@@ -9,7 +9,7 @@ EO Clínica is a comprehensive medical clinic scheduling system that integrates 
 This system follows clean architecture principles with:
 
 - **Backend**: Node.js + TypeScript + Fastify
-- **Frontend**: Next.js 15 + React 19 + Tailwind CSS
+- **Frontend**: Next.js 14 + React 18 + Tailwind CSS + Shadcn/ui
 - **Database**: PostgreSQL with Prisma ORM
 - **Cache**: Redis for sessions and caching
 - **AI Integration**: Claude Sonnet 4 API
@@ -86,14 +86,17 @@ npm run dev
 
 The frontend will be available at: **http://localhost:3001**
 
-### Frontend Features
-- **Landing Page** with system overview
-- **Authentication** system with role-based access
-- **Dashboard** personalized by user type (Admin, Doctor, Patient, Receptionist)
-- **Appointment Management** with calendar integration
-- **AI Chat Interface** for patient support
-- **Medical Records** management
-- **LGPD Compliance** interface
+### Frontend Features ✅ IMPLEMENTADAS
+- **Dashboard** - Página inicial com 4 cards estatísticos
+- **Pacientes** - Gestão completa de pacientes com filtros
+- **Consultas** - Sistema de agendamento e histórico
+- **Médicos** - Gerenciamento da equipe médica
+- **Agenda** - Calendário médico (dia/semana/mês)
+- **Configurações** - 5 abas de configurações do usuário
+- **Relatórios** - Analytics completos com gráficos mock
+- **Autenticação** - Login/registro com role-based access
+- **AI Chat Interface** - Para suporte ao paciente
+- **LGPD Compliance** - Interface de conformidade
 
 ### User Portals
 - **Admin Portal**: System management and analytics

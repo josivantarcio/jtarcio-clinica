@@ -72,7 +72,7 @@ export default function PatientsPage() {
   const loadPatients = async () => {
     setLoading(true)
     try {
-      const response = await apiClient.getUsers({ role: 'PATIENT' })
+      const response = await apiClient.getPatients()
       if (response.success) {
         // Transform users to patients with mock stats
         const patientsData: PatientWithStats[] = (response.data || []).map((userData: any, index: number) => ({

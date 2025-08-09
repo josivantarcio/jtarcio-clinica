@@ -427,7 +427,7 @@ export class QueueManagementService {
       logger.info('Optimizing queue distribution');
 
       const suggestions: string[] = [];
-      let redistributed = 0;
+      const redistributed = 0;
 
       // Get all queue keys
       const queueKeys = await redis.keys(`${this.QUEUE_KEY_PREFIX}:*`);

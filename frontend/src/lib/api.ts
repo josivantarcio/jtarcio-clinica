@@ -204,11 +204,19 @@ class ApiClient {
     })
   }
 
+  async getPatients(params?: any) {
+    return this.request<any[]>({
+      method: 'GET',
+      url: '/api/v1/users',
+      params: { ...params, role: 'PATIENT' }
+    })
+  }
+
   async getDoctors(params?: any) {
     return this.request<any[]>({
       method: 'GET',
-      url: '/api/v1/users/doctors',
-      params
+      url: '/api/v1/users',
+      params: { ...params, role: 'DOCTOR' }
     })
   }
 

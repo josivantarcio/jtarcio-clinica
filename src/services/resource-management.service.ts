@@ -355,7 +355,7 @@ export class ResourceManagementService {
       logger.info('Calculating resource utilization', { resourceId, resourceType });
 
       const utilization: ResourceUtilization[] = [];
-      let currentDate = new Date(startDate);
+      const currentDate = new Date(startDate);
 
       while (currentDate <= endDate) {
         const dayUtilization = await this.calculateDayUtilization(
