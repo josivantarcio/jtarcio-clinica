@@ -58,7 +58,21 @@ npm run db:seed
 ## 📚 Documentação
 
 - **Documentação Completa**: [`/docs`](./docs/)
+- **Guia de Solução de Problemas**: [`/docs/TROUBLESHOOTING.md`](./docs/TROUBLESHOOTING.md)
+- **Configuração de Portas**: [`/docs/PORTS.md`](./docs/PORTS.md)
 - **Prompts de IA**: [`/prompt`](./prompt/)
+
+## 🔧 Problemas Comuns
+
+### Porta já está em uso:
+```bash
+./scripts/start-complete.sh  # Limpa automaticamente
+```
+
+### Frontend redirecionando para /dashboard:
+- Limpe o cache do navegador ou clique em "🗑️ Limpar Cache" na página inicial
+
+### Mais soluções: [TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md)
 
 ## 🛠️ Stack Tecnológico
 
