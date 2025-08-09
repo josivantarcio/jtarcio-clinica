@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/store/auth'
 import { Button } from '@/components/ui/button'
@@ -8,20 +8,39 @@ import Link from 'next/link'
 import { Calendar, MessageCircle, Shield, Stethoscope } from 'lucide-react'
 
 export default function Home() {
-  const { isAuthenticated, user } = useAuthStore()
+  const { isAuthenticated, user, loadUser } = useAuthStore()
   const router = useRouter()
+  const [isHydrated, setIsHydrated] = useState(false)
 
   useEffect(() => {
     // Hydrate the persisted store
     useAuthStore.persist.rehydrate()
+    setIsHydrated(true)
   }, [])
 
   useEffect(() => {
-    // If user is authenticated, redirect to dashboard
-    if (isAuthenticated) {
-      router.push('/dashboard')
+    // Verify user authentication when hydrated
+    if (isHydrated && isAuthenticated) {
+      loadUser().then(() => {
+        // Only redirect if still authenticated after verification
+        if (useAuthStore.getState().isAuthenticated) {
+          router.push('/dashboard')
+        }
+      })
     }
-  }, [isAuthenticated, router])
+  }, [isHydrated, isAuthenticated, loadUser, router])
+
+  // Show loading while hydrating
+  if (!isHydrated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-2 text-muted-foreground">Carregando...</p>
+        </div>
+      </div>
+    )
+  }
 
   if (isAuthenticated) {
     return (
@@ -51,6 +70,20 @@ export default function Home() {
             </Button>
             <Button asChild>
               <Link href="/auth/register">Cadastrar</Link>
+            </Button>
+            {/* Debug button - remove in production */}
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  localStorage.clear()
+                  useAuthStore.persist.clearStorage()
+                  window.location.reload()
+                }
+              }}
+            >
+              🗑️ Limpar Cache
             </Button>
           </div>
         </div>

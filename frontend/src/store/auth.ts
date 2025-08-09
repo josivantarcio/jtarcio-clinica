@@ -111,12 +111,15 @@ export const useAuthStore = create<AuthState>()(
         const { token } = get()
         
         if (!token) {
+          set({ isAuthenticated: false, user: null })
           return
         }
         
         set({ isLoading: true })
         
         try {
+          // Set the token in apiClient before making the request
+          apiClient.setToken(token)
           const response = await apiClient.getProfile()
           
           if (response.success && response.data) {
@@ -127,9 +130,11 @@ export const useAuthStore = create<AuthState>()(
             })
           } else {
             // Token might be invalid
+            console.warn('Failed to load user profile, logging out')
             get().logout()
           }
         } catch (error) {
+          console.error('Error loading user:', error)
           get().logout()
         } finally {
           set({ isLoading: false })
