@@ -1,0 +1,48 @@
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
+import { ThemeProvider } from "@/providers/theme-provider";
+import { Toaster } from "@/providers/toast-provider";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ClientProvider } from "@/providers/client-provider";
+
+const inter = Inter({ subsets: ["latin"] });
+
+export const metadata: Metadata = {
+  title: "EO Clínica - Sistema de Agendamento Médico",
+  description: "Sistema moderno de agendamento médico com IA integrada",
+  manifest: "/manifest.json",
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/icon-192.png"
+  }
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  themeColor: "#10b981"
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="pt-BR" suppressHydrationWarning>
+      <body className={`${inter.className} antialiased`}>
+        <ClientProvider>
+          <ThemeProvider
+            defaultTheme="light"
+            storageKey="eo-clinica-theme"
+          >
+            {children}
+            <Toaster />
+          </ThemeProvider>
+        </ClientProvider>
+      </body>
+    </html>
+  );
+}

@@ -1,0 +1,506 @@
+{
+  "name": "reagendamento",
+  "active": true,
+  "nodes": [
+    {
+      "id": "webhook-trigger",
+      "name": "Webhook Reagendamento",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "reagendamento",
+        "options": {}
+      },
+      "webhookId": "reagendamento-webhook"
+    },
+    {
+      "id": "validate-data",
+      "name": "Validar Dados",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [460, 300],
+      "parameters": {
+        "jsCode": "// Validação dos dados de reagendamento\nconst requiredFields = ['appointmentId', 'newDate'];\nconst missingFields = [];\n\nfor (const field of requiredFields) {\n  if (!$input.first().json[field]) {\n    missingFields.push(field);\n  }\n}\n\nif (missingFields.length > 0) {\n  throw new Error(`Campos obrigatórios ausentes: ${missingFields.join(', ')}`);\n}\n\n// Validar formato da nova data\nconst newDate = new Date($input.first().json.newDate);\nif (isNaN(newDate.getTime())) {\n  throw new Error('Formato de nova data inválido');\n}\n\n// Verificar se a nova data não é no passado\nif (newDate < new Date()) {\n  throw new Error('Não é possível reagendar para datas passadas');\n}\n\n// Verificar prazo mínimo para reagendamento (2 horas)\nconst minTimeAdvance = 2 * 60 * 60 * 1000; // 2 horas\nif (newDate.getTime() - Date.now() < minTimeAdvance) {\n  throw new Error('Reagendamento deve ser feito com pelo menos 2 horas de antecedência');\n}\n\nreturn [{\n  json: {\n    ....$input.first().json,\n    validated: true,\n    validatedAt: new Date().toISOString()\n  }\n}];"
+      },
+      "continueOnFail": false,
+      "retryOnFail": true,
+      "maxTries": 3
+    },
+    {
+      "id": "get-current-appointment",
+      "name": "Buscar Agendamento Atual",
+      "type": "eoClinicaApi",
+      "typeVersion": 1,
+      "position": [680, 300],
+      "parameters": {
+        "resource": "appointment",
+        "operation": "get",
+        "appointmentId": "={{ $json.appointmentId }}"
+      },
+      "credentials": {
+        "eoClinicaApi": {
+          "id": "clinic-api-credentials",
+          "name": "EO Clínica API"
+        }
+      },
+      "continueOnFail": false,
+      "retryOnFail": true,
+      "maxTries": 3
+    },
+    {
+      "id": "check-appointment-exists",
+      "name": "Agendamento Existe?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [900, 300],
+      "parameters": {
+        "conditions": {
+          "boolean": [],
+          "dateTime": [],
+          "number": [],
+          "string": [
+            {
+              "value1": "={{ $json.id }}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        },
+        "combineOperation": "all"
+      }
+    },
+    {
+      "id": "appointment-not-found",
+      "name": "Agendamento Não Encontrado",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1120, 120],
+      "parameters": {
+        "options": {},
+        "responseBody": "{\n  \"success\": false,\n  \"error\": \"APPOINTMENT_NOT_FOUND\",\n  \"message\": \"Agendamento não encontrado\"\n}",
+        "responseCode": 404,
+        "responseHeaders": {
+          "entries": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "check-reschedule-policy",
+      "name": "Verificar Política Reagendamento",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [1120, 300],
+      "parameters": {
+        "jsCode": "// Verificar política de reagendamento\nconst appointment = $json;\nconst currentDate = new Date();\nconst appointmentDate = new Date(appointment.date);\n\n// Verificar se já não está muito próximo da consulta (mínimo 4 horas)\nconst minHoursAdvance = 4;\nconst hoursUntilAppointment = (appointmentDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60);\n\nif (hoursUntilAppointment < minHoursAdvance) {\n  return [{\n    json: {\n      canReschedule: false,\n      reason: 'MINIMUM_TIME_VIOLATION',\n      message: `Reagendamento deve ser feito com pelo menos ${minHoursAdvance} horas de antecedência`,\n      hoursRemaining: Math.floor(hoursUntilAppointment * 100) / 100\n    }\n  }];\n}\n\n// Verificar status do agendamento\nconst allowedStatuses = ['SCHEDULED', 'CONFIRMED'];\nif (!allowedStatuses.includes(appointment.status)) {\n  return [{\n    json: {\n      canReschedule: false,\n      reason: 'INVALID_STATUS',\n      message: `Não é possível reagendar agendamento com status: ${appointment.status}`,\n      currentStatus: appointment.status\n    }\n  }];\n}\n\n// Verificar limite de reagendamentos (máximo 2 por agendamento)\nconst rescheduleCount = appointment.rescheduleHistory ? appointment.rescheduleHistory.length : 0;\nconst maxReschedules = 2;\n\nif (rescheduleCount >= maxReschedules) {\n  return [{\n    json: {\n      canReschedule: false,\n      reason: 'RESCHEDULE_LIMIT_EXCEEDED',\n      message: `Limite máximo de ${maxReschedules} reagendamentos excedido`,\n      rescheduleCount\n    }\n  }];\n}\n\nreturn [{\n  json: {\n    canReschedule: true,\n    appointment,\n    validatedData: $('Validar Dados').first().json,\n    rescheduleCount\n  }\n}];"
+      }
+    },
+    {
+      "id": "check-policy-result",
+      "name": "Pode Reagendar?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1340, 300],
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.canReschedule }}",
+              "value2": true
+            }
+          ],
+          "dateTime": [],
+          "number": [],
+          "string": []
+        },
+        "combineOperation": "all"
+      }
+    },
+    {
+      "id": "reschedule-denied",
+      "name": "Reagendamento Negado",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1560, 120],
+      "parameters": {
+        "options": {},
+        "responseBody": "{\n  \"success\": false,\n  \"error\": \"{{ $json.reason }}\",\n  \"message\": \"{{ $json.message }}\",\n  \"details\": {{ JSON.stringify($json) }}\n}",
+        "responseCode": 400,
+        "responseHeaders": {
+          "entries": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "check-new-availability",
+      "name": "Verificar Nova Disponibilidade",
+      "type": "eoClinicaApi",
+      "typeVersion": 1,
+      "position": [1560, 300],
+      "parameters": {
+        "resource": "availability",
+        "operation": "check",
+        "specialtyId": "={{ $json.appointment.specialtyId }}",
+        "date": "={{ $json.validatedData.newDate }}",
+        "duration": "={{ $json.appointment.duration }}"
+      },
+      "credentials": {
+        "eoClinicaApi": {
+          "id": "clinic-api-credentials",
+          "name": "EO Clínica API"
+        }
+      },
+      "continueOnFail": false,
+      "retryOnFail": true,
+      "maxTries": 3
+    },
+    {
+      "id": "check-new-availability-result",
+      "name": "Nova Data Disponível?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1780, 300],
+      "parameters": {
+        "conditions": {
+          "boolean": [],
+          "dateTime": [],
+          "number": [],
+          "string": [
+            {
+              "value1": "={{ $json.available }}",
+              "operation": "equal",
+              "value2": "true"
+            }
+          ]
+        },
+        "combineOperation": "all"
+      }
+    },
+    {
+      "id": "new-slot-unavailable",
+      "name": "Nova Data Indisponível",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [2000, 120],
+      "parameters": {
+        "options": {},
+        "responseBody": "{\n  \"success\": false,\n  \"error\": \"NEW_SLOT_UNAVAILABLE\",\n  \"message\": \"Nova data/horário não disponível\",\n  \"suggestions\": {{ JSON.stringify($json.suggestions) }}\n}",
+        "responseCode": 409,
+        "responseHeaders": {
+          "entries": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "reschedule-appointment",
+      "name": "Reagendar Consulta",
+      "type": "eoClinicaApi",
+      "typeVersion": 1,
+      "position": [2000, 300],
+      "parameters": {
+        "resource": "appointment",
+        "operation": "reschedule",
+        "appointmentId": "={{ $('Verificar Política Reagendamento').first().json.appointment.id }}",
+        "date": "={{ $('Verificar Política Reagendamento').first().json.validatedData.newDate }}",
+        "additionalFields": {
+          "reason": "={{ $('Verificar Política Reagendamento').first().json.validatedData.reason || 'Reagendamento solicitado pelo paciente' }}",
+          "sendNotifications": true,
+          "updateCalendar": true
+        }
+      },
+      "credentials": {
+        "eoClinicaApi": {
+          "id": "clinic-api-credentials",
+          "name": "EO Clínica API"
+        }
+      },
+      "continueOnFail": false,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "update-google-calendar",
+      "name": "Atualizar Google Calendar",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1,
+      "position": [2220, 300],
+      "parameters": {
+        "operation": "update",
+        "calendarId": "primary",
+        "eventId": "={{ $('Verificar Política Reagendamento').first().json.appointment.externalCalendarId }}",
+        "title": "={{ $('Verificar Política Reagendamento').first().json.appointment.title }}",
+        "description": "Consulta reagendada via EO Clínica\\n\\nPaciente: {{ $('Verificar Política Reagendamento').first().json.appointment.patientName }}\\nMédico: Dr(a) {{ $('Verificar Política Reagendamento').first().json.appointment.doctorName }}\\nData anterior: {{ new Date($('Verificar Política Reagendamento').first().json.appointment.date).toLocaleString('pt-BR') }}\\nNova data: {{ new Date($('Verificar Política Reagendamento').first().json.validatedData.newDate).toLocaleString('pt-BR') }}\\n\\nMotivo: {{ $('Verificar Política Reagendamento').first().json.validatedData.reason }}",
+        "start": "={{ $('Verificar Política Reagendamento').first().json.validatedData.newDate }}",
+        "end": "={{ new Date(new Date($('Verificar Política Reagendamento').first().json.validatedData.newDate).getTime() + ($('Verificar Política Reagendamento').first().json.appointment.duration * 60000)).toISOString() }}",
+        "sendNotifications": true
+      },
+      "credentials": {
+        "googleCalendarOAuth2": {
+          "id": "google-calendar-credentials",
+          "name": "Google Calendar"
+        }
+      },
+      "continueOnFail": true,
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "id": "send-reschedule-notification",
+      "name": "Notificar Reagendamento",
+      "type": "n8n-nodes-base.sendEmail",
+      "typeVersion": 1,
+      "position": [2440, 300],
+      "parameters": {
+        "fromEmail": "noreply@eo-clinica.com",
+        "toEmail": "={{ $('Verificar Política Reagendamento').first().json.appointment.patientEmail }}",
+        "subject": "Consulta Reagendada - EO Clínica",
+        "html": "<!DOCTYPE html>\n<html>\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Consulta Reagendada</title>\n    <style>\n        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }\n        .container { max-width: 600px; margin: 0 auto; padding: 20px; }\n        .header { background-color: #ff9500; color: white; padding: 20px; text-align: center; }\n        .content { background-color: #f9f9f9; padding: 20px; }\n        .appointment-details { background-color: white; padding: 15px; border-left: 4px solid #ff9500; margin: 15px 0; }\n        .old-details { background-color: #f8d7da; border-left-color: #dc3545; }\n        .new-details { background-color: #d1edff; border-left-color: #1f77b4; }\n        .button { display: inline-block; background-color: #1f77b4; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 10px 0; }\n        .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }\n    </style>\n</head>\n<body>\n    <div class=\"container\">\n        <div class=\"header\">\n            <h1>📅 Consulta Reagendada</h1>\n        </div>\n        \n        <div class=\"content\">\n            <p>Olá <strong>{{ $('Verificar Política Reagendamento').first().json.appointment.patientName }}</strong>,</p>\n            \n            <p>Sua consulta foi reagendada com sucesso. Confira as alterações abaixo:</p>\n            \n            <div class=\"appointment-details old-details\">\n                <h3>📋 Dados Anteriores</h3>\n                <ul>\n                    <li><strong>Data:</strong> {{ new Date($('Verificar Política Reagendamento').first().json.appointment.date).toLocaleDateString('pt-BR') }}</li>\n                    <li><strong>Horário:</strong> {{ new Date($('Verificar Política Reagendamento').first().json.appointment.date).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'}) }}</li>\n                </ul>\n            </div>\n            \n            <div class=\"appointment-details new-details\">\n                <h3>✅ Novos Dados</h3>\n                <ul>\n                    <li><strong>Especialidade:</strong> {{ $('Verificar Política Reagendamento').first().json.appointment.specialty }}</li>\n                    <li><strong>Médico:</strong> Dr(a) {{ $('Verificar Política Reagendamento').first().json.appointment.doctorName }}</li>\n                    <li><strong>Nova Data:</strong> {{ new Date($('Verificar Política Reagendamento').first().json.validatedData.newDate).toLocaleDateString('pt-BR') }}</li>\n                    <li><strong>Novo Horário:</strong> {{ new Date($('Verificar Política Reagendamento').first().json.validatedData.newDate).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'}) }}</li>\n                    <li><strong>Duração:</strong> {{ $('Verificar Política Reagendamento').first().json.appointment.duration }} minutos</li>\n                    <li><strong>Local:</strong> EO Clínica - {{ $('Verificar Política Reagendamento').first().json.appointment.clinicAddress }}</li>\n                </ul>\n            </div>\n            \n            {{ $('Verificar Política Reagendamento').first().json.validatedData.reason ? '<p><strong>Motivo do reagendamento:</strong> ' + $('Verificar Política Reagendamento').first().json.validatedData.reason + '</p>' : '' }}\n            \n            <p>Por favor, confirme sua presença na nova data:</p>\n            \n            <a href=\"{{ $env.FRONTEND_URL }}/confirmar-consulta/{{ $('Reagendar Consulta').first().json.id }}\" class=\"button\">\n                ✅ Confirmar Nova Data\n            </a>\n            \n            <p>Caso precise fazer outro reagendamento ou cancelar, você pode fazer isso através dos links abaixo:</p>\n            \n            <a href=\"{{ $env.FRONTEND_URL }}/reagendar-consulta/{{ $('Reagendar Consulta').first().json.id }}\" class=\"button\" style=\"background-color: #ff9500;\">\n                📅 Reagendar Novamente\n            </a>\n            \n            <a href=\"{{ $env.FRONTEND_URL }}/cancelar-consulta/{{ $('Reagendar Consulta').first().json.id }}\" class=\"button\" style=\"background-color: #dc3545;\">\n                ❌ Cancelar\n            </a>\n            \n            <p><strong>Lembrete:</strong></p>\n            <ul>\n                <li>Chegue com 15 minutos de antecedência</li>\n                <li>Traga um documento com foto</li>\n                <li>Confirme sua presença até 24h antes da nova data</li>\n                <li>Limite de reagendamentos: {{ 2 - $('Verificar Política Reagendamento').first().json.rescheduleCount }}/2 restantes</li>\n            </ul>\n        </div>\n        \n        <div class=\"footer\">\n            <p>Este é um email automático. Não responda a este email.</p>\n            <p>EO Clínica - Sistema de Agendamento Inteligente</p>\n        </div>\n    </div>\n</body>\n</html>"
+      },
+      "credentials": {
+        "smtp": {
+          "id": "clinic-smtp-credentials",
+          "name": "Clinic SMTP"
+        }
+      },
+      "continueOnFail": true,
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "id": "notify-queue",
+      "name": "Notificar Fila de Espera",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [2220, 480],
+      "parameters": {
+        "workflowId": "gestao-fila-espera",
+        "waitForExecution": false,
+        "source": "parameter",
+        "mode": "ownExecutions",
+        "inputs": {
+          "action": "slot_available",\n          "originalDate": "={{ $('Verificar Política Reagendamento').first().json.appointment.date }}",
+          "specialtyId": "={{ $('Verificar Política Reagendamento').first().json.appointment.specialtyId }}",
+          "duration": "={{ $('Verificar Política Reagendamento').first().json.appointment.duration }}"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "id": "success-response",
+      "name": "Resposta Sucesso",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [2660, 300],
+      "parameters": {
+        "options": {},
+        "responseBody": "{\n  \"success\": true,\n  \"message\": \"Consulta reagendada com sucesso\",\n  \"data\": {\n    \"appointmentId\": \"{{ $('Reagendar Consulta').first().json.id }}\",\n    \"oldDate\": \"{{ $('Verificar Política Reagendamento').first().json.appointment.date }}\",\n    \"newDate\": \"{{ $('Verificar Política Reagendamento').first().json.validatedData.newDate }}\",\n    \"rescheduleCount\": {{ $('Verificar Política Reagendamento').first().json.rescheduleCount + 1 }},\n    \"remainingReschedules\": {{ 2 - ($('Verificar Política Reagendamento').first().json.rescheduleCount + 1) }},\n    \"notifications\": {\n      \"email\": {{ $('Notificar Reagendamento').first() ? 'true' : 'false' }},\n      \"calendar\": {{ $('Atualizar Google Calendar').first() ? 'true' : 'false' }},\n      \"queue\": {{ $('Notificar Fila de Espera').first() ? 'true' : 'false' }}\n    }\n  }\n}",
+        "responseHeaders": {
+          "entries": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "connections": {
+    "webhook-trigger": {
+      "main": [
+        [
+          {
+            "node": "validate-data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "validate-data": {
+      "main": [
+        [
+          {
+            "node": "get-current-appointment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get-current-appointment": {
+      "main": [
+        [
+          {
+            "node": "check-appointment-exists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "check-appointment-exists": {
+      "main": [
+        [
+          {
+            "node": "check-reschedule-policy",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "appointment-not-found",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "check-reschedule-policy": {
+      "main": [
+        [
+          {
+            "node": "check-policy-result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "check-policy-result": {
+      "main": [
+        [
+          {
+            "node": "check-new-availability",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "reschedule-denied",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "check-new-availability": {
+      "main": [
+        [
+          {
+            "node": "check-new-availability-result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "check-new-availability-result": {
+      "main": [
+        [
+          {
+            "node": "reschedule-appointment",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "new-slot-unavailable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "reschedule-appointment": {
+      "main": [
+        [
+          {
+            "node": "update-google-calendar",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "send-reschedule-notification",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "notify-queue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "update-google-calendar": {
+      "main": [
+        []
+      ]
+    },
+    "send-reschedule-notification": {
+      "main": [
+        [
+          {
+            "node": "success-response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "notify-queue": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "error-handler-workflow",
+    "timezone": "America/Sao_Paulo"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "eo-clinica-reagendamento"
+  },
+  "pinData": {},
+  "tags": [
+    {
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z",
+      "id": "1",
+      "name": "agendamento"
+    },
+    {
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z",
+      "id": "3",
+      "name": "reagendamento"
+    }
+  ]
+}

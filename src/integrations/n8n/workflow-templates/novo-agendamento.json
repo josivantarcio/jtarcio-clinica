@@ -1,0 +1,400 @@
+{
+  "name": "novo-agendamento",
+  "active": true,
+  "nodes": [
+    {
+      "id": "webhook-trigger",
+      "name": "Webhook Novo Agendamento",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "novo-agendamento",
+        "options": {}
+      },
+      "webhookId": "novo-agendamento-webhook"
+    },
+    {
+      "id": "validate-data",
+      "name": "Validar Dados",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [460, 300],
+      "parameters": {
+        "jsCode": "// Validação dos dados do agendamento\nconst requiredFields = ['patientId', 'doctorId', 'specialtyId', 'date'];\nconst missingFields = [];\n\nfor (const field of requiredFields) {\n  if (!$input.first().json[field]) {\n    missingFields.push(field);\n  }\n}\n\nif (missingFields.length > 0) {\n  throw new Error(`Campos obrigatórios ausentes: ${missingFields.join(', ')}`);\n}\n\n// Validar formato da data\nconst appointmentDate = new Date($input.first().json.date);\nif (isNaN(appointmentDate.getTime())) {\n  throw new Error('Formato de data inválido');\n}\n\n// Verificar se a data não é no passado\nif (appointmentDate < new Date()) {\n  throw new Error('Não é possível agendar para datas passadas');\n}\n\n// Validar duração\nconst duration = $input.first().json.duration || 30;\nif (duration < 15 || duration > 180) {\n  throw new Error('Duração deve estar entre 15 e 180 minutos');\n}\n\nreturn [{\n  json: {\n    ....$input.first().json,\n    duration,\n    validated: true,\n    validatedAt: new Date().toISOString()\n  }\n}];"
+      },
+      "continueOnFail": false,
+      "retryOnFail": true,
+      "maxTries": 3
+    },
+    {
+      "id": "check-availability",
+      "name": "Verificar Disponibilidade",
+      "type": "eoClinicaApi",
+      "typeVersion": 1,
+      "position": [680, 300],
+      "parameters": {
+        "resource": "availability",
+        "operation": "check",
+        "specialtyId": "={{ $json.specialtyId }}",
+        "date": "={{ $json.date }}",
+        "duration": "={{ $json.duration }}"
+      },
+      "credentials": {
+        "eoClinicaApi": {
+          "id": "clinic-api-credentials",
+          "name": "EO Clínica API"
+        }
+      },
+      "continueOnFail": false,
+      "retryOnFail": true,
+      "maxTries": 3
+    },
+    {
+      "id": "check-availability-result",
+      "name": "Disponibilidade OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [900, 300],
+      "parameters": {
+        "conditions": {
+          "boolean": [],
+          "dateTime": [],
+          "number": [],
+          "string": [
+            {
+              "value1": "={{ $json.available }}",
+              "operation": "equal",
+              "value2": "true"
+            }
+          ]
+        },
+        "combineOperation": "all"
+      }
+    },
+    {
+      "id": "send-unavailable-response",
+      "name": "Horário Indisponível",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1120, 120],
+      "parameters": {
+        "options": {},
+        "responseBody": "{\n  \"success\": false,\n  \"error\": \"SLOT_UNAVAILABLE\",\n  \"message\": \"Horário não disponível\",\n  \"suggestions\": {{ JSON.stringify($json.suggestions) }}\n}",
+        "responseCode": 409,
+        "responseHeaders": {
+          "entries": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "create-appointment",
+      "name": "Criar Agendamento",
+      "type": "eoClinicaApi",
+      "typeVersion": 1,
+      "position": [1120, 300],
+      "parameters": {
+        "resource": "appointment",
+        "operation": "create",
+        "patientId": "={{ $('Validar Dados').first().json.patientId }}",
+        "doctorId": "={{ $('Validar Dados').first().json.doctorId }}",
+        "specialtyId": "={{ $('Validar Dados').first().json.specialtyId }}",
+        "date": "={{ $('Validar Dados').first().json.date }}",
+        "duration": "={{ $('Validar Dados').first().json.duration }}",
+        "priority": "={{ $('Validar Dados').first().json.priority || 'MEDIUM' }}",
+        "notes": "={{ $('Validar Dados').first().json.notes || '' }}"
+      },
+      "credentials": {
+        "eoClinicaApi": {
+          "id": "clinic-api-credentials",
+          "name": "EO Clínica API"
+        }
+      },
+      "continueOnFail": false,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "sync-google-calendar",
+      "name": "Sincronizar Google Calendar",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1,
+      "position": [1340, 300],
+      "parameters": {
+        "operation": "create",
+        "calendarId": "primary",
+        "title": "={{ $('Validar Dados').first().json.specialty }} - {{ $('Validar Dados').first().json.patientName }}",
+        "description": "Consulta agendada via EO Clínica\\n\\nPaciente: {{ $('Validar Dados').first().json.patientName }}\\nMédico: Dr(a) {{ $('Validar Dados').first().json.doctorName }}\\nObservações: {{ $('Validar Dados').first().json.notes }}",
+        "start": "={{ $('Validar Dados').first().json.date }}",
+        "end": "={{ new Date(new Date($('Validar Dados').first().json.date).getTime() + ($('Validar Dados').first().json.duration * 60000)).toISOString() }}",
+        "attendees": "={{ $('Validar Dados').first().json.patientEmail }},{{ $('Validar Dados').first().json.doctorEmail }}",
+        "sendNotifications": true
+      },
+      "credentials": {
+        "googleCalendarOAuth2": {
+          "id": "google-calendar-credentials",
+          "name": "Google Calendar"
+        }
+      },
+      "continueOnFail": true,
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "id": "send-confirmation-email",
+      "name": "Enviar Email Confirmação",
+      "type": "n8n-nodes-base.sendEmail",
+      "typeVersion": 1,
+      "position": [1560, 300],
+      "parameters": {
+        "fromEmail": "noreply@eo-clinica.com",
+        "toEmail": "={{ $('Validar Dados').first().json.patientEmail }}",
+        "subject": "Consulta Agendada - EO Clínica",
+        "html": "<!DOCTYPE html>\n<html>\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Consulta Agendada</title>\n    <style>\n        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }\n        .container { max-width: 600px; margin: 0 auto; padding: 20px; }\n        .header { background-color: #1f77b4; color: white; padding: 20px; text-align: center; }\n        .content { background-color: #f9f9f9; padding: 20px; }\n        .appointment-details { background-color: white; padding: 15px; border-left: 4px solid #1f77b4; margin: 15px 0; }\n        .button { display: inline-block; background-color: #1f77b4; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 10px 0; }\n        .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }\n    </style>\n</head>\n<body>\n    <div class=\"container\">\n        <div class=\"header\">\n            <h1>🏥 Consulta Agendada com Sucesso!</h1>\n        </div>\n        \n        <div class=\"content\">\n            <p>Olá <strong>{{ $('Validar Dados').first().json.patientName }}</strong>,</p>\n            \n            <p>Sua consulta foi agendada com sucesso. Confira os detalhes abaixo:</p>\n            \n            <div class=\"appointment-details\">\n                <h3>📋 Detalhes da Consulta</h3>\n                <ul>\n                    <li><strong>Especialidade:</strong> {{ $('Validar Dados').first().json.specialty }}</li>\n                    <li><strong>Médico:</strong> Dr(a) {{ $('Validar Dados').first().json.doctorName }}</li>\n                    <li><strong>Data:</strong> {{ new Date($('Validar Dados').first().json.date).toLocaleDateString('pt-BR') }}</li>\n                    <li><strong>Horário:</strong> {{ new Date($('Validar Dados').first().json.date).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'}) }}</li>\n                    <li><strong>Duração:</strong> {{ $('Validar Dados').first().json.duration }} minutos</li>\n                    <li><strong>Local:</strong> EO Clínica - {{ $('Validar Dados').first().json.clinicAddress }}</li>\n                </ul>\n            </div>\n            \n            <p>Por favor, confirme sua presença clicando no botão abaixo:</p>\n            \n            <a href=\"{{ $env.FRONTEND_URL }}/confirmar-consulta/{{ $('Criar Agendamento').first().json.id }}\" class=\"button\">\n                ✅ Confirmar Presença\n            </a>\n            \n            <p>Caso precise reagendar ou cancelar, você pode fazer isso através dos links abaixo:</p>\n            \n            <a href=\"{{ $env.FRONTEND_URL }}/reagendar-consulta/{{ $('Criar Agendamento').first().json.id }}\" class=\"button\" style=\"background-color: #ff9500;\">\n                📅 Reagendar\n            </a>\n            \n            <a href=\"{{ $env.FRONTEND_URL }}/cancelar-consulta/{{ $('Criar Agendamento').first().json.id }}\" class=\"button\" style=\"background-color: #dc3545;\">\n                ❌ Cancelar\n            </a>\n            \n            <p><strong>Importante:</strong></p>\n            <ul>\n                <li>Chegue com 15 minutos de antecedência</li>\n                <li>Traga um documento com foto</li>\n                <li>Confirme sua presença até 24h antes da consulta</li>\n            </ul>\n        </div>\n        \n        <div class=\"footer\">\n            <p>Este é um email automático. Não responda a este email.</p>\n            <p>EO Clínica - Sistema de Agendamento Inteligente</p>\n        </div>\n    </div>\n</body>\n</html>",
+        "attachments": "={{ $json.calendar_event ? [{ filename: 'consulta.ics', data: $json.calendar_event }] : [] }}"
+      },
+      "credentials": {
+        "smtp": {
+          "id": "clinic-smtp-credentials",
+          "name": "Clinic SMTP"
+        }
+      },
+      "continueOnFail": true,
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "id": "send-whatsapp-confirmation",
+      "name": "Enviar WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [1560, 480],
+      "parameters": {
+        "url": "https://graph.facebook.com/v17.0/{{ $env.WHATSAPP_PHONE_NUMBER_ID }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "httpMethod": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "{\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $('Validar Dados').first().json.patientPhone }}\",\n  \"type\": \"template\",\n  \"template\": {\n    \"name\": \"confirmacao_consulta\",\n    \"language\": {\n      \"code\": \"pt_BR\"\n    },\n    \"components\": [\n      {\n        \"type\": \"body\",\n        \"parameters\": [\n          {\n            \"type\": \"text\",\n            \"text\": \"{{ $('Validar Dados').first().json.patientName }}\"\n          },\n          {\n            \"type\": \"text\",\n            \"text\": \"{{ new Date($('Validar Dados').first().json.date).toLocaleDateString('pt-BR') }}\"\n          },\n          {\n            \"type\": \"text\",\n            \"text\": \"{{ new Date($('Validar Dados').first().json.date).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'}) }}\"\n          },\n          {\n            \"type\": \"text\",\n            \"text\": \"Dr(a) {{ $('Validar Dados').first().json.doctorName }}\"\n          }\n        ]\n      },\n      {\n        \"type\": \"button\",\n        \"sub_type\": \"url\",\n        \"index\": \"0\",\n        \"parameters\": [\n          {\n            \"type\": \"text\",\n            \"text\": \"{{ $('Criar Agendamento').first().json.id }}\"\n          }\n        ]\n      }\n    ]\n  }\n}"
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "whatsapp-api-credentials",
+          "name": "WhatsApp API"
+        }
+      },
+      "continueOnFail": true,
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "id": "schedule-reminder",
+      "name": "Agendar Lembrete",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [1780, 300],
+      "parameters": {
+        "workflowId": "sistema-lembretes",
+        "waitForExecution": false,
+        "source": "parameter",
+        "mode": "ownExecutions",
+        "inputs": {
+          "appointmentId": "={{ $('Criar Agendamento').first().json.id }}",
+          "reminderTime": "={{ new Date(new Date($('Validar Dados').first().json.date).getTime() - (24 * 60 * 60 * 1000)).toISOString() }}"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "id": "success-response",
+      "name": "Resposta Sucesso",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [2000, 300],
+      "parameters": {
+        "options": {},
+        "responseBody": "{\n  \"success\": true,\n  \"message\": \"Agendamento criado com sucesso\",\n  \"data\": {\n    \"appointmentId\": \"{{ $('Criar Agendamento').first().json.id }}\",\n    \"confirmationCode\": \"{{ $('Criar Agendamento').first().json.confirmationCode }}\",\n    \"date\": \"{{ $('Validar Dados').first().json.date }}\",\n    \"doctor\": \"{{ $('Validar Dados').first().json.doctorName }}\",\n    \"specialty\": \"{{ $('Validar Dados').first().json.specialty }}\",\n    \"notifications\": {\n      \"email\": {{ $('Enviar Email Confirmação').first() ? 'true' : 'false' }},\n      \"whatsapp\": {{ $('Enviar WhatsApp').first() ? 'true' : 'false' }},\n      \"calendar\": {{ $('Sincronizar Google Calendar').first() ? 'true' : 'false' }}\n    }\n  }\n}",
+        "responseHeaders": {
+          "entries": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "error-handler",
+      "name": "Tratamento de Erro",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1120, 580],
+      "parameters": {
+        "options": {},
+        "responseBody": "{\n  \"success\": false,\n  \"error\": \"APPOINTMENT_CREATION_FAILED\",\n  \"message\": \"Erro ao criar agendamento: {{ $json.error || $json.message }}\",\n  \"details\": {{ JSON.stringify($json) }}\n}",
+        "responseCode": 500,
+        "responseHeaders": {
+          "entries": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "connections": {
+    "webhook-trigger": {
+      "main": [
+        [
+          {
+            "node": "validate-data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "validate-data": {
+      "main": [
+        [
+          {
+            "node": "check-availability",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "check-availability": {
+      "main": [
+        [
+          {
+            "node": "check-availability-result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "check-availability-result": {
+      "main": [
+        [
+          {
+            "node": "create-appointment",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "send-unavailable-response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "create-appointment": {
+      "main": [
+        [
+          {
+            "node": "sync-google-calendar",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "send-confirmation-email",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "send-whatsapp-confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "sync-google-calendar": {
+      "main": [
+        [
+          {
+            "node": "schedule-reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "send-confirmation-email": {
+      "main": [
+        [
+          {
+            "node": "success-response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "send-whatsapp-confirmation": {
+      "main": [
+        []
+      ]
+    },
+    "schedule-reminder": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "error-handler-workflow",
+    "timezone": "America/Sao_Paulo"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "eo-clinica-novo-agendamento"
+  },
+  "pinData": {},
+  "tags": [
+    {
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z",
+      "id": "1",
+      "name": "agendamento"
+    },
+    {
+      "createdAt": "2024-01-01T00:00:00.000Z", 
+      "updatedAt": "2024-01-01T00:00:00.000Z",
+      "id": "2",
+      "name": "core"
+    }
+  ]
+}

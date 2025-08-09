@@ -1,0 +1,542 @@
+{
+  "name": "sistema-lembretes",
+  "active": true,
+  "nodes": [
+    {
+      "id": "cron-trigger",
+      "name": "Trigger Diário Lembretes",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "get-today-appointments",
+      "name": "Buscar Consultas de Hoje",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [460, 300],
+      "parameters": {
+        "url": "{{ $env.API_BASE_URL }}/api/appointments/today",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "httpMethod": "GET",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.API_KEY }}"
+            }
+          ]
+        }
+      },
+      "continueOnFail": false,
+      "retryOnFail": true,
+      "maxTries": 3
+    },
+    {
+      "id": "filter-unconfirmed",
+      "name": "Filtrar Não Confirmadas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [680, 300],
+      "parameters": {
+        "jsCode": "// Filtrar apenas consultas não confirmadas que precisam de lembrete\nconst appointments = $input.first().json.data || [];\nconst now = new Date();\nconst reminderResults = [];\n\nfor (const appointment of appointments) {\n  const appointmentDate = new Date(appointment.date);\n  const hoursUntilAppointment = (appointmentDate.getTime() - now.getTime()) / (1000 * 60 * 60);\n  \n  // Verificar se precisa de lembrete (24h, 4h ou 1h antes)\n  const needsReminder = (\n    // Lembrete 24h antes\n    (hoursUntilAppointment <= 24 && hoursUntilAppointment > 20 && !appointment.reminder24hSent) ||\n    // Lembrete 4h antes  \n    (hoursUntilAppointment <= 4 && hoursUntilAppointment > 3 && !appointment.reminder4hSent) ||\n    // Lembrete 1h antes\n    (hoursUntilAppointment <= 1 && hoursUntilAppointment > 0.5 && !appointment.reminder1hSent)\n  );\n  \n  if (needsReminder) {\n    let reminderType = '24h';\n    if (hoursUntilAppointment <= 4) reminderType = '4h';\n    if (hoursUntilAppointment <= 1) reminderType = '1h';\n    \n    reminderResults.push({\n      ...appointment,\n      reminderType,\n      hoursUntilAppointment: Math.round(hoursUntilAppointment * 100) / 100,\n      channels: appointment.notificationPreferences || ['email', 'sms', 'whatsapp']\n    });\n  }\n}\n\nif (reminderResults.length === 0) {\n  // Se não há lembretes para enviar, retornar resultado vazio\n  return [{\n    json: {\n      message: 'Nenhum lembrete para enviar neste momento',\n      processedAt: now.toISOString(),\n      totalAppointments: appointments.length,\n      remindersToSend: 0\n    }\n  }];\n}\n\nreturn reminderResults.map(appointment => ({\n  json: appointment\n}));"
+      }
+    },
+    {
+      "id": "check-has-reminders",
+      "name": "Tem Lembretes?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [900, 300],
+      "parameters": {
+        "conditions": {
+          "boolean": [],
+          "dateTime": [],
+          "number": [
+            {
+              "value1": "={{ $json.remindersToSend }}",
+              "operation": "larger",
+              "value2": 0
+            }
+          ],
+          "string": []
+        },
+        "combineOperation": "all"
+      }
+    },
+    {
+      "id": "no-reminders-response",
+      "name": "Nenhum Lembrete",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1120, 120],
+      "parameters": {}
+    },
+    {
+      "id": "split-by-channel",
+      "name": "Dividir por Canal",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [1120, 300],
+      "parameters": {
+        "jsCode": "// Criar múltiplos outputs baseados nos canais preferidos\nconst appointment = $json;\nconst outputs = [];\n\n// Para cada canal preferido, criar um output\nfor (const channel of appointment.channels) {\n  if (['email', 'sms', 'whatsapp'].includes(channel)) {\n    outputs.push({\n      ...appointment,\n      selectedChannel: channel\n    });\n  }\n}\n\nreturn outputs.map(output => ({\n  json: output\n}));"
+      }
+    },
+    {
+      "id": "channel-router",
+      "name": "Roteador de Canal",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [1340, 300],
+      "parameters": {
+        "values": {
+          "rules": [
+            {
+              "conditions": {
+                "boolean": [],
+                "dateTime": [],
+                "number": [],
+                "string": [
+                  {
+                    "value1": "={{ $json.selectedChannel }}",
+                    "operation": "equal",
+                    "value2": "email"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "email"
+            },
+            {
+              "conditions": {
+                "boolean": [],
+                "dateTime": [],
+                "number": [],
+                "string": [
+                  {
+                    "value1": "={{ $json.selectedChannel }}",
+                    "operation": "equal",
+                    "value2": "sms"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "sms"
+            },
+            {
+              "conditions": {
+                "boolean": [],
+                "dateTime": [],
+                "number": [],
+                "string": [
+                  {
+                    "value1": "={{ $json.selectedChannel }}",
+                    "operation": "equal",
+                    "value2": "whatsapp"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "whatsapp"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "send-email-reminder",
+      "name": "Enviar Email Lembrete",
+      "type": "n8n-nodes-base.sendEmail",
+      "typeVersion": 1,
+      "position": [1560, 140],
+      "parameters": {
+        "fromEmail": "noreply@eo-clinica.com",
+        "toEmail": "={{ $json.patientEmail }}",
+        "subject": "{{ $json.reminderType === '24h' ? 'Lembrete: Consulta Amanhã' : $json.reminderType === '4h' ? 'Lembrete: Consulta em 4 horas' : 'Lembrete: Consulta em 1 hora' }} - EO Clínica",
+        "html": "<!DOCTYPE html>\n<html>\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Lembrete de Consulta</title>\n    <style>\n        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }\n        .container { max-width: 600px; margin: 0 auto; padding: 20px; }\n        .header { background-color: #28a745; color: white; padding: 20px; text-align: center; }\n        .content { background-color: #f9f9f9; padding: 20px; }\n        .appointment-details { background-color: white; padding: 15px; border-left: 4px solid #28a745; margin: 15px 0; }\n        .urgency { background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 10px; border-radius: 5px; margin: 15px 0; }\n        .button { display: inline-block; background-color: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 5px; text-align: center; }\n        .button-secondary { background-color: #6c757d; }\n        .button-warning { background-color: #ffc107; color: #000; }\n        .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }\n    </style>\n</head>\n<body>\n    <div class=\"container\">\n        <div class=\"header\">\n            <h1>🔔 {{ $json.reminderType === '24h' ? 'Lembrete: Consulta Amanhã' : $json.reminderType === '4h' ? 'Consulta em 4 horas!' : 'Consulta em 1 hora!' }}</h1>\n        </div>\n        \n        <div class=\"content\">\n            <p>Olá <strong>{{ $json.patientName }}</strong>,</p>\n            \n            {{ $json.reminderType === '1h' ? '<div class=\"urgency\"><strong>⚠️ URGENTE:</strong> Sua consulta é em aproximadamente 1 hora!</div>' : '' }}\n            \n            <p>{{ $json.reminderType === '24h' ? 'Lembramos que você tem consulta marcada para amanhã:' : $json.reminderType === '4h' ? 'Sua consulta é hoje em 4 horas:' : 'Sua consulta é hoje em 1 hora:' }}</p>\n            \n            <div class=\"appointment-details\">\n                <h3>📋 Detalhes da Consulta</h3>\n                <ul>\n                    <li><strong>Especialidade:</strong> {{ $json.specialty }}</li>\n                    <li><strong>Médico:</strong> Dr(a) {{ $json.doctorName }}</li>\n                    <li><strong>Data:</strong> {{ new Date($json.date).toLocaleDateString('pt-BR') }}</li>\n                    <li><strong>Horário:</strong> {{ new Date($json.date).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'}) }}</li>\n                    <li><strong>Duração:</strong> {{ $json.duration }} minutos</li>\n                    <li><strong>Local:</strong> EO Clínica - {{ $json.clinicAddress }}</li>\n                    {{ $json.status === 'CONFIRMED' ? '' : '<li><strong>Status:</strong> <span style=\"color: #dc3545;\">⚠️ PENDENTE CONFIRMAÇÃO</span></li>' }}\n                </ul>\n            </div>\n            \n            {{ $json.status !== 'CONFIRMED' ? '<p><strong style=\"color: #dc3545;\">IMPORTANTE: Sua consulta ainda não foi confirmada!</strong></p>' : '' }}\n            \n            <div style=\"text-align: center; margin: 20px 0;\">\n                {{ $json.status !== 'CONFIRMED' ? '<a href=\"' + $env.FRONTEND_URL + '/confirmar-consulta/' + $json.id + '\" class=\"button\">✅ Confirmar Presença</a>' : '<a href=\"' + $env.FRONTEND_URL + '/consulta/' + $json.id + '\" class=\"button\">📋 Ver Detalhes</a>' }}\n                \n                <a href=\"{{ $env.FRONTEND_URL }}/reagendar-consulta/{{ $json.id }}\" class=\"button button-warning\">\n                    📅 Reagendar\n                </a>\n                \n                <a href=\"{{ $env.FRONTEND_URL }}/cancelar-consulta/{{ $json.id }}\" class=\"button button-secondary\">\n                    ❌ Cancelar\n                </a>\n            </div>\n            \n            <p><strong>Preparação para a consulta:</strong></p>\n            <ul>\n                <li>{{ $json.reminderType === '1h' ? '⏰ Saia de casa AGORA para chegar no horário' : 'Chegue com 15 minutos de antecedência' }}</li>\n                <li>{{ $json.reminderType === '1h' ? '📄 Confirme que tem todos os documentos' : 'Traga um documento com foto e cartão do convênio (se aplicável)' }}</li>\n                {{ $json.reminderType === '24h' ? '<li>Confirme sua presença até 4 horas antes da consulta</li>' : '' }}\n                {{ $json.preparationInstructions ? '<li>' + $json.preparationInstructions + '</li>' : '' }}\n            </ul>\n            \n            {{ $json.doctorNotes ? '<p><strong>Orientações do médico:</strong><br>' + $json.doctorNotes + '</p>' : '' }}\n        </div>\n        \n        <div class=\"footer\">\n            <p>Este é um email automático. Não responda a este email.</p>\n            <p>EO Clínica - Sistema de Agendamento Inteligente</p>\n            <p>Em caso de emergência, ligue: {{ $env.EMERGENCY_PHONE || '(11) 9999-9999' }}</p>\n        </div>\n    </div>\n</body>\n</html>"
+      },
+      "credentials": {
+        "smtp": {
+          "id": "clinic-smtp-credentials",
+          "name": "Clinic SMTP"
+        }
+      },
+      "continueOnFail": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "send-sms-reminder",
+      "name": "Enviar SMS Lembrete",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [1560, 300],
+      "parameters": {
+        "operation": "send",
+        "from": "={{ $env.TWILIO_PHONE_NUMBER }}",
+        "to": "={{ $json.patientPhone }}",
+        "message": "🏥 LEMBRETE EO Clínica\n\n{{ $json.reminderType === '24h' ? '📅 Consulta AMANHÃ' : $json.reminderType === '4h' ? '⏰ Consulta em 4H' : '🚨 Consulta em 1H' }}\n\n👤 {{ $json.patientName }}\n🩺 Dr(a) {{ $json.doctorName }}\n📅 {{ new Date($json.date).toLocaleDateString('pt-BR') }}\n⏰ {{ new Date($json.date).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'}) }}\n📍 EO Clínica\n\n{{ $json.status !== 'CONFIRMED' ? '⚠️ CONFIRME SUA PRESENÇA:' : '✅ CONFIRMADO' }}\n{{ $env.FRONTEND_URL }}/{{ $json.status !== 'CONFIRMED' ? 'confirmar' : 'consulta' }}/{{ $json.id }}\n\n{{ $json.reminderType === '1h' ? '🚨 SAIA AGORA DE CASA!' : 'Chegue 15min antes' }}"
+      },
+      "credentials": {
+        "twilioApi": {
+          "id": "twilio-credentials",
+          "name": "Twilio SMS"
+        }
+      },
+      "continueOnFail": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "send-whatsapp-reminder",
+      "name": "Enviar WhatsApp Lembrete",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [1560, 460],
+      "parameters": {
+        "url": "https://graph.facebook.com/v17.0/{{ $env.WHATSAPP_PHONE_NUMBER_ID }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "httpMethod": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "{\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $json.patientPhone }}\",\n  \"type\": \"template\",\n  \"template\": {\n    \"name\": \"lembrete_consulta_{{ $json.reminderType }}\",\n    \"language\": {\n      \"code\": \"pt_BR\"\n    },\n    \"components\": [\n      {\n        \"type\": \"body\",\n        \"parameters\": [\n          {\n            \"type\": \"text\",\n            \"text\": \"{{ $json.patientName }}\"\n          },\n          {\n            \"type\": \"text\",\n            \"text\": \"{{ new Date($json.date).toLocaleDateString('pt-BR') }}\"\n          },\n          {\n            \"type\": \"text\",\n            \"text\": \"{{ new Date($json.date).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'}) }}\"\n          },\n          {\n            \"type\": \"text\",\n            \"text\": \"Dr(a) {{ $json.doctorName }}\"\n          }\n        ]\n      },\n      {\n        \"type\": \"button\",\n        \"sub_type\": \"url\",\n        \"index\": \"0\",\n        \"parameters\": [\n          {\n            \"type\": \"text\",\n            \"text\": \"{{ $json.id }}\"\n          }\n        ]\n      }\n    ]\n  }\n}"
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "whatsapp-api-credentials",
+          "name": "WhatsApp API"
+        }
+      },
+      "continueOnFail": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "mark-reminder-sent",
+      "name": "Marcar Lembrete Enviado",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [1780, 300],
+      "parameters": {
+        "url": "{{ $env.API_BASE_URL }}/api/appointments/{{ $json.id }}/reminder-sent",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "httpMethod": "PATCH",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "{\n  \"reminderType\": \"{{ $json.reminderType }}\",\n  \"channel\": \"{{ $json.selectedChannel }}\",\n  \"sentAt\": \"{{ new Date().toISOString() }}\",\n  \"successful\": true\n}"
+      },
+      "continueOnFail": true,
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "id": "schedule-next-reminder",
+      "name": "Agendar Próximo Lembrete",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [2000, 300],
+      "parameters": {
+        "jsCode": "// Agendar próximo lembrete se necessário\nconst appointment = $json;\nconst appointmentDate = new Date(appointment.date);\nconst now = new Date();\nconst hoursUntilAppointment = (appointmentDate.getTime() - now.getTime()) / (1000 * 60 * 60);\n\nlet scheduleNext = false;\nlet nextReminderTime = null;\nlet nextReminderType = null;\n\n// Se acabou de enviar lembrete de 24h, agendar o de 4h\nif (appointment.reminderType === '24h' && hoursUntilAppointment > 4) {\n  nextReminderTime = new Date(appointmentDate.getTime() - (4 * 60 * 60 * 1000));\n  nextReminderType = '4h';\n  scheduleNext = true;\n}\n// Se acabou de enviar lembrete de 4h, agendar o de 1h\nelse if (appointment.reminderType === '4h' && hoursUntilAppointment > 1) {\n  nextReminderTime = new Date(appointmentDate.getTime() - (1 * 60 * 60 * 1000));\n  nextReminderType = '1h';\n  scheduleNext = true;\n}\n\nif (scheduleNext && nextReminderTime > now) {\n  return [{\n    json: {\n      appointmentId: appointment.id,\n      nextReminderType,\n      nextReminderTime: nextReminderTime.toISOString(),\n      shouldSchedule: true,\n      message: `Próximo lembrete ${nextReminderType} agendado para ${nextReminderTime.toLocaleString('pt-BR')}`\n    }\n  }];\n} else {\n  return [{\n    json: {\n      appointmentId: appointment.id,\n      shouldSchedule: false,\n      message: 'Nenhum próximo lembrete necessário'\n    }\n  }];\n}"
+      }
+    },
+    {
+      "id": "create-next-reminder-schedule",
+      "name": "Criar Agendamento Próximo Lembrete",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [2220, 300],
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.shouldSchedule }}",
+              "value2": true
+            }
+          ],
+          "dateTime": [],
+          "number": [],
+          "string": []
+        },
+        "combineOperation": "all"
+      }
+    },
+    {
+      "id": "schedule-workflow-execution",
+      "name": "Executar Sistema Lembretes",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [2440, 300],
+      "parameters": {
+        "workflowId": "sistema-lembretes",
+        "waitForExecution": false,
+        "source": "parameter",
+        "mode": "ownExecutions",
+        "inputs": {
+          "scheduledExecution": true,
+          "targetTime": "={{ $json.nextReminderTime }}",
+          "reminderType": "={{ $json.nextReminderType }}",
+          "appointmentId": "={{ $json.appointmentId }}"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "id": "log-reminder-activity",
+      "name": "Log Atividade Lembretes",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [2000, 600],
+      "parameters": {
+        "url": "{{ $env.API_BASE_URL }}/api/audit/reminder-activity",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "httpMethod": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "{\n  \"workflowExecution\": \"{{ $workflow.id }}\",\n  \"executionId\": \"{{ $execution.id }}\",\n  \"remindersSent\": {{ $('Filtrar Não Confirmadas').all().length }},\n  \"channels\": {\n    \"email\": {{ $('Enviar Email Lembrete').all().length || 0 }},\n    \"sms\": {{ $('Enviar SMS Lembrete').all().length || 0 }},\n    \"whatsapp\": {{ $('Enviar WhatsApp Lembrete').all().length || 0 }}\n  },\n  \"executedAt\": \"{{ new Date().toISOString() }}\",\n  \"nextScheduled\": {{ $('Criar Agendamento Próximo Lembrete').all().length || 0 }}\n}"
+      },
+      "continueOnFail": true
+    }
+  ],
+  "connections": {
+    "cron-trigger": {
+      "main": [
+        [
+          {
+            "node": "get-today-appointments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get-today-appointments": {
+      "main": [
+        [
+          {
+            "node": "filter-unconfirmed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "filter-unconfirmed": {
+      "main": [
+        [
+          {
+            "node": "check-has-reminders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "check-has-reminders": {
+      "main": [
+        [
+          {
+            "node": "split-by-channel",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "no-reminders-response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "split-by-channel": {
+      "main": [
+        [
+          {
+            "node": "channel-router",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "channel-router": {
+      "main": [
+        [
+          {
+            "node": "send-email-reminder",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "send-sms-reminder",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "send-whatsapp-reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "send-email-reminder": {
+      "main": [
+        [
+          {
+            "node": "mark-reminder-sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "send-sms-reminder": {
+      "main": [
+        [
+          {
+            "node": "mark-reminder-sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "send-whatsapp-reminder": {
+      "main": [
+        [
+          {
+            "node": "mark-reminder-sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "mark-reminder-sent": {
+      "main": [
+        [
+          {
+            "node": "schedule-next-reminder",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "log-reminder-activity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "schedule-next-reminder": {
+      "main": [
+        [
+          {
+            "node": "create-next-reminder-schedule",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "create-next-reminder-schedule": {
+      "main": [
+        [
+          {
+            "node": "schedule-workflow-execution",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "error-handler-workflow",
+    "timezone": "America/Sao_Paulo"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "eo-clinica-sistema-lembretes"
+  },
+  "pinData": {},
+  "tags": [
+    {
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z",
+      "id": "4",
+      "name": "lembretes"
+    },
+    {
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z",
+      "id": "5",
+      "name": "notificacoes"
+    }
+  ]
+}

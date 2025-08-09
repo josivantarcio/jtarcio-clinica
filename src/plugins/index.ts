@@ -1,0 +1,201 @@
+import { FastifyInstance } from 'fastify';
+import cors from '@fastify/cors';
+import helmet from '@fastify/helmet';
+import rateLimit from '@fastify/rate-limit';
+import swagger from '@fastify/swagger';
+import swaggerUi from '@fastify/swagger-ui';
+import { env } from '@/config/env';
+import { redis } from '@/config/redis';
+
+export async function registerPlugins(fastify: FastifyInstance): Promise<void> {
+  // Security plugins
+  await fastify.register(helmet, {
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        scriptSrc: ["'self'"],
+        imgSrc: ["'self'", 'data:', 'https:'],
+      },
+    },
+  });
+
+  await fastify.register(cors, {
+    origin: (origin, callback) => {
+      // Allow requests with no origin (e.g., mobile apps, curl)
+      if (!origin) return callback(null, true);
+      
+      // In development, allow all origins
+      if (env.NODE_ENV === 'development') {
+        return callback(null, true);
+      }
+      
+      // In production, validate against allowed origins
+      const allowedOrigins = [
+        'http://localhost:3000',
+        'http://localhost:3001',
+        'https://your-production-domain.com',
+      ];
+      
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      
+      return callback(new Error('Not allowed by CORS'), false);
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  });
+
+  // Rate limiting
+  await fastify.register(rateLimit, {
+    max: env.RATE_LIMIT_MAX_REQUESTS,
+    timeWindow: env.RATE_LIMIT_WINDOW_MS,
+    redis,
+    skipOnError: true,
+    errorResponseBuilder: (request, context) => ({
+      error: 'Rate limit exceeded',
+      message: `Too many requests, retry after ${Math.round(context.ttl / 1000)} seconds`,
+      retryAfter: Math.round(context.ttl / 1000),
+    }),
+  });
+
+  // API Documentation
+  await fastify.register(swagger, {
+    swagger: {
+      info: {
+        title: 'EO Clinica API',
+        description: 'Medical clinic scheduling system with AI integration',
+        version: '1.0.0',
+      },
+      host: `localhost:${env.PORT}`,
+      schemes: ['http', 'https'],
+      consumes: ['application/json'],
+      produces: ['application/json'],
+      tags: [
+        { name: 'Health', description: 'Health check endpoints' },
+        { name: 'Auth', description: 'Authentication endpoints' },
+        { name: 'Users', description: 'User management endpoints' },
+        { name: 'Appointments', description: 'Appointment management endpoints' },
+        { name: 'Specialties', description: 'Medical specialties endpoints' },
+        { name: 'Availability', description: 'Doctor availability endpoints' },
+      ],
+      securityDefinitions: {
+        Bearer: {
+          type: 'apiKey',
+          name: 'Authorization',
+          in: 'header',
+          description: 'Enter JWT token with Bearer prefix',
+        },
+      },
+    },
+  });
+
+  await fastify.register(swaggerUi, {
+    routePrefix: '/documentation',
+    uiConfig: {
+      docExpansion: 'list',
+      deepLinking: false,
+    },
+    uiHooks: {
+      onRequest: function (request, reply, next) {
+        next();
+      },
+      preHandler: function (request, reply, next) {
+        next();
+      },
+    },
+    staticCSP: true,
+    transformStaticCSP: (header) => header,
+  });
+
+  // Content type parser for file uploads
+  fastify.addContentTypeParser('multipart/form-data', function (request, payload, done) {
+    done(null);
+  });
+
+  // Global error handler
+  fastify.setErrorHandler((error, request, reply) => {
+    const { validation, validationContext } = error;
+
+    // Handle validation errors
+    if (validation) {
+      const errorMessage = validation.map(err => `${err.instancePath} ${err.message}`).join(', ');
+      return reply.status(400).send({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: `Validation failed: ${errorMessage}`,
+          details: validation,
+        },
+      });
+    }
+
+    // Handle rate limiting errors
+    if (error.statusCode === 429) {
+      return reply.status(429).send({
+        success: false,
+        error: {
+          code: 'RATE_LIMIT_EXCEEDED',
+          message: error.message,
+        },
+      });
+    }
+
+    // Handle authentication errors
+    if (error.statusCode === 401) {
+      return reply.status(401).send({
+        success: false,
+        error: {
+          code: 'UNAUTHORIZED',
+          message: 'Authentication required',
+        },
+      });
+    }
+
+    // Handle authorization errors
+    if (error.statusCode === 403) {
+      return reply.status(403).send({
+        success: false,
+        error: {
+          code: 'FORBIDDEN',
+          message: 'Insufficient permissions',
+        },
+      });
+    }
+
+    // Handle not found errors
+    if (error.statusCode === 404) {
+      return reply.status(404).send({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Resource not found',
+        },
+      });
+    }
+
+    // Handle internal server errors
+    request.log.error(error);
+    
+    if (env.NODE_ENV === 'production') {
+      return reply.status(500).send({
+        success: false,
+        error: {
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'An internal server error occurred',
+        },
+      });
+    } else {
+      return reply.status(500).send({
+        success: false,
+        error: {
+          code: 'INTERNAL_SERVER_ERROR',
+          message: error.message,
+          stack: error.stack,
+        },
+      });
+    }
+  });
+}

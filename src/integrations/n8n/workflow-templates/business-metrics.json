@@ -1,0 +1,375 @@
+{
+  "name": "business-metrics",
+  "active": true,
+  "nodes": [
+    {
+      "id": "daily-metrics-trigger",
+      "name": "Daily Metrics Trigger",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 23 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "collect-appointment-metrics",
+      "name": "Collect Appointment Metrics",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [460, 200],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH daily_stats AS (\n  SELECT \n    DATE(\"createdAt\") as metric_date,\n    COUNT(*) as total_appointments,\n    COUNT(CASE WHEN \"status\" = 'CONFIRMED' THEN 1 END) as confirmed_appointments,\n    COUNT(CASE WHEN \"status\" = 'CANCELLED' THEN 1 END) as cancelled_appointments,\n    COUNT(CASE WHEN \"status\" = 'COMPLETED' THEN 1 END) as completed_appointments,\n    COUNT(CASE WHEN \"status\" = 'NO_SHOW' THEN 1 END) as no_show_appointments,\n    AVG(\"duration\") as avg_duration,\n    COUNT(DISTINCT \"patientId\") as unique_patients,\n    COUNT(DISTINCT \"doctorId\") as active_doctors\n  FROM \"Appointment\" \n  WHERE DATE(\"createdAt\") = CURRENT_DATE - INTERVAL '1 day'\n  GROUP BY DATE(\"createdAt\")\n),\nspecialty_stats AS (\n  SELECT \n    s.\"name\" as specialty_name,\n    COUNT(a.*) as appointment_count,\n    AVG(a.\"duration\") as avg_duration\n  FROM \"Appointment\" a\n  JOIN \"Specialty\" s ON a.\"specialtyId\" = s.\"id\"\n  WHERE DATE(a.\"createdAt\") = CURRENT_DATE - INTERVAL '1 day'\n  GROUP BY s.\"id\", s.\"name\"\n),\nqueue_stats AS (\n  SELECT \n    COUNT(*) as total_in_queue,\n    AVG(EXTRACT(DAY FROM (NOW() - \"createdAt\"))) as avg_wait_days,\n    COUNT(CASE WHEN \"priority\" = 'EMERGENCY' THEN 1 END) as emergency_queue,\n    COUNT(CASE WHEN \"priority\" = 'HIGH' THEN 1 END) as high_priority_queue\n  FROM \"QueueEntry\"\n  WHERE \"status\" = 'WAITING'\n)\nSELECT \n  'daily_summary' as metric_type,\n  json_build_object(\n    'date', CURRENT_DATE - INTERVAL '1 day',\n    'appointments', json_build_object(\n      'total', COALESCE(ds.total_appointments, 0),\n      'confirmed', COALESCE(ds.confirmed_appointments, 0),\n      'cancelled', COALESCE(ds.cancelled_appointments, 0),\n      'completed', COALESCE(ds.completed_appointments, 0),\n      'no_show', COALESCE(ds.no_show_appointments, 0),\n      'avg_duration', COALESCE(ds.avg_duration, 0),\n      'confirmation_rate', CASE \n        WHEN COALESCE(ds.total_appointments, 0) > 0 \n        THEN ROUND((COALESCE(ds.confirmed_appointments, 0) * 100.0 / ds.total_appointments), 2)\n        ELSE 0 \n      END,\n      'no_show_rate', CASE \n        WHEN COALESCE(ds.total_appointments, 0) > 0 \n        THEN ROUND((COALESCE(ds.no_show_appointments, 0) * 100.0 / ds.total_appointments), 2)\n        ELSE 0 \n      END\n    ),\n    'patients', json_build_object(\n      'unique_patients', COALESCE(ds.unique_patients, 0),\n      'active_doctors', COALESCE(ds.active_doctors, 0)\n    ),\n    'queue', json_build_object(\n      'total_waiting', COALESCE(qs.total_in_queue, 0),\n      'avg_wait_days', COALESCE(qs.avg_wait_days, 0),\n      'emergency_queue', COALESCE(qs.emergency_queue, 0),\n      'high_priority_queue', COALESCE(qs.high_priority_queue, 0)\n    )\n  ) as metrics\nFROM daily_stats ds\nFULL OUTER JOIN queue_stats qs ON true\n\nUNION ALL\n\nSELECT \n  'specialty_breakdown' as metric_type,\n  json_agg(\n    json_build_object(\n      'specialty', specialty_name,\n      'appointments', appointment_count,\n      'avg_duration', avg_duration\n    )\n  ) as metrics\nFROM specialty_stats",
+        "additionalFields": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "clinic-postgres-credentials",
+          "name": "Clinic PostgreSQL"
+        }
+      },
+      "continueOnFail": false,
+      "retryOnFail": true,
+      "maxTries": 3
+    },
+    {
+      "id": "collect-notification-metrics",
+      "name": "Collect Notification Metrics",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [460, 400],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH notification_stats AS (\n  SELECT \n    DATE(\"sentAt\") as metric_date,\n    \"channel\",\n    COUNT(*) as total_sent,\n    COUNT(CASE WHEN \"status\" = 'delivered' THEN 1 END) as delivered,\n    COUNT(CASE WHEN \"status\" = 'failed' THEN 1 END) as failed,\n    COUNT(CASE WHEN \"status\" = 'read' THEN 1 END) as read_count\n  FROM \"NotificationLog\" \n  WHERE DATE(\"sentAt\") = CURRENT_DATE - INTERVAL '1 day'\n  GROUP BY DATE(\"sentAt\"), \"channel\"\n),\nreminder_effectiveness AS (\n  SELECT \n    COUNT(a.*) as total_reminders_sent,\n    COUNT(CASE WHEN a.\"status\" = 'CONFIRMED' THEN 1 END) as confirmed_after_reminder,\n    COUNT(CASE WHEN a.\"status\" = 'NO_SHOW' THEN 1 END) as no_show_despite_reminder\n  FROM \"Appointment\" a\n  JOIN \"NotificationLog\" nl ON a.\"id\" = nl.\"appointmentId\"::uuid\n  WHERE DATE(nl.\"sentAt\") = CURRENT_DATE - INTERVAL '1 day'\n    AND nl.\"type\" = 'reminder'\n)\nSELECT \n  'notification_summary' as metric_type,\n  json_build_object(\n    'date', CURRENT_DATE - INTERVAL '1 day',\n    'by_channel', json_agg(\n      json_build_object(\n        'channel', channel,\n        'total_sent', total_sent,\n        'delivered', delivered,\n        'failed', failed,\n        'read_count', read_count,\n        'delivery_rate', CASE \n          WHEN total_sent > 0 \n          THEN ROUND((delivered * 100.0 / total_sent), 2)\n          ELSE 0 \n        END,\n        'read_rate', CASE \n          WHEN delivered > 0 \n          THEN ROUND((read_count * 100.0 / delivered), 2)\n          ELSE 0 \n        END\n      )\n    ),\n    'reminder_effectiveness', (\n      SELECT json_build_object(\n        'total_sent', total_reminders_sent,\n        'confirmed_after', confirmed_after_reminder,\n        'no_show_despite', no_show_despite_reminder,\n        'effectiveness_rate', CASE \n          WHEN total_reminders_sent > 0 \n          THEN ROUND((confirmed_after_reminder * 100.0 / total_reminders_sent), 2)\n          ELSE 0 \n        END\n      )\n      FROM reminder_effectiveness\n    )\n  ) as metrics\nFROM notification_stats",
+        "additionalFields": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "clinic-postgres-credentials",
+          "name": "Clinic PostgreSQL"
+        }
+      },
+      "continueOnFail": false,
+      "retryOnFail": true,
+      "maxTries": 3
+    },
+    {
+      "id": "collect-system-performance",
+      "name": "Collect System Performance",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [460, 600],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH workflow_stats AS (\n  SELECT \n    COUNT(*) as total_executions,\n    COUNT(CASE WHEN \"status\" = 'success' THEN 1 END) as successful_executions,\n    COUNT(CASE WHEN \"status\" = 'error' THEN 1 END) as failed_executions,\n    AVG(\"executionTime\") as avg_execution_time\n  FROM \"WorkflowExecution\" \n  WHERE DATE(\"executedAt\") = CURRENT_DATE - INTERVAL '1 day'\n),\napi_stats AS (\n  SELECT \n    COUNT(*) as total_requests,\n    COUNT(CASE WHEN \"statusCode\" >= 200 AND \"statusCode\" < 300 THEN 1 END) as successful_requests,\n    COUNT(CASE WHEN \"statusCode\" >= 400 THEN 1 END) as error_requests,\n    AVG(\"responseTime\") as avg_response_time\n  FROM \"APILog\" \n  WHERE DATE(\"timestamp\") = CURRENT_DATE - INTERVAL '1 day'\n),\nuser_activity AS (\n  SELECT \n    COUNT(DISTINCT \"userId\") as active_users,\n    COUNT(*) as total_sessions\n  FROM \"UserSession\" \n  WHERE DATE(\"createdAt\") = CURRENT_DATE - INTERVAL '1 day'\n)\nSELECT \n  'system_performance' as metric_type,\n  json_build_object(\n    'date', CURRENT_DATE - INTERVAL '1 day',\n    'workflows', (\n      SELECT json_build_object(\n        'total_executions', COALESCE(total_executions, 0),\n        'successful_executions', COALESCE(successful_executions, 0),\n        'failed_executions', COALESCE(failed_executions, 0),\n        'success_rate', CASE \n          WHEN COALESCE(total_executions, 0) > 0 \n          THEN ROUND((COALESCE(successful_executions, 0) * 100.0 / total_executions), 2)\n          ELSE 0 \n        END,\n        'avg_execution_time_ms', COALESCE(avg_execution_time, 0)\n      )\n      FROM workflow_stats\n    ),\n    'api', (\n      SELECT json_build_object(\n        'total_requests', COALESCE(total_requests, 0),\n        'successful_requests', COALESCE(successful_requests, 0),\n        'error_requests', COALESCE(error_requests, 0),\n        'success_rate', CASE \n          WHEN COALESCE(total_requests, 0) > 0 \n          THEN ROUND((COALESCE(successful_requests, 0) * 100.0 / total_requests), 2)\n          ELSE 0 \n        END,\n        'avg_response_time_ms', COALESCE(avg_response_time, 0)\n      )\n      FROM api_stats\n    ),\n    'users', (\n      SELECT json_build_object(\n        'active_users', COALESCE(active_users, 0),\n        'total_sessions', COALESCE(total_sessions, 0)\n      )\n      FROM user_activity\n    )\n  ) as metrics",
+        "additionalFields": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "clinic-postgres-credentials",
+          "name": "Clinic PostgreSQL"
+        }
+      },
+      "continueOnFail": false,
+      "retryOnFail": true,
+      "maxTries": 3
+    },
+    {
+      "id": "aggregate-metrics",
+      "name": "Aggregate All Metrics",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [680, 400],
+      "parameters": {
+        "jsCode": "// Aggregate all metrics into a comprehensive daily report\nconst appointmentMetrics = $('Collect Appointment Metrics').all();\nconst notificationMetrics = $('Collect Notification Metrics').all();\nconst performanceMetrics = $('Collect System Performance').all();\n\nconst report = {\n  reportDate: new Date().toISOString().split('T')[0],\n  reportType: 'daily_business_metrics',\n  generatedAt: new Date().toISOString(),\n  metrics: {}\n};\n\n// Process appointment metrics\nfor (const metric of appointmentMetrics) {\n  if (metric.json.metric_type === 'daily_summary') {\n    report.metrics.appointments = metric.json.metrics;\n  } else if (metric.json.metric_type === 'specialty_breakdown') {\n    report.metrics.specialties = metric.json.metrics;\n  }\n}\n\n// Process notification metrics\nfor (const metric of notificationMetrics) {\n  if (metric.json.metric_type === 'notification_summary') {\n    report.metrics.notifications = metric.json.metrics;\n  }\n}\n\n// Process performance metrics\nfor (const metric of performanceMetrics) {\n  if (metric.json.metric_type === 'system_performance') {\n    report.metrics.performance = metric.json.metrics;\n  }\n}\n\n// Calculate derived KPIs\nreport.kpis = {\n  // Operational KPIs\n  appointment_utilization: report.metrics.appointments?.appointments?.total || 0,\n  patient_satisfaction_proxy: 100 - (report.metrics.appointments?.appointments?.no_show_rate || 0),\n  system_reliability: report.metrics.performance?.workflows?.success_rate || 0,\n  \n  // Business KPIs\n  daily_revenue_proxy: (report.metrics.appointments?.appointments?.completed || 0) * 150, // Assuming avg R$150 per appointment\n  queue_efficiency: report.metrics.appointments?.queue?.total_waiting || 0,\n  \n  // Communication KPIs\n  communication_effectiveness: report.metrics.notifications?.reminder_effectiveness?.effectiveness_rate || 0,\n  multi_channel_reach: (report.metrics.notifications?.by_channel || []).length\n};\n\n// Add trend analysis (comparison with previous day would require historical data)\nreport.trends = {\n  note: 'Trend analysis requires historical data - implement in next version',\n  appointment_growth: 'N/A',\n  efficiency_improvement: 'N/A'\n};\n\n// Add alerts and recommendations\nreport.alerts = [];\nreport.recommendations = [];\n\n// Check for concerning metrics and add alerts\nif ((report.metrics.appointments?.appointments?.no_show_rate || 0) > 20) {\n  report.alerts.push({\n    level: 'warning',\n    message: `High no-show rate: ${report.metrics.appointments.appointments.no_show_rate}%`,\n    action: 'Review reminder strategy and patient communication'\n  });\n}\n\nif ((report.metrics.performance?.workflows?.success_rate || 100) < 95) {\n  report.alerts.push({\n    level: 'error',\n    message: `Low workflow success rate: ${report.metrics.performance.workflows.success_rate}%`,\n    action: 'Investigate workflow failures immediately'\n  });\n}\n\nif ((report.metrics.appointments?.queue?.total_waiting || 0) > 50) {\n  report.alerts.push({\n    level: 'info',\n    message: `High queue volume: ${report.metrics.appointments.queue.total_waiting} patients waiting`,\n    action: 'Consider adding more appointment slots or doctors'\n  });\n}\n\n// Add recommendations based on metrics\nif ((report.metrics.notifications?.reminder_effectiveness?.effectiveness_rate || 0) < 70) {\n  report.recommendations.push({\n    category: 'communication',\n    suggestion: 'Improve reminder message content and timing',\n    impact: 'Reduce no-show rates and improve patient satisfaction'\n  });\n}\n\nif ((report.metrics.appointments?.appointments?.confirmation_rate || 0) < 80) {\n  report.recommendations.push({\n    category: 'patient_engagement',\n    suggestion: 'Implement more proactive confirmation processes',\n    impact: 'Better resource planning and reduced waste'\n  });\n}\n\nreturn [{ json: report }];"
+      }
+    },
+    {
+      "id": "generate-report-html",
+      "name": "Generate HTML Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [900, 400],
+      "parameters": {
+        "jsCode": "const report = $json;\n\nconst html = `\n<!DOCTYPE html>\n<html>\n<head>\n    <meta charset=\"UTF-8\">\n    <title>EO Clínica - Relatório Diário</title>\n    <style>\n        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; background-color: #f5f5f5; }\n        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.1); }\n        .header { text-align: center; border-bottom: 2px solid #1f77b4; padding-bottom: 20px; margin-bottom: 30px; }\n        .header h1 { color: #1f77b4; margin: 0; }\n        .header p { color: #666; margin: 10px 0 0 0; }\n        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin: 30px 0; }\n        .metric-card { background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 4px solid #1f77b4; }\n        .metric-card h3 { margin: 0 0 15px 0; color: #1f77b4; }\n        .metric-value { font-size: 24px; font-weight: bold; color: #28a745; }\n        .metric-label { font-size: 14px; color: #666; margin-top: 5px; }\n        .kpi-section { background: linear-gradient(135deg, #1f77b4, #17a2b8); color: white; padding: 25px; border-radius: 10px; margin: 30px 0; }\n        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 20px; }\n        .kpi-item { text-align: center; }\n        .kpi-value { font-size: 28px; font-weight: bold; }\n        .kpi-label { font-size: 14px; opacity: 0.9; }\n        .alerts { margin: 30px 0; }\n        .alert { padding: 15px; border-radius: 5px; margin: 10px 0; }\n        .alert-warning { background: #fff3cd; border-left: 4px solid #ffc107; color: #856404; }\n        .alert-error { background: #f8d7da; border-left: 4px solid #dc3545; color: #721c24; }\n        .alert-info { background: #d1ecf1; border-left: 4px solid #17a2b8; color: #0c5460; }\n        .recommendations { background: #d4edda; padding: 20px; border-radius: 8px; border-left: 4px solid #28a745; }\n        .specialty-table { width: 100%; border-collapse: collapse; margin: 20px 0; }\n        .specialty-table th, .specialty-table td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }\n        .specialty-table th { background-color: #1f77b4; color: white; }\n        .footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 12px; }\n    </style>\n</head>\n<body>\n    <div class=\"container\">\n        <div class=\"header\">\n            <h1>🏥 EO Clínica - Relatório Diário</h1>\n            <p>Período: ${new Date(report.reportDate).toLocaleDateString('pt-BR')} | Gerado em: ${new Date(report.generatedAt).toLocaleString('pt-BR')}</p>\n        </div>\n\n        <div class=\"kpi-section\">\n            <h2>📊 KPIs Principais</h2>\n            <div class=\"kpi-grid\">\n                <div class=\"kpi-item\">\n                    <div class=\"kpi-value\">${report.kpis.appointment_utilization}</div>\n                    <div class=\"kpi-label\">Agendamentos do Dia</div>\n                </div>\n                <div class=\"kpi-item\">\n                    <div class=\"kpi-value\">${report.kpis.patient_satisfaction_proxy.toFixed(1)}%</div>\n                    <div class=\"kpi-label\">Satisfação (Proxy)</div>\n                </div>\n                <div class=\"kpi-item\">\n                    <div class=\"kpi-value\">${report.kpis.system_reliability.toFixed(1)}%</div>\n                    <div class=\"kpi-label\">Confiabilidade Sistema</div>\n                </div>\n                <div class=\"kpi-item\">\n                    <div class=\"kpi-value\">R$ ${report.kpis.daily_revenue_proxy.toLocaleString('pt-BR')}</div>\n                    <div class=\"kpi-label\">Receita Estimada</div>\n                </div>\n            </div>\n        </div>\n\n        <div class=\"metrics-grid\">\n            <div class=\"metric-card\">\n                <h3>📅 Agendamentos</h3>\n                <div class=\"metric-value\">${report.metrics.appointments?.appointments?.total || 0}</div>\n                <div class=\"metric-label\">Total de Agendamentos</div>\n                <hr>\n                <p><strong>Confirmados:</strong> ${report.metrics.appointments?.appointments?.confirmed || 0} (${report.metrics.appointments?.appointments?.confirmation_rate || 0}%)</p>\n                <p><strong>Cancelados:</strong> ${report.metrics.appointments?.appointments?.cancelled || 0}</p>\n                <p><strong>No-show:</strong> ${report.metrics.appointments?.appointments?.no_show || 0} (${report.metrics.appointments?.appointments?.no_show_rate || 0}%)</p>\n                <p><strong>Completados:</strong> ${report.metrics.appointments?.appointments?.completed || 0}</p>\n            </div>\n\n            <div class=\"metric-card\">\n                <h3>👥 Pacientes</h3>\n                <div class=\"metric-value\">${report.metrics.appointments?.patients?.unique_patients || 0}</div>\n                <div class=\"metric-label\">Pacientes Únicos</div>\n                <hr>\n                <p><strong>Médicos Ativos:</strong> ${report.metrics.appointments?.patients?.active_doctors || 0}</p>\n                <p><strong>Duração Média:</strong> ${(report.metrics.appointments?.appointments?.avg_duration || 0).toFixed(0)} min</p>\n            </div>\n\n            <div class=\"metric-card\">\n                <h3>⏳ Fila de Espera</h3>\n                <div class=\"metric-value\">${report.metrics.appointments?.queue?.total_waiting || 0}</div>\n                <div class=\"metric-label\">Pacientes Aguardando</div>\n                <hr>\n                <p><strong>Emergências:</strong> ${report.metrics.appointments?.queue?.emergency_queue || 0}</p>\n                <p><strong>Alta Prioridade:</strong> ${report.metrics.appointments?.queue?.high_priority_queue || 0}</p>\n                <p><strong>Tempo Médio Espera:</strong> ${(report.metrics.appointments?.queue?.avg_wait_days || 0).toFixed(1)} dias</p>\n            </div>\n\n            <div class=\"metric-card\">\n                <h3>📱 Notificações</h3>\n                <div class=\"metric-value\">${report.metrics.notifications?.reminder_effectiveness?.effectiveness_rate || 0}%</div>\n                <div class=\"metric-label\">Efetividade Lembretes</div>\n                <hr>\n                <p><strong>Lembretes Enviados:</strong> ${report.metrics.notifications?.reminder_effectiveness?.total_sent || 0}</p>\n                <p><strong>Confirmados Após:</strong> ${report.metrics.notifications?.reminder_effectiveness?.confirmed_after || 0}</p>\n            </div>\n        </div>\n\n        ${report.metrics.specialties && report.metrics.specialties.length > 0 ? `\n        <div style=\"margin: 30px 0;\">\n            <h3>🏥 Breakdown por Especialidade</h3>\n            <table class=\"specialty-table\">\n                <thead>\n                    <tr>\n                        <th>Especialidade</th>\n                        <th>Agendamentos</th>\n                        <th>Duração Média (min)</th>\n                    </tr>\n                </thead>\n                <tbody>\n                    ${report.metrics.specialties.map(s => `\n                    <tr>\n                        <td>${s.specialty}</td>\n                        <td>${s.appointments}</td>\n                        <td>${s.avg_duration ? s.avg_duration.toFixed(0) : 'N/A'}</td>\n                    </tr>\n                    `).join('')}\n                </tbody>\n            </table>\n        </div>\n        ` : ''}\n\n        ${report.alerts.length > 0 ? `\n        <div class=\"alerts\">\n            <h3>⚠️ Alertas e Observações</h3>\n            ${report.alerts.map(alert => `\n            <div class=\"alert alert-${alert.level}\">\n                <strong>${alert.level.toUpperCase()}:</strong> ${alert.message}\n                <br><strong>Ação:</strong> ${alert.action}\n            </div>\n            `).join('')}\n        </div>\n        ` : ''}\n\n        ${report.recommendations.length > 0 ? `\n        <div class=\"recommendations\">\n            <h3>💡 Recomendações</h3>\n            ${report.recommendations.map(rec => `\n            <div style=\"margin: 15px 0; padding: 10px; background: white; border-radius: 5px;\">\n                <strong>${rec.category.replace('_', ' ').toUpperCase()}:</strong> ${rec.suggestion}\n                <br><em>Impacto:</em> ${rec.impact}\n            </div>\n            `).join('')}\n        </div>\n        ` : ''}\n\n        <div class=\"footer\">\n            <p>Relatório gerado automaticamente pelo sistema EO Clínica</p>\n            <p>Para dúvidas ou suporte, contate a equipe técnica</p>\n        </div>\n    </div>\n</body>\n</html>\n`;\n\nreturn [{ json: { report, html } }];"
+      }
+    },
+    {
+      "id": "send-daily-report",
+      "name": "Send Daily Report",
+      "type": "n8n-nodes-base.sendEmail",
+      "typeVersion": 1,
+      "position": [1120, 400],
+      "parameters": {
+        "fromEmail": "relatorios@eo-clinica.com",
+        "toEmail": "{{ $env.ADMIN_EMAIL }}, {{ $env.MANAGER_EMAIL }}",
+        "subject": "📊 EO Clínica - Relatório Diário {{ new Date().toLocaleDateString('pt-BR') }}",
+        "html": "={{ $json.html }}",
+        "attachments": "={{ $json.report ? [{ filename: 'relatorio-diario-' + new Date().toISOString().split('T')[0] + '.json', data: JSON.stringify($json.report, null, 2) }] : [] }}"
+      },
+      "credentials": {
+        "smtp": {
+          "id": "clinic-smtp-credentials",
+          "name": "Clinic SMTP"
+        }
+      },
+      "continueOnFail": true,
+      "retryOnFail": true,
+      "maxTries": 3
+    },
+    {
+      "id": "store-metrics-db",
+      "name": "Store Metrics in Database",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [1120, 600],
+      "parameters": {
+        "url": "{{ $env.API_BASE_URL }}/api/metrics/daily-report",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "httpMethod": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={{ JSON.stringify($('Generate HTML Report').first().json.report) }}"
+      },
+      "continueOnFail": true,
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "id": "post-to-dashboard",
+      "name": "Update Dashboard",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [1340, 400],
+      "parameters": {
+        "url": "{{ $env.DASHBOARD_WEBHOOK_URL || $env.SLACK_WEBHOOK_URL }}",
+        "authentication": "noAuth",
+        "httpMethod": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "{\n  \"channel\": \"#daily-reports\",\n  \"username\": \"EO Clínica Analytics\",\n  \"icon_emoji\": \":bar_chart:\",\n  \"blocks\": [\n    {\n      \"type\": \"header\",\n      \"text\": {\n        \"type\": \"plain_text\",\n        \"text\": \"📊 Relatório Diário EO Clínica\"\n      }\n    },\n    {\n      \"type\": \"section\",\n      \"text\": {\n        \"type\": \"mrkdwn\",\n        \"text\": \"*Data:* {{ new Date($('Generate HTML Report').first().json.report.reportDate).toLocaleDateString('pt-BR') }}\\n*Gerado:* {{ new Date().toLocaleTimeString('pt-BR') }}\"\n      }\n    },\n    {\n      \"type\": \"section\",\n      \"fields\": [\n        {\n          \"type\": \"mrkdwn\",\n          \"text\": \"*📅 Agendamentos:*\\n{{ $('Generate HTML Report').first().json.report.kpis.appointment_utilization }}\"\n        },\n        {\n          \"type\": \"mrkdwn\",\n          \"text\": \"*😊 Satisfação:*\\n{{ $('Generate HTML Report').first().json.report.kpis.patient_satisfaction_proxy.toFixed(1) }}%\"\n        },\n        {\n          \"type\": \"mrkdwn\",\n          \"text\": \"*⚡ Confiabilidade:*\\n{{ $('Generate HTML Report').first().json.report.kpis.system_reliability.toFixed(1) }}%\"\n        },\n        {\n          \"type\": \"mrkdwn\",\n          \"text\": \"*💰 Receita Est.:*\\nR$ {{ $('Generate HTML Report').first().json.report.kpis.daily_revenue_proxy.toLocaleString('pt-BR') }}\"\n        }\n      ]\n    },\n    {{ $('Generate HTML Report').first().json.report.alerts.length > 0 ? '{\n      \"type\": \"section\",\n      \"text\": {\n        \"type\": \"mrkdwn\",\n        \"text\": \"⚠️ *Alertas:* ' + $('Generate HTML Report').first().json.report.alerts.length + ' alertas requerem atenção\"\n      }\n    },' : '' }}\n    {\n      \"type\": \"actions\",\n      \"elements\": [\n        {\n          \"type\": \"button\",\n          \"text\": {\n            \"type\": \"plain_text\",\n            \"text\": \"Ver Relatório Completo\"\n          },\n          \"url\": \"{{ $env.FRONTEND_URL }}/admin/relatorios\"\n        }\n      ]\n    }\n  ]\n}"
+      },
+      "continueOnFail": true
+    },
+    {
+      "id": "weekly-summary-check",
+      "name": "Weekly Summary Check",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [900, 600],
+      "parameters": {
+        "jsCode": "// Check if today is Sunday (end of week) to generate weekly summary\nconst today = new Date();\nconst dayOfWeek = today.getDay(); // 0 = Sunday\n\nif (dayOfWeek === 0) {\n  // It's Sunday, generate weekly summary\n  return [{\n    json: {\n      shouldGenerateWeekly: true,\n      weekEndDate: today.toISOString().split('T')[0],\n      weekStartDate: new Date(today.getTime() - (6 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0]\n    }\n  }];\n} else {\n  return [{\n    json: {\n      shouldGenerateWeekly: false,\n      message: 'Weekly report only generated on Sundays'\n    }\n  }];\n}"
+      }
+    },
+    {
+      "id": "generate-weekly-summary",
+      "name": "Generate Weekly Summary",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1120, 700],
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.shouldGenerateWeekly }}",
+              "value2": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "weekly-metrics-query",
+      "name": "Collect Weekly Metrics",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [1340, 700],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH weekly_summary AS (\n  SELECT \n    DATE_TRUNC('week', \"createdAt\") as week_start,\n    COUNT(*) as total_appointments,\n    COUNT(CASE WHEN \"status\" = 'COMPLETED' THEN 1 END) as completed_appointments,\n    COUNT(CASE WHEN \"status\" = 'NO_SHOW' THEN 1 END) as no_show_appointments,\n    COUNT(DISTINCT \"patientId\") as unique_patients,\n    AVG(\"duration\") as avg_duration\n  FROM \"Appointment\" \n  WHERE \"createdAt\" >= DATE_TRUNC('week', CURRENT_DATE - INTERVAL '7 days')\n    AND \"createdAt\" < DATE_TRUNC('week', CURRENT_DATE)\n  GROUP BY DATE_TRUNC('week', \"createdAt\")\n)\nSELECT \n  json_build_object(\n    'week_start', week_start,\n    'week_end', week_start + INTERVAL '6 days',\n    'total_appointments', total_appointments,\n    'completed_appointments', completed_appointments,\n    'no_show_appointments', no_show_appointments,\n    'unique_patients', unique_patients,\n    'avg_duration', avg_duration,\n    'completion_rate', ROUND((completed_appointments * 100.0 / total_appointments), 2),\n    'no_show_rate', ROUND((no_show_appointments * 100.0 / total_appointments), 2)\n  ) as weekly_metrics\nFROM weekly_summary",
+        "additionalFields": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "clinic-postgres-credentials",
+          "name": "Clinic PostgreSQL"
+        }
+      },
+      "continueOnFail": true
+    }
+  ],
+  "connections": {
+    "daily-metrics-trigger": {
+      "main": [
+        [
+          {
+            "node": "collect-appointment-metrics",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "collect-notification-metrics",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "collect-system-performance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "collect-appointment-metrics": {
+      "main": [
+        [
+          {
+            "node": "aggregate-metrics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "collect-notification-metrics": {
+      "main": [
+        [
+          {
+            "node": "aggregate-metrics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "collect-system-performance": {
+      "main": [
+        [
+          {
+            "node": "aggregate-metrics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "aggregate-metrics": {
+      "main": [
+        [
+          {
+            "node": "generate-report-html",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "weekly-summary-check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "generate-report-html": {
+      "main": [
+        [
+          {
+            "node": "send-daily-report",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "store-metrics-db",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "post-to-dashboard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "weekly-summary-check": {
+      "main": [
+        [
+          {
+            "node": "generate-weekly-summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "generate-weekly-summary": {
+      "main": [
+        [
+          {
+            "node": "weekly-metrics-query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "timezone": "America/Sao_Paulo"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "eo-clinica-business-metrics"
+  },
+  "pinData": {},
+  "tags": [
+    {
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z",
+      "id": "10",
+      "name": "metrics"
+    },
+    {
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z",
+      "id": "11",
+      "name": "reporting"
+    }
+  ]
+}

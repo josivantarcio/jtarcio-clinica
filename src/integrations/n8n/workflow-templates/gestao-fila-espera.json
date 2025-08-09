@@ -1,0 +1,255 @@
+{
+  "name": "gestao-fila-espera",
+  "active": true,
+  "nodes": [
+    {
+      "id": "webhook-trigger",
+      "name": "Webhook Vaga Disponível",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "vaga-disponivel",
+        "options": {}
+      },
+      "webhookId": "vaga-disponivel-webhook"
+    },
+    {
+      "id": "validate-trigger-data",
+      "name": "Validar Dados",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [460, 300],
+      "parameters": {
+        "jsCode": "// Validar dados da vaga disponível\nconst requiredFields = ['specialtyId', 'date', 'duration'];\nconst missingFields = [];\n\nfor (const field of requiredFields) {\n  if (!$input.first().json[field]) {\n    missingFields.push(field);\n  }\n}\n\nif (missingFields.length > 0) {\n  throw new Error(`Campos obrigatórios ausentes: ${missingFields.join(', ')}`);\n}\n\n// Validar formato da data\nconst availableDate = new Date($input.first().json.date);\nif (isNaN(availableDate.getTime())) {\n  throw new Error('Formato de data inválido');\n}\n\n// Verificar se a data não é no passado (com margem de 1 hora)\nconst oneHourFromNow = new Date(Date.now() + (60 * 60 * 1000));\nif (availableDate < oneHourFromNow) {\n  throw new Error('Vaga muito próxima - mínimo 1 hora de antecedência necessária');\n}\n\nreturn [{\n  json: {\n    ....$input.first().json,\n    validated: true,\n    validatedAt: new Date().toISOString(),\n    availableDate: availableDate.toISOString()\n  }\n}];"
+      },
+      "continueOnFail": false,
+      "retryOnFail": true,
+      "maxTries": 3
+    },
+    {
+      "id": "get-queue-list",
+      "name": "Buscar Fila de Espera",
+      "type": "eoClinicaApi",
+      "typeVersion": 1,
+      "position": [680, 300],
+      "parameters": {
+        "resource": "queue",
+        "operation": "list",
+        "specialtyId": "={{ $json.specialtyId }}"
+      },
+      "credentials": {
+        "eoClinicaApi": {
+          "id": "clinic-api-credentials",
+          "name": "EO Clínica API"
+        }
+      },
+      "continueOnFail": false,
+      "retryOnFail": true,
+      "maxTries": 3
+    },
+    {
+      "id": "check-queue-exists",
+      "name": "Existe Fila?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [900, 300],
+      "parameters": {
+        "conditions": {
+          "boolean": [],
+          "dateTime": [],
+          "number": [
+            {
+              "value1": "={{ $json.data ? $json.data.length : 0 }}",
+              "operation": "larger",
+              "value2": 0
+            }
+          ],
+          "string": []
+        },
+        "combineOperation": "all"
+      }
+    },
+    {
+      "id": "no-queue-response",
+      "name": "Fila Vazia",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1120, 120],
+      "parameters": {}
+    },
+    {
+      "id": "sort-by-priority",
+      "name": "Ordenar por Prioridade",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [1120, 300],
+      "parameters": {
+        "jsCode": "// Ordenar fila por prioridade e tempo de espera\nconst queueData = $json.data || [];\nconst availableSlot = $('Validar Dados').first().json;\n\n// Calcular score de prioridade para cada paciente\nconst scoredQueue = queueData.map(patient => {\n  const waitingTime = Date.now() - new Date(patient.queuedAt).getTime();\n  const waitingDays = waitingTime / (1000 * 60 * 60 * 24);\n  \n  // Scores base por prioridade\n  const priorityScores = {\n    'EMERGENCY': 1000,\n    'HIGH': 100,\n    'MEDIUM': 50,\n    'LOW': 10\n  };\n  \n  // Score base pela prioridade\n  let score = priorityScores[patient.priority] || 10;\n  \n  // Bonus por tempo de espera (1 ponto por dia)\n  score += waitingDays;\n  \n  // Bonus para pacientes idosos (65+ anos)\n  const age = patient.age || 0;\n  if (age >= 65) score += 20;\n  \n  // Bonus para pacientes com necessidades especiais\n  if (patient.specialNeeds) score += 15;\n  \n  // Bonus para pacientes que já cancelaram/reagendaram antes\n  if (patient.previousCancellations > 0) score += (patient.previousCancellations * 5);\n  \n  // Penalidade para pacientes que perderam consultas (no-show)\n  if (patient.noShowCount > 0) score -= (patient.noShowCount * 10);\n  \n  return {\n    ...patient,\n    priorityScore: Math.max(score, 0), // Não permitir score negativo\n    waitingDays: Math.round(waitingDays * 100) / 100\n  };\n});\n\n// Ordenar por score decrescente\nconst sortedQueue = scoredQueue.sort((a, b) => b.priorityScore - a.priorityScore);\n\n// Filtrar apenas os que podem ser notificados (não notificados nas últimas 24h)\nconst now = new Date();\nconst canNotify = sortedQueue.filter(patient => {\n  if (!patient.lastNotified) return true;\n  \n  const lastNotified = new Date(patient.lastNotified);\n  const hoursSinceNotified = (now.getTime() - lastNotified.getTime()) / (1000 * 60 * 60);\n  \n  return hoursSinceNotified >= 24; // Mínimo 24h entre notificações\n});\n\nreturn [{\n  json: {\n    availableSlot,\n    totalInQueue: queueData.length,\n    eligibleForNotification: canNotify.length,\n    nextInLine: canNotify.length > 0 ? canNotify[0] : null,\n    queueStats: {\n      emergency: scoredQueue.filter(p => p.priority === 'EMERGENCY').length,\n      high: scoredQueue.filter(p => p.priority === 'HIGH').length,\n      medium: scoredQueue.filter(p => p.priority === 'MEDIUM').length,\n      low: scoredQueue.filter(p => p.priority === 'LOW').length,\n      avgWaitingDays: scoredQueue.reduce((sum, p) => sum + p.waitingDays, 0) / scoredQueue.length\n    }\n  }\n}];"
+      }
+    },
+    {
+      "id": "check-next-patient",
+      "name": "Há Próximo Paciente?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1340, 300],
+      "parameters": {
+        "conditions": {
+          "boolean": [],
+          "dateTime": [],
+          "number": [],
+          "string": [
+            {
+              "value1": "={{ $json.nextInLine ? $json.nextInLine.id : '' }}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        },
+        "combineOperation": "all"
+      }
+    },
+    {
+      "id": "no-eligible-patients",
+      "name": "Nenhum Paciente Elegível",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1560, 120],
+      "parameters": {}
+    },
+    {
+      "id": "send-queue-notification",
+      "name": "Notificar Paciente",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1560, 300],
+      "parameters": {
+        "functionCode": "// Preparar dados para notificação do paciente na fila\nconst data = $input.first().json;\nconst patient = data.nextInLine;\nconst slot = data.availableSlot;\n\n// Calcular prazo para resposta (2 horas)\nconst responseDeadline = new Date(Date.now() + (2 * 60 * 60 * 1000));\n\n// Preparar dados da notificação\nconst notificationData = {\n  patient: {\n    id: patient.patientId,\n    name: patient.patientName,\n    email: patient.patientEmail,\n    phone: patient.patientPhone,\n    priority: patient.priority,\n    waitingDays: patient.waitingDays\n  },\n  slot: {\n    specialtyId: slot.specialtyId,\n    specialtyName: slot.specialtyName,\n    date: slot.date,\n    duration: slot.duration,\n    doctorId: slot.doctorId,\n    doctorName: slot.doctorName\n  },\n  notification: {\n    queuePosition: 1,\n    responseDeadline: responseDeadline.toISOString(),\n    responseDeadlineFormatted: responseDeadline.toLocaleString('pt-BR'),\n    availableUntil: new Date(Date.now() + (30 * 60 * 1000)).toISOString(), // 30 minutos para aceitar\n    notificationId: `queue-${patient.patientId}-${Date.now()}`,\n    channels: patient.preferredChannels || ['email', 'sms', 'whatsapp']\n  },\n  queue: {\n    totalWaiting: data.totalInQueue,\n    stats: data.queueStats\n  }\n};\n\nreturn {\n  json: notificationData\n};"
+      }
+    },
+    {
+      "id": "send-email-notification",
+      "name": "Email Vaga Disponível",
+      "type": "n8n-nodes-base.sendEmail",
+      "typeVersion": 1,
+      "position": [1780, 200],
+      "parameters": {
+        "fromEmail": "vagas@eo-clinica.com",
+        "toEmail": "={{ $json.patient.email }}",
+        "subject": "🎉 VAGA DISPONÍVEL - {{ $json.slot.specialtyName }} - EO Clínica",
+        "html": "<!DOCTYPE html>\n<html>\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Vaga Disponível</title>\n    <style>\n        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }\n        .container { max-width: 600px; margin: 0 auto; padding: 20px; }\n        .header { background-color: #28a745; color: white; padding: 20px; text-align: center; }\n        .content { background-color: #f9f9f9; padding: 20px; }\n        .slot-details { background-color: white; padding: 15px; border-left: 4px solid #28a745; margin: 15px 0; }\n        .urgency-notice { background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 15px 0; text-align: center; }\n        .countdown { font-size: 24px; color: #dc3545; font-weight: bold; }\n        .button { display: inline-block; background-color: #28a745; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; margin: 10px 5px; font-size: 16px; text-align: center; }\n        .button-decline { background-color: #dc3545; }\n        .queue-info { background-color: #e9ecef; padding: 10px; border-radius: 5px; margin: 10px 0; font-size: 14px; }\n        .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }\n    </style>\n</head>\n<body>\n    <div class=\"container\">\n        <div class=\"header\">\n            <h1>🎉 VAGA DISPONÍVEL!</h1>\n            <p>Oportunidade única de agendamento</p>\n        </div>\n        \n        <div class=\"content\">\n            <p>Olá <strong>{{ $json.patient.name }}</strong>,</p>\n            \n            <div class=\"urgency-notice\">\n                <h3>⏰ AÇÃO URGENTE NECESSÁRIA</h3>\n                <p>Responda até: <span class=\"countdown\">{{ $json.notification.responseDeadlineFormatted }}</span></p>\n                <p><strong>Tempo restante: 2 horas</strong></p>\n            </div>\n            \n            <p>Boa notícia! Uma vaga acabou de ficar disponível para a especialidade que você está aguardando na fila:</p>\n            \n            <div class=\"slot-details\">\n                <h3>📋 Detalhes da Vaga</h3>\n                <ul>\n                    <li><strong>Especialidade:</strong> {{ $json.slot.specialtyName }}</li>\n                    <li><strong>Médico:</strong> Dr(a) {{ $json.slot.doctorName }}</li>\n                    <li><strong>Data:</strong> {{ new Date($json.slot.date).toLocaleDateString('pt-BR') }}</li>\n                    <li><strong>Horário:</strong> {{ new Date($json.slot.date).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'}) }}</li>\n                    <li><strong>Duração:</strong> {{ $json.slot.duration }} minutos</li>\n                    <li><strong>Local:</strong> EO Clínica</li>\n                </ul>\n            </div>\n            \n            <div class=\"queue-info\">\n                <strong>📊 Informações da Fila:</strong><br>\n                • Você estava na posição: <strong>#{{ $json.notification.queuePosition }}</strong><br>\n                • Tempo na fila: <strong>{{ Math.floor($json.patient.waitingDays) }} dias</strong><br>\n                • Prioridade: <strong>{{ $json.patient.priority }}</strong><br>\n                • Total aguardando: <strong>{{ $json.queue.totalWaiting }} pessoas</strong>\n            </div>\n            \n            <p><strong style=\"color: #dc3545;\">⚠️ IMPORTANTE:</strong></p>\n            <ul>\n                <li>Esta vaga é oferecida por ordem de prioridade</li>\n                <li>Você tem <strong>2 horas</strong> para responder</li>\n                <li>Se não responder, a vaga será oferecida ao próximo da fila</li>\n                <li>Após aceitar, você terá 15 minutos para confirmar o agendamento</li>\n            </ul>\n            \n            <div style=\"text-align: center; margin: 30px 0;\">\n                <a href=\"{{ $env.FRONTEND_URL }}/aceitar-vaga/{{ $json.notification.notificationId }}\" class=\"button\">\n                    ✅ ACEITAR VAGA\n                </a>\n                \n                <a href=\"{{ $env.FRONTEND_URL }}/recusar-vaga/{{ $json.notification.notificationId }}\" class=\"button button-decline\">\n                    ❌ RECUSAR VAGA\n                </a>\n            </div>\n            \n            <p><strong>O que acontece depois?</strong></p>\n            <ol>\n                <li>Clique em \"ACEITAR VAGA\" para reservar o horário</li>\n                <li>Complete o agendamento no sistema</li>\n                <li>Receba confirmação por email/SMS</li>\n                <li>Compareça na data marcada</li>\n            </ol>\n        </div>\n        \n        <div class=\"footer\">\n            <p>Esta é uma oportunidade exclusiva baseada em sua posição na fila.</p>\n            <p>EO Clínica - Sistema de Agendamento Inteligente</p>\n            <p>Para dúvidas: {{ $env.CLINIC_PHONE || '(11) 9999-9999' }}</p>\n        </div>\n    </div>\n</body>\n</html>"
+      },
+      "credentials": {
+        "smtp": {
+          "id": "clinic-smtp-credentials",
+          "name": "Clinic SMTP"
+        }
+      },
+      "continueOnFail": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "send-sms-notification",
+      "name": "SMS Vaga Disponível",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [1780, 300],
+      "parameters": {
+        "operation": "send",
+        "from": "={{ $env.TWILIO_PHONE_NUMBER }}",
+        "to": "={{ $json.patient.phone }}",
+        "message": "🎉 VAGA DISPONÍVEL - EO Clínica\n\n{{ $json.patient.name }}, liberou vaga para:\n\n🩺 {{ $json.slot.specialtyName }}\n👨‍⚕️ Dr(a) {{ $json.slot.doctorName }}\n📅 {{ new Date($json.slot.date).toLocaleDateString('pt-BR') }}\n⏰ {{ new Date($json.slot.date).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'}) }}\n\n⚠️ RESPONDA EM 2 HORAS!\n\n✅ Aceitar: {{ $env.FRONTEND_URL }}/aceitar/{{ $json.notification.notificationId }}\n\n❌ Recusar: {{ $env.FRONTEND_URL }}/recusar/{{ $json.notification.notificationId }}\n\nPosição na fila: #{{ $json.notification.queuePosition }}\nTempo esperando: {{ Math.floor($json.patient.waitingDays) }} dias\n\nNão perca esta oportunidade!"
+      },
+      "credentials": {
+        "twilioApi": {
+          "id": "twilio-credentials",
+          "name": "Twilio SMS"
+        }
+      },
+      "continueOnFail": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "send-whatsapp-notification",
+      "name": "WhatsApp Vaga Disponível",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [1780, 400],
+      "parameters": {
+        "url": "https://graph.facebook.com/v17.0/{{ $env.WHATSAPP_PHONE_NUMBER_ID }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "httpMethod": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "{\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $json.patient.phone }}\",\n  \"type\": \"template\",\n  \"template\": {\n    \"name\": \"vaga_disponivel\",\n    \"language\": {\n      \"code\": \"pt_BR\"\n    },\n    \"components\": [\n      {\n        \"type\": \"body\",\n        \"parameters\": [\n          {\n            \"type\": \"text\",\n            \"text\": \"{{ $json.patient.name }}\"\n          },\n          {\n            \"type\": \"text\",\n            \"text\": \"{{ $json.slot.specialtyName }}\"\n          },\n          {\n            \"type\": \"text\",\n            \"text\": \"Dr(a) {{ $json.slot.doctorName }}\"\n          },\n          {\n            \"type\": \"text\",\n            \"text\": \"{{ new Date($json.slot.date).toLocaleDateString('pt-BR') }}\"\n          },\n          {\n            \"type\": \"text\",\n            \"text\": \"{{ new Date($json.slot.date).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'}) }}\"\n          },\n          {\n            \"type\": \"text\",\n            \"text\": \"{{ Math.floor($json.patient.waitingDays) }}\"\n          }\n        ]\n      },\n      {\n        \"type\": \"button\",\n        \"sub_type\": \"url\",\n        \"index\": \"0\",\n        \"parameters\": [\n          {\n            \"type\": \"text\",\n            \"text\": \"{{ $json.notification.notificationId }}\"\n          }\n        ]\n      }\n    ]\n  }\n}"
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "whatsapp-api-credentials",
+          "name": "WhatsApp API"
+        }
+      },
+      "continueOnFail": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "mark-patient-notified",
+      "name": "Marcar Paciente Notificado",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [2000, 300],
+      "parameters": {
+        "url": "{{ $env.API_BASE_URL }}/api/queue/{{ $json.patient.id }}/notified",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "httpMethod": "PATCH",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "{\n  \"notificationId\": \"{{ $json.notification.notificationId }}\",\n  \"notifiedAt\": \"{{ new Date().toISOString() }}\",\n  \"slot\": {\n    \"date\": \"{{ $json.slot.date }}\",\n    \"specialtyId\": \"{{ $json.slot.specialtyId }}\",\n    \"duration\": \"{{ $json.slot.duration }}\"\n  },\n  \"responseDeadline\": \"{{ $json.notification.responseDeadline }}\",\n  \"channels\": {{ JSON.stringify($json.notification.channels) }}\n}"
+      },
+      "continueOnFail": true,
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "id": "schedule-followup",
+      "name": "Agendar Follow-up",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [2220, 300],
+      "parameters": {
+        "workflowId": "queue-followup",
+        "waitForExecution": false,
+        "source": "parameter",
+        "mode": "ownExecutions",
+        "inputs": {\n          "notificationId": "={{ $json.notification.notificationId }}",\n          "patientId": "={{ $json.patient.id }}",\n          "responseDeadline": "={{ $json.notification.responseDeadline }}",\n          "slotData": "={{ JSON.stringify($json.slot) }}"\n        }\n      },\n      "continueOnFail": true\n    },\n    {\n      "id": "log-queue-activity",\n      "name": "Log Atividade Fila",\n      "type": "n8n-nodes-base.httpRequest",\n      "typeVersion": 1,\n      "position": [2220, 500],\n      "parameters": {\n        "url": "{{ $env.API_BASE_URL }}/api/audit/queue-activity",\n        "authentication": "genericCredentialType",\n        "genericAuthType": "httpHeaderAuth",\n        "httpMethod": "POST",\n        "sendHeaders": true,\n        "headerParameters": {\n          "parameters": [\n            {\n              "name": "Authorization",\n              "value": "Bearer {{ $env.API_KEY }}"\n            },\n            {\n              "name": "Content-Type",\n              "value": "application/json"\n            }\n          ]\n        },\n        "sendBody": true,\n        "bodyContentType": "json",\n        "jsonBody": "{\n  \"action\": \"slot_offered\",\n  \"workflowExecution\": \"{{ $workflow.id }}\",\n  \"executionId\": \"{{ $execution.id }}\",\n  \"slotData\": {{ JSON.stringify($('Validar Dados').first().json) }},\n  \"queueStats\": {{ JSON.stringify($('Ordenar por Prioridade').first().json.queueStats) }},\n  \"notifiedPatient\": {\n    \"id\": \"{{ $('Notificar Paciente').first().json.patient.id }}\",\n    \"priority\": \"{{ $('Notificar Paciente').first().json.patient.priority }}\",\n    \"waitingDays\": {{ $('Notificar Paciente').first().json.patient.waitingDays }}\n  },\n  \"notificationChannels\": {{ JSON.stringify($('Notificar Paciente').first().json.notification.channels) }},\n  \"executedAt\": \"{{ new Date().toISOString() }}\"\n}"\n      },\n      "continueOnFail": true\n    }\n  ],\n  "connections": {\n    "webhook-trigger": {\n      "main": [\n        [\n          {\n            "node": "validate-trigger-data",\n            "type": "main",\n            "index": 0\n          }\n        ]\n      ]\n    },\n    "validate-trigger-data": {\n      "main": [\n        [\n          {\n            "node": "get-queue-list",\n            "type": "main",\n            "index": 0\n          }\n        ]\n      ]\n    },\n    "get-queue-list": {\n      "main": [\n        [\n          {\n            "node": "check-queue-exists",\n            "type": "main",\n            "index": 0\n          }\n        ]\n      ]\n    },\n    "check-queue-exists": {\n      "main": [\n        [\n          {\n            "node": "sort-by-priority",\n            "type": "main",\n            "index": 0\n          }\n        ],\n        [\n          {\n            "node": "no-queue-response",\n            "type": "main",\n            "index": 0\n          }\n        ]\n      ]\n    },\n    "sort-by-priority": {\n      "main": [\n        [\n          {\n            "node": "check-next-patient",\n            "type": "main",\n            "index": 0\n          }\n        ]\n      ]\n    },\n    "check-next-patient": {\n      "main": [\n        [\n          {\n            "node": "send-queue-notification",\n            "type": "main",\n            "index": 0\n          }\n        ],\n        [\n          {\n            "node": "no-eligible-patients",\n            "type": "main",\n            "index": 0\n          }\n        ]\n      ]\n    },\n    "send-queue-notification": {\n      "main": [\n        [\n          {\n            "node": "send-email-notification",\n            "type": "main",\n            "index": 0\n          },\n          {\n            "node": "send-sms-notification",\n            "type": "main",\n            "index": 0\n          },\n          {\n            "node": "send-whatsapp-notification",\n            "type": "main",\n            "index": 0\n          }\n        ]\n      ]\n    },\n    "send-email-notification": {\n      "main": [\n        [\n          {\n            "node": "mark-patient-notified",\n            "type": "main",\n            "index": 0\n          }\n        ]\n      ]\n    },\n    "send-sms-notification": {\n      "main": [\n        []\n      ]\n    },\n    "send-whatsapp-notification": {\n      "main": [\n        []\n      ]\n    },\n    "mark-patient-notified": {\n      "main": [\n        [\n          {\n            "node": "schedule-followup",\n            "type": "main",\n            "index": 0\n          },\n          {\n            "node": "log-queue-activity",\n            "type": "main",\n            "index": 0\n          }\n        ]\n      ]\n    }\n  },\n  "settings": {\n    "executionOrder": "v1",\n    "saveDataErrorExecution": "all",\n    "saveDataSuccessExecution": "all",\n    "saveManualExecutions": true,\n    "callerPolicy": "workflowsFromSameOwner",\n    "errorWorkflow": "error-handler-workflow",\n    "timezone": "America/Sao_Paulo"\n  },\n  "staticData": null,\n  "meta": {\n    "templateCredsSetupCompleted": true,\n    "instanceId": "eo-clinica-gestao-fila-espera"\n  },\n  "pinData": {},\n  "tags": [\n    {\n      "createdAt": "2024-01-01T00:00:00.000Z",\n      "updatedAt": "2024-01-01T00:00:00.000Z",\n      "id": "6",\n      "name": "fila-espera"\n    },\n    {\n      "createdAt": "2024-01-01T00:00:00.000Z",\n      "updatedAt": "2024-01-01T00:00:00.000Z",\n      "id": "7",\n      "name": "notificacoes"\n    }\n  ]\n}

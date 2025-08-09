@@ -1,0 +1,482 @@
+{
+  "name": "monitoring-sistema",
+  "active": true,
+  "nodes": [
+    {
+      "id": "cron-health-check",
+      "name": "Health Check Timer",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "*/5 * * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "check-api-health",
+      "name": "Check API Health",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [460, 300],
+      "parameters": {
+        "url": "{{ $env.API_BASE_URL }}/health",
+        "authentication": "noAuth",
+        "httpMethod": "GET",
+        "sendHeaders": false,
+        "options": {
+          "timeout": 10000,
+          "retry": {
+            "enabled": true,
+            "maxTries": 3
+          }
+        }
+      },
+      "continueOnFail": true,
+      "retryOnFail": false
+    },
+    {
+      "id": "check-database-health",
+      "name": "Check Database",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [460, 400],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n  'database' as service,\n  CASE \n    WHEN (SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public') > 0 \n    THEN 'healthy' \n    ELSE 'unhealthy' \n  END as status,\n  (SELECT COUNT(*) FROM \"Appointment\" WHERE \"createdAt\" >= NOW() - INTERVAL '1 day') as appointments_today,\n  NOW() as checked_at",
+        "additionalFields": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "clinic-postgres-credentials",
+          "name": "Clinic PostgreSQL"
+        }
+      },
+      "continueOnFail": true,
+      "retryOnFail": false
+    },
+    {
+      "id": "check-redis-health",
+      "name": "Check Redis Cache",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [460, 500],
+      "parameters": {
+        "operation": "info",
+        "options": {}
+      },
+      "credentials": {
+        "redis": {
+          "id": "clinic-redis-credentials",
+          "name": "Clinic Redis"
+        }
+      },
+      "continueOnFail": true,
+      "retryOnFail": false
+    },
+    {
+      "id": "check-external-services",
+      "name": "Check External Services",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [460, 600],
+      "parameters": {
+        "jsCode": "const services = [\n  {\n    name: 'WhatsApp API',\n    url: 'https://graph.facebook.com/v17.0/me',\n    headers: { 'Authorization': `Bearer ${$env.WHATSAPP_ACCESS_TOKEN}` }\n  },\n  {\n    name: 'Google Calendar',\n    url: 'https://www.googleapis.com/calendar/v3/users/me/calendarList',\n    headers: { 'Authorization': `Bearer ${$env.GOOGLE_ACCESS_TOKEN}` }\n  },\n  {\n    name: 'Twilio SMS',\n    url: 'https://api.twilio.com/2010-04-01/Accounts.json',\n    auth: {\n      username: $env.TWILIO_ACCOUNT_SID,\n      password: $env.TWILIO_AUTH_TOKEN\n    }\n  }\n];\n\nconst results = [];\n\nfor (const service of services) {\n  try {\n    const response = await $http.request({\n      method: 'GET',\n      url: service.url,\n      headers: service.headers || {},\n      auth: service.auth,\n      timeout: 10000\n    });\n    \n    results.push({\n      service: service.name,\n      status: response.status === 200 ? 'healthy' : 'unhealthy',\n      responseTime: Date.now() - startTime,\n      statusCode: response.status\n    });\n  } catch (error) {\n    results.push({\n      service: service.name,\n      status: 'unhealthy',\n      error: error.message,\n      statusCode: error.response?.status || 0\n    });\n  }\n}\n\nreturn [{ json: { externalServices: results, checkedAt: new Date().toISOString() } }];"
+      },
+      "continueOnFail": true,
+      "retryOnFail": false
+    },
+    {
+      "id": "aggregate-health-results",
+      "name": "Aggregate Health Status",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [680, 400],
+      "parameters": {
+        "jsCode": "// Aggregate all health check results\nconst apiHealth = $('Check API Health').first();\nconst dbHealth = $('Check Database').first();\nconst redisHealth = $('Check Redis Cache').first();\nconst externalHealth = $('Check External Services').first();\n\nconst healthStatus = {\n  timestamp: new Date().toISOString(),\n  overall: 'healthy',\n  services: {}\n};\n\n// Check API health\nif (apiHealth?.json?.status === 'ok') {\n  healthStatus.services.api = {\n    status: 'healthy',\n    responseTime: apiHealth.json.responseTime || null,\n    version: apiHealth.json.version || null\n  };\n} else {\n  healthStatus.services.api = {\n    status: 'unhealthy',\n    error: apiHealth?.error || 'API health check failed'\n  };\n  healthStatus.overall = 'unhealthy';\n}\n\n// Check database health\nif (dbHealth?.json?.length > 0 && dbHealth.json[0].status === 'healthy') {\n  healthStatus.services.database = {\n    status: 'healthy',\n    appointmentsToday: dbHealth.json[0].appointments_today || 0,\n    checkedAt: dbHealth.json[0].checked_at\n  };\n} else {\n  healthStatus.services.database = {\n    status: 'unhealthy',\n    error: dbHealth?.error || 'Database health check failed'\n  };\n  healthStatus.overall = 'unhealthy';\n}\n\n// Check Redis health\nif (redisHealth?.json && !redisHealth.error) {\n  healthStatus.services.redis = {\n    status: 'healthy',\n    info: redisHealth.json\n  };\n} else {\n  healthStatus.services.redis = {\n    status: 'unhealthy',\n    error: redisHealth?.error || 'Redis health check failed'\n  };\n  healthStatus.overall = 'degraded'; // Redis failure is not critical\n}\n\n// Check external services\nif (externalHealth?.json?.externalServices) {\n  healthStatus.services.external = {};\n  let externalHealthy = 0;\n  let externalTotal = externalHealth.json.externalServices.length;\n  \n  for (const service of externalHealth.json.externalServices) {\n    healthStatus.services.external[service.service.toLowerCase().replace(/\\s+/g, '_')] = {\n      status: service.status,\n      responseTime: service.responseTime,\n      error: service.error,\n      statusCode: service.statusCode\n    };\n    \n    if (service.status === 'healthy') {\n      externalHealthy++;\n    }\n  }\n  \n  // If more than half of external services are down, mark as degraded\n  if (externalHealthy < externalTotal / 2) {\n    if (healthStatus.overall === 'healthy') {\n      healthStatus.overall = 'degraded';\n    }\n  }\n} else {\n  healthStatus.services.external = {\n    status: 'unknown',\n    error: 'External services check failed'\n  };\n}\n\n// Calculate uptime and performance metrics\nhealthStatus.metrics = {\n  servicesHealthy: Object.values(healthStatus.services).filter(s => s.status === 'healthy' || (typeof s === 'object' && Object.values(s).some(ss => ss.status === 'healthy'))).length,\n  servicesTotal: Object.keys(healthStatus.services).length,\n  lastCheck: healthStatus.timestamp\n};\n\nreturn [{ json: healthStatus }];"
+      }
+    },
+    {
+      "id": "evaluate-health-status",
+      "name": "Evaluate Overall Health",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [900, 400],
+      "parameters": {
+        "values": {
+          "rules": [
+            {
+              "conditions": {
+                "string": [
+                  {
+                    "value1": "={{ $json.overall }}",
+                    "operation": "equal",
+                    "value2": "healthy"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "healthy"
+            },
+            {
+              "conditions": {
+                "string": [
+                  {
+                    "value1": "={{ $json.overall }}",
+                    "operation": "equal",
+                    "value2": "degraded"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "degraded"
+            },
+            {
+              "conditions": {
+                "string": [
+                  {
+                    "value1": "={{ $json.overall }}",
+                    "operation": "equal",
+                    "value2": "unhealthy"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "unhealthy"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "log-healthy-status",
+      "name": "Log Healthy Status",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1120, 200],
+      "parameters": {}
+    },
+    {
+      "id": "alert-degraded-service",
+      "name": "Alert Degraded Service",
+      "type": "n8n-nodes-base.sendEmail",
+      "typeVersion": 1,
+      "position": [1120, 400],
+      "parameters": {
+        "fromEmail": "alerts@eo-clinica.com",
+        "toEmail": "{{ $env.ADMIN_EMAIL }}",
+        "subject": "⚠️ EO Clínica - Sistema com Performance Degradada",
+        "html": "<!DOCTYPE html>\n<html>\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Alerta de Sistema</title>\n    <style>\n        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }\n        .container { max-width: 600px; margin: 0 auto; padding: 20px; }\n        .header { background-color: #ffc107; color: #000; padding: 20px; text-align: center; }\n        .content { background-color: #f9f9f9; padding: 20px; }\n        .service { background-color: white; padding: 10px; margin: 10px 0; border-left: 4px solid #ffc107; }\n        .unhealthy { border-left-color: #dc3545; }\n        .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }\n    </style>\n</head>\n<body>\n    <div class=\"container\">\n        <div class=\"header\">\n            <h1>⚠️ Sistema com Performance Degradada</h1>\n        </div>\n        \n        <div class=\"content\">\n            <p><strong>Detectado problema no sistema EO Clínica</strong></p>\n            \n            <p><strong>Status Geral:</strong> {{ $json.overall.toUpperCase() }}</p>\n            <p><strong>Timestamp:</strong> {{ new Date($json.timestamp).toLocaleString('pt-BR') }}</p>\n            \n            <h3>Status dos Serviços:</h3>\n            \n            <div class=\"service {{ $json.services.api.status === 'unhealthy' ? 'unhealthy' : '' }}\">\n                <strong>API Principal:</strong> {{ $json.services.api.status.toUpperCase() }}\n                {{ $json.services.api.error ? '<br>Erro: ' + $json.services.api.error : '' }}\n            </div>\n            \n            <div class=\"service {{ $json.services.database.status === 'unhealthy' ? 'unhealthy' : '' }}\">\n                <strong>Banco de Dados:</strong> {{ $json.services.database.status.toUpperCase() }}\n                {{ $json.services.database.error ? '<br>Erro: ' + $json.services.database.error : '' }}\n            </div>\n            \n            <div class=\"service {{ $json.services.redis.status === 'unhealthy' ? 'unhealthy' : '' }}\">\n                <strong>Cache (Redis):</strong> {{ $json.services.redis.status.toUpperCase() }}\n                {{ $json.services.redis.error ? '<br>Erro: ' + $json.services.redis.error : '' }}\n            </div>\n            \n            <p><strong>Serviços Saudáveis:</strong> {{ $json.metrics.servicesHealthy }}/{{ $json.metrics.servicesTotal }}</p>\n            \n            <p><strong>Ação Recomendada:</strong> Verificar logs do sistema e serviços externos.</p>\n        </div>\n        \n        <div class=\"footer\">\n            <p>EO Clínica - Sistema de Monitoramento Automatizado</p>\n        </div>\n    </div>\n</body>\n</html>"
+      },
+      "credentials": {
+        "smtp": {
+          "id": "clinic-smtp-credentials",
+          "name": "Clinic SMTP"
+        }
+      },
+      "continueOnFail": true,
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "id": "alert-critical-failure",
+      "name": "Alert Critical Failure",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [1120, 600],
+      "parameters": {
+        "url": "{{ $env.SLACK_WEBHOOK_URL }}",
+        "authentication": "noAuth",
+        "httpMethod": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "{\n  \"channel\": \"#alerts\",\n  \"username\": \"EO Clínica Monitor\",\n  \"icon_emoji\": \":warning:\",\n  \"attachments\": [\n    {\n      \"color\": \"danger\",\n      \"title\": \"🚨 SISTEMA CRÍTICO - EO Clínica\",\n      \"text\": \"Sistema principal fora do ar ou com falhas críticas\",\n      \"fields\": [\n        {\n          \"title\": \"Status Geral\",\n          \"value\": \"{{ $json.overall.toUpperCase() }}\",\n          \"short\": true\n        },\n        {\n          \"title\": \"Timestamp\",\n          \"value\": \"{{ new Date($json.timestamp).toLocaleString('pt-BR') }}\",\n          \"short\": true\n        },\n        {\n          \"title\": \"API Status\",\n          \"value\": \"{{ $json.services.api.status.toUpperCase() }}\",\n          \"short\": true\n        },\n        {\n          \"title\": \"Database Status\",\n          \"value\": \"{{ $json.services.database.status.toUpperCase() }}\",\n          \"short\": true\n        }\n      ],\n      \"footer\": \"EO Clínica Monitoring\",\n      \"ts\": {{ Math.floor(Date.now() / 1000) }}\n    }\n  ]\n}"
+      },
+      "continueOnFail": true,
+      "retryOnFail": true,
+      "maxTries": 3
+    },
+    {
+      "id": "send-admin-sms",
+      "name": "Send Admin SMS Alert",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [1340, 600],
+      "parameters": {
+        "operation": "send",
+        "from": "{{ $env.TWILIO_PHONE_NUMBER }}",
+        "to": "{{ $env.ADMIN_PHONE }}",
+        "message": "🚨 ALERTA CRÍTICO - EO Clínica\n\nSistema principal FORA DO AR\n\nStatus: {{ $json.overall.toUpperCase() }}\nAPI: {{ $json.services.api.status.toUpperCase() }}\nDB: {{ $json.services.database.status.toUpperCase() }}\n\nVerifique IMEDIATAMENTE!\n\nTempo: {{ new Date($json.timestamp).toLocaleString('pt-BR') }}"
+      },
+      "credentials": {
+        "twilioApi": {
+          "id": "twilio-credentials",
+          "name": "Twilio SMS"
+        }
+      },
+      "continueOnFail": true,
+      "retryOnFail": true,
+      "maxTries": 3
+    },
+    {
+      "id": "store-health-metrics",
+      "name": "Store Health Metrics",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [1120, 800],
+      "parameters": {
+        "url": "{{ $env.API_BASE_URL }}/api/monitoring/health-metrics",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "httpMethod": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "{\n  \"timestamp\": \"{{ $json.timestamp }}\",\n  \"overall_status\": \"{{ $json.overall }}\",\n  \"services\": {{ JSON.stringify($json.services) }},\n  \"metrics\": {{ JSON.stringify($json.metrics) }},\n  \"source\": \"n8n_monitoring\"\n}"
+      },
+      "continueOnFail": true,
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "id": "check-workflow-health",
+      "name": "Check N8N Workflows",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [460, 700],
+      "parameters": {
+        "url": "{{ $env.N8N_BASE_URL }}/api/v1/workflows",
+        "authentication": "basicAuth",
+        "httpMethod": "GET",
+        "sendHeaders": false,
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "n8n-basic-auth",
+          "name": "N8N Basic Auth"
+        }
+      },
+      "continueOnFail": true,
+      "retryOnFail": false
+    },
+    {
+      "id": "evaluate-workflow-health",
+      "name": "Evaluate Workflow Health",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [680, 700],
+      "parameters": {
+        "jsCode": "// Check N8N workflow health\nconst workflowsData = $('Check N8N Workflows').first();\n\nif (!workflowsData || workflowsData.error) {\n  return [{\n    json: {\n      workflowHealth: {\n        status: 'unhealthy',\n        error: workflowsData?.error || 'Failed to fetch workflows',\n        activeWorkflows: 0,\n        totalWorkflows: 0\n      }\n    }\n  }];\n}\n\nconst workflows = workflowsData.json.data || [];\nconst activeWorkflows = workflows.filter(w => w.active).length;\nconst totalWorkflows = workflows.length;\n\n// Core workflows that must be active\nconst coreWorkflows = [\n  'novo-agendamento',\n  'sistema-lembretes',\n  'gestao-fila-espera',\n  'reagendamento',\n  'monitoring-sistema'\n];\n\nconst activeCoreWorkflows = workflows.filter(w => \n  w.active && coreWorkflows.includes(w.name)\n).length;\n\nlet status = 'healthy';\nlet issues = [];\n\nif (activeCoreWorkflows < coreWorkflows.length) {\n  status = 'degraded';\n  issues.push(`${coreWorkflows.length - activeCoreWorkflows} core workflows inactive`);\n}\n\nif (activeWorkflows === 0) {\n  status = 'unhealthy';\n  issues.push('No workflows are active');\n}\n\nreturn [{\n  json: {\n    workflowHealth: {\n      status,\n      activeWorkflows,\n      totalWorkflows,\n      activeCoreWorkflows,\n      totalCoreWorkflows: coreWorkflows.length,\n      issues: issues.length > 0 ? issues : null,\n      checkedAt: new Date().toISOString()\n    }\n  }\n}];"
+      }
+    }
+  ],
+  "connections": {
+    "cron-health-check": {
+      "main": [
+        [
+          {
+            "node": "check-api-health",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "check-database-health",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "check-redis-health",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "check-external-services",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "check-workflow-health",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "check-api-health": {
+      "main": [
+        [
+          {
+            "node": "aggregate-health-results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "check-database-health": {
+      "main": [
+        [
+          {
+            "node": "aggregate-health-results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "check-redis-health": {
+      "main": [
+        [
+          {
+            "node": "aggregate-health-results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "check-external-services": {
+      "main": [
+        [
+          {
+            "node": "aggregate-health-results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "check-workflow-health": {
+      "main": [
+        [
+          {
+            "node": "evaluate-workflow-health",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "evaluate-workflow-health": {
+      "main": [
+        [
+          {
+            "node": "aggregate-health-results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "aggregate-health-results": {
+      "main": [
+        [
+          {
+            "node": "evaluate-health-status",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "store-health-metrics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "evaluate-health-status": {
+      "main": [
+        [
+          {
+            "node": "log-healthy-status",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "alert-degraded-service",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "alert-critical-failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "alert-critical-failure": {
+      "main": [
+        [
+          {
+            "node": "send-admin-sms",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "timezone": "America/Sao_Paulo"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "eo-clinica-monitoring-sistema"
+  },
+  "pinData": {},
+  "tags": [
+    {
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z",
+      "id": "8",
+      "name": "monitoring"
+    },
+    {
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z",
+      "id": "9",
+      "name": "health-check"
+    }
+  ]
+}

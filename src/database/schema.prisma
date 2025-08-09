@@ -1,0 +1,412 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum UserRole {
+  PATIENT
+  DOCTOR
+  ADMIN
+  RECEPTIONIST
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  PENDING_VERIFICATION
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+  RESCHEDULED
+}
+
+enum AppointmentType {
+  CONSULTATION
+  FOLLOW_UP
+  EMERGENCY
+  ROUTINE_CHECKUP
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  PARTIAL
+  CANCELLED
+  REFUNDED
+}
+
+enum NotificationType {
+  EMAIL
+  SMS
+  WHATSAPP
+  PUSH
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  DELIVERED
+  FAILED
+}
+
+// Core Models
+model User {
+  id                String     @id @default(cuid())
+  email             String     @unique
+  phone             String?    @unique
+  cpf               String?    @unique
+  rg                String?
+  password          String
+  firstName         String
+  lastName          String
+  fullName          String
+  dateOfBirth       DateTime?
+  gender            String?
+  role              UserRole   @default(PATIENT)
+  status            UserStatus @default(PENDING_VERIFICATION)
+  avatar            String?
+  emailVerifiedAt   DateTime?
+  phoneVerifiedAt   DateTime?
+  lastLoginAt       DateTime?
+  timezone          String     @default("America/Sao_Paulo")
+  
+  // Encrypted sensitive data
+  encryptedData     Json? // For LGPD compliance
+  
+  // Relationships
+  patientProfile    Patient?
+  doctorProfile     Doctor?
+  appointments      Appointment[] @relation("PatientAppointments")
+  doctorAppointments Appointment[] @relation("DoctorAppointments")
+  conversations     Conversation[]
+  notifications     Notification[]
+  auditLogs         AuditLog[]
+  
+  // Metadata
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  deletedAt         DateTime? // Soft delete
+
+  @@index([email])
+  @@index([phone])
+  @@index([cpf])
+  @@map("users")
+}
+
+model Patient {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  
+  // Medical information
+  emergencyContactName  String?
+  emergencyContactPhone String?
+  allergies             String[]
+  medications           String[]
+  medicalHistory        Json?
+  insurance             Json?
+  
+  // Address
+  address               Json?
+  
+  // Preferences
+  preferredDoctors      String[]
+  preferredTimes        Json?
+  
+  // Relationships
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Metadata
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  deletedAt             DateTime?
+
+  @@map("patients")
+}
+
+model Doctor {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  
+  // Professional information
+  crm               String   @unique
+  specialtyId       String
+  subSpecialties    String[]
+  
+  // Professional details
+  biography         String?
+  experience        Int? // years of experience
+  consultationFee   Decimal?
+  consultationDuration Int @default(30) // minutes
+  
+  // Schedule configuration
+  workingHours      Json? // Weekly schedule configuration
+  isActive          Boolean @default(true)
+  acceptsNewPatients Boolean @default(true)
+  
+  // Relationships
+  user              User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  specialty         Specialty  @relation(fields: [specialtyId], references: [id])
+  availability      Availability[]
+  
+  // Metadata
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  deletedAt         DateTime?
+
+  @@index([crm])
+  @@map("doctors")
+}
+
+model Specialty {
+  id            String   @id @default(cuid())
+  name          String   @unique
+  description   String?
+  duration      Int      @default(30) // default consultation duration in minutes
+  isActive      Boolean  @default(true)
+  
+  // Relationships
+  doctors       Doctor[]
+  appointments  Appointment[]
+  
+  // Metadata
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("specialties")
+}
+
+model Appointment {
+  id                String            @id @default(cuid())
+  
+  // Basic information
+  patientId         String
+  doctorId          String
+  specialtyId       String
+  
+  // Scheduling details
+  scheduledAt       DateTime
+  duration          Int               @default(30) // minutes
+  endTime           DateTime // calculated field
+  
+  // Status and type
+  status            AppointmentStatus @default(SCHEDULED)
+  type              AppointmentType   @default(CONSULTATION)
+  
+  // Clinical information
+  reason            String?
+  symptoms          String?
+  notes             String?
+  diagnosis         String?
+  prescription      String?
+  
+  // Business rules
+  cancelledAt       DateTime?
+  cancelReason      String?
+  rescheduledFrom   String? // ID of original appointment
+  rescheduleCount   Int               @default(0)
+  confirmedAt       DateTime?
+  
+  // Payment
+  fee               Decimal?
+  paymentStatus     PaymentStatus     @default(PENDING)
+  
+  // AI Integration
+  conversationId    String?
+  aiSummary         String?
+  
+  // Relationships
+  patient           User        @relation("PatientAppointments", fields: [patientId], references: [id])
+  doctor            User        @relation("DoctorAppointments", fields: [doctorId], references: [id])
+  specialty         Specialty   @relation(fields: [specialtyId], references: [id])
+  conversation      Conversation? @relation(fields: [conversationId], references: [id])
+  notifications     Notification[]
+  
+  // Metadata
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  deletedAt         DateTime?
+
+  @@index([scheduledAt])
+  @@index([patientId])
+  @@index([doctorId])
+  @@index([status])
+  @@map("appointments")
+}
+
+model Availability {
+  id            String    @id @default(cuid())
+  doctorId      String
+  
+  // Time slots
+  dayOfWeek     Int       // 0 = Sunday, 1 = Monday, etc.
+  startTime     String    // HH:mm format
+  endTime       String    // HH:mm format
+  
+  // Configuration
+  slotDuration  Int       @default(30) // minutes per slot
+  isActive      Boolean   @default(true)
+  
+  // Date range (optional - for temporary availability)
+  validFrom     DateTime?
+  validUntil    DateTime?
+  
+  // Relationships
+  doctor        Doctor    @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  
+  // Metadata
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([doctorId, dayOfWeek])
+  @@map("availability")
+}
+
+model Conversation {
+  id                String   @id @default(cuid())
+  
+  // Participants
+  userId            String
+  patientId         String?
+  
+  // Conversation details
+  title             String?
+  summary           String?
+  isCompleted       Boolean  @default(false)
+  
+  // AI Integration
+  aiContext         Json?
+  embedding         Bytes? // Vector embedding for similarity search
+  
+  // Relationships
+  user              User     @relation(fields: [userId], references: [id])
+  appointments      Appointment[]
+  messages          Message[]
+  
+  // Metadata
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  deletedAt         DateTime?
+
+  @@index([userId])
+  @@map("conversations")
+}
+
+model Message {
+  id              String   @id @default(cuid())
+  conversationId  String
+  
+  // Message content
+  content         String
+  role            String   // 'user', 'assistant', 'system'
+  
+  // AI processing
+  embedding       Bytes?   // Vector embedding
+  processed       Boolean  @default(false)
+  
+  // Relationships
+  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  
+  // Metadata
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([conversationId])
+  @@map("messages")
+}
+
+model Notification {
+  id              String             @id @default(cuid())
+  
+  // Recipients
+  userId          String
+  appointmentId   String?
+  
+  // Content
+  title           String
+  message         String
+  type            NotificationType
+  
+  // Delivery
+  status          NotificationStatus @default(PENDING)
+  scheduledFor    DateTime?
+  sentAt          DateTime?
+  deliveredAt     DateTime?
+  
+  // Configuration
+  retryCount      Int                @default(0)
+  maxRetries      Int                @default(3)
+  
+  // Relationships
+  user            User               @relation(fields: [userId], references: [id])
+  appointment     Appointment?       @relation(fields: [appointmentId], references: [id])
+  
+  // Metadata
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  @@index([userId])
+  @@index([scheduledFor])
+  @@map("notifications")
+}
+
+model AuditLog {
+  id              String   @id @default(cuid())
+  
+  // Actor information
+  userId          String?
+  userEmail       String?
+  ipAddress       String?
+  userAgent       String?
+  
+  // Action details
+  action          String   // CREATE, UPDATE, DELETE, LOGIN, etc.
+  resource        String   // appointments, users, etc.
+  resourceId      String?
+  
+  // Changes (for LGPD compliance)
+  oldValues       Json?
+  newValues       Json?
+  
+  // Relationships
+  user            User?    @relation(fields: [userId], references: [id])
+  
+  // Metadata
+  createdAt       DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([resource])
+  @@map("audit_logs")
+}
+
+model SystemConfiguration {
+  id              String   @id @default(cuid())
+  key             String   @unique
+  value           String
+  description     String?
+  category        String?
+  isEncrypted     Boolean  @default(false)
+  
+  // Metadata
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("system_configurations")
+}
+

@@ -1,0 +1,29 @@
+{
+  "name": "EO Clínica - Sistema de Agendamentos",
+  "short_name": "EO Clínica",
+  "description": "Sistema completo de agendamentos médicos com integração de IA",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/next.svg",
+      "sizes": "48x48 96x96",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["medical", "healthcare", "productivity"],
+  "lang": "pt-BR",
+  "scope": "/",
+  "screenshots": [
+    {
+      "src": "/next.svg",
+      "sizes": "540x720",
+      "type": "image/svg+xml",
+      "form_factor": "narrow"
+    }
+  ]
+}
