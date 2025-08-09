@@ -31,6 +31,30 @@ cd frontend && ./start.sh
 - **Recepcionista**: recepcao@eoclinica.com.br
 - **Paciente**: paciente@example.com
 
+## 🚀 Como Iniciar
+
+### Opção 1: Script Automático (Recomendado)
+```bash
+./scripts/start-complete.sh
+```
+
+### Opção 2: Manual
+```bash
+# Backend (porta 3000)
+npm run start &
+
+# Frontend (porta 3001) 
+cd frontend && PORT=3001 npm run dev &
+```
+
+### Opção 3: Com Docker
+```bash
+npm run docker:up
+npm run db:generate
+npm run db:migrate
+npm run db:seed
+```
+
 ## 📚 Documentação
 
 - **Documentação Completa**: [`/docs`](./docs/)
@@ -59,4 +83,4 @@ Frontend (Next.js) ←→ API (Fastify) ←→ PostgreSQL
 
 ---
 
-**Desenvolvido com ❤️ para revolucionar o agendamento médico no Brasil** 🇧🇷
+**© 2025 Jtarcio Desenvolvimento - Desenvolvido com ❤️ para revolucionar o agendamento médico no Brasil** 🇧🇷

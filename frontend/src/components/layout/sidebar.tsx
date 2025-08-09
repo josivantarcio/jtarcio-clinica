@@ -35,6 +35,12 @@ const navigationItems: NavItem[] = [
     roles: ["PATIENT", "DOCTOR", "ADMIN", "RECEPTIONIST"]
   },
   {
+    title: "Meus Dados",
+    href: "/patient",
+    icon: Users,
+    roles: ["PATIENT"]
+  },
+  {
     title: "Consultas",
     href: "/appointments",
     icon: Calendar,
