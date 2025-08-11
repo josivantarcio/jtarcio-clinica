@@ -8,7 +8,7 @@ import Link from 'next/link'
 import { Calendar, MessageCircle, Shield, Stethoscope } from 'lucide-react'
 
 export default function Home() {
-  const { isAuthenticated, user, loadUser } = useAuthStore()
+  const { isAuthenticated, loadUser } = useAuthStore()
   const router = useRouter()
   const [isHydrated, setIsHydrated] = useState(false)
 

@@ -34,7 +34,7 @@ export const useDoctorsStore = create<DoctorsState>((set) => ({
           isLoading: false
         })
       }
-    } catch (error) {
+    } catch (_error) {
       set({
         error: 'Network error',
         isLoading: false

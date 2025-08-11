@@ -34,7 +34,7 @@ export const useSpecialtiesStore = create<SpecialtiesState>((set) => ({
           isLoading: false
         })
       }
-    } catch (error) {
+    } catch (_error) {
       set({
         error: 'Network error',
         isLoading: false

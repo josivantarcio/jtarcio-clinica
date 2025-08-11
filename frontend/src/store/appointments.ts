@@ -52,7 +52,7 @@ export const useAppointmentsStore = create<AppointmentsState>((set, get) => ({
           isLoading: false
         })
       }
-    } catch (error) {
+    } catch (_error) {
       set({
         error: 'Network error',
         isLoading: false
@@ -78,7 +78,7 @@ export const useAppointmentsStore = create<AppointmentsState>((set, get) => ({
         })
         return false
       }
-    } catch (error) {
+    } catch (_error) {
       set({
         error: 'Network error',
         isLoading: false
@@ -104,7 +104,7 @@ export const useAppointmentsStore = create<AppointmentsState>((set, get) => ({
           isLoading: false
         })
       }
-    } catch (error) {
+    } catch (_error) {
       set({
         error: 'Network error',
         isLoading: false
@@ -136,7 +136,7 @@ export const useAppointmentsStore = create<AppointmentsState>((set, get) => ({
         })
         return false
       }
-    } catch (error) {
+    } catch (_error) {
       set({
         error: 'Network error',
         isLoading: false
@@ -163,7 +163,7 @@ export const useAppointmentsStore = create<AppointmentsState>((set, get) => ({
         })
         return false
       }
-    } catch (error) {
+    } catch (_error) {
       set({
         error: 'Network error',
         isLoading: false
@@ -196,7 +196,7 @@ export const useAppointmentsStore = create<AppointmentsState>((set, get) => ({
         })
         return false
       }
-    } catch (error) {
+    } catch (_error) {
       set({
         error: 'Network error',
         isLoading: false

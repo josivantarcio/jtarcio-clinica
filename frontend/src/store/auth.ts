@@ -53,7 +53,7 @@ export const useAuthStore = create<AuthState>()(
             })
             return false
           }
-        } catch (error) {
+        } catch (_error) {
           set({
             error: 'Network error',
             isLoading: false
@@ -88,7 +88,7 @@ export const useAuthStore = create<AuthState>()(
             })
             return false
           }
-        } catch (error) {
+        } catch (_error) {
           set({
             error: 'Network error',
             isLoading: false
@@ -133,7 +133,7 @@ export const useAuthStore = create<AuthState>()(
             console.warn('Failed to load user profile, logging out')
             get().logout()
           }
-        } catch (error) {
+        } catch (_error) {
           console.error('Error loading user:', error)
           get().logout()
         } finally {

@@ -64,7 +64,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
           isLoading: false
         })
       }
-    } catch (error) {
+    } catch (_error) {
       set({
         error: 'Network error',
         isLoading: false
@@ -90,7 +90,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
           isLoading: false
         })
       }
-    } catch (error) {
+    } catch (_error) {
       set({
         error: 'Network error',
         isLoading: false
