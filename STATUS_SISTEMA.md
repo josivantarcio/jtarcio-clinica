@@ -117,6 +117,17 @@ curl -I http://localhost:3001
 - ✅ **Automação**: N8N disponível
 - ✅ **Admin**: PgAdmin funcionando
 
+### 🔐 **Login e Autenticação:**
+
+| Credencial | Email | Senha | Status |
+|------------|-------|-------|--------|
+| **Admin** | admin@eoclinica.com.br | Admin123! | ✅ Funcionando |
+
+**Endpoints de Autenticação:**
+- ✅ `POST /api/v1/auth/login` - Login funcionando
+- ✅ `GET /api/v1/auth/me` - Perfil do usuário funcionando  
+- ✅ Frontend: http://localhost:3001/auth/login
+
 ### 🔄 **Arquitetura Híbrida:**
 - **Docker**: Infraestrutura (DB, Cache, APIs, Tools)
 - **Local**: Frontend development (mais rápido)
@@ -126,7 +137,9 @@ curl -I http://localhost:3001
 ---
 
 **Status**: ✅ **COMPLETAMENTE FUNCIONAL**  
-**Versão**: v1.0.2  
-**Última atualização**: 11/08/2025 20:38  
+**Versão**: v1.0.3  
+**Última atualização**: 11/08/2025 22:45  
 **Frontend**: ✅ **CARREGANDO NORMALMENTE**  
+**Backend**: ✅ **LOGIN FUNCIONANDO**  
+**Banco**: ✅ **DADOS POPULADOS**  
 **Lint**: ✅ **CORRIGIDO E OTIMIZADO**

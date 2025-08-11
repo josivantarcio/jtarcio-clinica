@@ -67,9 +67,8 @@ export default function LoginPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="text-xs space-y-1">
-            <p><strong>Paciente:</strong> paciente@demo.com / 123456</p>
-            <p><strong>Médico:</strong> medico@demo.com / 123456</p>
-            <p><strong>Admin:</strong> admin@demo.com / 123456</p>
+            <p><strong>Admin:</strong> admin@eoclinica.com.br / Admin123!</p>
+            <p className="text-muted-foreground italic">Outras contas serão criadas conforme necessário</p>
           </CardContent>
         </Card>
       </div>

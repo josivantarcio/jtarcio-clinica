@@ -2,7 +2,30 @@
 
 ## 🚨 Problemas Comuns e Soluções
 
-### 1. Erro: "Port already in use" / "Porta já está em uso"
+### 1. Erro de Login: "Request failed with status code 404"
+
+**Sintomas:**
+- Login falha com erro 404 no frontend  
+- Console mostra erro: `AxiosError: Request failed with status code 404`
+- Endpoint `/api/v1/auth/profile` não encontrado
+
+**Causa:**
+- Endpoint de perfil incorreto (`/profile` vs `/me`)
+- Banco de dados sem usuários (sem seeds executados)
+
+**Solução:**
+```bash
+# 1. Executar seeds do banco de dados
+npm run db:seed
+
+# 2. Usar credenciais corretas
+# Email: admin@eoclinica.com.br
+# Senha: Admin123!
+```
+
+**Status:** ✅ **Corrigido na versão 1.0.3**
+
+### 2. Erro: "Port already in use" / "Porta já está em uso"
 
 **Sintomas:**
 - Container falha ao iniciar

@@ -77,118 +77,26 @@ export default function DoctorsPage() {
     setLoading(true)
     try {
       const response = await apiClient.getDoctors()
-      if (response.success) {
-        // Transform API data to doctors with mock stats (following the model's data structure)
-        const doctorsData: DoctorWithStats[] = [
-          {
-            id: '1',
-            userId: '1',
-            user: {
-              id: '1',
-              email: 'dr.silva@eoclinica.com.br',
-              name: 'Dr. João Silva',
-              role: 'DOCTOR',
-              avatar: '',
-              createdAt: new Date(),
-              updatedAt: new Date()
-            },
-            crm: 'CRM-SP 123456',
-            specialties: [],
-            bio: 'Cardiologista com 15 anos de experiência em medicina preventiva e tratamento de doenças cardiovasculares.',
-            experience: '15 anos',
-            education: 'USP - Medicina, Especialização em Cardiologia',
-            phone: '(11) 99999-1111',
-            totalPatients: 87,
-            totalAppointments: 156,
-            rating: 4.9,
-            reviewsCount: 52,
-            nextAppointment: new Date(Date.now() + 2 * 60 * 60 * 1000), // 2 hours from now
-            status: 'active',
-            specialtyNames: ['Cardiologia']
-          },
-          {
-            id: '2',
-            userId: '2', 
-            user: {
-              id: '2',
-              email: 'dra.santos@eoclinica.com.br',
-              name: 'Dra. Maria Santos',
-              role: 'DOCTOR',
-              avatar: '',
-              createdAt: new Date(),
-              updatedAt: new Date()
-            },
-            crm: 'CRM-SP 654321',
-            specialties: [],
-            bio: 'Dermatologista especializada em dermatologia clínica e estética, com foco em tratamentos inovadores.',
-            experience: '12 anos',
-            education: 'UNIFESP - Medicina, Residência em Dermatologia',
-            phone: '(11) 99999-2222',
-            totalPatients: 134,
-            totalAppointments: 298,
-            rating: 4.8,
-            reviewsCount: 89,
-            nextAppointment: new Date(Date.now() + 4 * 60 * 60 * 1000),
-            status: 'active',
-            specialtyNames: ['Dermatologia']
-          },
-          {
-            id: '3',
-            userId: '3',
-            user: {
-              id: '3',
-              email: 'dr.oliveira@eoclinica.com.br',
-              name: 'Dr. Carlos Oliveira',
-              role: 'DOCTOR',
-              avatar: '',
-              createdAt: new Date(),
-              updatedAt: new Date()
-            },
-            crm: 'CRM-SP 789123',
-            specialties: [],
-            bio: 'Ortopedista especializado em cirurgia de joelho e medicina esportiva.',
-            experience: '20 anos',
-            education: 'FMUSP - Medicina, Fellowship em Medicina Esportiva',
-            phone: '(11) 99999-3333',
-            totalPatients: 95,
-            totalAppointments: 203,
-            rating: 4.7,
-            reviewsCount: 67,
-            status: 'vacation',
-            specialtyNames: ['Ortopedia']
-          },
-          {
-            id: '4',
-            userId: '4',
-            user: {
-              id: '4',
-              email: 'dra.lima@eoclinica.com.br',
-              name: 'Dra. Ana Lima',
-              role: 'DOCTOR',
-              avatar: '',
-              createdAt: new Date(),
-              updatedAt: new Date()
-            },
-            crm: 'CRM-SP 456789',
-            specialties: [],
-            bio: 'Pediatra com especialização em neonatologia e desenvolvimento infantil.',
-            experience: '8 anos',
-            education: 'UNICAMP - Medicina, Residência em Pediatria',
-            phone: '(11) 99999-4444',
-            totalPatients: 156,
-            totalAppointments: 402,
-            rating: 4.9,
-            reviewsCount: 123,
-            nextAppointment: new Date(Date.now() + 1 * 60 * 60 * 1000),
-            status: 'active',
-            specialtyNames: ['Pediatria']
-          }
-        ]
+      if (response.success && response.data) {
+        // Transform API data to doctors with calculated stats
+        const doctorsData: DoctorWithStats[] = response.data.map((doctor: any) => ({
+          ...doctor,
+          totalPatients: 0, // Will be calculated from actual appointments
+          totalAppointments: 0, // Will be calculated from actual appointments  
+          rating: 5.0, // Default rating for new doctors
+          reviewsCount: 0, // Will be implemented later
+          nextAppointment: undefined, // Will be calculated from actual appointments
+          status: 'active', // Default status
+          specialtyNames: doctor.specialties?.map((s: any) => s.name) || []
+        }))
         setDoctors(doctorsData)
+      } else {
+        // No doctors found - clean state
+        setDoctors([])
       }
     } catch (error) {
       console.error('Error loading doctors:', error)
-      // Set mock data if API fails
+      // Clean state if API fails
       setDoctors([])
     } finally {
       setLoading(false)
@@ -238,39 +146,49 @@ export default function DoctorsPage() {
     )
   }
 
-  // Statistics cards following the model's design
+  // Statistics cards with real data
+  const totalDoctors = doctors.length
+  const activeDoctors = doctors.filter(d => d.status === 'active').length
+  const todayAppointments = doctors.reduce((sum, doctor) => {
+    return sum + (doctor.nextAppointment && 
+      doctor.nextAppointment.toDateString() === new Date().toDateString() ? 1 : 0)
+  }, 0)
+  const avgRating = doctors.length > 0 
+    ? (doctors.reduce((sum, d) => sum + d.rating, 0) / doctors.length).toFixed(1)
+    : '0.0'
+  const totalReviews = doctors.reduce((sum, d) => sum + d.reviewsCount, 0)
+
   const statsCards = [
     {
       title: 'Total de Médicos',
-      value: doctors.length,
-      subtitle: `+2 este mês`,
+      value: totalDoctors,
+      subtitle: totalDoctors === 0 ? 'Nenhum cadastrado' : `${activeDoctors} ativos`,
       icon: Stethoscope,
       color: 'text-blue-600',
       bgColor: 'bg-blue-50'
     },
     {
       title: 'Médicos Ativos',
-      value: doctors.filter(d => d.status === 'active').length,
-      subtitle: `${Math.round((doctors.filter(d => d.status === 'active').length / doctors.length) * 100)}% do total`,
+      value: activeDoctors,
+      subtitle: totalDoctors > 0 
+        ? `${Math.round((activeDoctors / totalDoctors) * 100)}% do total`
+        : 'Aguardando cadastros',
       icon: User,
       color: 'text-green-600',
       bgColor: 'bg-green-50'
     },
     {
       title: 'Consultas Hoje',
-      value: doctors.reduce((sum, doctor) => {
-        return sum + (doctor.nextAppointment && 
-          doctor.nextAppointment.toDateString() === new Date().toDateString() ? 1 : 0)
-      }, 0),
-      subtitle: '8 pendentes',
+      value: todayAppointments,
+      subtitle: todayAppointments === 0 ? 'Nenhuma agendada' : `${todayAppointments} pendentes`,
       icon: Calendar,
       color: 'text-purple-600',
       bgColor: 'bg-purple-50'
     },
     {
       title: 'Avaliação Média',
-      value: '4.8',
-      subtitle: 'Base: 331 avaliações',
+      value: avgRating,
+      subtitle: totalReviews === 0 ? 'Sem avaliações' : `Base: ${totalReviews} avaliações`,
       icon: Star,
       color: 'text-yellow-600',
       bgColor: 'bg-yellow-50'
@@ -306,7 +224,7 @@ export default function DoctorsPage() {
               <Download className="h-4 w-4 mr-2" />
               Exportar
             </Button>
-            <Button>
+            <Button onClick={() => router.push('/doctors/new')}>
               <Plus className="h-4 w-4 mr-2" />
               Novo Médico
             </Button>
@@ -413,7 +331,7 @@ export default function DoctorsPage() {
                   }
                 </p>
                 {!searchTerm && (
-                  <Button>
+                  <Button onClick={() => router.push('/doctors/new')}>
                     <Plus className="h-4 w-4 mr-2" />
                     Cadastrar Primeiro Médico
                   </Button>

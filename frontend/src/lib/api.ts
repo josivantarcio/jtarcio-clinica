@@ -128,7 +128,7 @@ class ApiClient {
   async getProfile() {
     return this.request<any>({
       method: 'GET',
-      url: '/api/v1/auth/profile'
+      url: '/api/v1/auth/me'
     })
   }
 
@@ -217,6 +217,27 @@ class ApiClient {
       method: 'GET',
       url: '/api/v1/users',
       params: { ...params, role: 'DOCTOR' }
+    })
+  }
+
+  async createDoctor(doctorData: {
+    user: {
+      name: string
+      email: string
+      password: string
+      role: string
+    }
+    crm: string
+    phone: string
+    specialties: string[]
+    experience?: string
+    education?: string
+    bio?: string
+  }) {
+    return this.request<any>({
+      method: 'POST',
+      url: '/api/v1/doctors',
+      data: doctorData
     })
   }
 
