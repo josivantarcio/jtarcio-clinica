@@ -31,6 +31,7 @@ This system follows clean architecture principles with:
    ```bash
    cd /home/josivan/ws/eo-clinica2
    npm install
+   cd frontend && npm install
    ```
 
 2. **Environment configuration:**
@@ -41,29 +42,40 @@ This system follows clean architecture principles with:
 
 3. **Start the development environment:**
    ```bash
-   # Start all services (PostgreSQL, Redis, ChromaDB, N8N)
+   # Method 1: Use complete setup script (RECOMMENDED)
+   ./scripts/start-complete.sh
+   
+   # Method 2: Fix Redis port conflict if needed
+   ./scripts/fix-redis-port.sh
+   
+   # Method 3: Manual steps
+   # 1. Start Docker services
    npm run docker:up
    
-   # Generate Prisma client
+   # 2. Generate Prisma client
    npm run db:generate
    
-   # Run database migrations
+   # 3. Run database migrations
    npm run db:migrate
    
-   # Seed the database with initial data
+   # 4. Seed the database
    npm run db:seed
    
-   # Start the development server
+   # 5. Start backend (port 3000)
    npm run dev
+   
+   # 6. Start frontend (port 3001) - in another terminal
+   cd frontend && npm run dev
    ```
 
 4. **Access the services:**
-   - **API**: http://localhost:3000
-   - **Frontend**: http://localhost:3001 (see Frontend section below)
-   - **API Documentation**: http://localhost:3000/documentation
+   - **Frontend (User Interface)**: http://localhost:3001
+   - **Backend API**: http://localhost:3000
+   - **API Documentation (Swagger)**: http://localhost:3000/documentation
    - **N8N Workflows**: http://localhost:5678 (admin/admin123)
+   - **PgAdmin (Database)**: http://localhost:5050 (admin@clinic.com/admin123)
    - **PostgreSQL**: localhost:5432
-   - **Redis**: localhost:6379
+   - **Redis**: localhost:6380
    - **ChromaDB**: http://localhost:8000
 
 ## 🎨 Frontend Interface
@@ -87,16 +99,18 @@ npm run dev
 The frontend will be available at: **http://localhost:3001**
 
 ### Frontend Features ✅ IMPLEMENTADAS
-- **Dashboard** - Página inicial com 4 cards estatísticos
-- **Pacientes** - Gestão completa de pacientes com filtros
-- **Consultas** - Sistema de agendamento e histórico
-- **Médicos** - Gerenciamento da equipe médica
-- **Agenda** - Calendário médico (dia/semana/mês)
-- **Configurações** - 5 abas de configurações do usuário
-- **Relatórios** - Analytics completos com gráficos mock
-- **Autenticação** - Login/registro com role-based access
-- **AI Chat Interface** - Para suporte ao paciente
-- **LGPD Compliance** - Interface de conformidade
+- **Dashboard** - Página inicial com estatísticas e métricas
+- **Pacientes** - Gestão completa de pacientes com filtros e busca
+- **Agendamentos** - Sistema completo de agendamento de consultas
+- **Médicos** - Gerenciamento da equipe médica e especialidades
+- **Agenda/Calendário** - Visualização de agenda médica completa
+- **Configurações** - Painel completo de configurações do usuário
+- **Relatórios/Analytics** - Relatórios detalhados com gráficos interativos
+- **Autenticação** - Login/registro com controle de acesso baseado em roles
+- **AI Chat Interface** - Interface de chat com IA integrada para pacientes
+- **Conformidade LGPD** - Sistema completo de conformidade e privacidade
+- **Notificações** - Sistema de notificações em tempo real
+- **Interface Responsiva** - Design otimizado para mobile e desktop
 
 ### User Portals
 - **Admin Portal**: System management and analytics
@@ -121,9 +135,13 @@ The system includes comprehensive models for:
 
 ```bash
 # Development
-npm run dev              # Start development server with hot reload
-npm run build           # Build for production
-npm run start           # Start production server
+npm run dev              # Start backend development server (port 3000)
+npm run start           # Start backend production server
+
+# Frontend (from /frontend directory)
+npm run dev             # Start frontend development server (port 3001)
+npm run build          # Build frontend for production
+npm run start          # Start frontend production server
 
 # Database
 npm run db:generate     # Generate Prisma client
@@ -131,17 +149,23 @@ npm run db:migrate      # Run database migrations
 npm run db:studio       # Open Prisma Studio
 npm run db:seed         # Seed database with initial data
 
-# Docker
-npm run docker:up       # Start all services
-npm run docker:down     # Stop all services
-npm run docker:logs     # View logs
+# Docker Services
+npm run docker:up       # Start all Docker services
+npm run docker:down     # Stop all Docker services
+npm run docker:logs     # View container logs
 
-# Quality
-npm run lint            # Run ESLint
+# Development Tools
+npm run lint            # Run ESLint (backend)
 npm run lint:fix        # Fix ESLint issues
 npm run format          # Format code with Prettier
 npm run test            # Run tests
 npm run test:coverage   # Run tests with coverage
+
+# Helper Scripts
+./scripts/start-complete.sh  # Complete system initialization
+./scripts/dev-setup.sh       # Development environment setup
+./scripts/fix-redis-port.sh     # Fix Redis port 6379 conflicts
+./scripts/disable-local-redis.sh  # Disable local Redis service permanently
 ```
 
 ## 🎯 Medical Specialties

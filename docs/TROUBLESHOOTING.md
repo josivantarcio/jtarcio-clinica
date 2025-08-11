@@ -8,6 +8,7 @@
 - Container falha ao iniciar
 - Erro: `bind: address already in use`
 - Serviços não conseguem se conectar
+- Especificamente comum com Redis (porta 6379)
 
 **Soluções:**
 
@@ -20,22 +21,38 @@
 #### Solução Manual:
 ```bash
 # 1. Verificar o que está usando as portas
-sudo ss -tulpn | grep :3000
-sudo ss -tulpn | grep :3001
+sudo ss -tulpn | grep :3000   # Backend
+sudo ss -tulpn | grep :3001   # Frontend  
+sudo ss -tulpn | grep :6379   # Redis
+sudo ss -tulpn | grep :5432   # PostgreSQL
 
-# 2. Matar processos específicos
-sudo kill -9 <PID>
+# 2. Parar processo Redis local (se existir)
+sudo systemctl stop redis-server
+sudo service redis stop
 
-# 3. Parar todos os containers Docker
+# 3. Matar processos específicos por porta
+sudo lsof -ti:6379 | xargs sudo kill -9
+sudo lsof -ti:3000 | xargs sudo kill -9
+sudo lsof -ti:3001 | xargs sudo kill -9
+
+# 4. Parar todos os containers Docker
 docker-compose down --volumes --remove-orphans
 
-# 4. Limpar sistema Docker (opcional)
+# 5. Limpar sistema Docker (opcional)
 docker system prune -f
 docker network prune -f
 
-# 5. Reiniciar serviços
+# 6. Desabilitar Redis local permanentemente (RECOMENDADO)
+./scripts/disable-local-redis.sh
+
+# 7. Reiniciar serviços
 docker-compose up -d
 ```
+
+**✅ SOLUÇÃO PERMANENTE APLICADA:**
+- Redis Docker agora usa porta 6380 externamente
+- Redis local pode continuar rodando na 6379 sem conflitos  
+- Configurações atualizadas em .env e .env.example
 
 ### 2. Erro: "Network needs to be recreated"
 
@@ -157,6 +174,33 @@ docker-compose build frontend
 # 3. Verificar Dockerfiles
 # Verificar se os arquivos de dependências existem
 ls package.json frontend/package.json
+```
+
+### 8. Redis/ChromaDB/N8N não iniciam
+
+**Sintomas:**
+- `Cannot start service redis: ports are not available`
+- Serviços auxiliares falham ao iniciar
+- Erro de bind de portas 6379, 8000, 5678
+
+**Solução:**
+```bash
+# 1. Verificar se há serviços locais rodando
+sudo systemctl status redis-server
+sudo systemctl status redis
+
+# 2. Parar serviços locais conflitantes
+sudo systemctl stop redis-server
+sudo systemctl disable redis-server  # Opcional: impedir inicialização automática
+
+# 3. Verificar portas ocupadas
+sudo netstat -tlnp | grep -E ':6379|:8000|:5678'
+
+# 4. Limpar containers órfãos específicos
+docker container prune -f
+
+# 5. Usar script completo de inicialização
+./scripts/start-complete.sh
 ```
 
 ## 🛠️ Comandos Úteis para Debug

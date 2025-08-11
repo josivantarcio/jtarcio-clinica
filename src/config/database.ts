@@ -19,7 +19,7 @@ export async function connectDatabase(): Promise<void> {
     await prisma.$connect();
     logger.info('✅ Database connected successfully'); // Usar logger.info
   } catch (error) {
-    console.error('❌ Database connection failed:', error);
+    logger.error('❌ Database connection failed:', error);
     throw error;
   }
 }
@@ -29,7 +29,7 @@ export async function disconnectDatabase(): Promise<void> {
     await prisma.$disconnect();
     logger.info('✅ Database disconnected successfully'); // Usar logger.info
   } catch (error) {
-    console.error('❌ Database disconnection failed:', error);
+    logger.error('❌ Database disconnection failed:', error);
     throw error;
   }
 }

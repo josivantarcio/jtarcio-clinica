@@ -7,7 +7,7 @@
 | **Frontend** | `3001` | http://localhost:3001 | Interface Next.js do usuário |
 | **Backend** | `3000` | http://localhost:3000 | API Fastify + Swagger Docs |
 | **PostgreSQL** | `5432` | localhost:5432 | Banco de dados principal |
-| **Redis** | `6379` | localhost:6379 | Cache e sessões |
+| **Redis** | `6380` | localhost:6380 | Cache e sessões |
 | **ChromaDB** | `8000` | http://localhost:8000 | Banco vetorial para IA |
 | **N8N** | `5678` | http://localhost:5678 | Automação de workflows |
 | **PgAdmin** | `5050` | http://localhost:5050 | Interface de administração DB |
