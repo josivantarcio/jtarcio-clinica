@@ -1,6 +1,6 @@
 import { FastifyInstance, FastifyPluginOptions } from 'fastify';
 import { AIChatController } from '../controllers/ai-chat.js';
-import { PrismaClient } from '@prisma/client/generated/client/index.js';
+import { PrismaClient } from '../../database/generated/client';
 import Redis from 'ioredis';
 
 export default async function aiChatRoutes(

@@ -6,7 +6,7 @@ import {
 } from '@/types/scheduling';
 import { AppointmentStatus } from '@/types/appointment';
 import { BusinessRules, RESOURCE_CONFIG, TIME_CONSTRAINTS } from '@/config/business-rules';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../../database/generated/client';
 import {
   startOfDay,
   endOfDay,

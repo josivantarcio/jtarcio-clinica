@@ -6,7 +6,7 @@
  * appointment booking assistance, and medical knowledge access.
  */
 
-import { PrismaClient } from '@prisma/client/generated/client/index.js';
+import { PrismaClient } from '@/database/generated/client';
 import Redis from 'ioredis';
 import { logger } from '../config/logger.js';
 import { env } from '../config/env.js';
@@ -15,7 +15,6 @@ import {
   AIServiceFactory,
   ConversationManager,
   Intent,
-  ConversationResponse,
   StreamingConversationResponse,
   AIUtils
 } from '../integrations/ai/index.js';

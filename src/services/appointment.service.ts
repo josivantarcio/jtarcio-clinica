@@ -2,10 +2,10 @@ import {
   AppointmentBooking,
   SchedulingCriteria,
   CancellationReason,
+  CancellationCode,
   AvailableSlot,
-  MultiResourceSlot,
   QueueEntry
-} from '@/types/scheduling';
+} from '../types/scheduling';
 import { 
   CreateAppointmentDto,
   UpdateAppointmentDto,
@@ -14,13 +14,13 @@ import {
   CompleteAppointmentDto,
   AppointmentStatus,
   AppointmentType
-} from '@/types/appointment';
-import { BusinessRulesEngine, BusinessRuleResult } from '@/services/business-rules.engine';
-import { CoreSchedulingService } from '@/services/core-scheduling.service';
-import { AdvancedSchedulingAlgorithms } from '@/services/advanced-scheduling.algorithms';
-import { AvailabilityManagementService } from '@/services/availability-management.service';
-import { BusinessRules, CANCELLATION_POLICY, RESCHEDULING_RULES } from '@/config/business-rules';
-import { PrismaClient, Appointment } from '@prisma/client';
+} from '../types/appointment';
+import { BusinessRulesEngine, BusinessRuleResult } from './business-rules.engine';
+import { CoreSchedulingService } from './core-scheduling.service';
+import { AdvancedSchedulingAlgorithms } from './advanced-scheduling.algorithms';
+import { AvailabilityManagementService } from './availability-management.service';
+import { BusinessRules, CANCELLATION_POLICY, RESCHEDULING_RULES } from '../config/business-rules';
+import { PrismaClient, Appointment, AppointmentStatus as PrismaAppointmentStatus, AppointmentType as PrismaAppointmentType } from '../database/generated/client';
 import { Logger } from 'winston';
 import Redis from 'ioredis';
 import { 
@@ -175,7 +175,7 @@ export class AppointmentService {
 
       // Validate cancellation rules
       const cancellationReason: CancellationReason = {
-        code: 'PATIENT_REQUEST',
+        code: CancellationCode.PATIENT_REQUEST,
         description: cancellationData.reason,
         initiatedBy: 'PATIENT',
         refundable: true
@@ -202,7 +202,7 @@ export class AppointmentService {
       const cancelledAppointment = await prisma.appointment.update({
         where: { id: appointmentId },
         data: {
-          status: AppointmentStatus.CANCELLED,
+          status: PrismaAppointmentStatus.CANCELLED,
           cancelledAt: new Date(),
           cancelReason: cancellationData.reason
         }
@@ -300,7 +300,7 @@ export class AppointmentService {
             endTime: addMinutes(rescheduleData.newScheduledAt, currentAppointment.duration),
             rescheduleCount: { increment: 1 },
             rescheduledFrom: appointmentId,
-            status: AppointmentStatus.SCHEDULED
+            status: PrismaAppointmentStatus.SCHEDULED
           }
         });
 
@@ -366,7 +366,7 @@ export class AppointmentService {
         throw new Error('Only the assigned doctor can complete this appointment');
       }
 
-      if (appointment.status !== AppointmentStatus.IN_PROGRESS) {
+      if (appointment.status !== PrismaAppointmentStatus.IN_PROGRESS) {
         throw new Error('Appointment must be in progress to complete');
       }
 
@@ -374,7 +374,7 @@ export class AppointmentService {
       const completedAppointment = await prisma.appointment.update({
         where: { id: appointmentId },
         data: {
-          status: AppointmentStatus.COMPLETED,
+          status: PrismaAppointmentStatus.COMPLETED,
           diagnosis: completionData.diagnosis,
           prescription: completionData.prescription,
           notes: completionData.notes,
@@ -587,7 +587,7 @@ export class AppointmentService {
       reason: bookingData.reason,
       symptoms: bookingData.symptoms,
       notes: bookingData.notes,
-      status: AppointmentStatus.SCHEDULED
+      status: PrismaAppointmentStatus.SCHEDULED
     };
 
     return await prisma.appointment.create({
@@ -635,7 +635,7 @@ export class AppointmentService {
   private requiresConfirmation(appointment: Appointment, validation: BusinessRuleResult): boolean {
     // Check if appointment requires confirmation based on business rules
     return validation.warnings.some(w => w.impact === 'HIGH') ||
-           appointment.type === AppointmentType.EMERGENCY ||
+           appointment.type === PrismaAppointmentType.EMERGENCY ||
            appointment.scheduledAt <= addDays(new Date(), 1);
   }
 

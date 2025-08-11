@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { AuditController } from '../modules/audit/audit.controller';
-import { PrismaClient } from '../database/generated/client';
+import { PrismaClient } from '../../database/generated/client';
 
 // Initialize prisma client
 const prisma = new PrismaClient();

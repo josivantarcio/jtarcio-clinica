@@ -93,59 +93,7 @@ fastify.post('/api/v1/auth/login', async (request, reply) => {
     };
   }
   
-  if (email === 'dr.silva@eoclinica.com.br' && password === 'Admin123!') {
-    return {
-      success: true,
-      data: {
-        user: {
-          id: '2',
-          email: 'dr.silva@eoclinica.com.br',
-          role: 'DOCTOR',
-          name: 'Dr. João Silva',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        },
-        accessToken: 'fake-jwt-token-for-testing',
-        refreshToken: 'fake-refresh-token-for-testing'
-      }
-    };
-  }
-
-  if (email === 'recepcao@eoclinica.com.br' && password === 'Admin123!') {
-    return {
-      success: true,
-      data: {
-        user: {
-          id: '3',
-          email: 'recepcao@eoclinica.com.br',
-          role: 'RECEPTIONIST',
-          name: 'Maria Santos',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        },
-        accessToken: 'fake-jwt-token-for-testing',
-        refreshToken: 'fake-refresh-token-for-testing'
-      }
-    };
-  }
-
-  if (email === 'paciente@example.com' && password === 'Admin123!') {
-    return {
-      success: true,
-      data: {
-        user: {
-          id: '4',
-          email: 'paciente@example.com',
-          role: 'PATIENT',
-          name: 'João Paciente',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        },
-        accessToken: 'fake-jwt-token-for-testing',
-        refreshToken: 'fake-refresh-token-for-testing'
-      }
-    };
-  }
+  // Only admin login is available now
   
     reply.status(401);
     return {
@@ -179,6 +127,32 @@ fastify.get('/api/v1/auth/me', async (request, reply) => {
       name: 'Administrador Sistema',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
+    }
+  };
+});
+
+// Usuários/Pacientes - agora retorna lista vazia (somente admin existe)
+fastify.get('/api/v1/users', async (request, reply) => {
+  const query = request.query as any;
+  const role = query?.role;
+  
+  // Lista vazia - não há mais dados fictícios
+  const allUsers: any[] = [];
+  
+  // Filtrar por role se especificado
+  let filteredUsers = allUsers;
+  if (role) {
+    filteredUsers = allUsers.filter(user => user.role === role);
+  }
+  
+  return {
+    success: true,
+    data: filteredUsers,
+    pagination: {
+      page: 1,
+      pageSize: 10,
+      total: filteredUsers.length,
+      totalPages: 1
     }
   };
 });

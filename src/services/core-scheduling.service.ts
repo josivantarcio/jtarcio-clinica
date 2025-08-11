@@ -12,7 +12,7 @@ import {
 } from '@/types/scheduling';
 import { AppointmentType, AppointmentStatus } from '@/types/appointment';
 import { BusinessRules, SPECIALTY_CONFIG, APPOINTMENT_TYPE_CONFIG } from '@/config/business-rules';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../../database/generated/client';
 import { addMinutes, isWithinInterval, parseISO, format, isSameDay, differenceInMinutes } from 'date-fns';
 import { Logger } from 'winston';
 import Redis from 'ioredis';

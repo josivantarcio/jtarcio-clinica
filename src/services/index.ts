@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../../database/generated/client';
 import Redis from 'ioredis';
 import { Logger } from 'winston';
 

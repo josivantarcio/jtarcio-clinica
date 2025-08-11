@@ -17,7 +17,7 @@ import {
   TIME_CONSTRAINTS,
   PatientClassification 
 } from '@/config/business-rules';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../../database/generated/client';
 import {
   addMinutes,
   addHours,

@@ -13,7 +13,7 @@ import {
   CancellationReason,
   SchedulingCriteria 
 } from '@/types/scheduling';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../../database/generated/client';
 import { 
   differenceInHours, 
   differenceInMinutes,

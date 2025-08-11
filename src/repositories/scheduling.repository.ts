@@ -1,17 +1,7 @@
-import { PrismaClient, Appointment, Doctor, Specialty, Patient } from '@prisma/client';
-import { AppointmentStatus, AppointmentType } from '@/types/appointment';
-import { 
-  SchedulingCriteria,
-  AvailableSlot,
-  QueueEntry 
-} from '@/types/scheduling';
-import { 
-  startOfDay, 
-  endOfDay, 
-  addDays, 
-  subDays,
-  format 
-} from 'date-fns';
+import { PrismaClient, Appointment, Doctor, Specialty, Patient, AppointmentStatus as PrismaAppointmentStatus } from '../database/generated/client';
+import { AppointmentStatus, AppointmentType } from '../types/appointment';
+import { SchedulingCriteria, AvailableSlot, QueueEntry } from '../types/scheduling';
+import { startOfDay, endOfDay, addDays, format } from 'date-fns';
 import { Logger } from 'winston';
 import Redis from 'ioredis';
 
@@ -22,22 +12,19 @@ export interface SchedulingRepositoryDeps {
 }
 
 export interface AppointmentWithRelations extends Appointment {
-  patient: Patient & {
-    user: {
-      id: string;
-      firstName: string;
-      lastName: string;
-      email: string;
-      phone: string | null;
-    };
+  patient: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string | null;
+    patientProfile?: Patient | null;
   };
-  doctor: Doctor & {
-    user: {
-      id: string;
-      firstName: string;
-      lastName: string;
-    };
-    specialty: Specialty;
+  doctor: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    doctorProfile?: Doctor | null;
   };
   specialty: Specialty;
 }
@@ -99,32 +86,25 @@ export class SchedulingRepository {
         data: {
           ...data,
           endTime: new Date(data.scheduledAt.getTime() + data.duration * 60000),
-          status: AppointmentStatus.SCHEDULED
+          status: PrismaAppointmentStatus.SCHEDULED
         },
         include: {
           patient: {
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  firstName: true,
-                  lastName: true,
-                  email: true,
-                  phone: true
-                }
-              }
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+              phone: true,
+              patientProfile: true
             }
           },
           doctor: {
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  firstName: true,
-                  lastName: true
-                }
-              },
-              specialty: true
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              doctorProfile: true
             }
           },
           specialty: true
@@ -159,28 +139,21 @@ export class SchedulingRepository {
         where: { id },
         include: {
           patient: {
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  firstName: true,
-                  lastName: true,
-                  email: true,
-                  phone: true
-                }
-              }
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+              phone: true,
+              patientProfile: true
             }
           },
           doctor: {
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  firstName: true,
-                  lastName: true
-                }
-              },
-              specialty: true
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              doctorProfile: true
             }
           },
           specialty: true
@@ -212,28 +185,21 @@ export class SchedulingRepository {
         data,
         include: {
           patient: {
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  firstName: true,
-                  lastName: true,
-                  email: true,
-                  phone: true
-                }
-              }
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+              phone: true,
+              patientProfile: true
             }
           },
           doctor: {
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  firstName: true,
-                  lastName: true
-                }
-              },
-              specialty: true
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              doctorProfile: true
             }
           },
           specialty: true
@@ -366,7 +332,7 @@ export class SchedulingRepository {
   async getDoctorAppointments(
     doctorId: string, 
     date: Date,
-    statuses: AppointmentStatus[] = [AppointmentStatus.SCHEDULED, AppointmentStatus.CONFIRMED, AppointmentStatus.IN_PROGRESS]
+    statuses: PrismaAppointmentStatus[] = [PrismaAppointmentStatus.SCHEDULED, PrismaAppointmentStatus.CONFIRMED, PrismaAppointmentStatus.IN_PROGRESS]
   ): Promise<AppointmentWithRelations[]> {
     const { prisma, redis, logger } = this.deps;
     const dateStr = format(date, 'yyyy-MM-dd');
@@ -392,28 +358,21 @@ export class SchedulingRepository {
         },
         include: {
           patient: {
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  firstName: true,
-                  lastName: true,
-                  email: true,
-                  phone: true
-                }
-              }
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+              phone: true,
+              patientProfile: true
             }
           },
           doctor: {
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  firstName: true,
-                  lastName: true
-                }
-              },
-              specialty: true
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              doctorProfile: true
             }
           },
           specialty: true
@@ -464,28 +423,21 @@ export class SchedulingRepository {
         where,
         include: {
           patient: {
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  firstName: true,
-                  lastName: true,
-                  email: true,
-                  phone: true
-                }
-              }
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+              phone: true,
+              patientProfile: true
             }
           },
           doctor: {
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  firstName: true,
-                  lastName: true
-                }
-              },
-              specialty: true
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              doctorProfile: true
             }
           },
           specialty: true
@@ -542,28 +494,21 @@ export class SchedulingRepository {
           where,
           include: {
             patient: {
-              include: {
-                user: {
-                  select: {
-                    id: true,
-                    firstName: true,
-                    lastName: true,
-                    email: true,
-                    phone: true
-                  }
-                }
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+                phone: true,
+                patientProfile: true
               }
             },
             doctor: {
-              include: {
-                user: {
-                  select: {
-                    id: true,
-                    firstName: true,
-                    lastName: true
-                  }
-                },
-                specialty: true
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                doctorProfile: true
               }
             },
             specialty: true
@@ -747,7 +692,8 @@ export class SchedulingRepository {
         }
         return 0;
       } else {
-        return await redis.flushdb();
+        await redis.flushdb();
+        return 1; // Return positive number to indicate success
       }
 
     } catch (error) {

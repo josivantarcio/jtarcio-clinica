@@ -51,7 +51,7 @@ export type {
 } from './conversation-flows.js';
 
 // Main AI service factory
-import { PrismaClient } from '@prisma/client/generated/client/index.js';
+import { PrismaClient } from '../../database/generated/client';
 import Redis from 'ioredis';
 import { ConversationManager } from './conversation-manager.js';
 import { logger } from '../../config/logger.js';

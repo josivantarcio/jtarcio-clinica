@@ -193,7 +193,7 @@ export default function PatientsPage() {
               <Download className="h-4 w-4 mr-2" />
               Exportar
             </Button>
-            <Button>
+            <Button onClick={() => router.push('/patients/new')}>
               <Plus className="h-4 w-4 mr-2" />
               Novo Paciente
             </Button>
@@ -345,20 +345,35 @@ export default function PatientsPage() {
                         variant="ghost"
                         size="sm"
                         onClick={() => setSelectedPatient(patient)}
+                        title="Ver detalhes do paciente"
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="sm">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => router.push(`/patients/${patient.id}/edit`)}
+                        title="Editar paciente"
+                      >
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => router.push('/appointments/new?patientId=' + patient.id)}
+                        title="Agendar nova consulta"
                       >
                         <Plus className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="sm">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        title="Mais opções"
+                        onClick={() => {
+                          // TODO: Implementar dropdown com mais opções
+                          console.log('More options for patient:', patient.id)
+                        }}
+                      >
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </div>

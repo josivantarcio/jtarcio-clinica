@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client/generated/client/index.js';
+import { PrismaClient } from '../../database/generated/client';
 import { logger } from '../../config/logger.js';
 import { AnthropicClient, ConversationMessage } from './anthropic-client.js';
 import { NLPPipeline, Intent, NLPResult } from './nlp-pipeline.js';

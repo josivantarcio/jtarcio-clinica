@@ -1,5 +1,6 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../database/generated/client';
 import { env } from './env';
+import { logger } from './logger'; // Importar o logger
 
 // Create Prisma client with configuration
 export const prisma = new PrismaClient({
@@ -16,7 +17,7 @@ export const prisma = new PrismaClient({
 export async function connectDatabase(): Promise<void> {
   try {
     await prisma.$connect();
-    console.log('✅ Database connected successfully');
+    logger.info('✅ Database connected successfully'); // Usar logger.info
   } catch (error) {
     console.error('❌ Database connection failed:', error);
     throw error;
@@ -26,7 +27,7 @@ export async function connectDatabase(): Promise<void> {
 export async function disconnectDatabase(): Promise<void> {
   try {
     await prisma.$disconnect();
-    console.log('✅ Database disconnected successfully');
+    logger.info('✅ Database disconnected successfully'); // Usar logger.info
   } catch (error) {
     console.error('❌ Database disconnection failed:', error);
     throw error;

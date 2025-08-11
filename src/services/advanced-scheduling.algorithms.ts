@@ -9,7 +9,7 @@ import {
 } from '@/types/scheduling';
 import { AppointmentType, AppointmentStatus } from '@/types/appointment';
 import { BusinessRules, QUEUE_CONFIG, EMERGENCY_RULES } from '@/config/business-rules';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../../database/generated/client';
 import {
   addMinutes,
   addDays,

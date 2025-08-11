@@ -2,7 +2,7 @@ import { FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
 import { logger } from '../config/logger.js';
 import { ConversationManager } from '../integrations/ai/conversation-manager.js';
-import { PrismaClient } from '@prisma/client/generated/client/index.js';
+import { PrismaClient } from '../../database/generated/client';
 import Redis from 'ioredis';
 
 // Validation schemas

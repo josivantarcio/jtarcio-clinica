@@ -4,7 +4,6 @@ import { env } from './env';
 // Create Redis client
 export const redis = new Redis(env.REDIS_URL, {
   password: env.REDIS_PASSWORD,
-  retryDelayOnFailover: 100,
   maxRetriesPerRequest: 3,
   lazyConnect: true,
   keepAlive: 30000,

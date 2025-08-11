@@ -243,12 +243,12 @@ export const cancellationReasonSchema = z.object({
   fee: z.number().nonnegative().optional(),
 });
 
-// Type exports
-export type SchedulingCriteria = z.infer<typeof schedulingCriteriaSchema>;
-export type AvailableSlot = z.infer<typeof availableSlotSchema>;
-export type QueueEntry = z.infer<typeof queueEntrySchema>;
-export type AppointmentBooking = z.infer<typeof appointmentBookingSchema>;
-export type CancellationReason = z.infer<typeof cancellationReasonSchema>;
+// Zod inferred types (different from interfaces above)
+export type SchedulingCriteriaDto = z.infer<typeof schedulingCriteriaSchema>;
+export type AvailableSlotDto = z.infer<typeof availableSlotSchema>;
+export type QueueEntryDto = z.infer<typeof queueEntrySchema>;
+export type AppointmentBookingDto = z.infer<typeof appointmentBookingSchema>;
+export type CancellationReasonDto = z.infer<typeof cancellationReasonSchema>;
 
 // Search and filter schemas
 export const availabilitySearchSchema = z.object({
