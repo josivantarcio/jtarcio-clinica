@@ -435,20 +435,27 @@ start_docker_services() {
 wait_for_docker_services() {
     log_step "Aguardando serviços Docker ficarem saudáveis..."
     
-    local services=("postgres:5432" "redis:6379")
+    # Determine PostgreSQL port based on configuration
+    local postgres_port="5432"
+    if [ -f docker-compose.yml.backup ] || grep -q "5433:5432" docker-compose.yml; then
+        postgres_port="5433"
+    fi
+    
+    local services=("postgres:$postgres_port" "redis:6380")
     local timeout=$HEALTH_CHECK_TIMEOUT
     local elapsed=0
     
     for service in "${services[@]}"; do
         local container_name=$(echo "$service" | cut -d':' -f1)
-        local port=$(echo "$service" | cut -d':' -f2)
+        local host_port=$(echo "$service" | cut -d':' -f2)
         
-        log_step "Aguardando $container_name na porta $port..."
+        log_step "Aguardando $container_name na porta host $host_port..."
         
         elapsed=0
         while [ $elapsed -lt $timeout ]; do
-            if docker-compose exec -T "$container_name" timeout 5 sh -c "echo > /dev/tcp/localhost/$port" 2>/dev/null; then
-                log_success "$container_name está respondendo!"
+            # Test connection to host port instead of container internal port
+            if timeout 5 bash -c "echo > /dev/tcp/localhost/$host_port" 2>/dev/null; then
+                log_success "$container_name está respondendo na porta $host_port!"
                 break
             fi
             
@@ -459,6 +466,9 @@ wait_for_docker_services() {
         
         if [ $elapsed -ge $timeout ]; then
             log_warning "$container_name não respondeu em ${timeout}s"
+            # Show container logs for debugging
+            log_step "Logs do container $container_name:"
+            docker-compose logs --tail=10 "$container_name" || true
         fi
     done
 }
@@ -469,11 +479,18 @@ setup_database() {
     
     # Wait for PostgreSQL to be ready
     log_step "Aguardando PostgreSQL..."
+    
+    # Determine correct PostgreSQL port
+    local postgres_port="5432"
+    if [ -f docker-compose.yml.backup ] || grep -q "5433:5432" docker-compose.yml; then
+        postgres_port="5433"
+    fi
+    
     local attempts=0
     while [ $attempts -lt 30 ]; do
-        if pg_isready -h localhost -p 5432 -U clinic_user -d eo_clinica_db >/dev/null 2>&1 || \
-           docker-compose exec -T postgres pg_isready -U clinic_user -d eo_clinica_db >/dev/null 2>&1; then
-            log_success "PostgreSQL está pronto!"
+        if pg_isready -h localhost -p $postgres_port -U clinic_user -d eo_clinica_app >/dev/null 2>&1 || \
+           docker-compose exec -T postgres pg_isready -U clinic_user -d eo_clinica_app >/dev/null 2>&1; then
+            log_success "PostgreSQL está pronto na porta $postgres_port!"
             break
         fi
         echo -n "."
