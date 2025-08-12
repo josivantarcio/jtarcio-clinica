@@ -1,22 +1,27 @@
-# EO Clínica - Production Script Guide
-## Complete Guide for Production Deployment
+# EO Clínica - Hybrid Deployment Script Guide
+## Complete Guide for Hybrid Architecture Deployment
 
-### 🚀 Production Script Overview
+### 🚀 Hybrid Deployment Overview
 
-The EO Clínica system includes a robust production deployment script (`start-production.sh`) that handles the complete deployment process with automated error recovery, backup creation, and health monitoring.
+The EO Clínica system uses a **hybrid architecture** where:
+- **Infrastructure services** run in Docker containers (PostgreSQL, Redis, ChromaDB, N8N, PgAdmin)
+- **Application services** run locally (Backend, Frontend) for better development experience
+
+The production script (`start-production.sh`) handles the complete hybrid deployment process with automated error recovery, backup creation, and health monitoring.
 
 ### 📋 Script Features
 
 #### ✅ Core Features
+- **Hybrid Architecture**: Docker infrastructure + Local application services
 - **Automated Prerequisites Check**: Validates all required tools and environment
 - **Automatic Backup Creation**: Creates timestamped backups before deployment
 - **Docker Environment Cleanup**: Completely cleans Docker environment to prevent conflicts
-- **Production Environment Setup**: Creates optimized production configurations
-- **Image Building**: Builds optimized Docker images for backend and frontend
+- **Local Service Management**: Installs dependencies and manages local backend/frontend
+- **Smart Environment Setup**: Creates optimized configurations for hybrid architecture
 - **Retry Logic**: Automatic retry with cleanup on failure
 - **Health Monitoring**: Comprehensive health checks for all services
-- **Zero-Downtime Deployment**: Minimizes service interruption
-- **Automatic Rollback**: Reverts to backup on critical failure
+- **Service Monitoring**: Continuous monitoring of local and Docker services
+- **Automatic Rollback**: Reverts to backup and stops services on critical failure
 
 #### 🔧 Technical Improvements
 - **Timeout Handling**: Prevents hanging operations
@@ -43,26 +48,29 @@ The script automatically checks for:
 - npm >= 9.0.0
 - Required project files (package.json, docker-compose.yml, frontend/)
 
-### 📊 Script Execution Flow
+### 📊 Hybrid Deployment Flow
 
 ```mermaid
 flowchart TD
     A[Start Script] --> B[Check Prerequisites]
     B --> C[Create Backup]
     C --> D[Clean Docker Environment]
-    D --> E[Setup Production Environment]
-    E --> F[Build Production Images]
-    F --> G[Start Services with Retry]
-    G --> H{Services Started?}
-    H -->|Yes| I[Wait for Services Health]
+    D --> E[Setup Hybrid Environment]
+    E --> F[Prepare Local Services]
+    F --> G[Start Docker Infrastructure]
+    G --> H{Docker Services OK?}
+    H -->|Yes| I[Wait for Docker Health]
     H -->|No| J[Rollback Deployment]
-    I --> K[Setup Database]
-    K --> L[Perform Health Checks]
-    L --> M{Health Check OK?}
-    M -->|Yes| N[Show Final Status]
-    M -->|No| J
-    J --> O[Exit with Error]
-    N --> P[Deployment Complete]
+    I --> K[Setup Database Locally]
+    K --> L[Start Local Backend]
+    L --> M[Start Local Frontend]
+    M --> N[Health Checks All Services]
+    N --> O{All Services Healthy?}
+    O -->|Yes| P[Show Status & Monitor]
+    O -->|No| J
+    P --> Q[Continuous Monitoring]
+    Q --> R[Keep Services Running]
+    J --> S[Stop All Services]
 ```
 
 ### 🗂️ File Structure Created

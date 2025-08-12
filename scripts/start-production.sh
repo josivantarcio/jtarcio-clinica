@@ -12,6 +12,8 @@ DOCKER_RETRY_COUNT=3
 HEALTH_CHECK_TIMEOUT=60
 BACKUP_CREATED=false
 ROLLBACK_NEEDED=false
+BACKEND_PID=""
+FRONTEND_PID=""
 
 # Colors for output
 RED='\033[0;31m'
@@ -166,11 +168,11 @@ NODE_ENV=production
 PORT=3000
 API_VERSION=v1
 
-# Database Configuration (adjust for production)
-DATABASE_URL=postgresql://clinic_user:clinic_password@postgres:5432/eo_clinica_db
+# Database Configuration (local connection to Docker)
+DATABASE_URL=postgresql://clinic_user:clinic_password@localhost:5432/eo_clinica_db
 
-# Redis Configuration
-REDIS_URL=redis://redis:6379
+# Redis Configuration (local connection to Docker) 
+REDIS_URL=redis://localhost:6380
 REDIS_PASSWORD=
 
 # JWT Configuration (use strong secrets in production)
@@ -187,8 +189,8 @@ SALT_ROUNDS=12
 ANTHROPIC_API_KEY=your-anthropic-api-key-here
 ANTHROPIC_API_VERSION=2023-06-01
 
-# ChromaDB Configuration
-CHROMA_HOST=chromadb
+# ChromaDB Configuration (local connection to Docker)
+CHROMA_HOST=localhost
 CHROMA_PORT=8000
 CHROMA_COLLECTION_NAME=clinic_conversations
 
@@ -239,48 +241,67 @@ EOF
 NODE_ENV=production
 NEXT_PUBLIC_API_URL=http://localhost:3000/api/v1
 NEXT_PUBLIC_APP_NAME=EO Clínica
-NEXT_PUBLIC_APP_VERSION=1.0.3
+NEXT_PUBLIC_APP_VERSION=1.0.4
 NEXT_PUBLIC_ENABLE_AI_CHAT=true
-PORT=3000
+PORT=3001
+EOF
+
+    # Also create .env.local for frontend development mode
+    cat > frontend/.env.local << 'EOF'
+NODE_ENV=development
+NEXT_PUBLIC_API_URL=http://localhost:3000/api/v1
+NEXT_PUBLIC_APP_NAME=EO Clínica
+NEXT_PUBLIC_APP_VERSION=1.0.4
+NEXT_PUBLIC_ENABLE_AI_CHAT=true
+PORT=3001
 EOF
     
     log_success "Ambiente de produção configurado"
 }
 
-# Function to build production images
-build_production_images() {
-    log_step "Construindo imagens de produção..."
+# Function to install and prepare local services
+prepare_local_services() {
+    log_step "Preparando serviços locais (backend e frontend)..."
     
-    # Build backend image
-    log_step "Construindo imagem do backend..."
-    docker build -t eo-clinica/backend:latest . || {
-        log_error "Falha ao construir imagem do backend"
+    # Install backend dependencies
+    log_step "Instalando dependências do backend..."
+    npm install --silent || {
+        log_error "Falha ao instalar dependências do backend"
         return 1
     }
     
-    # Build frontend image
-    log_step "Construindo imagem do frontend..."
-    docker build -t eo-clinica/frontend:latest ./frontend || {
-        log_error "Falha ao construir imagem do frontend"
+    # Install frontend dependencies
+    log_step "Instalando dependências do frontend..."
+    cd frontend
+    npm install --silent || {
+        log_error "Falha ao instalar dependências do frontend"
+        cd ..
         return 1
     }
+    cd ..
     
-    log_success "Imagens de produção construídas"
+    # Generate Prisma client locally
+    log_step "Gerando cliente Prisma..."
+    npm run db:generate || {
+        log_warning "Falha ao gerar cliente Prisma - será feito após o banco iniciar"
+    }
+    
+    log_success "Serviços locais preparados"
 }
 
-# Function to start services with retry logic
-start_services_with_retry() {
-    log_step "Iniciando serviços com retry automático..."
+# Function to start Docker infrastructure services
+start_docker_services() {
+    log_step "Iniciando serviços de infraestrutura (Docker)..."
     
     local retry=1
     local max_retries=$DOCKER_RETRY_COUNT
     
     while [ $retry -le $max_retries ]; do
-        log_step "Tentativa $retry/$max_retries de inicialização dos serviços..."
+        log_step "Tentativa $retry/$max_retries de inicialização dos containers..."
         
-        # Use production environment
-        if COMPOSE_HTTP_TIMEOUT=120 docker-compose --env-file .env.production up -d --build; then
-            log_success "Serviços iniciados com sucesso"
+        # Start only infrastructure services (postgres, redis, chromadb, n8n, pgadmin)
+        if COMPOSE_HTTP_TIMEOUT=120 docker-compose --env-file .env.production up -d postgres redis chromadb n8n pgadmin; then
+            log_success "Containers de infraestrutura iniciados"
             return 0
         else
             log_warning "Falha na tentativa $retry/$max_retries"
@@ -295,16 +316,16 @@ start_services_with_retry() {
         fi
     done
     
-    log_error "Falha ao iniciar serviços após $max_retries tentativas"
+    log_error "Falha ao iniciar containers após $max_retries tentativas"
     ROLLBACK_NEEDED=true
     return 1
 }
 
-# Function to wait for services to be healthy
-wait_for_services() {
-    log_step "Aguardando serviços ficarem saudáveis..."
+# Function to wait for Docker services to be healthy  
+wait_for_docker_services() {
+    log_step "Aguardando serviços Docker ficarem saudáveis..."
     
-    local services=("postgres:5432" "redis:6379" "app:3000")
+    local services=("postgres:5432" "redis:6379")
     local timeout=$HEALTH_CHECK_TIMEOUT
     local elapsed=0
     
@@ -332,7 +353,7 @@ wait_for_services() {
     done
 }
 
-# Function to run database migrations
+# Function to run database migrations locally
 setup_database() {
     log_step "Configurando banco de dados..."
     
@@ -340,7 +361,8 @@ setup_database() {
     log_step "Aguardando PostgreSQL..."
     local attempts=0
     while [ $attempts -lt 30 ]; do
-        if docker-compose exec -T postgres pg_isready -U clinic_user -d eo_clinica_db >/dev/null 2>&1; then
+        if pg_isready -h localhost -p 5432 -U clinic_user -d eo_clinica_db >/dev/null 2>&1 || \
+           docker-compose exec -T postgres pg_isready -U clinic_user -d eo_clinica_db >/dev/null 2>&1; then
             log_success "PostgreSQL está pronto!"
             break
         fi
@@ -355,30 +377,65 @@ setup_database() {
         return 1
     fi
     
-    # Run migrations in production mode
+    # Generate Prisma client locally
+    log_step "Gerando cliente Prisma..."
+    if npm run db:generate; then
+        log_success "Cliente Prisma gerado"
+    else
+        log_error "Falha ao gerar cliente Prisma"
+        return 1
+    fi
+    
+    # Run migrations locally
     log_step "Executando migrações..."
-    if docker-compose exec -T app npm run db:migrate; then
+    if npm run db:migrate; then
         log_success "Migrações executadas"
     else
         log_error "Falha nas migrações"
         return 1
     fi
     
-    # Generate Prisma client
-    log_step "Gerando cliente Prisma..."
-    if docker-compose exec -T app npm run db:generate; then
-        log_success "Cliente Prisma gerado"
-    else
-        log_warning "Falha ao gerar cliente Prisma"
-    fi
-    
-    # Seed database
+    # Seed database locally
     log_step "Populando banco com dados iniciais..."
-    if docker-compose exec -T app npm run db:seed; then
+    if npm run db:seed; then
         log_success "Base de dados populada"
     else
         log_warning "Falha no seed - continuando (normal em re-deploys)"
     fi
+}
+
+# Function to start local backend and frontend services
+start_local_services() {
+    log_step "Iniciando serviços locais..."
+    
+    # Kill any existing processes on ports 3000 and 3001
+    log_step "Limpando portas 3000 e 3001..."
+    pkill -f "node.*3000" 2>/dev/null || true
+    pkill -f "next.*3001" 2>/dev/null || true
+    pkill -f "tsx.*src/index" 2>/dev/null || true
+    sleep 3
+    
+    # Start backend locally
+    log_step "Iniciando Backend local (porta 3000)..."
+    npm run start &
+    BACKEND_PID=$!
+    log_info "Backend PID: $BACKEND_PID"
+    
+    # Wait a bit for backend to start
+    sleep 8
+    
+    # Start frontend locally
+    log_step "Iniciando Frontend local (porta 3001)..."
+    cd frontend
+    PORT=3001 npm run dev &
+    FRONTEND_PID=$!
+    log_info "Frontend PID: $FRONTEND_PID"
+    cd ..
+    
+    # Wait for services to stabilize
+    sleep 5
+    
+    log_success "Serviços locais iniciados"
 }
 
 # Function to perform health checks
@@ -424,24 +481,40 @@ perform_health_checks() {
 
 # Function to rollback deployment
 rollback_deployment() {
+    log_warning "Iniciando rollback..."
+    
+    # Stop local services
+    if [ ! -z "$BACKEND_PID" ]; then
+        log_step "Parando backend local (PID: $BACKEND_PID)..."
+        kill $BACKEND_PID 2>/dev/null || true
+    fi
+    
+    if [ ! -z "$FRONTEND_PID" ]; then
+        log_step "Parando frontend local (PID: $FRONTEND_PID)..."
+        kill $FRONTEND_PID 2>/dev/null || true
+    fi
+    
+    # Kill any remaining processes
+    pkill -f "node.*3000" 2>/dev/null || true
+    pkill -f "next.*3001" 2>/dev/null || true
+    pkill -f "tsx.*src/index" 2>/dev/null || true
+    
     if [ "$BACKUP_CREATED" = true ] && [ -f .last_backup_path ]; then
         local backup_path=$(cat .last_backup_path)
-        log_warning "Iniciando rollback para backup: $backup_path"
+        log_warning "Backup disponível em: $backup_path"
         
-        # Stop current deployment
+        # Stop Docker services
         docker-compose down --volumes
         
         # Restore database if backup exists
         if [ -f "$backup_path/database_backup.sql" ]; then
-            log_step "Restaurando banco de dados..."
-            docker-compose up -d postgres
-            sleep 10
-            docker-compose exec -T postgres psql -U clinic_user -d eo_clinica_db < "$backup_path/database_backup.sql"
+            log_step "Backup do banco disponível para restauração manual"
+            log_info "Para restaurar: docker-compose up -d postgres && sleep 10 && docker-compose exec -T postgres psql -U clinic_user -d eo_clinica_db < \"$backup_path/database_backup.sql\""
         fi
         
         log_warning "Rollback concluído. Verifique os logs e tente novamente."
     else
-        log_error "Não foi possível fazer rollback - backup não disponível"
+        log_error "Rollback básico concluído - backup não disponível"
     fi
 }
 
@@ -450,9 +523,12 @@ show_final_status() {
     log_header "🎉 EO CLÍNICA - DEPLOY DE PRODUÇÃO CONCLUÍDO!"
     
     echo -e "${WHITE}📱 SERVIÇOS DISPONÍVEIS${NC}"
-    echo -e "   Frontend:     ${GREEN}http://localhost:3001${NC}"
-    echo -e "   Backend:      ${GREEN}http://localhost:3000${NC}"
+    echo -e "   Frontend:     ${GREEN}http://localhost:3001${NC} ${YELLOW}(Local)${NC}"
+    echo -e "   Backend:      ${GREEN}http://localhost:3000${NC} ${YELLOW}(Local)${NC}"
     echo -e "   API Docs:     ${GREEN}http://localhost:3000/documentation${NC}"
+    echo ""
+    
+    echo -e "${WHITE}🐳 SERVIÇOS DOCKER${NC}"
     echo -e "   PostgreSQL:   ${CYAN}localhost:5432${NC}"
     echo -e "   Redis:        ${CYAN}localhost:6380${NC}"
     echo -e "   ChromaDB:     ${CYAN}http://localhost:8000${NC}"
@@ -468,18 +544,25 @@ show_final_status() {
     echo ""
     
     echo -e "${WHITE}🔧 MONITORAMENTO${NC}"
-    echo -e "   Logs:         ${CYAN}docker-compose logs -f${NC}"
-    echo -e "   Status:       ${CYAN}docker-compose ps${NC}"
-    echo -e "   Reiniciar:    ${CYAN}docker-compose restart${NC}"
-    echo -e "   Parar:        ${CYAN}docker-compose down${NC}"
+    echo -e "   Docker Logs:  ${CYAN}docker-compose logs -f${NC}"
+    echo -e "   Docker Status:${CYAN}docker-compose ps${NC}"
+    echo -e "   Backend Logs: ${CYAN}tail -f logs/*.log${NC}"
+    echo -e "   Frontend Logs:${CYAN}cd frontend && npm run dev${NC}"
+    echo ""
+    
+    echo -e "${WHITE}⚙️  CONTROLE DOS SERVIÇOS${NC}"
+    echo -e "   Parar Docker: ${CYAN}docker-compose down${NC}"
+    echo -e "   Parar Backend:${CYAN}kill $BACKEND_PID${NC}"
+    echo -e "   Parar Frontend:${CYAN}kill $FRONTEND_PID${NC}"
+    echo -e "   Parar Todos:  ${CYAN}pkill -f \"node.*300[01]\"${NC}"
     echo ""
     
     echo -e "${WHITE}📊 ESTATÍSTICAS${NC}"
     local containers=$(docker-compose ps --services | wc -l)
-    local images=$(docker images --filter "reference=eo-clinica/*" --format "{{.Repository}}" | wc -l)
-    echo -e "   Containers:   ${GREEN}$containers serviços rodando${NC}"
-    echo -e "   Imagens:      ${GREEN}$images imagens de produção${NC}"
-    echo -e "   Ambiente:     ${GREEN}Produção${NC}"
+    echo -e "   Containers:   ${GREEN}$containers serviços Docker${NC}"
+    echo -e "   Backend PID:  ${GREEN}$BACKEND_PID${NC}"
+    echo -e "   Frontend PID: ${GREEN}$FRONTEND_PID${NC}"
+    echo -e "   Arquitetura:  ${GREEN}Híbrida (Docker + Local)${NC}"
     echo ""
     
     if [ "$BACKUP_CREATED" = true ]; then
@@ -494,6 +577,26 @@ show_final_status() {
 # Cleanup function for signals
 cleanup() {
     log_header "🛑 INTERRUPÇÃO DETECTADA..."
+    
+    # Stop local services
+    if [ ! -z "$BACKEND_PID" ]; then
+        log_step "Parando backend local..."
+        kill $BACKEND_PID 2>/dev/null || true
+    fi
+    
+    if [ ! -z "$FRONTEND_PID" ]; then
+        log_step "Parando frontend local..."
+        kill $FRONTEND_PID 2>/dev/null || true
+    fi
+    
+    # Kill any remaining local processes
+    pkill -f "node.*3000" 2>/dev/null || true
+    pkill -f "next.*3001" 2>/dev/null || true
+    pkill -f "tsx.*src/index" 2>/dev/null || true
+    
+    # Stop Docker services
+    log_step "Parando containers Docker..."
+    docker-compose down 2>/dev/null || true
     
     if [ "$ROLLBACK_NEEDED" = true ]; then
         rollback_deployment
@@ -520,13 +623,31 @@ main() {
     create_backup
     clean_docker_environment
     setup_production_environment
-    build_production_images
+    prepare_local_services
     
-    if start_services_with_retry; then
-        wait_for_services
+    if start_docker_services; then
+        wait_for_docker_services
         setup_database
+        start_local_services
         perform_health_checks
         show_final_status
+        
+        # Keep script running to maintain services
+        log_info "Pressione Ctrl+C para parar todos os serviços..."
+        while true; do
+            sleep 10
+            
+            # Check if services are still running
+            if ! kill -0 $BACKEND_PID 2>/dev/null; then
+                log_error "Backend parou unexpectadamente"
+                break
+            fi
+            
+            if ! kill -0 $FRONTEND_PID 2>/dev/null; then
+                log_error "Frontend parou unexpectadamente"
+                break
+            fi
+        done
     else
         log_error "Deploy falhou - iniciando rollback..."
         rollback_deployment

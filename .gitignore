@@ -113,3 +113,7 @@ playwright-report/
 # Generated files
 generated/
 *.generated.*
+# Backup files
+backups/
+.last_backup_path
+.env.production

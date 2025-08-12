@@ -40,14 +40,19 @@ This system follows clean architecture principles with:
    # Edit .env with your configuration
    ```
 
-3. **Start the production environment:**
+3. **Start the system:**
    ```bash
-   # Method 1: Use complete production script (RECOMMENDED)
+   # Method 1: Use hybrid production script (RECOMMENDED)
    ./scripts/start-production.sh
    
-   # Method 2: Manual development setup
-   # 1. Start Docker services
-   npm run docker:up
+   # This will:
+   # - Start infrastructure in Docker (PostgreSQL, Redis, ChromaDB, N8N, PgAdmin)  
+   # - Run backend and frontend locally for better development experience
+   # - Provide automatic backup, health checks and rollback capabilities
+   
+   # Method 2: Manual setup
+   # 1. Start Docker infrastructure only
+   docker-compose up -d postgres redis chromadb n8n pgadmin
    
    # 2. Generate Prisma client
    npm run db:generate
@@ -58,17 +63,21 @@ This system follows clean architecture principles with:
    # 4. Seed the database
    npm run db:seed
    
-   # 5. Start backend (port 3000)
-   npm run dev
+   # 5. Start backend locally (port 3000)
+   npm run start
    
-   # 6. Start frontend (port 3001) - in another terminal
-   cd frontend && npm run dev
+   # 6. Start frontend locally (port 3001) - in another terminal
+   cd frontend && PORT=3001 npm run dev
    ```
 
 4. **Access the services:**
+   
+   **🏠 Local Services:**
    - **Frontend (User Interface)**: http://localhost:3001
    - **Backend API**: http://localhost:3000
    - **API Documentation (Swagger)**: http://localhost:3000/documentation
+   
+   **🐳 Docker Services:**
    - **N8N Workflows**: http://localhost:5678 (admin/admin123)
    - **PgAdmin (Database)**: http://localhost:5050 (admin@clinic.com/admin123)
    - **PostgreSQL**: localhost:5432
@@ -159,7 +168,7 @@ npm run test            # Run tests
 npm run test:coverage   # Run tests with coverage
 
 # Helper Scripts
-./scripts/start-production.sh  # Complete production deployment with zero-downtime
+./scripts/start-production.sh  # Complete hybrid deployment (Docker infrastructure + Local services)
 ```
 
 ## 🎯 Medical Specialties

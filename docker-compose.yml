@@ -1,46 +1,6 @@
 version: '3.8'
 
 services:
-  # Main application
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - "3000:3000"
-    environment:
-      - NODE_ENV=development
-      - DATABASE_URL=postgresql://clinic_user:clinic_password@postgres:5432/eo_clinica_db
-      - REDIS_URL=redis://redis:6379
-    depends_on:
-      - postgres
-      - redis
-    volumes:
-      - ./src:/app/src
-      - ./logs:/app/logs
-    networks:
-      - clinic-network
-    restart: unless-stopped
-
-  # Frontend Next.js Application
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    ports:
-      - "3001:3000"
-    environment:
-      - NODE_ENV=development
-      - NEXT_PUBLIC_API_URL=http://localhost:3000
-      - NEXT_PUBLIC_WS_URL=ws://localhost:3000
-    depends_on:
-      - app
-    volumes:
-      - ./frontend/src:/app/src
-      - ./frontend/public:/app/public
-    networks:
-      - clinic-network
-    restart: unless-stopped
 
   # PostgreSQL Database
   postgres:
@@ -87,6 +47,7 @@ services:
   # N8N for workflow automation
   n8n:
     image: n8nio/n8n:latest
+    network_mode: host
     ports:
       - "5678:5678"
     environment:
@@ -101,9 +62,9 @@ services:
       # Webhook Configuration
       - WEBHOOK_URL=http://localhost:5678/
       
-      # Database Configuration
+      # Database Configuration  
       - DB_TYPE=postgresdb
-      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_HOST=localhost
       - DB_POSTGRESDB_PORT=5432
       - DB_POSTGRESDB_DATABASE=eo_clinica_db
       - DB_POSTGRESDB_USER=clinic_user
@@ -122,8 +83,8 @@ services:
       - EXECUTIONS_DATA_MAX_AGE=90
       
       # Queue Configuration
-      - QUEUE_BULL_REDIS_HOST=redis
-      - QUEUE_BULL_REDIS_PORT=6379
+      - QUEUE_BULL_REDIS_HOST=localhost
+      - QUEUE_BULL_REDIS_PORT=6380
       - QUEUE_HEALTH_CHECK_ACTIVE=true
       
       # Timezone
@@ -141,7 +102,7 @@ services:
       - N8N_METRICS=true
       
       # Clinic-specific configuration
-      - CLINIC_API_BASE_URL=http://app:3000
+      - CLINIC_API_BASE_URL=http://localhost:3000
       - CLINIC_FRONTEND_URL=http://localhost:3001
       
       # External API Keys (set these in production)
@@ -163,13 +124,10 @@ services:
     volumes:
       - n8n_data:/home/node/.n8n
       - ./src/integrations/n8n/custom-nodes:/home/node/.n8n/custom:ro
-    networks:
-      - clinic-network
     restart: unless-stopped
     depends_on:
       - postgres
       - redis
-      - app
 
   # Database administration (optional)
   pgadmin:
