@@ -175,7 +175,7 @@ PORT=3000
 API_VERSION=v1
 
 # Database Configuration (local connection to Docker)
-DATABASE_URL=postgresql://clinic_user:clinic_password@localhost:5433/eo_clinica_db
+DATABASE_URL=postgresql://clinic_user:clinic_password@localhost:5433/eo_clinica_app
 
 # Redis Configuration (local connection to Docker) 
 REDIS_URL=redis://localhost:6380
@@ -245,7 +245,7 @@ EOF
     # Setup frontend production environment
     cat > frontend/.env.production << 'EOF'
 NODE_ENV=production
-NEXT_PUBLIC_API_URL=http://localhost:3000/api/v1
+NEXT_PUBLIC_API_URL=http://localhost:3000
 NEXT_PUBLIC_APP_NAME=EO Clínica
 NEXT_PUBLIC_APP_VERSION=1.0.4
 NEXT_PUBLIC_ENABLE_AI_CHAT=true
@@ -255,7 +255,7 @@ EOF
     # Also create .env.local for frontend development mode
     cat > frontend/.env.local << 'EOF'
 NODE_ENV=development
-NEXT_PUBLIC_API_URL=http://localhost:3000/api/v1
+NEXT_PUBLIC_API_URL=http://localhost:3000
 NEXT_PUBLIC_APP_NAME=EO Clínica
 NEXT_PUBLIC_APP_VERSION=1.0.4
 NEXT_PUBLIC_ENABLE_AI_CHAT=true
