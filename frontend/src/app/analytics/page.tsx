@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/store/auth'
+import { apiClient } from '@/lib/api'
 import { AppLayout } from '@/components/layout/app-layout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -81,7 +82,8 @@ export default function AnalyticsPage() {
   const router = useRouter()
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [selectedPeriod, setSelectedPeriod] = useState('thisMonth')
+  const [error, setError] = useState<string | null>(null)
+  const [selectedPeriod, setSelectedPeriod] = useState('month')
   const [activeTab, setActiveTab] = useState('overview')
   const [dateRange, setDateRange] = useState({
     start: new Date(new Date().setDate(1)),
@@ -110,48 +112,21 @@ export default function AnalyticsPage() {
 
   const loadAnalyticsData = async () => {
     setLoading(true)
+    setError(null)
+    
     try {
-      // Mock analytics data - em produção viria da API
-      const mockData: AnalyticsData = {
-        overview: {
-          totalRevenue: 298450.75,
-          totalAppointments: 2184,
-          totalPatients: 1456,
-          averageRating: 4.7,
-          revenueGrowth: 18.5,
-          appointmentGrowth: 12.3,
-          patientGrowth: 15.8,
-          satisfactionGrowth: 3.2
-        },
-        advanced: {
-          conversionRate: 68.5,
-          churnRate: 4.2,
-          customerLifetimeValue: 2850.00,
-          averageSessionTime: 12.5,
-          bounceRate: 15.3,
-          retentionRate: 85.7,
-          npsScore: 72,
-          operationalEfficiency: 91.2
-        },
-        predictions: {
-          nextMonthRevenue: 315000.00,
-          nextMonthAppointments: 2350,
-          capacity: 87.5,
-          demandForecast: 'Alto',
-          seasonalTrends: ['Dezembro: +25%', 'Janeiro: -15%', 'Fevereiro: +5%']
-        },
-        realTime: {
-          activeUsers: 34,
-          todayBookings: 18,
-          systemLoad: 72.5,
-          responseTime: 245
-        }
-      }
+      const response = await apiClient.getAnalytics({
+        period: selectedPeriod as 'today' | 'week' | 'month' | 'quarter' | 'year'
+      })
 
-      await new Promise(resolve => setTimeout(resolve, 1200))
-      setAnalyticsData(mockData)
-    } catch (error) {
+      if (response.success && response.data) {
+        setAnalyticsData(response.data)
+      } else {
+        setError(response.error?.message || 'Erro ao carregar dados de analytics')
+      }
+    } catch (error: any) {
       console.error('Error loading analytics:', error)
+      setError('Erro de conexão ao carregar analytics')
     } finally {
       setLoading(false)
     }
@@ -172,14 +147,14 @@ export default function AnalyticsPage() {
     )
   }
 
-  if (!analyticsData) {
+  if (error || (!analyticsData && !loading)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <h3 className="text-lg font-semibold mb-2">Erro ao carregar dados</h3>
           <p className="text-muted-foreground mb-4">
-            Não foi possível carregar os dados analíticos
+            {error || 'Não foi possível carregar os dados analíticos'}
           </p>
           <Button onClick={refreshData}>
             <RefreshCw className="h-4 w-4 mr-2" />
@@ -273,11 +248,10 @@ export default function AnalyticsPage() {
               className="px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="today">Hoje</option>
-              <option value="thisWeek">Esta Semana</option>
-              <option value="thisMonth">Este Mês</option>
-              <option value="thisQuarter">Este Trimestre</option>
-              <option value="thisYear">Este Ano</option>
-              <option value="custom">Personalizado</option>
+              <option value="week">Esta Semana</option>
+              <option value="month">Este Mês</option>
+              <option value="quarter">Este Trimestre</option>
+              <option value="year">Este Ano</option>
             </select>
             
             <Button variant="outline" onClick={refreshData} disabled={loading}>

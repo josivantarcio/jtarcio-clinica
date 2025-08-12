@@ -191,6 +191,48 @@ fastify.get('/api/v1/availability', async (request, reply) => {
   };
 });
 
+// Analytics
+fastify.get('/api/v1/analytics', async (request, reply) => {
+  return {
+    success: true,
+    data: {
+      overview: {
+        totalRevenue: 0,
+        totalAppointments: 0,
+        totalPatients: 0,
+        averageRating: 0,
+        revenueGrowth: 0,
+        appointmentGrowth: 0,
+        patientGrowth: 0,
+        satisfactionGrowth: 0
+      },
+      advanced: {
+        conversionRate: 0,
+        churnRate: 0,
+        customerLifetimeValue: 0,
+        averageSessionTime: 0,
+        bounceRate: 0,
+        retentionRate: 0,
+        npsScore: 0,
+        operationalEfficiency: 0
+      },
+      predictions: {
+        nextMonthRevenue: 0,
+        nextMonthAppointments: 0,
+        capacity: 0,
+        demandForecast: 'Baixo',
+        seasonalTrends: ['Nenhum dado histórico disponível']
+      },
+      realTime: {
+        activeUsers: 0,
+        todayBookings: 0,
+        systemLoad: 0,
+        responseTime: 0
+      }
+    }
+  };
+});
+
 // Error handler
 fastify.setErrorHandler((error, request, reply) => {
   console.error('Error:', error);

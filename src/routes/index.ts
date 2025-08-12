@@ -9,6 +9,7 @@ import { specialtyRoutes } from './specialties';
 import { availabilityRoutes } from './availability';
 import aiChatRoutes from './ai-chat';
 import { auditRoutes } from './audit';
+import { analyticsRoutes } from './analytics';
 
 export async function registerRoutes(fastify: FastifyInstance): Promise<void> {
   const apiPrefix = `/api/${env.API_VERSION}`;
@@ -21,12 +22,13 @@ export async function registerRoutes(fastify: FastifyInstance): Promise<void> {
   await fastify.register(availabilityRoutes, { prefix: `${apiPrefix}/availability` });
   await fastify.register(aiChatRoutes, { prefix: apiPrefix });
   await fastify.register(auditRoutes, { prefix: apiPrefix });
+  await fastify.register(analyticsRoutes, { prefix: apiPrefix });
 
   // Root endpoint
   fastify.get('/', async (request, reply) => {
     return {
       message: 'EO Clinica System API',
-      version: '1.0.0',
+      version: '1.1.0',
       environment: env.NODE_ENV,
       timestamp: new Date().toISOString(),
       endpoints: {
@@ -51,6 +53,7 @@ export async function registerRoutes(fastify: FastifyInstance): Promise<void> {
         `${apiPrefix}/availability`,
         `${apiPrefix}/chat`,
         `${apiPrefix}/audit`,
+        `${apiPrefix}/analytics`,
       ],
     };
   });

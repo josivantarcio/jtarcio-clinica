@@ -265,6 +265,30 @@ class ApiClient {
       url: `/api/v1/chat/history/${conversationId}`
     })
   }
+
+  // Analytics
+  async getAnalytics(params?: {
+    startDate?: string
+    endDate?: string
+    period?: 'today' | 'week' | 'month' | 'quarter' | 'year'
+  }) {
+    return this.request<any>({
+      method: 'GET',
+      url: '/api/v1/analytics',
+      params
+    })
+  }
+
+  async getRevenueChart(params?: {
+    period?: 'week' | 'month' | 'quarter' | 'year'
+    granularity?: 'day' | 'week' | 'month'
+  }) {
+    return this.request<any>({
+      method: 'GET',
+      url: '/api/v1/analytics/revenue-chart',
+      params
+    })
+  }
 }
 
 // Singleton instance
