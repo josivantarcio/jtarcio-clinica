@@ -7,6 +7,8 @@
 - [x] **Médicos** (`/doctors`) - Conectado 100% com API real  
 - [x] **Dashboard** (`/dashboard`) - Sem dados mock detectados
 - [x] **Agendamentos** (`/appointments`) - Conectado com API real
+- [x] **Schedule/Agenda** (`/schedule`) - Conectado 100% com API real
+- [x] **Reports/Relatórios** (`/reports`) - Conectado 100% com API real e layouts corrigidos
 
 ---
 
@@ -14,7 +16,7 @@
 
 ### 🔴 **PRIORIDADE ALTA - Funcionalidades Core**
 
-#### 1. **Analytics/Relatórios** (`/analytics`)
+#### 1. **Analytics** (`/analytics`)
 - **📁 Arquivo**: `frontend/src/app/analytics/page.tsx:115`
 - **🚨 Problema**: Dados completamente mock
 ```typescript
@@ -30,28 +32,6 @@ const mockData: AnalyticsData = {
 - **✅ Solução**: Implementar API `/api/v1/analytics` no backend
 - **⏱️ Estimativa**: 4-6 horas
 - **💡 Impacto**: Alto - Decisões gerenciais dependem destes dados
-
-#### 2. **Schedule/Agenda** (`/schedule`)
-- **📁 Arquivo**: `frontend/src/app/schedule/page.tsx:94`
-- **🚨 Problema**: Agenda com dados mock
-```typescript
-const mockSchedule: DaySchedule[] = generateMockSchedule(currentDate, viewMode)
-```
-- **✅ Solução**: Conectar com API real de agendamentos já existente
-- **⏱️ Estimativa**: 2-3 horas
-- **💡 Impacto**: Alto - Visualização crítica para médicos
-
-#### 3. **Reports/Relatórios** (`/reports`)
-- **📁 Arquivo**: `frontend/src/app/reports/page.tsx:115`
-- **🚨 Problema**: Relatórios com dados mock
-```typescript
-const mockData: ReportData = {
-  // dados fictícios de relatórios
-}
-```
-- **✅ Solução**: Implementar API `/api/v1/reports` no backend
-- **⏱️ Estimativa**: 6-8 horas
-- **💡 Impacto**: Alto - Gestão e compliance
 
 ---
 
@@ -249,7 +229,7 @@ const schedule = formatToSchedule(appointments)
 ---
 
 **🎯 OBJETIVO**: Sistema 100% com dados reais em 2 semanas  
-**📊 PROGRESSO**: 4/9 páginas limpas (44% concluído)  
+**📊 PROGRESSO**: 6/9 páginas limpas (67% concluído)  
 **⏳ PRÓXIMO**: Analytics (máxima prioridade)
 
 ---

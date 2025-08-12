@@ -79,8 +79,9 @@ export default function ReportsPage() {
   const { user, isAuthenticated, isLoading } = useAuthStore()
   const router = useRouter()
   const [reportData, setReportData] = useState<ReportData | null>(null)
+  const [analyticsData, setAnalyticsData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  const [selectedPeriod, setSelectedPeriod] = useState('thisMonth')
+  const [selectedPeriod, setSelectedPeriod] = useState('month')
   const [selectedReportType, setSelectedReportType] = useState('overview')
   const [dateRange, setDateRange] = useState({
     start: new Date(new Date().setDate(1)), // First day of current month
@@ -119,39 +120,40 @@ export default function ReportsPage() {
 
       if (analyticsResponse.success && analyticsResponse.data) {
         const analytics = analyticsResponse.data
+        setAnalyticsData(analytics)
         
         // Convert analytics data to report format
         const realReportData: ReportData = {
           financial: {
             totalRevenue: analytics.overview.totalRevenue,
-            monthlyRevenue: analytics.overview.totalRevenue, // Same for now
+            monthlyRevenue: analytics.financial?.monthlyRevenue || analytics.overview.totalRevenue,
             averageTicket: analytics.overview.totalRevenue / (analytics.overview.totalAppointments || 1),
-            pendingPayments: analytics.overview.totalRevenue * 0.1, // Estimate 10% pending
+            pendingPayments: analytics.financial?.pendingPayments || 0,
             revenueGrowth: analytics.overview.revenueGrowth,
-            monthlyComparison: generateMonthlyComparison(analytics.overview.totalRevenue)
+            monthlyComparison: analytics.financial?.monthlyData || [0, 0, 0, 0, 0, 0]
           },
           appointments: {
             totalAppointments: analytics.overview.totalAppointments,
-            completedAppointments: Math.floor(analytics.overview.totalAppointments * 0.85), // Estimate 85% completed
-            cancelledAppointments: Math.floor(analytics.overview.totalAppointments * 0.1), // Estimate 10% cancelled
-            noShowRate: analytics.advanced.churnRate || 5.0,
+            completedAppointments: analytics.appointments?.completed || 0,
+            cancelledAppointments: analytics.appointments?.cancelled || 0,
+            noShowRate: analytics.appointments?.noShowRate || 0,
             appointmentGrowth: analytics.overview.appointmentGrowth,
-            dailyAppointments: generateDailyAppointments(analytics.overview.totalAppointments)
+            dailyAppointments: analytics.appointments?.dailyData || [0, 0, 0, 0, 0, 0, 0]
           },
           patients: {
             totalPatients: analytics.overview.totalPatients,
-            newPatients: Math.floor(analytics.overview.totalPatients * 0.15), // Estimate 15% new
-            returningPatients: Math.floor(analytics.overview.totalPatients * 0.85), // Estimate 85% returning
-            patientRetention: analytics.advanced.retentionRate || 80,
+            newPatients: analytics.patients?.newPatients || 0,
+            returningPatients: analytics.patients?.returningPatients || analytics.overview.totalPatients,
+            patientRetention: analytics.advanced.retentionRate || 0,
             patientSatisfaction: analytics.overview.averageRating,
-            patientGrowth: generatePatientGrowth(analytics.overview.totalPatients)
+            patientGrowth: analytics.patients?.growthData || [0, 0, 0, 0, 0, 0]
           },
           doctors: {
-            totalDoctors: Math.max(1, Math.floor(analytics.overview.totalAppointments / 150)), // Estimate based on appointments
+            totalDoctors: analytics.doctors?.totalDoctors || 0,
             averageRating: analytics.overview.averageRating,
-            mostBookedDoctor: 'Médico Principal', // Generic name since we don't have specific data
-            doctorEfficiency: analytics.advanced.operationalEfficiency || 90,
-            doctorPerformance: generateDoctorPerformance(analytics.overview.totalRevenue, analytics.overview.totalAppointments)
+            mostBookedDoctor: analytics.doctors?.mostBookedDoctor || 'Não disponível',
+            doctorEfficiency: analytics.advanced.operationalEfficiency || 0,
+            doctorPerformance: analytics.doctors?.performance || []
           }
         }
         
@@ -208,44 +210,14 @@ export default function ReportsPage() {
     }
   }
 
-  // Helper functions to generate derived data
-  const generateMonthlyComparison = (totalRevenue: number): number[] => {
-    const baseRevenue = totalRevenue / 6 // Distribute across 6 months
-    return Array.from({ length: 6 }, (_, i) => Math.floor(baseRevenue * (0.8 + Math.random() * 0.4)))
-  }
-
-  const generateDailyAppointments = (total: number): number[] => {
-    const dailyAverage = total / 30 // Assuming monthly data
-    return Array.from({ length: 7 }, () => Math.floor(dailyAverage * (0.5 + Math.random() * 1.0)))
-  }
-
-  const generatePatientGrowth = (totalPatients: number): number[] => {
-    const baseGrowth = totalPatients / 6
-    return Array.from({ length: 6 }, (_, i) => Math.floor(totalPatients - (baseGrowth * (5 - i))))
-  }
-
-  const generateDoctorPerformance = (totalRevenue: number, totalAppointments: number) => {
-    if (totalRevenue === 0 || totalAppointments === 0) return []
-    
-    const avgRevenue = totalRevenue / 4 // Assume 4 doctors
-    const avgAppointments = totalAppointments / 4
-    
-    return [
-      { name: 'Médico 1', appointments: Math.floor(avgAppointments * 1.2), rating: 4.8, revenue: Math.floor(avgRevenue * 1.2) },
-      { name: 'Médico 2', appointments: Math.floor(avgAppointments * 1.0), rating: 4.7, revenue: Math.floor(avgRevenue * 1.0) },
-      { name: 'Médico 3', appointments: Math.floor(avgAppointments * 0.9), rating: 4.6, revenue: Math.floor(avgRevenue * 0.9) },
-      { name: 'Médico 4', appointments: Math.floor(avgAppointments * 0.8), rating: 4.5, revenue: Math.floor(avgRevenue * 0.8) }
-    ]
-  }
 
   const refreshData = () => {
     loadReportData()
   }
 
   const exportReport = (format: 'pdf' | 'excel' | 'csv') => {
-    // Simulate export functionality
-    console.log(`Exporting report as ${format}`)
-    // In real implementation, this would trigger download
+    // TODO: Implement real export functionality
+    alert(`Funcionalidade de exportação em ${format.toUpperCase()} será implementada em versão futura`)
   }
 
   // Show loading while checking auth
@@ -325,7 +297,7 @@ export default function ReportsPage() {
       title: 'Pacientes Ativos',
       value: reportData.patients.totalPatients.toLocaleString(),
       subtitle: `${reportData.patients.newPatients} novos este mês`,
-      growth: 8.3, // Patient growth percentage
+      growth: analyticsData?.patients?.growthPercentage || 0,
       icon: Users,
       color: 'text-purple-600',
       bgColor: 'bg-purple-50'
@@ -333,8 +305,8 @@ export default function ReportsPage() {
     {
       title: 'Satisfação',
       value: `${reportData.patients.patientSatisfaction}/5.0`,
-      subtitle: `Base: 428 avaliações`,
-      growth: 2.1,
+      subtitle: `Base: ${analyticsData?.patients?.totalReviews || 0} avaliações`,
+      growth: analyticsData?.patients?.satisfactionGrowth || 0,
       icon: Award,
       color: 'text-yellow-600',
       bgColor: 'bg-yellow-50'
@@ -591,8 +563,8 @@ export default function ReportsPage() {
                     </div>
                     <div className="text-sm text-muted-foreground">Ticket Médio</div>
                     <div className="flex items-center justify-center space-x-1 text-green-600">
-                      <ArrowUp className="h-3 w-3" />
-                      <span className="text-xs">+5.2% vs mês anterior</span>
+                      {(analyticsData?.financial?.ticketGrowth || 0) > 0 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
+                      <span className="text-xs">{formatPercentage(analyticsData?.financial?.ticketGrowth || 0)} vs mês anterior</span>
                     </div>
                   </div>
                   
@@ -602,8 +574,8 @@ export default function ReportsPage() {
                     </div>
                     <div className="text-sm text-muted-foreground">Taxa de Retenção</div>
                     <div className="flex items-center justify-center space-x-1 text-blue-600">
-                      <ArrowUp className="h-3 w-3" />
-                      <span className="text-xs">+2.1% vs mês anterior</span>
+                      {(analyticsData?.patients?.retentionGrowth || 0) > 0 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
+                      <span className="text-xs">{formatPercentage(analyticsData?.patients?.retentionGrowth || 0)} vs mês anterior</span>
                     </div>
                   </div>
                   
@@ -613,8 +585,8 @@ export default function ReportsPage() {
                     </div>
                     <div className="text-sm text-muted-foreground">Taxa de No-Show</div>
                     <div className="flex items-center justify-center space-x-1 text-red-600">
-                      <ArrowDown className="h-3 w-3" />
-                      <span className="text-xs">-1.3% vs mês anterior</span>
+                      {(analyticsData?.appointments?.noShowGrowth || 0) > 0 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
+                      <span className="text-xs">{formatPercentage(analyticsData?.appointments?.noShowGrowth || 0)} vs mês anterior</span>
                     </div>
                   </div>
                 </div>
@@ -637,7 +609,7 @@ export default function ReportsPage() {
                   </div>
                   <div className="flex justify-between items-center py-2">
                     <span className="text-muted-foreground">Receita Líquida</span>
-                    <span className="font-semibold">{formatCurrency(reportData.financial.totalRevenue * 0.85)}</span>
+                    <span className="font-semibold">{formatCurrency(analyticsData?.financial?.netRevenue || reportData.financial.totalRevenue)}</span>
                   </div>
                   <div className="flex justify-between items-center py-2">
                     <span className="text-muted-foreground">Ticket Médio</span>
@@ -657,28 +629,30 @@ export default function ReportsPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {[
-                      { specialty: 'Cardiologia', revenue: 45680, percentage: 29.2, color: 'bg-blue-500' },
-                      { specialty: 'Dermatologia', revenue: 38920, percentage: 24.9, color: 'bg-green-500' },
-                      { specialty: 'Ortopedia', revenue: 32150, percentage: 20.5, color: 'bg-purple-500' },
-                      { specialty: 'Pediatria', revenue: 28430, percentage: 18.2, color: 'bg-yellow-500' },
-                      { specialty: 'Outros', revenue: 11300, percentage: 7.2, color: 'bg-gray-500' }
-                    ].map((item, index) => (
-                      <div key={index} className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm font-medium">{item.specialty}</span>
-                          <span className="text-sm text-muted-foreground">
-                            {formatCurrency(item.revenue)} ({item.percentage}%)
-                          </span>
+                    {(analyticsData?.specialties && analyticsData.specialties.length > 0) ? (
+                      analyticsData.specialties.map((item, index) => (
+                        <div key={index} className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium">{item.name || item.specialty}</span>
+                            <span className="text-sm text-muted-foreground">
+                              {formatCurrency(item.revenue)} ({item.percentage?.toFixed(1) || 0}%)
+                            </span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div 
+                              className={`h-2 rounded-full ${item.color || 'bg-blue-500'}`}
+                              style={{ width: `${item.percentage || 0}%` }}
+                            ></div>
+                          </div>
                         </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div 
-                            className={`h-2 rounded-full ${item.color}`}
-                            style={{ width: `${item.percentage}%` }}
-                          ></div>
-                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-6">
+                        <p className="text-muted-foreground text-sm">
+                          Nenhum dado de especialidade disponível para o período selecionado
+                        </p>
                       </div>
-                    ))}
+                    )}
                   </div>
                 </CardContent>
               </Card>
