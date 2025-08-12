@@ -188,45 +188,45 @@ export default function AnalyticsPage() {
     return 'text-gray-600'
   }
 
-  // Main Statistics Cards seguindo exatamente o modelo da imagem
-  const mainStats = [
+  // Main Statistics Cards com dados da API real
+  const mainStats = analyticsData ? [
     {
       title: 'Receita Total',
-      value: formatCurrency(analyticsData.overview.totalRevenue),
-      subtitle: `${formatCurrency(analyticsData.overview.totalRevenue * 0.15)} este mês`,
-      growth: analyticsData.overview.revenueGrowth,
+      value: formatCurrency(analyticsData.overview?.totalRevenue || 0),
+      subtitle: `${formatCurrency(analyticsData.financial?.monthlyRevenue || 0)} este mês`,
+      growth: analyticsData.overview?.revenueGrowth || 0,
       icon: DollarSign,
       color: 'text-green-600',
       bgColor: 'bg-green-50'
     },
     {
       title: 'Total Consultas',
-      value: analyticsData.overview.totalAppointments.toLocaleString(),
-      subtitle: `${analyticsData.overview.totalAppointments - 198} concluídas`,
-      growth: analyticsData.overview.appointmentGrowth,
+      value: (analyticsData.overview?.totalAppointments || 0).toLocaleString(),
+      subtitle: `${analyticsData.appointments?.completed || 0} concluídas`,
+      growth: analyticsData.overview?.appointmentGrowth || 0,
       icon: Calendar,
       color: 'text-blue-600',
       bgColor: 'bg-blue-50'
     },
     {
       title: 'Pacientes Únicos',
-      value: analyticsData.overview.totalPatients.toLocaleString(),
-      subtitle: `${Math.floor(analyticsData.overview.totalPatients * 0.08)} novos este mês`,
-      growth: analyticsData.overview.patientGrowth,
+      value: (analyticsData.overview?.totalPatients || 0).toLocaleString(),
+      subtitle: `${analyticsData.patients?.newPatients || 0} novos este mês`,
+      growth: analyticsData.overview?.patientGrowth || 0,
       icon: Users,
       color: 'text-purple-600',
       bgColor: 'bg-purple-50'
     },
     {
       title: 'NPS Score',
-      value: `${analyticsData.advanced.npsScore}`,
-      subtitle: `Base: 1.2k avaliações`,
-      growth: analyticsData.overview.satisfactionGrowth,
+      value: `${analyticsData.advanced?.npsScore || 0}`,
+      subtitle: `Base: ${analyticsData.patients?.totalReviews || 0} avaliações`,
+      growth: analyticsData.overview?.satisfactionGrowth || 0,
       icon: Award,
       color: 'text-yellow-600',
       bgColor: 'bg-yellow-50'
     }
-  ]
+  ] : []
 
   return (
     <AppLayout>
@@ -267,20 +267,27 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        {/* Main Statistics Cards - Exata replicação do modelo */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {/* Main Statistics Cards - Layout responsivo e corrigido */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {mainStats.map((stat, index) => (
             <Card key={index} className="relative overflow-hidden">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-muted-foreground">
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex flex-col space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-muted-foreground truncate">
                       {stat.title}
                     </p>
-                    <p className="text-3xl font-bold">
+                    <div className={`flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full ${stat.bgColor}`}>
+                      <stat.icon className={`h-5 w-5 sm:h-6 sm:w-6 ${stat.color}`} />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <p className="text-2xl sm:text-3xl font-bold truncate" title={stat.value}>
                       {stat.value}
                     </p>
-                    <div className="flex items-center space-x-2">
+                    
+                    <div className="flex items-center space-x-2 flex-wrap">
                       <div className={`flex items-center space-x-1 ${getGrowthColor(stat.growth)}`}>
                         {getGrowthIcon(stat.growth)}
                         <span className="text-sm font-medium">
@@ -288,15 +295,13 @@ export default function AnalyticsPage() {
                         </span>
                       </div>
                       <span className="text-xs text-muted-foreground">
-                        vs período anterior
+                        vs anterior
                       </span>
                     </div>
-                    <p className="text-xs text-muted-foreground">
+                    
+                    <p className="text-xs text-muted-foreground truncate" title={stat.subtitle}>
                       {stat.subtitle}
                     </p>
-                  </div>
-                  <div className={`flex items-center justify-center w-14 h-14 rounded-full ${stat.bgColor}`}>
-                    <stat.icon className={`h-7 w-7 ${stat.color}`} />
                   </div>
                 </div>
               </CardContent>
@@ -341,22 +346,31 @@ export default function AnalyticsPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {/* Mock revenue chart */}
+                    {/* Real revenue chart */}
                     <div className="h-64 bg-gradient-to-t from-green-50 to-transparent rounded-lg flex items-end justify-around p-4">
-                      {[42000, 48000, 35000, 52000, 45600, 58000].map((value, index) => (
-                        <div key={index} className="flex flex-col items-center space-y-2">
-                          <div 
-                            className="bg-green-500 rounded-t transition-all hover:bg-green-600"
-                            style={{ 
-                              height: `${(value / 58000) * 200}px`,
-                              width: '35px'
-                            }}
-                          ></div>
-                          <span className="text-xs text-muted-foreground">
-                            {formatCurrency(value / 1000)}k
-                          </span>
+                      {(analyticsData.financial?.monthlyData || []).map((value, index) => {
+                        const maxValue = Math.max(...(analyticsData.financial?.monthlyData || [1]))
+                        return (
+                          <div key={index} className="flex flex-col items-center space-y-2">
+                            <div 
+                              className="bg-green-500 rounded-t transition-all hover:bg-green-600 min-h-[8px]"
+                              style={{ 
+                                height: `${maxValue > 0 ? (value / maxValue) * 200 : 8}px`,
+                                width: '35px'
+                              }}
+                              title={formatCurrency(value)}
+                            ></div>
+                            <span className="text-xs text-muted-foreground">
+                              {value > 1000 ? `${(value / 1000).toFixed(0)}k` : value.toString()}
+                            </span>
+                          </div>
+                        )
+                      })}
+                      {(analyticsData.financial?.monthlyData || []).length === 0 && (
+                        <div className="text-center text-muted-foreground py-16">
+                          <p className="text-sm">Nenhum dado de receita disponível para o período</p>
                         </div>
-                      ))}
+                      )}
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Jul</span>
@@ -383,22 +397,22 @@ export default function AnalyticsPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-6">
-                    {/* Funnel visualization */}
+                    {/* Real funnel visualization */}
                     <div className="space-y-3">
                       <div className="bg-blue-500 text-white p-3 rounded text-center">
-                        <div className="font-bold">2,450</div>
+                        <div className="font-bold">{analyticsData.patients?.totalVisitors || 0}</div>
                         <div className="text-sm opacity-90">Visitantes Site</div>
                       </div>
                       <div className="bg-blue-400 text-white p-3 rounded text-center mx-4">
-                        <div className="font-bold">1,890</div>
+                        <div className="font-bold">{analyticsData.patients?.interested || 0}</div>
                         <div className="text-sm opacity-90">Interessados</div>
                       </div>
                       <div className="bg-blue-300 text-white p-3 rounded text-center mx-8">
-                        <div className="font-bold">1,295</div>
+                        <div className="font-bold">{analyticsData.appointments?.scheduled || 0}</div>
                         <div className="text-sm opacity-90">Agendaram</div>
                       </div>
                       <div className="bg-blue-200 text-blue-900 p-3 rounded text-center mx-12">
-                        <div className="font-bold">1,156</div>
+                        <div className="font-bold">{analyticsData.appointments?.attended || 0}</div>
                         <div className="text-sm">Compareceram</div>
                       </div>
                     </div>
@@ -406,7 +420,7 @@ export default function AnalyticsPage() {
                     <div className="border-t pt-4">
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Taxa de Conversão:</span>
-                        <span className="font-medium text-green-600">{analyticsData.advanced.conversionRate}%</span>
+                        <span className="font-medium text-green-600">{analyticsData.advanced?.conversionRate || 0}%</span>
                       </div>
                     </div>
                   </div>
@@ -429,45 +443,45 @@ export default function AnalyticsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                   <div className="text-center space-y-2">
                     <div className="text-3xl font-bold text-green-600">
-                      {formatCurrency(analyticsData.advanced.customerLifetimeValue)}
+                      {formatCurrency(analyticsData.advanced?.customerLifetimeValue || 0)}
                     </div>
                     <div className="text-sm text-muted-foreground">Valor Vida Cliente</div>
                     <div className="flex items-center justify-center space-x-1 text-green-600">
-                      <ArrowUp className="h-3 w-3" />
-                      <span className="text-xs">+8.2% vs mês anterior</span>
+                      {(analyticsData.advanced.customerLifetimeValueGrowth || 0) > 0 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
+                      <span className="text-xs">{formatPercentage(analyticsData.advanced.customerLifetimeValueGrowth || 0)} vs mês anterior</span>
                     </div>
                   </div>
                   
                   <div className="text-center space-y-2">
                     <div className="text-3xl font-bold text-blue-600">
-                      {analyticsData.advanced.retentionRate}%
+                      {analyticsData.advanced?.retentionRate || 0}%
                     </div>
                     <div className="text-sm text-muted-foreground">Taxa Retenção</div>
                     <div className="flex items-center justify-center space-x-1 text-blue-600">
-                      <ArrowUp className="h-3 w-3" />
-                      <span className="text-xs">+2.5% vs mês anterior</span>
+                      {(analyticsData.advanced.retentionRateGrowth || 0) > 0 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
+                      <span className="text-xs">{formatPercentage(analyticsData.advanced.retentionRateGrowth || 0)} vs mês anterior</span>
                     </div>
                   </div>
                   
                   <div className="text-center space-y-2">
                     <div className="text-3xl font-bold text-yellow-600">
-                      {analyticsData.advanced.churnRate}%
+                      {analyticsData.advanced?.churnRate || 0}%
                     </div>
                     <div className="text-sm text-muted-foreground">Taxa Churn</div>
                     <div className="flex items-center justify-center space-x-1 text-red-600">
-                      <ArrowDown className="h-3 w-3" />
-                      <span className="text-xs">-0.8% vs mês anterior</span>
+                      {(analyticsData.advanced.churnRateGrowth || 0) > 0 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
+                      <span className="text-xs">{formatPercentage(analyticsData.advanced.churnRateGrowth || 0)} vs mês anterior</span>
                     </div>
                   </div>
 
                   <div className="text-center space-y-2">
                     <div className="text-3xl font-bold text-purple-600">
-                      {analyticsData.advanced.operationalEfficiency}%
+                      {analyticsData.advanced?.operationalEfficiency || 0}%
                     </div>
                     <div className="text-sm text-muted-foreground">Eficiência Operacional</div>
                     <div className="flex items-center justify-center space-x-1 text-green-600">
-                      <ArrowUp className="h-3 w-3" />
-                      <span className="text-xs">+4.1% vs mês anterior</span>
+                      {(analyticsData.advanced.operationalEfficiencyGrowth || 0) > 0 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
+                      <span className="text-xs">{formatPercentage(analyticsData.advanced.operationalEfficiencyGrowth || 0)} vs mês anterior</span>
                     </div>
                   </div>
                 </div>
@@ -486,19 +500,19 @@ export default function AnalyticsPage() {
                 <CardContent className="space-y-4">
                   <div className="flex justify-between items-center py-2">
                     <span className="text-muted-foreground">Tempo Médio de Sessão</span>
-                    <span className="font-semibold">{analyticsData.advanced.averageSessionTime} min</span>
+                    <span className="font-semibold">{analyticsData.advanced?.averageSessionTime || 0} min</span>
                   </div>
                   <div className="flex justify-between items-center py-2">
                     <span className="text-muted-foreground">Taxa de Rejeição</span>
-                    <span className="font-semibold text-red-600">{analyticsData.advanced.bounceRate}%</span>
+                    <span className="font-semibold text-red-600">{analyticsData.advanced?.bounceRate || 0}%</span>
                   </div>
                   <div className="flex justify-between items-center py-2">
                     <span className="text-muted-foreground">Taxa de Conversão</span>
-                    <span className="font-semibold text-green-600">{analyticsData.advanced.conversionRate}%</span>
+                    <span className="font-semibold text-green-600">{analyticsData.advanced?.conversionRate || 0}%</span>
                   </div>
                   <div className="flex justify-between items-center py-2 border-t">
                     <span className="text-muted-foreground">Eficiência Operacional</span>
-                    <span className="font-semibold">{analyticsData.advanced.operationalEfficiency}%</span>
+                    <span className="font-semibold">{analyticsData.advanced?.operationalEfficiency || 0}%</span>
                   </div>
                 </CardContent>
               </Card>
@@ -512,28 +526,28 @@ export default function AnalyticsPage() {
                   <div className="space-y-4">
                     <div className="text-center">
                       <div className="text-4xl font-bold text-green-600 mb-2">
-                        {analyticsData.advanced.npsScore}
+                        {analyticsData.advanced?.npsScore || 0}
                       </div>
                       <div className="text-sm text-muted-foreground mb-4">Net Promoter Score</div>
                       <div className="w-full bg-gray-200 rounded-full h-3">
                         <div 
                           className="bg-green-500 h-3 rounded-full"
-                          style={{ width: `${analyticsData.advanced.npsScore}%` }}
+                          style={{ width: `${analyticsData.advanced?.npsScore || 0}%` }}
                         ></div>
                       </div>
                     </div>
                     
                     <div className="grid grid-cols-3 gap-4 mt-6">
                       <div className="text-center">
-                        <div className="text-lg font-bold text-green-600">67%</div>
+                        <div className="text-lg font-bold text-green-600">{analyticsData.advanced.npsPromoters || 0}%</div>
                         <div className="text-xs text-muted-foreground">Promotores</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-lg font-bold text-yellow-600">28%</div>
+                        <div className="text-lg font-bold text-yellow-600">{analyticsData.advanced.npsNeutrals || 0}%</div>
                         <div className="text-xs text-muted-foreground">Neutros</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-lg font-bold text-red-600">5%</div>
+                        <div className="text-lg font-bold text-red-600">{analyticsData.advanced.npsDetractors || 0}%</div>
                         <div className="text-xs text-muted-foreground">Detratores</div>
                       </div>
                     </div>
@@ -560,35 +574,35 @@ export default function AnalyticsPage() {
                   <div className="text-center p-6 bg-purple-50 rounded-lg">
                     <DollarSign className="h-8 w-8 text-purple-600 mx-auto mb-3" />
                     <div className="text-2xl font-bold text-purple-600">
-                      {formatCurrency(analyticsData.predictions.nextMonthRevenue)}
+                      {formatCurrency(analyticsData.predictions?.nextMonthRevenue || 0)}
                     </div>
                     <div className="text-sm text-muted-foreground">Receita Prevista Próximo Mês</div>
-                    <div className="text-xs text-green-600 mt-1">+5.5% vs este mês</div>
+                    <div className="text-xs text-green-600 mt-1">{formatPercentage(analyticsData.predictions.revenueGrowthPrediction || 0)} vs este mês</div>
                   </div>
                   
                   <div className="text-center p-6 bg-blue-50 rounded-lg">
                     <Calendar className="h-8 w-8 text-blue-600 mx-auto mb-3" />
                     <div className="text-2xl font-bold text-blue-600">
-                      {analyticsData.predictions.nextMonthAppointments}
+                      {analyticsData.predictions?.nextMonthAppointments || 0}
                     </div>
                     <div className="text-sm text-muted-foreground">Consultas Previstas</div>
-                    <div className="text-xs text-green-600 mt-1">+7.6% vs este mês</div>
+                    <div className="text-xs text-green-600 mt-1">{formatPercentage(analyticsData.predictions.appointmentGrowthPrediction || 0)} vs este mês</div>
                   </div>
                   
                   <div className="text-center p-6 bg-yellow-50 rounded-lg">
                     <Activity className="h-8 w-8 text-yellow-600 mx-auto mb-3" />
                     <div className="text-2xl font-bold text-yellow-600">
-                      {analyticsData.predictions.capacity}%
+                      {analyticsData.predictions?.capacity || 0}%
                     </div>
                     <div className="text-sm text-muted-foreground">Capacidade Prevista</div>
-                    <div className="text-xs text-yellow-600 mt-1">Demanda {analyticsData.predictions.demandForecast}</div>
+                    <div className="text-xs text-yellow-600 mt-1">Demanda: {analyticsData.predictions.demandForecast || 'Não disponível'}</div>
                   </div>
                 </div>
 
                 <div className="mt-8">
                   <h4 className="text-lg font-semibold mb-4">Tendências Sazonais</h4>
                   <div className="space-y-2">
-                    {analyticsData.predictions.seasonalTrends.map((trend, index) => (
+                    {(analyticsData.predictions?.seasonalTrends || []).map((trend, index) => (
                       <div key={index} className="flex items-center justify-between p-3 bg-muted/30 rounded">
                         <span className="text-sm">{trend}</span>
                         <Badge variant="outline">{trend.includes('+') ? 'Crescimento' : 'Declínio'}</Badge>
@@ -616,25 +630,25 @@ export default function AnalyticsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div className="text-center p-4 bg-orange-50 rounded-lg">
                     <Globe className="h-8 w-8 text-orange-600 mx-auto mb-2" />
-                    <div className="text-2xl font-bold text-orange-600">{analyticsData.realTime.activeUsers}</div>
+                    <div className="text-2xl font-bold text-orange-600">{analyticsData.realTime?.activeUsers || 0}</div>
                     <div className="text-sm text-muted-foreground">Usuários Online</div>
                   </div>
                   
                   <div className="text-center p-4 bg-green-50 rounded-lg">
                     <Calendar className="h-8 w-8 text-green-600 mx-auto mb-2" />
-                    <div className="text-2xl font-bold text-green-600">{analyticsData.realTime.todayBookings}</div>
+                    <div className="text-2xl font-bold text-green-600">{analyticsData.realTime?.todayBookings || 0}</div>
                     <div className="text-sm text-muted-foreground">Agendamentos Hoje</div>
                   </div>
                   
                   <div className="text-center p-4 bg-blue-50 rounded-lg">
                     <Activity className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-                    <div className="text-2xl font-bold text-blue-600">{analyticsData.realTime.systemLoad}%</div>
+                    <div className="text-2xl font-bold text-blue-600">{analyticsData.realTime?.systemLoad || 0}%</div>
                     <div className="text-sm text-muted-foreground">Carga do Sistema</div>
                   </div>
                   
                   <div className="text-center p-4 bg-purple-50 rounded-lg">
                     <Clock className="h-8 w-8 text-purple-600 mx-auto mb-2" />
-                    <div className="text-2xl font-bold text-purple-600">{analyticsData.realTime.responseTime}ms</div>
+                    <div className="text-2xl font-bold text-purple-600">{analyticsData.realTime?.responseTime || 0}ms</div>
                     <div className="text-sm text-muted-foreground">Tempo Resposta</div>
                   </div>
                 </div>
