@@ -317,7 +317,7 @@ EOF
 NODE_ENV=production
 NEXT_PUBLIC_API_URL=http://localhost:3000
 NEXT_PUBLIC_APP_NAME=EO Clínica
-NEXT_PUBLIC_APP_VERSION=1.0.9
+NEXT_PUBLIC_APP_VERSION=1.1.0
 NEXT_PUBLIC_ENABLE_AI_CHAT=true
 PORT=3001
 EOF
@@ -327,7 +327,7 @@ EOF
 NODE_ENV=development
 NEXT_PUBLIC_API_URL=http://localhost:3000
 NEXT_PUBLIC_APP_NAME=EO Clínica
-NEXT_PUBLIC_APP_VERSION=1.0.9
+NEXT_PUBLIC_APP_VERSION=1.1.0
 NEXT_PUBLIC_ENABLE_AI_CHAT=true
 PORT=3001
 EOF
@@ -745,7 +745,7 @@ main() {
     clear
     log_header "🏥 EO CLÍNICA - DEPLOY COMPLETO PARA PRODUÇÃO"
     echo -e "${CYAN}© 2025 Jtarcio Desenvolvimento${NC}"
-    echo -e "${CYAN}Versão: 1.0.9 - Script com Limpeza Completa${NC}"
+    echo -e "${CYAN}Versão: 1.1.0 - Limpeza de Dados Fictícios${NC}"
     echo ""
     
     # Set up signal handlers
