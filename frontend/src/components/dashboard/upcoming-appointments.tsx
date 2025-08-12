@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Calendar, Clock, User } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Appointment } from '@/types'
 import { formatDateTime, formatTime } from '@/lib/utils'
 import { useAppointmentsStore } from '@/store/appointments'
@@ -14,6 +15,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 export function UpcomingAppointments() {
   const { appointments, isLoading, loadAppointments } = useAppointmentsStore()
   const { user } = useAuthStore()
+  const router = useRouter()
   
   useEffect(() => {
     // Load upcoming appointments
@@ -107,7 +109,11 @@ export function UpcomingAppointments() {
             <p className="text-muted-foreground">
               Nenhuma consulta agendada
             </p>
-            <Button variant="outline" className="mt-2">
+            <Button 
+              variant="outline" 
+              className="mt-2"
+              onClick={() => router.push('/appointments/new')}
+            >
               Agendar Consulta
             </Button>
           </div>

@@ -17,25 +17,53 @@ export function DashboardStats() {
 
   const loadStats = async () => {
     try {
-      // This would be a real API call
-      // For now, using mock data
-      const mockStats: StatsType = {
-        totalAppointments: 156,
-        todayAppointments: 12,
-        pendingAppointments: 8,
-        completedAppointments: 144,
-        cancelledAppointments: 4,
-        revenue: 45600,
-        patientGrowth: 12.5,
-        satisfactionScore: 4.8
+      const response = await apiClient.getAnalytics()
+      
+      if (response.success && response.data) {
+        const analyticsData = response.data
+        
+        const dashboardStats: StatsType = {
+          totalAppointments: analyticsData.overview.totalAppointments,
+          todayAppointments: analyticsData.realTime.todayBookings,
+          pendingAppointments: Math.floor(analyticsData.overview.totalAppointments * 0.1), // Estimate 10% pending
+          completedAppointments: Math.floor(analyticsData.overview.totalAppointments * 0.8), // Estimate 80% completed
+          cancelledAppointments: Math.floor(analyticsData.overview.totalAppointments * 0.1), // Estimate 10% cancelled
+          revenue: analyticsData.overview.totalRevenue,
+          patientGrowth: analyticsData.overview.patientGrowth,
+          satisfactionScore: analyticsData.overview.averageRating
+        }
+        
+        setStats(dashboardStats)
+      } else {
+        // No data available - show zeros instead of mock data
+        const emptyStats: StatsType = {
+          totalAppointments: 0,
+          todayAppointments: 0,
+          pendingAppointments: 0,
+          completedAppointments: 0,
+          cancelledAppointments: 0,
+          revenue: 0,
+          patientGrowth: 0,
+          satisfactionScore: 0
+        }
+        setStats(emptyStats)
       }
       
-      setTimeout(() => {
-        setStats(mockStats)
-        setIsLoading(false)
-      }, 1000)
+      setIsLoading(false)
     } catch (error) {
       console.error('Failed to load stats:', error)
+      // Set empty stats on error instead of showing mock data
+      const emptyStats: StatsType = {
+        totalAppointments: 0,
+        todayAppointments: 0,
+        pendingAppointments: 0,
+        completedAppointments: 0,
+        cancelledAppointments: 0,
+        revenue: 0,
+        patientGrowth: 0,
+        satisfactionScore: 0
+      }
+      setStats(emptyStats)
       setIsLoading(false)
     }
   }
