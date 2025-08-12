@@ -12,9 +12,11 @@ The production script (`start-production.sh`) handles the complete hybrid deploy
 ### 📋 Script Features
 
 #### ✅ Core Features
+- **Complete System Cleanup**: Stops ALL processes (Docker + Local) before starting
 - **Hybrid Architecture**: Docker infrastructure + Local application services
 - **Automated Prerequisites Check**: Validates all required tools and environment
 - **Automatic Backup Creation**: Creates timestamped backups before deployment
+- **Advanced Process Management**: Kills all interfering processes by port and pattern
 - **Docker Environment Cleanup**: Completely cleans Docker environment to prevent conflicts
 - **Local Service Management**: Installs dependencies and manages local backend/frontend
 - **Smart Environment Setup**: Creates optimized configurations for hybrid architecture
@@ -29,6 +31,35 @@ The production script (`start-production.sh`) handles the complete hybrid deploy
 - **Detailed Logging**: Color-coded output with progress indicators
 - **Error Recovery**: Automatic problem detection and resolution
 - **Resource Management**: Optimized Docker resource usage
+
+### 🧹 Advanced System Cleanup
+
+#### Complete Process Termination
+The script v1.0.9+ includes **complete system cleanup** that:
+
+**Local Process Cleanup:**
+- Terminates ALL Node.js processes on ports 3000/3001
+- Kills Next.js development servers
+- Stops TSX processes running the backend
+- Kills any process using project-specific ports (3000, 3001, 5432, 5433, 6379, 6380, 8000, 5678, 5050)
+
+**Docker Environment Cleanup:**
+- Stops ALL running Docker containers
+- Removes project-specific containers (`eo-clinica*`)
+- Cleans unused Docker networks, containers, and images
+- Gracefully handles timeouts with forced cleanup
+
+**Process Verification:**
+- Uses `lsof` for precise port-based process detection
+- Employs pattern matching for service-specific cleanup
+- Provides 3-second grace period for clean termination
+- Performs final verification scan
+
+**Why This Matters:**
+- Prevents "port already in use" errors
+- Eliminates conflicts between development and production instances
+- Ensures clean state for reliable deployments
+- Resolves database connection conflicts
 
 ### 🏃 Quick Start
 

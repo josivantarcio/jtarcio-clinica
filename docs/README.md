@@ -46,6 +46,7 @@ This system follows clean architecture principles with:
    ./scripts/start-production.sh
    
    # This will:
+   # - STOP ALL existing processes (Docker + Local) for clean start
    # - Start infrastructure in Docker (PostgreSQL, Redis, ChromaDB, N8N, PgAdmin)  
    # - Run backend and frontend locally for better development experience
    # - Provide automatic backup, health checks and rollback capabilities

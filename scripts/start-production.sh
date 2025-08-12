@@ -52,6 +52,76 @@ log_step() {
     echo -e "${BLUE}🔧 $1${NC}"
 }
 
+# Function to perform complete system cleanup before starting
+complete_system_cleanup() {
+    log_header "🧹 LIMPEZA COMPLETA DO SISTEMA"
+    
+    log_step "Parando todos os processos locais..."
+    
+    # Stop all Node.js processes on ports 3000 and 3001
+    log_step "Finalizando processos Node.js (portas 3000/3001)..."
+    pkill -f "node.*3000" 2>/dev/null || true
+    pkill -f "node.*3001" 2>/dev/null || true
+    pkill -f "next.*3001" 2>/dev/null || true
+    pkill -f "tsx.*src/index" 2>/dev/null || true
+    pkill -f "next.*dev" 2>/dev/null || true
+    pkill -f "next-server" 2>/dev/null || true
+    
+    # Stop any processes using our specific ports with more precision
+    log_step "Liberando portas específicas..."
+    local ports=("3000" "3001" "5432" "5433" "6379" "6380" "8000" "5678" "5050")
+    for port in "${ports[@]}"; do
+        local pids=$(lsof -ti:$port 2>/dev/null || true)
+        if [ ! -z "$pids" ]; then
+            log_warning "Liberando porta $port..."
+            echo "$pids" | xargs kill -9 2>/dev/null || true
+        fi
+    done
+    
+    # Wait for processes to terminate
+    sleep 3
+    
+    log_step "Limpando ambiente Docker..."
+    
+    # Stop all Docker containers (not just compose ones)
+    local running_containers=$(docker ps -q 2>/dev/null || true)
+    if [ ! -z "$running_containers" ]; then
+        log_step "Parando todos os containers Docker..."
+        docker stop $running_containers 2>/dev/null || true
+    fi
+    
+    # Stop compose services specifically
+    timeout 30 docker-compose down --volumes --remove-orphans 2>/dev/null || {
+        log_warning "Timeout no docker-compose down, forçando..."
+        docker stop $(docker ps -q) 2>/dev/null || true
+        docker rm $(docker ps -aq) 2>/dev/null || true
+    }
+    
+    # Clean up EO Clinica specific containers
+    local project_containers=$(docker ps -a --filter "name=eo-clinica" --format "{{.Names}}" 2>/dev/null || true)
+    if [ ! -z "$project_containers" ]; then
+        log_step "Removendo containers específicos do projeto..."
+        echo "$project_containers" | xargs docker stop 2>/dev/null || true
+        echo "$project_containers" | xargs docker rm 2>/dev/null || true
+    fi
+    
+    # Clean up Docker networks and unused resources
+    log_step "Limpando recursos Docker não utilizados..."
+    docker network prune -f 2>/dev/null || true
+    docker container prune -f 2>/dev/null || true
+    docker image prune -f 2>/dev/null || true
+    
+    # Clean any remaining processes that might interfere
+    log_step "Verificação final de processos..."
+    pkill -f "eo-clinica" 2>/dev/null || true
+    pkill -f "clinic" 2>/dev/null || true
+    
+    # Give system time to clean up
+    sleep 2
+    
+    log_success "Sistema completamente limpo e pronto para inicialização"
+}
+
 # Function to check prerequisites
 check_prerequisites() {
     log_step "Verificando pré-requisitos..."
@@ -247,7 +317,7 @@ EOF
 NODE_ENV=production
 NEXT_PUBLIC_API_URL=http://localhost:3000
 NEXT_PUBLIC_APP_NAME=EO Clínica
-NEXT_PUBLIC_APP_VERSION=1.0.4
+NEXT_PUBLIC_APP_VERSION=1.0.9
 NEXT_PUBLIC_ENABLE_AI_CHAT=true
 PORT=3001
 EOF
@@ -257,7 +327,7 @@ EOF
 NODE_ENV=development
 NEXT_PUBLIC_API_URL=http://localhost:3000
 NEXT_PUBLIC_APP_NAME=EO Clínica
-NEXT_PUBLIC_APP_VERSION=1.0.4
+NEXT_PUBLIC_APP_VERSION=1.0.9
 NEXT_PUBLIC_ENABLE_AI_CHAT=true
 PORT=3001
 EOF
@@ -658,13 +728,14 @@ main() {
     clear
     log_header "🏥 EO CLÍNICA - DEPLOY COMPLETO PARA PRODUÇÃO"
     echo -e "${CYAN}© 2025 Jtarcio Desenvolvimento${NC}"
-    echo -e "${CYAN}Versão: 1.0.3 - Script de Produção Robusto${NC}"
+    echo -e "${CYAN}Versão: 1.0.9 - Script com Limpeza Completa${NC}"
     echo ""
     
     # Set up signal handlers
     trap cleanup SIGINT SIGTERM
     
     # Execute deployment steps
+    complete_system_cleanup
     check_prerequisites
     create_backup
     clean_docker_environment
