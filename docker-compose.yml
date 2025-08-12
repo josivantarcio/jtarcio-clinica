@@ -10,7 +10,7 @@ services:
       POSTGRES_USER: clinic_user
       POSTGRES_PASSWORD: clinic_password
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -65,7 +65,7 @@ services:
       # Database Configuration  
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=localhost
-      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_PORT=5433
       - DB_POSTGRESDB_DATABASE=eo_clinica_db
       - DB_POSTGRESDB_USER=clinic_user
       - DB_POSTGRESDB_PASSWORD=clinic_password

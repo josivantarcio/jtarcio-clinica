@@ -143,6 +143,12 @@ clean_docker_environment() {
     docker container prune -f 2>/dev/null || true
     docker image prune -f 2>/dev/null || true
     
+    # Restore original docker-compose.yml if it was modified
+    if [ -f docker-compose.yml.backup ]; then
+        mv docker-compose.yml.backup docker-compose.yml
+        log_info "Docker-compose.yml restaurado"
+    fi
+    
     log_success "Ambiente Docker limpo"
 }
 
@@ -289,9 +295,43 @@ prepare_local_services() {
     log_success "Serviços locais preparados"
 }
 
+# Function to check and resolve port conflicts
+check_and_resolve_port_conflicts() {
+    log_step "Verificando conflitos de porta..."
+    
+    # Check if PostgreSQL is already running locally on 5432
+    if ss -tlnp | grep ":5432" >/dev/null 2>&1; then
+        log_warning "PostgreSQL local detectado na porta 5432"
+        log_step "Modificando configuração do Docker para usar porta 5433..."
+        
+        # Backup original docker-compose.yml if not already backed up
+        if [ ! -f docker-compose.yml.backup ]; then
+            cp docker-compose.yml docker-compose.yml.backup
+        fi
+        
+        # Modify docker-compose.yml to use port 5433
+        sed -i 's/"5432:5432"/"5433:5432"/g' docker-compose.yml
+        
+        # Update the production environment to use the new port
+        sed -i 's|localhost:5432|localhost:5433|g' .env.production
+        
+        # Also update N8N database connection to use the correct port
+        sed -i 's|DB_POSTGRESDB_HOST=localhost|DB_POSTGRESDB_HOST=localhost\n      - DB_POSTGRESDB_PORT=5433|g' docker-compose.yml
+        
+        log_info "Docker PostgreSQL configurado para usar porta 5433"
+        return 0
+    fi
+    
+    log_success "Nenhum conflito de porta detectado"
+    return 0
+}
+
 # Function to start Docker infrastructure services
 start_docker_services() {
     log_step "Iniciando serviços de infraestrutura (Docker)..."
+    
+    # Check and resolve port conflicts first
+    check_and_resolve_port_conflicts
     
     local retry=1
     local max_retries=$DOCKER_RETRY_COUNT
@@ -528,8 +568,14 @@ show_final_status() {
     echo -e "   API Docs:     ${GREEN}http://localhost:3000/documentation${NC}"
     echo ""
     
+    # Determine the correct PostgreSQL port to display
+    local postgres_port="5432"
+    if [ -f docker-compose.yml.backup ]; then
+        postgres_port="5433"
+    fi
+    
     echo -e "${WHITE}🐳 SERVIÇOS DOCKER${NC}"
-    echo -e "   PostgreSQL:   ${CYAN}localhost:5432${NC}"
+    echo -e "   PostgreSQL:   ${CYAN}localhost:$postgres_port${NC}"
     echo -e "   Redis:        ${CYAN}localhost:6380${NC}"
     echo -e "   ChromaDB:     ${CYAN}http://localhost:8000${NC}"
     echo -e "   N8N:          ${CYAN}http://localhost:5678${NC} (admin/admin123)"
