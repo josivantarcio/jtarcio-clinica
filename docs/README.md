@@ -40,15 +40,12 @@ This system follows clean architecture principles with:
    # Edit .env with your configuration
    ```
 
-3. **Start the development environment:**
+3. **Start the production environment:**
    ```bash
-   # Method 1: Use complete setup script (RECOMMENDED)
-   ./scripts/start-complete.sh
+   # Method 1: Use complete production script (RECOMMENDED)
+   ./scripts/start-production.sh
    
-   # Method 2: Fix Redis port conflict if needed
-   ./scripts/fix-redis-port.sh
-   
-   # Method 3: Manual steps
+   # Method 2: Manual development setup
    # 1. Start Docker services
    npm run docker:up
    
@@ -162,10 +159,7 @@ npm run test            # Run tests
 npm run test:coverage   # Run tests with coverage
 
 # Helper Scripts
-./scripts/start-complete.sh  # Complete system initialization
-./scripts/dev-setup.sh       # Development environment setup
-./scripts/fix-redis-port.sh     # Fix Redis port 6379 conflicts
-./scripts/disable-local-redis.sh  # Disable local Redis service permanently
+./scripts/start-production.sh  # Complete production deployment with zero-downtime
 ```
 
 ## 🎯 Medical Specialties

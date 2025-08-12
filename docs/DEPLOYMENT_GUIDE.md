@@ -519,7 +519,25 @@ proxy_read_timeout 60s;
 
 ### Step 5: Application Deployment
 
-#### Build and Deploy
+#### Automated Production Deploy (RECOMMENDED)
+```bash
+cd /opt/eo-clinica
+
+# Use the automated production script
+./scripts/start-production.sh
+
+# This script will:
+# - Check prerequisites
+# - Create automatic backups
+# - Clean Docker environment
+# - Build production images
+# - Start services with retry logic
+# - Run database migrations
+# - Perform health checks
+# - Provide rollback if needed
+```
+
+#### Manual Build and Deploy (Alternative)
 ```bash
 cd /opt/eo-clinica
 
