@@ -143,10 +143,10 @@ clean_docker_environment() {
     docker container prune -f 2>/dev/null || true
     docker image prune -f 2>/dev/null || true
     
-    # Restore original docker-compose.yml if it was modified
+    # Keep docker-compose.yml modifications (don't restore on retry)
+    # Backup is preserved but not automatically restored to maintain port fixes
     if [ -f docker-compose.yml.backup ]; then
-        mv docker-compose.yml.backup docker-compose.yml
-        log_info "Docker-compose.yml restaurado"
+        log_info "Docker-compose.yml backup mantido (sem restauração automática)"
     fi
     
     log_success "Ambiente Docker limpo"
@@ -175,7 +175,7 @@ PORT=3000
 API_VERSION=v1
 
 # Database Configuration (local connection to Docker)
-DATABASE_URL=postgresql://clinic_user:clinic_password@localhost:5432/eo_clinica_db
+DATABASE_URL=postgresql://clinic_user:clinic_password@localhost:5433/eo_clinica_db
 
 # Redis Configuration (local connection to Docker) 
 REDIS_URL=redis://localhost:6380

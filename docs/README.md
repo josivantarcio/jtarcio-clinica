@@ -80,7 +80,7 @@ This system follows clean architecture principles with:
    **🐳 Docker Services:**
    - **N8N Workflows**: http://localhost:5678 (admin/admin123)
    - **PgAdmin (Database)**: http://localhost:5050 (admin@clinic.com/admin123)
-   - **PostgreSQL**: localhost:5432
+   - **PostgreSQL**: localhost:5433
    - **Redis**: localhost:6380
    - **ChromaDB**: http://localhost:8000
 

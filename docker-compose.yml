@@ -47,9 +47,10 @@ services:
   # N8N for workflow automation
   n8n:
     image: n8nio/n8n:latest
-    network_mode: host
     ports:
       - "5678:5678"
+    networks:
+      - clinic-network
     environment:
       # Basic Configuration
       - N8N_BASIC_AUTH_ACTIVE=true
@@ -64,8 +65,8 @@ services:
       
       # Database Configuration  
       - DB_TYPE=postgresdb
-      - DB_POSTGRESDB_HOST=localhost
-      - DB_POSTGRESDB_PORT=5433
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
       - DB_POSTGRESDB_DATABASE=eo_clinica_db
       - DB_POSTGRESDB_USER=clinic_user
       - DB_POSTGRESDB_PASSWORD=clinic_password
@@ -83,8 +84,8 @@ services:
       - EXECUTIONS_DATA_MAX_AGE=90
       
       # Queue Configuration
-      - QUEUE_BULL_REDIS_HOST=localhost
-      - QUEUE_BULL_REDIS_PORT=6380
+      - QUEUE_BULL_REDIS_HOST=redis
+      - QUEUE_BULL_REDIS_PORT=6379
       - QUEUE_HEALTH_CHECK_ACTIVE=true
       
       # Timezone

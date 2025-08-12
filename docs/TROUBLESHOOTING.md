@@ -47,7 +47,7 @@ npm run db:seed
 sudo ss -tulpn | grep :3000   # Backend
 sudo ss -tulpn | grep :3001   # Frontend  
 sudo ss -tulpn | grep :6379   # Redis
-sudo ss -tulpn | grep :5432   # PostgreSQL
+sudo ss -tulpn | grep :5433   # PostgreSQL (Docker)
 
 # 2. Parar processo Redis local (se existir)
 sudo systemctl stop redis-server
