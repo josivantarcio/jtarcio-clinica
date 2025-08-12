@@ -85,72 +85,128 @@ export default function SchedulePage() {
       }
       loadScheduleData()
     }
-  }, [user, isAuthenticated, currentDate, viewMode])
+  }, [user, isAuthenticated, currentDate, viewMode, selectedDoctor])
 
   const loadScheduleData = async () => {
     setLoading(true)
     try {
-      // Mock data following the model's style - would come from API
-      const mockSchedule: DaySchedule[] = generateMockSchedule(currentDate, viewMode)
-      setScheduleData(mockSchedule)
+      // Calculate date range based on view mode
+      const startDate = new Date(currentDate)
+      const endDate = new Date(currentDate)
+      
+      if (viewMode === 'day') {
+        // Just today
+        endDate.setDate(startDate.getDate() + 1)
+      } else if (viewMode === 'week') {
+        // Week starting from Monday
+        const dayOfWeek = startDate.getDay()
+        const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek // Handle Sunday
+        startDate.setDate(startDate.getDate() + mondayOffset)
+        endDate.setDate(startDate.getDate() + 7)
+      } else {
+        // Month view
+        startDate.setDate(1)
+        endDate.setMonth(startDate.getMonth() + 1)
+        endDate.setDate(1)
+      }
+
+      // Fetch real appointments from API
+      const response = await apiClient.getAppointments({
+        startDate: startDate.toISOString().split('T')[0],
+        endDate: endDate.toISOString().split('T')[0],
+        doctorId: selectedDoctor !== 'all' ? selectedDoctor : undefined
+      })
+
+      if (response.success && response.data) {
+        const realSchedule = formatAppointmentsToSchedule(response.data, startDate, endDate, viewMode)
+        setScheduleData(realSchedule)
+      } else {
+        // No appointments found - create empty schedule
+        const emptySchedule = createEmptySchedule(startDate, endDate, viewMode)
+        setScheduleData(emptySchedule)
+      }
     } catch (error) {
       console.error('Error loading schedule:', error)
+      // Create empty schedule on error
+      const startDate = new Date(currentDate)
+      const endDate = new Date(currentDate)
+      if (viewMode === 'week') {
+        endDate.setDate(startDate.getDate() + 7)
+      } else if (viewMode === 'month') {
+        endDate.setMonth(startDate.getMonth() + 1)
+      } else {
+        endDate.setDate(startDate.getDate() + 1)
+      }
+      const emptySchedule = createEmptySchedule(startDate, endDate, viewMode)
+      setScheduleData(emptySchedule)
     } finally {
       setLoading(false)
     }
   }
 
-  const generateMockSchedule = (date: Date, mode: string): DaySchedule[] => {
-    const days = mode === 'day' ? 1 : mode === 'week' ? 7 : 30
+  const formatAppointmentsToSchedule = (appointments: any[], startDate: Date, endDate: Date, viewMode: string): DaySchedule[] => {
     const schedule: DaySchedule[] = []
+    const days = viewMode === 'day' ? 1 : viewMode === 'week' ? 7 : 30
     
     for (let i = 0; i < days; i++) {
-      const currentDay = new Date(date)
-      currentDay.setDate(date.getDate() + i)
+      const currentDay = new Date(startDate)
+      currentDay.setDate(startDate.getDate() + i)
       
-      // Skip weekends for this example
-      if (currentDay.getDay() === 0 || currentDay.getDay() === 6) {
-        schedule.push({
-          date: currentDay,
-          appointments: [],
-          availableSlots: 0,
-          totalSlots: 0
-        })
-        continue
-      }
-
-      const appointments: ScheduleAppointment[] = []
-      const appointmentCount = Math.floor(Math.random() * 8) + 2 // 2-10 appointments per day
+      // Filter appointments for this day
+      const dayAppointments = appointments.filter(apt => {
+        const aptDate = new Date(apt.scheduledAt)
+        return aptDate.toDateString() === currentDay.toDateString()
+      })
       
-      for (let j = 0; j < appointmentCount; j++) {
-        const hour = 8 + j // Starting at 8 AM
-        const startTime = new Date(currentDay)
-        startTime.setHours(hour, 0, 0, 0)
-        
-        const endTime = new Date(startTime)
-        endTime.setMinutes(startTime.getMinutes() + 30) // 30 min appointments
-        
-        appointments.push({
-          id: `apt-${i}-${j}`,
-          patientName: ['João Silva', 'Maria Santos', 'Pedro Oliveira', 'Ana Lima', 'Carlos Costa'][Math.floor(Math.random() * 5)],
-          patientEmail: 'paciente@example.com',
-          patientPhone: '(11) 99999-9999',
-          startTime,
-          endTime,
-          duration: 30,
-          type: ['CONSULTATION', 'FOLLOW_UP', 'ROUTINE_CHECKUP'][Math.floor(Math.random() * 3)] as any,
-          status: ['SCHEDULED', 'CONFIRMED', 'COMPLETED'][Math.floor(Math.random() * 3)] as any,
-          specialty: ['Cardiologia', 'Dermatologia', 'Ortopedia', 'Pediatria'][Math.floor(Math.random() * 4)],
-          notes: Math.random() > 0.7 ? 'Paciente com histórico de hipertensão' : undefined,
-          isFirstTime: Math.random() > 0.8
-        })
-      }
+      // Convert API appointments to ScheduleAppointment format
+      const formattedAppointments: ScheduleAppointment[] = dayAppointments.map(apt => ({
+        id: apt.id,
+        patientName: apt.patient?.user?.name || 'Paciente',
+        patientEmail: apt.patient?.user?.email || '',
+        patientPhone: apt.patient?.user?.phone || '',
+        startTime: new Date(apt.scheduledAt),
+        endTime: new Date(apt.endTime || new Date(new Date(apt.scheduledAt).getTime() + apt.duration * 60000)),
+        duration: apt.duration || 30,
+        type: apt.type || 'CONSULTATION',
+        status: apt.status,
+        specialty: apt.specialty?.name || 'Especialidade',
+        notes: apt.notes,
+        isFirstTime: apt.isFirstTime || false
+      }))
+      
+      // Calculate slots (assuming 8h-18h = 20 slots of 30 min each)
+      const totalSlots = 20
+      const usedSlots = formattedAppointments.length
+      const availableSlots = Math.max(0, totalSlots - usedSlots)
       
       schedule.push({
         date: currentDay,
-        appointments: appointments.sort((a, b) => a.startTime.getTime() - b.startTime.getTime()),
-        availableSlots: 16 - appointmentCount, // 8h-18h = 20 slots, minus appointments
-        totalSlots: 16
+        appointments: formattedAppointments.sort((a, b) => a.startTime.getTime() - b.startTime.getTime()),
+        availableSlots,
+        totalSlots
+      })
+    }
+    
+    return schedule
+  }
+
+  const createEmptySchedule = (startDate: Date, endDate: Date, viewMode: string): DaySchedule[] => {
+    const schedule: DaySchedule[] = []
+    const days = viewMode === 'day' ? 1 : viewMode === 'week' ? 7 : 30
+    
+    for (let i = 0; i < days; i++) {
+      const currentDay = new Date(startDate)
+      currentDay.setDate(startDate.getDate() + i)
+      
+      // Weekend handling - reduced slots
+      const isWeekend = currentDay.getDay() === 0 || currentDay.getDay() === 6
+      const totalSlots = isWeekend ? 0 : 20 // No appointments on weekends
+      
+      schedule.push({
+        date: currentDay,
+        appointments: [],
+        availableSlots: totalSlots,
+        totalSlots
       })
     }
     
@@ -228,7 +284,7 @@ export default function SchedulePage() {
     }
   }
 
-  // Statistics for the header cards (following the model)
+  // Statistics for the header cards - all based on real data
   const totalAppointments = scheduleData.reduce((sum, day) => sum + day.appointments.length, 0)
   const todayAppointments = scheduleData.find(day => 
     day.date.toDateString() === new Date().toDateString()
@@ -236,6 +292,14 @@ export default function SchedulePage() {
   const confirmedAppointments = scheduleData.reduce((sum, day) => 
     sum + day.appointments.filter(apt => apt.status === 'CONFIRMED').length, 0
   )
+  const pendingAppointments = scheduleData.reduce((sum, day) => 
+    sum + day.appointments.filter(apt => apt.status === 'SCHEDULED').length, 0
+  )
+  
+  // Calculate occupation rate based on real data
+  const totalSlotsAvailable = scheduleData.reduce((sum, day) => sum + day.totalSlots, 0)
+  const totalSlotsUsed = scheduleData.reduce((sum, day) => sum + day.appointments.length, 0)
+  const occupationRate = totalSlotsAvailable > 0 ? Math.round((totalSlotsUsed / totalSlotsAvailable) * 100) : 0
 
   const statsCards = [
     {
@@ -249,7 +313,7 @@ export default function SchedulePage() {
     {
       title: 'Consultas Hoje',
       value: todayAppointments,
-      subtitle: '8 pendentes',
+      subtitle: `${pendingAppointments} pendentes`,
       icon: Clock,
       color: 'text-green-600',
       bgColor: 'bg-green-50'
@@ -264,8 +328,8 @@ export default function SchedulePage() {
     },
     {
       title: 'Taxa de Ocupação',
-      value: '87%',
-      subtitle: 'Média da semana',
+      value: `${occupationRate}%`,
+      subtitle: viewMode === 'day' ? 'Hoje' : viewMode === 'week' ? 'Esta semana' : 'Este mês',
       icon: Users,
       color: 'text-yellow-600',
       bgColor: 'bg-yellow-50'
@@ -292,7 +356,7 @@ export default function SchedulePage() {
               <Filter className="h-4 w-4 mr-2" />
               Filtros
             </Button>
-            <Button>
+            <Button onClick={() => router.push('/appointments/new')}>
               <Plus className="h-4 w-4 mr-2" />
               Nova Consulta
             </Button>
@@ -449,7 +513,7 @@ export default function SchedulePage() {
                     <p className="text-muted-foreground mb-4">
                       Você tem o dia livre ou é fim de semana
                     </p>
-                    <Button>
+                    <Button onClick={() => router.push('/appointments/new')}>
                       <Plus className="h-4 w-4 mr-2" />
                       Adicionar Consulta
                     </Button>
