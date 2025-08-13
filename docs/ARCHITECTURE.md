@@ -7,8 +7,10 @@ EO Clínica is a **production-ready, enterprise-grade medical scheduling platfor
 
 **System Status**: ✅ **100% Complete - All 6 Sectors Implemented**  
 **Production Ready**: ✅ **Enterprise-grade with LGPD compliance**  
-**AI Integration**: ✅ **Claude Sonnet 4 fully integrated**  
-**Security Level**: ✅ **Banking-level security implemented**
+**AI Integration**: ✅ **Claude Sonnet 4 fully integrated with ChromaDB**  
+**Frontend**: ✅ **Next.js 15 + React 19 + Tailwind v4 complete**  
+**Security Level**: ✅ **Banking-level security implemented**  
+**Workspace Setup**: ✅ **Monorepo with npm workspaces configured**
 
 ```mermaid
 graph TB
@@ -76,11 +78,22 @@ graph TB
 ## Technology Stack
 
 ### Backend
-- **Runtime**: Node.js 18+
-- **Language**: TypeScript
-- **Framework**: Fastify (high-performance alternative to Express)
-- **ORM**: Prisma (type-safe database client)
-- **Validation**: Zod (TypeScript-first schema validation)
+- **Runtime**: Node.js 18+ (currently using TSX for development)
+- **Language**: TypeScript 5.2+
+- **Framework**: Fastify 4+ (high-performance alternative to Express)
+- **ORM**: Prisma 5.22+ (type-safe database client with generated client)
+- **Validation**: Zod 3.22+ (TypeScript-first schema validation)
+
+### Frontend
+- **Framework**: Next.js 15.4.6 (App Router with Turbopack)
+- **Runtime**: React 19.1.0 (latest stable)
+- **Language**: TypeScript 5+ (strict mode)
+- **Styling**: Tailwind CSS v4 + Radix UI components
+- **State**: Zustand 5+ for client state
+- **Data Fetching**: React Query (TanStack Query 5.84+)
+- **Forms**: React Hook Form 7.62+ with Zod validation
+- **Charts**: Recharts 3.1+ for analytics
+- **WebSocket**: Socket.io-client 4.8+ for real-time features
 
 ### Databases
 - **Primary**: PostgreSQL 15 (ACID compliance, JSON support)
@@ -100,35 +113,68 @@ graph TB
 ## Project Structure
 
 ```
-src/
-├── config/           # Configuration files
-│   ├── env.ts       # Environment variables
-│   ├── database.ts  # Database connection
-│   ├── redis.ts     # Redis connection
-│   └── logger.ts    # Logging setup
-├── database/        # Database related files
-│   ├── schema.prisma # Prisma schema
-│   ├── migrations/  # Database migrations
-│   └── seeds/       # Seed data
-├── types/           # TypeScript type definitions
-│   ├── common.ts    # Common types and schemas
-│   ├── user.ts      # User-related types
-│   └── appointment.ts # Appointment types
-├── routes/          # API route definitions
-├── middleware/      # Custom middleware
-├── services/        # Business logic layer
-├── repositories/    # Data access layer
-├── utils/           # Utility functions
-├── integrations/    # External service integrations
-│   ├── ai/         # AI service integration
-│   ├── calendar/   # Calendar integration
-│   ├── whatsapp/   # WhatsApp integration
-│   └── n8n/        # N8N integration
-└── modules/         # Domain modules
-    ├── auth/       # Authentication module
-    ├── users/      # User management
-    ├── appointments/ # Appointment management
-    └── notifications/ # Notification system
+# Monorepo with npm workspaces
+eo-clinica2/
+├── package.json             # Root package with workspaces configuration
+├── src/                     # Backend source code
+│   ├── config/             # Configuration files
+│   │   ├── env.ts         # Environment variables
+│   │   ├── database.ts    # Database connection
+│   │   ├── redis.ts       # Redis connection  
+│   │   ├── logger.ts      # Winston logging setup
+│   │   └── business-rules.ts # Medical business rules
+│   ├── database/          # Database related files
+│   │   ├── schema.prisma  # Complete Prisma schema
+│   │   ├── migrations/    # Database migrations
+│   │   ├── seeds/         # Seed data (users, specialties)
+│   │   └── generated/     # Prisma generated client
+│   ├── integrations/      # External service integrations
+│   │   ├── ai/           # Claude Sonnet 4 + ChromaDB
+│   │   │   ├── anthropic-client.ts
+│   │   │   ├── conversation-manager.ts
+│   │   │   └── knowledge-base.ts
+│   │   ├── n8n/          # Workflow automation
+│   │   │   ├── custom-nodes/
+│   │   │   └── workflow-templates/
+│   │   ├── whatsapp/     # WhatsApp Business API
+│   │   └── calendar/     # Google Calendar sync
+│   ├── modules/          # Domain modules
+│   │   ├── auth/         # JWT authentication
+│   │   ├── users/        # User management
+│   │   ├── appointments/ # Appointment system
+│   │   ├── audit/        # LGPD audit logs
+│   │   ├── security/     # Security & encryption
+│   │   └── notifications/ # Multi-channel notifications
+│   ├── services/         # Business logic
+│   ├── repositories/     # Data access layer
+│   ├── routes/          # API routes
+│   └── utils/           # Utilities
+├── frontend/            # Next.js 15 frontend
+│   ├── package.json    # Frontend dependencies
+│   ├── src/
+│   │   ├── app/        # Next.js App Router
+│   │   │   ├── dashboard/
+│   │   │   ├── appointments/
+│   │   │   ├── patients/
+│   │   │   ├── doctors/
+│   │   │   ├── schedule/
+│   │   │   ├── reports/
+│   │   │   ├── settings/
+│   │   │   └── auth/
+│   │   ├── components/ # React components
+│   │   │   ├── ui/     # Radix UI + Tailwind
+│   │   │   ├── forms/  # Form components
+│   │   │   ├── chat/   # AI chat interface
+│   │   │   └── layout/ # Layout components
+│   │   ├── store/      # Zustand stores
+│   │   ├── lib/        # Utilities & API client
+│   │   └── types/      # TypeScript types
+│   ├── public/         # Static assets
+│   └── next.config.ts  # Next.js configuration
+├── docs/               # Documentation
+├── scripts/            # Deployment scripts
+├── docker-compose.yml  # Container orchestration
+└── logs/              # Application logs
 ```
 
 ## Database Schema

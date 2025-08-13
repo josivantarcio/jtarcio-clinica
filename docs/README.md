@@ -8,14 +8,14 @@ EO Clínica is a comprehensive medical clinic scheduling system that integrates 
 
 This system follows clean architecture principles with:
 
-- **Backend**: Node.js + TypeScript + Fastify
-- **Frontend**: Next.js 14 + React 18 + Tailwind CSS + Shadcn/ui
-- **Database**: PostgreSQL with Prisma ORM
-- **Cache**: Redis for sessions and caching
-- **AI Integration**: Claude Sonnet 4 API
-- **Vector Database**: ChromaDB for embeddings
-- **Automation**: N8N workflows
-- **Containerization**: Docker & Docker Compose
+- **Backend**: Node.js + TypeScript + Fastify (production-ready)
+- **Frontend**: Next.js 15 + React 19 + Tailwind CSS v4 + Radix UI
+- **Database**: PostgreSQL 15 with Prisma ORM (complete schema)
+- **Cache**: Redis 7 for sessions and caching
+- **AI Integration**: Claude Sonnet 4 API (fully integrated)
+- **Vector Database**: ChromaDB for embeddings and context
+- **Automation**: N8N workflows (custom nodes implemented)
+- **Containerization**: Docker & Docker Compose (monorepo workspaces)
 
 ## 🚀 Quick Start
 
@@ -30,8 +30,7 @@ This system follows clean architecture principles with:
 1. **Clone and setup the project:**
    ```bash
    cd /home/josivan/ws/eo-clinica2
-   npm install
-   cd frontend && npm install
+   npm install  # Installs both backend and frontend (workspaces configured)
    ```
 
 2. **Environment configuration:**
