@@ -447,18 +447,18 @@ export class MedicalKnowledgeBase {
     return `
 EMERGÊNCIAS MÉDICAS - PROCURE ATENDIMENTO IMEDIATO:
 
-🚨 SITUAÇÕES CRÍTICAS (CHAME SAMU - 192):
+SITUAÇÕES CRÍTICAS (CHAME SAMU - 192):
 - Dor no peito intensa
 - Dificuldade respiratória severa  
 - Perda de consciência
 - Sangramento intenso
 - Convulsões
 
-🏥 NOSSA CLÍNICA:
+NOSSA CLÍNICA:
 - Plantão 24h: (xx) xxxx-xxxx
 - Endereço: [Endereço da clínica]
 
-⚠️ IMPORTANTE: Em casos graves, não hesite em chamar o SAMU (192) ou ir ao pronto-socorro mais próximo.
+[IMPORTANTE] Em casos graves, não hesite em chamar o SAMU (192) ou ir ao pronto-socorro mais próximo.
 `;
   }
 

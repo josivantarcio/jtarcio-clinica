@@ -2,8 +2,8 @@ import { PrismaClient } from '../generated/client';
 
 // Simple logger for seed
 const logger = {
-  info: (msg: string) => console.log(`ℹ️  ${msg}`),
-  error: (msg: string, err?: any) => console.error(`❌ ${msg}`, err)
+  info: (msg: string) => console.log(`[INFO] ${msg}`),
+  error: (msg: string, err?: any) => console.error(`[ERROR] ${msg}`, err)
 };
 
 const specialties = [
@@ -71,7 +71,7 @@ const specialties = [
 
 export async function seedSpecialties(prisma: PrismaClient): Promise<void> {
   try {
-    logger.info('🏥 Seeding medical specialties...');
+    logger.info('Seeding medical specialties...');
 
     for (const specialty of specialties) {
       await prisma.specialty.upsert({
@@ -82,9 +82,9 @@ export async function seedSpecialties(prisma: PrismaClient): Promise<void> {
     }
 
     const count = await prisma.specialty.count();
-    logger.info(`✅ Seeded ${count} medical specialties`);
+    logger.info(`[SUCCESS] Seeded ${count} medical specialties`);
   } catch (error) {
-    logger.error('❌ Failed to seed specialties:', error);
+    logger.error('[ERROR] Failed to seed specialties:', error);
     throw error;
   }
 }

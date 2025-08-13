@@ -228,14 +228,14 @@ export class ConversationFlowHandler {
       if (emergencyProtocol) {
         return {
           success: true,
-          message: `⚠️ SITUAÇÃO DE EMERGÊNCIA IDENTIFICADA
+          message: `[EMERGÊNCIA] SITUAÇÃO DE EMERGÊNCIA IDENTIFICADA
 
 ${emergencyProtocol.response}
 
 AÇÕES RECOMENDADAS:
 ${emergencyProtocol.actions.map(action => `• ${action}`).join('\n')}
 
-🚨 Se a situação for grave, não hesite em chamar o SAMU (192) imediatamente.
+[URGENTE] Se a situação for grave, não hesite em chamar o SAMU (192) imediatamente.
 
 Nossa clínica também tem plantão 24h disponível.`,
           nextStep: 'emergency_handled',
@@ -395,10 +395,10 @@ Qual dessas opções você prefere? Digite o número da sua escolha.`,
       success: false,
       message: `Por favor, confirme os dados da sua consulta:
 
-👤 Nome: ${appointmentData.patientName}
-📞 Telefone: ${appointmentData.patientPhone}
-🏥 Especialidade: ${appointmentData.specialty}
-📅 Data e horário: ${appointmentData.preferredDate} às ${appointmentData.preferredTime}
+Nome: ${appointmentData.patientName}
+Telefone: ${appointmentData.patientPhone}
+Especialidade: ${appointmentData.specialty}
+Data e horário: ${appointmentData.preferredDate} às ${appointmentData.preferredTime}
 
 Está tudo correto? Digite "sim" para confirmar ou me diga o que precisa alterar.`,
       nextStep: 'confirm_details',
@@ -454,16 +454,16 @@ Está tudo correto? Digite "sim" para confirmar ou me diga o que precisa alterar
 
       return {
         success: true,
-        message: `✅ Consulta agendada com sucesso!
+        message: `[SUCESSO] Consulta agendada com sucesso!
 
-📋 Detalhes:
+Detalhes:
 • Paciente: ${appointmentData.patientName}
 • Médico: Dr(a). ${appointment.doctor.user.firstName} ${appointment.doctor.user.lastName}
 • Especialidade: ${appointment.specialty.name}
 • Data: ${this.formatDate(appointment.scheduledAt.toISOString())}
 • Horário: ${this.formatTime(appointment.scheduledAt)}
 
-📝 Lembretes importantes:
+Lembretes importantes:
 • Chegue 15 minutos antes do horário
 • Traga documento com foto e cartão do convênio
 • Em caso de cancelamento, avise com 24h de antecedência
@@ -558,9 +558,9 @@ Você receberá uma confirmação por SMS/WhatsApp em breve.`,
           success: true,
           message: `Encontrei sua consulta:
 
-📋 ${apt.patient.user.fullName}
-🏥 ${apt.specialty.name} - Dr(a). ${apt.doctor.user.firstName} ${apt.doctor.user.lastName}
-📅 ${this.formatDate(apt.scheduledAt.toISOString())} às ${this.formatTime(apt.scheduledAt)}
+Paciente: ${apt.patient.user.fullName}
+Especialidade: ${apt.specialty.name} - Dr(a). ${apt.doctor.user.firstName} ${apt.doctor.user.lastName}
+Data: ${this.formatDate(apt.scheduledAt.toISOString())} às ${this.formatTime(apt.scheduledAt)}
 
 É essa consulta que você deseja alterar?`,
           nextStep: 'confirm_appointment',

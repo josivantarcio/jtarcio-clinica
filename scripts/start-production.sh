@@ -27,19 +27,19 @@ NC='\033[0m' # No Color
 
 # Logging functions
 log_info() {
-    echo -e "${CYAN}ℹ️  $1${NC}"
+    echo -e "${CYAN}[INFO] $1${NC}"
 }
 
 log_success() {
-    echo -e "${GREEN}✅ $1${NC}"
+    echo -e "${GREEN}[SUCCESS] $1${NC}"
 }
 
 log_warning() {
-    echo -e "${YELLOW}⚠️  $1${NC}"
+    echo -e "${YELLOW}[WARNING] $1${NC}"
 }
 
 log_error() {
-    echo -e "${RED}❌ $1${NC}"
+    echo -e "${RED}[ERROR] $1${NC}"
 }
 
 log_header() {
@@ -49,12 +49,12 @@ log_header() {
 }
 
 log_step() {
-    echo -e "${BLUE}🔧 $1${NC}"
+    echo -e "${BLUE}[PROCESSING] $1${NC}"
 }
 
 # Function to perform complete system cleanup before starting
 complete_system_cleanup() {
-    log_header "🧹 LIMPEZA COMPLETA DO SISTEMA"
+    log_header "LIMPEZA COMPLETA DO SISTEMA"
     
     log_step "Parando todos os processos locais..."
     
@@ -647,9 +647,9 @@ rollback_deployment() {
 
 # Function to show final status
 show_final_status() {
-    log_header "🎉 EO CLÍNICA - DEPLOY DE PRODUÇÃO CONCLUÍDO!"
+    log_header "EO CLÍNICA - DEPLOY DE PRODUÇÃO CONCLUÍDO!"
     
-    echo -e "${WHITE}📱 SERVIÇOS DISPONÍVEIS${NC}"
+    echo -e "${WHITE}SERVIÇOS DISPONÍVEIS${NC}"
     echo -e "   Frontend:     ${GREEN}http://localhost:3001${NC} ${YELLOW}(Local)${NC}"
     echo -e "   Backend:      ${GREEN}http://localhost:3000${NC} ${YELLOW}(Local)${NC}"
     echo -e "   API Docs:     ${GREEN}http://localhost:3000/documentation${NC}"
@@ -661,7 +661,7 @@ show_final_status() {
         postgres_port="5433"
     fi
     
-    echo -e "${WHITE}🐳 SERVIÇOS DOCKER${NC}"
+    echo -e "${WHITE}SERVIÇOS DOCKER${NC}"
     echo -e "   PostgreSQL:   ${CYAN}localhost:$postgres_port${NC}"
     echo -e "   Redis:        ${CYAN}localhost:6380${NC}"
     echo -e "   ChromaDB:     ${CYAN}http://localhost:8000${NC}"
@@ -669,28 +669,28 @@ show_final_status() {
     echo -e "   PgAdmin:      ${CYAN}http://localhost:5050${NC} (admin@clinic.com/admin123)"
     echo ""
     
-    echo -e "${WHITE}👤 USUÁRIOS DE TESTE${NC}"
-    echo -e "   👑 Admin:        ${YELLOW}admin@eoclinica.com.br${NC} / Admin123!"
-    echo -e "   👨‍⚕️ Médico:       ${YELLOW}dr.silva@eoclinica.com.br${NC} / Admin123!"
-    echo -e "   👩‍💼 Recepcionista: ${YELLOW}recepcao@eoclinica.com.br${NC} / Admin123!"
-    echo -e "   🤒 Paciente:     ${YELLOW}paciente@example.com${NC} / Admin123!"
+    echo -e "${WHITE}USUÁRIOS DE TESTE${NC}"
+    echo -e "   Admin:        ${YELLOW}admin@eoclinica.com.br${NC} / Admin123!"
+    echo -e "   Médico:       ${YELLOW}dr.silva@eoclinica.com.br${NC} / Admin123!"
+    echo -e "   Recepcionista: ${YELLOW}recepcao@eoclinica.com.br${NC} / Admin123!"
+    echo -e "   Paciente:     ${YELLOW}paciente@example.com${NC} / Admin123!"
     echo ""
     
-    echo -e "${WHITE}🔧 MONITORAMENTO${NC}"
+    echo -e "${WHITE}MONITORAMENTO${NC}"
     echo -e "   Docker Logs:  ${CYAN}docker-compose logs -f${NC}"
     echo -e "   Docker Status:${CYAN}docker-compose ps${NC}"
     echo -e "   Backend Logs: ${CYAN}tail -f logs/*.log${NC}"
     echo -e "   Frontend Logs:${CYAN}cd frontend && npm run dev${NC}"
     echo ""
     
-    echo -e "${WHITE}⚙️  CONTROLE DOS SERVIÇOS${NC}"
+    echo -e "${WHITE}CONTROLE DOS SERVIÇOS${NC}"
     echo -e "   Parar Docker: ${CYAN}docker-compose down${NC}"
     echo -e "   Parar Backend:${CYAN}kill $BACKEND_PID${NC}"
     echo -e "   Parar Frontend:${CYAN}kill $FRONTEND_PID${NC}"
     echo -e "   Parar Todos:  ${CYAN}pkill -f \"node.*300[01]\"${NC}"
     echo ""
     
-    echo -e "${WHITE}📊 ESTATÍSTICAS${NC}"
+    echo -e "${WHITE}ESTATÍSTICAS${NC}"
     local containers=$(docker-compose ps --services | wc -l)
     echo -e "   Containers:   ${GREEN}$containers serviços Docker${NC}"
     echo -e "   Backend PID:  ${GREEN}$BACKEND_PID${NC}"
@@ -699,17 +699,17 @@ show_final_status() {
     echo ""
     
     if [ "$BACKUP_CREATED" = true ]; then
-        echo -e "${WHITE}💾 BACKUP${NC}"
+        echo -e "${WHITE}BACKUP${NC}"
         echo -e "   Localização:  ${CYAN}$(cat .last_backup_path)${NC}"
         echo ""
     fi
     
-    log_header "🚀 SISTEMA PRONTO PARA PRODUÇÃO!"
+    log_header "SISTEMA PRONTO PARA PRODUÇÃO!"
 }
 
 # Cleanup function for signals
 cleanup() {
-    log_header "🛑 INTERRUPÇÃO DETECTADA..."
+    log_header "INTERRUPÇÃO DETECTADA..."
     
     # Stop local services
     if [ ! -z "$BACKEND_PID" ]; then
@@ -743,7 +743,7 @@ cleanup() {
 main() {
     # Clear screen and show header
     clear
-    log_header "🏥 EO CLÍNICA - DEPLOY COMPLETO PARA PRODUÇÃO"
+    log_header "EO CLÍNICA - DEPLOY COMPLETO PARA PRODUÇÃO"
     echo -e "${CYAN}© 2025 Jtarcio Desenvolvimento${NC}"
     echo -e "${CYAN}Versão: 1.1.0 - Limpeza de Dados Fictícios${NC}"
     echo ""
@@ -788,7 +788,7 @@ main() {
         exit 1
     fi
     
-    log_success "Deploy de produção concluído com sucesso! 🎉"
+    log_success "Deploy de produção concluído com sucesso!"
 }
 
 # Execute main function with all arguments

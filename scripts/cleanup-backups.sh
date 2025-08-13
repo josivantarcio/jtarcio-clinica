@@ -22,24 +22,24 @@ NC='\033[0m' # No Color
 # Logging function
 log_message() {
     local message="[$(date '+%Y-%m-%d %H:%M:%S')] $1"
-    echo -e "${BLUE}📋 $message${NC}"
+    echo -e "${BLUE}[INFO] $message${NC}"
     echo "$message" >> "$LOG_FILE" 2>/dev/null || echo "$message"
 }
 
 log_success() {
-    local message="[$(date '+%Y-%m-%d %H:%M:%S')] ✅ $1"
+    local message="[$(date '+%Y-%m-%d %H:%M:%S')] [SUCCESS] $1"
     echo -e "${GREEN}$message${NC}"
     echo "$message" >> "$LOG_FILE" 2>/dev/null || echo "$message"
 }
 
 log_warning() {
-    local message="[$(date '+%Y-%m-%d %H:%M:%S')] ⚠️  $1"
+    local message="[$(date '+%Y-%m-%d %H:%M:%S')] [WARNING] $1"
     echo -e "${YELLOW}$message${NC}"
     echo "$message" >> "$LOG_FILE" 2>/dev/null || echo "$message"
 }
 
 log_error() {
-    local message="[$(date '+%Y-%m-%d %H:%M:%S')] ❌ $1"
+    local message="[$(date '+%Y-%m-%d %H:%M:%S')] [ERROR] $1"
     echo -e "${RED}$message${NC}"
     echo "$message" >> "$LOG_FILE" 2>/dev/null || echo "$message"
 }
@@ -153,10 +153,10 @@ verify_backup_integrity() {
         local backup_name=$(basename "$backup_dir")
         
         if gzip -t "$backup_file" 2>/dev/null; then
-            log_message "✅ Backup íntegro: $backup_name"
+            log_message "[OK] Backup íntegro: $backup_name"
             verified_count=$((verified_count + 1))
         else
-            log_warning "❌ Backup corrompido detectado: $backup_name"
+            log_warning "[FAILED] Backup corrompido detectado: $backup_name"
             log_warning "Considere remover o backup corrompido: $backup_dir"
             corrupted_count=$((corrupted_count + 1))
         fi
@@ -196,7 +196,7 @@ generate_cleanup_report() {
 
 # Main cleanup function
 main() {
-    echo -e "${BLUE}🧹 EO CLÍNICA - LIMPEZA AUTOMÁTICA DE BACKUPS${NC}"
+    echo -e "${BLUE}EO CLÍNICA - LIMPEZA AUTOMÁTICA DE BACKUPS${NC}"
     echo -e "${BLUE}© 2025 Jtarcio Desenvolvimento${NC}"
     echo ""
     
@@ -222,11 +222,11 @@ main() {
     # Generate report
     generate_cleanup_report "$stats_before"
     
-    log_success "Limpeza automática concluída com sucesso! 🎉"
+    log_success "Limpeza automática concluída com sucesso!"
     
     # Show remaining backups
     echo ""
-    echo -e "${GREEN}📊 BACKUPS MANTIDOS:${NC}"
+    echo -e "${GREEN}BACKUPS MANTIDOS:${NC}"
     ls -la "$BACKUP_DIR"/ 2>/dev/null | grep ^d | grep -E "202[0-9]" | while read line; do
         echo "   $(echo "$line" | awk '{print $9}') - $(echo "$line" | awk '{print $6, $7, $8}')"
     done || echo "   Nenhum backup encontrado"

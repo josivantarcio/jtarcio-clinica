@@ -253,8 +253,8 @@ const start = async () => {
       host: '0.0.0.0' 
     });
     
-    console.log('🚀 EO Clínica Server running on port', process.env.PORT || 3000);
-    console.log('🏥 API ready for authentication');
+    console.log('[SUCCESS] EO Clínica Server running on port', process.env.PORT || 3000);
+    console.log('[INFO] API ready for authentication');
     
   } catch (err) {
     console.error('Failed to start server:', err);

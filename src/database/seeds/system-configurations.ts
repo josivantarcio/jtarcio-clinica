@@ -2,8 +2,8 @@ import { PrismaClient } from '../generated/client';
 
 // Simple logger for seed
 const logger = {
-  info: (msg: string) => console.log(`ℹ️  ${msg}`),
-  error: (msg: string, err?: any) => console.error(`❌ ${msg}`, err)
+  info: (msg: string) => console.log(`[INFO] ${msg}`),
+  error: (msg: string, err?: any) => console.error(`[ERROR] ${msg}`, err)
 };
 
 const systemConfigurations = [
@@ -205,7 +205,7 @@ const systemConfigurations = [
 
 export async function seedSystemConfigurations(prisma: PrismaClient): Promise<void> {
   try {
-    logger.info('⚙️ Seeding system configurations...');
+    logger.info('Seeding system configurations...');
 
     for (const config of systemConfigurations) {
       await prisma.systemConfiguration.upsert({
@@ -221,9 +221,9 @@ export async function seedSystemConfigurations(prisma: PrismaClient): Promise<vo
     }
 
     const count = await prisma.systemConfiguration.count();
-    logger.info(`✅ Seeded ${count} system configurations`);
+    logger.info(`[SUCCESS] Seeded ${count} system configurations`);
   } catch (error) {
-    logger.error('❌ Failed to seed system configurations:', error);
+    logger.error('[ERROR] Failed to seed system configurations:', error);
     throw error;
   }
 }

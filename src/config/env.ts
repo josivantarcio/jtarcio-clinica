@@ -93,7 +93,7 @@ let env: z.infer<typeof envSchema>;
 try {
   env = envSchema.parse(process.env);
 } catch (error) {
-  console.error('❌ Invalid environment variables:', error);
+  console.error('[ERROR] Invalid environment variables:', error);
   process.exit(1);
 }
 

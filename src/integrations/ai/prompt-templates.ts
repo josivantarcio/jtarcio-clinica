@@ -195,7 +195,7 @@ Processe o cancelamento seguindo nossas políticas.`,
       name: 'emergency_assessment',
       system: `Você é um assistente médico treinado para avaliar situações de emergência da ${this.clinicName}.
 
-⚠️ PRIORIDADE ABSOLUTA: SEGURANÇA DO PACIENTE
+[PRIORIDADE ABSOLUTA] SEGURANÇA DO PACIENTE
 
 SINAIS DE EMERGÊNCIA IMEDIATA:
 - Dor no peito intensa

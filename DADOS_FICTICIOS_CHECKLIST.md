@@ -1,8 +1,8 @@
-# 🧹 Checklist de Limpeza de Dados Fictícios - EO Clínica
+# Checklist de Limpeza de Dados Fictícios - EO Clínica
 
-## 📊 **STATUS ATUAL**
+## STATUS ATUAL
 
-### ✅ **PÁGINAS JÁ LIMPAS**
+### PÁGINAS JÁ LIMPAS
 - [x] **Pacientes** (`/patients`) - Conectado 100% com API real
 - [x] **Médicos** (`/doctors`) - Conectado 100% com API real  
 - [x] **Dashboard** (`/dashboard`) - Sem dados mock detectados
@@ -14,32 +14,32 @@
 
 ---
 
-## 🎯 **PÁGINAS COM DADOS FICTÍCIOS RESTANTES**
+## PÁGINAS COM DADOS FICTÍCIOS RESTANTES
 
-### 🔴 **PRIORIDADE ALTA - Funcionalidades Core**
+### PRIORIDADE ALTA - Funcionalidades Core
 
 
 ---
 
-### 🟡 **PRIORIDADE MÉDIA - Funcionalidades Secundárias**
+### PRIORIDADE MÉDIA - Funcionalidades Secundárias
 
 #### 4. **Settings/Configurações** (`/settings`)
-- **📁 Arquivo**: `frontend/src/app/settings/page.tsx`
-- **🚨 Problema**: Configurações não persistem no backend
-- **✅ Solução**: Implementar API `/api/v1/user/settings`
-- **⏱️ Estimativa**: 3-4 horas
-- **💡 Impacto**: Médio - UX importante
+- **Arquivo**: `frontend/src/app/settings/page.tsx`
+- **Problema**: Configurações não persistem no backend
+- **Solução**: Implementar API `/api/v1/user/settings`
+- **Estimativa**: 3-4 horas
+- **Impacto**: Médio - UX importante
 
 #### 5. **Admin Panel** (`/admin`)
-- **📁 Arquivo**: `frontend/src/app/admin/page.tsx`
-- **🚨 Problema**: Pode ter dados administrativos mock
-- **✅ Solução**: Conectar com APIs reais de sistema
-- **⏱️ Estimativa**: 4-5 horas
-- **💡 Impacto**: Médio - Gestão do sistema
+- **Arquivo**: `frontend/src/app/admin/page.tsx`
+- **Problema**: Pode ter dados administrativos mock
+- **Solução**: Conectar com APIs reais de sistema
+- **Estimativa**: 4-5 horas
+- **Impacto**: Médio - Gestão do sistema
 
 ---
 
-## 🛠️ **PLANO DE AÇÃO DETALHADO**
+## PLANO DE AÇÃO DETALHADO
 
 ### **SEMANA 1: Funcionalidades Core**
 
@@ -113,29 +113,29 @@
 
 ---
 
-## 📋 **CHECKLIST DE VALIDAÇÃO**
+## CHECKLIST DE VALIDAÇÃO
 
 Para cada página limpa, verificar:
 
-### **✅ Dados Reais**
+### Dados Reais
 - [ ] Nenhum `mockData` no código
 - [ ] Nenhum `generateMock*()` function
 - [ ] Dados vêm de APIs reais
 - [ ] Loading states implementados
 
-### **✅ API Backend**
+### API Backend
 - [ ] Endpoint criado e funcional
 - [ ] Queries otimizadas
 - [ ] Validação de dados
 - [ ] Tratamento de erros
 
-### **✅ Experiência do Usuário**
+### Experiência do Usuário
 - [ ] Performance mantida
 - [ ] Estados de loading/erro
 - [ ] Dados sempre atualizados
 - [ ] Filtros funcionando
 
-### **✅ Testes**
+### Testes
 - [ ] API testada com dados reais
 - [ ] Frontend testado end-to-end
 - [ ] Performance validada
@@ -143,68 +143,68 @@ Para cada página limpa, verificar:
 
 ---
 
-## 🚨 **RISCOS E MITIGAÇÕES**
+## RISCOS E MITIGAÇÕES
 
-### **⚠️ Performance**
+### Performance
 - **Risco**: Queries lentas com dados reais
 - **Mitigação**: Indexação, paginação, cache
 
-### **⚠️ Dados Vazios**
+### Dados Vazios
 - **Risco**: Telas vazias em clínicas novas
 - **Mitigação**: States vazios elegantes, dados de exemplo inicial
 
-### **⚠️ Quebra de Funcionalidade**
+### Quebra de Funcionalidade
 - **Risco**: APIs podem falhar
 - **Mitigação**: Fallbacks, retry logic, offline states
 
 ---
 
-## 📊 **MÉTRICAS DE SUCESSO**
+## MÉTRICAS DE SUCESSO
 
-### **Após cada limpeza:**
-- ✅ 0% dados fictícios na página
-- ✅ 100% dados vindos de API real
-- ✅ Tempo de carregamento < 3s
-- ✅ UX mantida ou melhorada
+### Após cada limpeza:
+- COMPLETED 0% dados fictícios na página
+- COMPLETED 100% dados vindos de API real
+- COMPLETED Tempo de carregamento < 3s
+- COMPLETED UX mantida ou melhorada
 
-### **Meta Final:**
-- ✅ **Sistema 100% com dados reais**
-- ✅ **Nenhum mockData em produção**
-- ✅ **Performance otimizada**
-- ✅ **UX profissional**
-
----
-
-## 🎯 **ORDEM DE EXECUÇÃO RECOMENDADA**
-
-1. **🔴 Analytics** (Dia 1-2) - Base para decisões
-2. **🔴 Schedule** (Dia 3) - Crítico para médicos  
-3. **🔴 Reports** (Dia 4-5) - Gestão operacional
-4. **🟡 Settings** (Semana 2) - UX melhorada
-5. **🟡 Admin** (Final) - Funcionalidade avançada
+### Meta Final:
+- COMPLETED **Sistema 100% com dados reais**
+- COMPLETED **Nenhum mockData em produção**
+- COMPLETED **Performance otimizada**
+- COMPLETED **UX profissional**
 
 ---
 
-## 💡 **DICAS DE IMPLEMENTAÇÃO**
+## ORDEM DE EXECUÇÃO RECOMENDADA
 
-### **Para Analytics:**
+1. **Analytics** (Dia 1-2) - Base para decisões
+2. **Schedule** (Dia 3) - Crítico para médicos  
+3. **Reports** (Dia 4-5) - Gestão operacional
+4. **Settings** (Semana 2) - UX melhorada
+5. **Admin** (Final) - Funcionalidade avançada
+
+---
+
+## DICAS DE IMPLEMENTAÇÃO
+
+### Para Analytics:
 ```typescript
-// ❌ Antes (Mock)
+// INCORRECT Antes (Mock)
 const mockData = { totalRevenue: 298450.75 }
 
-// ✅ Depois (Real)
+// CORRECT Depois (Real)
 const { data } = await apiClient.getAnalytics({ 
   startDate: '2024-01-01', 
   endDate: '2024-12-31' 
 })
 ```
 
-### **Para Schedule:**
+### Para Schedule:
 ```typescript
-// ❌ Antes (Mock)
+// INCORRECT Antes (Mock)
 const mockSchedule = generateMockSchedule(date)
 
-// ✅ Depois (Real)
+// CORRECT Depois (Real)
 const appointments = await apiClient.getAppointments({ 
   date: currentDate,
   doctorId: selectedDoctor 
@@ -214,9 +214,9 @@ const schedule = formatToSchedule(appointments)
 
 ---
 
-**🎯 OBJETIVO**: Sistema 100% com dados reais em 2 semanas  
-**📊 PROGRESSO**: 8/9 páginas limpas (89% concluído)  
-**⏳ PRÓXIMO**: Settings (última página restante)
+**OBJETIVO**: Sistema 100% com dados reais em 2 semanas  
+**PROGRESSO**: 8/9 páginas limpas (89% concluído)  
+**PRÓXIMO**: Settings (última página restante)
 
 ---
 

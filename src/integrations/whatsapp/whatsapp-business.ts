@@ -503,7 +503,7 @@ export class WhatsAppTemplateManager {
     const interactive: WhatsAppInteractive = {
       type: 'button',
       body: {
-        text: `Olá ${patientName}!\n\n🏥 *Confirmação de Consulta*\n\nVocê tem uma consulta marcada:\n📅 ${date}\n⏰ ${time}\n👨‍⚕️ Dr(a) ${doctorName}\n\nPor favor, confirme sua presença:`
+        text: `Olá ${patientName}!\n\n*Confirmação de Consulta*\n\nVocê tem uma consulta marcada:\nData: ${date}\nHorário: ${time}\nMédico: Dr(a) ${doctorName}\n\nPor favor, confirme sua presença:`
       },
       action: {
         buttons: [
@@ -511,21 +511,21 @@ export class WhatsAppTemplateManager {
             type: 'reply',
             reply: {
               id: `confirm_${appointmentId}`,
-              title: '✅ Confirmar'
+              title: 'Confirmar'
             }
           },
           {
             type: 'reply',
             reply: {
               id: `reschedule_${appointmentId}`,
-              title: '📅 Reagendar'
+              title: 'Reagendar'
             }
           },
           {
             type: 'reply',
             reply: {
               id: `cancel_${appointmentId}`,
-              title: '❌ Cancelar'
+              title: 'Cancelar'
             }
           }
         ]
@@ -547,13 +547,13 @@ export class WhatsAppTemplateManager {
   ): Promise<MessageResult> {
     return this.api.sendText(
       phoneNumber,
-      `🏥 *Atualização da Fila - EO Clínica*\n\n` +
+      `*Atualização da Fila - EO Clínica*\n\n` +
       `Olá ${patientName}!\n\n` +
-      `📋 *${specialty}*\n` +
-      `📍 Posição atual: ${currentPosition}º na fila\n` +
-      `⏱️ Tempo estimado: ${estimatedWait}\n\n` +
+      `*${specialty}*\n` +
+      `Posição atual: ${currentPosition}º na fila\n` +
+      `Tempo estimado: ${estimatedWait}\n\n` +
       `Você receberá uma notificação quando uma vaga estiver disponível.\n\n` +
-      `💚 Obrigado pela paciência!`
+      `Obrigado pela paciência!`
     );
   }
 }
@@ -665,13 +665,13 @@ export class WhatsAppWebhookProcessor {
     // Send confirmation acknowledgment
     await this.api.sendText(
       phoneNumber,
-      '✅ *Consulta Confirmada!*\n\n' +
+      '*Consulta Confirmada!*\n\n' +
       'Sua presença foi confirmada com sucesso.\n\n' +
-      '📋 *Lembre-se:*\n' +
+      '*Lembre-se:*\n' +
       '• Chegue 15 minutos antes\n' +
       '• Traga documento com foto\n' +
       '• Traga cartão do convênio (se aplicável)\n\n' +
-      '🏥 *EO Clínica*\n' +
+      '*EO Clínica*\n' +
       'Até breve!'
     );
 
@@ -685,13 +685,13 @@ export class WhatsAppWebhookProcessor {
   private async handleRescheduleRequest(phoneNumber: string, appointmentId: string): Promise<void> {
     await this.api.sendText(
       phoneNumber,
-      '📅 *Reagendamento Solicitado*\n\n' +
+      '*Reagendamento Solicitado*\n\n' +
       'Entendemos que você precisa reagendar sua consulta.\n\n' +
-      '🔗 Use o link abaixo para escolher uma nova data:\n' +
+      'Use o link abaixo para escolher uma nova data:\n' +
       `${process.env.FRONTEND_URL}/reagendar-consulta/${appointmentId}\n\n` +
       'Ou ligue para nossa central:\n' +
-      `📞 ${process.env.CLINIC_PHONE || '(11) 9999-9999'}\n\n` +
-      '⏰ Horário de atendimento: 8h às 18h'
+      `${process.env.CLINIC_PHONE || '(11) 9999-9999'}\n\n` +
+      'Horário de atendimento: 8h às 18h'
     );
 
     logger.info('Reschedule requested via WhatsApp', { phoneNumber, appointmentId });
@@ -703,14 +703,14 @@ export class WhatsAppWebhookProcessor {
   private async handleCancellation(phoneNumber: string, appointmentId: string): Promise<void> {
     await this.api.sendText(
       phoneNumber,
-      '❌ *Cancelamento Solicitado*\n\n' +
+      '*Cancelamento Solicitado*\n\n' +
       'Lamentamos que você precise cancelar sua consulta.\n\n' +
-      '🔗 Confirme o cancelamento no link:\n' +
+      'Confirme o cancelamento no link:\n' +
       `${process.env.FRONTEND_URL}/cancelar-consulta/${appointmentId}\n\n` +
-      '📋 *Importante:*\n' +
+      '*Importante:*\n' +
       '• Cancelamentos com menos de 4h de antecedência podem ter taxa\n' +
       '• Você será notificado sobre vagas futuras\n\n' +
-      '💙 *EO Clínica* - Cuidando da sua saúde'
+      '*EO Clínica* - Cuidando da sua saúde'
     );
 
     logger.info('Cancellation requested via WhatsApp', { phoneNumber, appointmentId });
@@ -742,15 +742,15 @@ export class WhatsAppWebhookProcessor {
   private async sendHelpMessage(phoneNumber: string): Promise<void> {
     await this.api.sendText(
       phoneNumber,
-      '🆘 *Como posso ajudar?*\n\n' +
-      '📋 *Comandos disponíveis:*\n' +
+      '*Como posso ajudar?*\n\n' +
+      '*Comandos disponíveis:*\n' +
       '• "horario" - Horário de funcionamento\n' +
       '• "endereco" - Localização da clínica\n' +
       '• "ajuda" - Esta mensagem\n\n' +
-      '🔗 *Links úteis:*\n' +
+      '*Links úteis:*\n' +
       `• Agendar consulta: ${process.env.FRONTEND_URL}/agendar\n` +
       `• Minhas consultas: ${process.env.FRONTEND_URL}/consultas\n\n` +
-      '📞 *Precisa falar conosco?*\n' +
+      '*Precisa falar conosco?*\n' +
       `Ligue: ${process.env.CLINIC_PHONE || '(11) 9999-9999'}`
     );
   }
@@ -761,15 +761,15 @@ export class WhatsAppWebhookProcessor {
   private async sendBusinessHours(phoneNumber: string): Promise<void> {
     await this.api.sendText(
       phoneNumber,
-      '🕐 *Horário de Funcionamento*\n\n' +
-      '📅 **Segunda a Sexta:**\n' +
+      '*Horário de Funcionamento*\n\n' +
+      '**Segunda a Sexta:**\n' +
       '8:00 - 18:00\n\n' +
-      '📅 **Sábado:**\n' +
+      '**Sábado:**\n' +
       '8:00 - 12:00\n\n' +
-      '📅 **Domingo e Feriados:**\n' +
+      '**Domingo e Feriados:**\n' +
       'Fechado\n\n' +
-      '🚨 *Emergências 24h:*\n' +
-      `📞 ${process.env.EMERGENCY_PHONE || '(11) 9999-9999'}`
+      '*Emergências 24h:*\n' +
+      `${process.env.EMERGENCY_PHONE || '(11) 9999-9999'}`
     );
   }
 
@@ -779,14 +779,14 @@ export class WhatsAppWebhookProcessor {
   private async sendClinicAddress(phoneNumber: string): Promise<void> {
     await this.api.sendText(
       phoneNumber,
-      '📍 *Localização - EO Clínica*\n\n' +
-      '🏥 **Endereço:**\n' +
+      '*Localização - EO Clínica*\n\n' +
+      '**Endereço:**\n' +
       `${process.env.CLINIC_ADDRESS || 'Rua Example, 123 - Centro, São Paulo - SP'}\n\n` +
-      '🚗 **Como chegar:**\n' +
+      '**Como chegar:**\n' +
       '• Metrô: Estação Centro (300m)\n' +
       '• Ônibus: Linhas 100, 200, 300\n' +
       '• Estacionamento gratuito disponível\n\n' +
-      '🗺️ **Ver no mapa:**\n' +
+      '**Ver no mapa:**\n' +
       `${process.env.CLINIC_MAPS_URL || 'https://maps.google.com'}`
     );
   }
@@ -797,13 +797,13 @@ export class WhatsAppWebhookProcessor {
   private async sendDefaultResponse(phoneNumber: string): Promise<void> {
     await this.api.sendText(
       phoneNumber,
-      '🏥 *EO Clínica - Atendimento Automatizado*\n\n' +
+      '*EO Clínica - Atendimento Automatizado*\n\n' +
       'Obrigado por entrar em contato!\n\n' +
       'Para um atendimento mais rápido, digite:\n' +
       '• "ajuda" - Ver comandos disponíveis\n' +
       '• "horario" - Horário de funcionamento\n' +
       '• "endereco" - Localização da clínica\n\n' +
-      '👩‍⚕️ **Precisa de atendimento humano?**\n' +
+      '**Precisa de atendimento humano?**\n' +
       `Ligue: ${process.env.CLINIC_PHONE || '(11) 9999-9999'}`
     );
   }

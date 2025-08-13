@@ -13,15 +13,15 @@ export const redis = new Redis(env.REDIS_URL, {
 
 // Connection event handlers
 redis.on('connect', () => {
-  console.log('✅ Redis connected successfully');
+  console.log('[SUCCESS] Redis connected successfully');
 });
 
 redis.on('error', (error) => {
-  console.error('❌ Redis connection error:', error);
+  console.error('[ERROR] Redis connection error:', error);
 });
 
 redis.on('close', () => {
-  console.log('🔌 Redis connection closed');
+  console.log('[INFO] Redis connection closed');
 });
 
 // Connection management
@@ -29,7 +29,7 @@ export async function connectRedis(): Promise<void> {
   try {
     await redis.connect();
   } catch (error) {
-    console.error('❌ Redis connection failed:', error);
+    console.error('[ERROR] Redis connection failed:', error);
     throw error;
   }
 }
@@ -37,9 +37,9 @@ export async function connectRedis(): Promise<void> {
 export async function disconnectRedis(): Promise<void> {
   try {
     await redis.disconnect();
-    console.log('✅ Redis disconnected successfully');
+    console.log('[SUCCESS] Redis disconnected successfully');
   } catch (error) {
-    console.error('❌ Redis disconnection failed:', error);
+    console.error('[ERROR] Redis disconnection failed:', error);
     throw error;
   }
 }

@@ -74,9 +74,9 @@ const start = async (): Promise<void> => {
       host: '0.0.0.0',
     });
     
-    logger.info(`🚀 Server running at ${address}`);
-    logger.info(`📚 API Documentation: ${address}/documentation`);
-    logger.info(`🏥 EO Clinica System - Sector 1 initialized successfully`);
+    logger.info(`[SUCCESS] Server running at ${address}`);
+    logger.info(`[INFO] API Documentation: ${address}/documentation`);
+    logger.info(`[SUCCESS] EO Clinica System - Sector 1 initialized successfully`);
     
   } catch (error) {
     logger.error('Failed to start server:', error);

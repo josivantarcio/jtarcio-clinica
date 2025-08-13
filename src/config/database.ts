@@ -17,9 +17,9 @@ export const prisma = new PrismaClient({
 export async function connectDatabase(): Promise<void> {
   try {
     await prisma.$connect();
-    logger.info('✅ Database connected successfully'); // Usar logger.info
+    logger.info('[SUCCESS] Database connected successfully'); // Usar logger.info
   } catch (error) {
-    logger.error('❌ Database connection failed:', error);
+    logger.error('[ERROR] Database connection failed:', error);
     throw error;
   }
 }
@@ -27,9 +27,9 @@ export async function connectDatabase(): Promise<void> {
 export async function disconnectDatabase(): Promise<void> {
   try {
     await prisma.$disconnect();
-    logger.info('✅ Database disconnected successfully'); // Usar logger.info
+    logger.info('[SUCCESS] Database disconnected successfully'); // Usar logger.info
   } catch (error) {
-    logger.error('❌ Database disconnection failed:', error);
+    logger.error('[ERROR] Database disconnection failed:', error);
     throw error;
   }
 }

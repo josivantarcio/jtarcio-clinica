@@ -3,8 +3,8 @@ import bcrypt from 'bcryptjs';
 
 // Simple logger for seed
 const logger = {
-  info: (msg: string) => console.log(`ℹ️  ${msg}`),
-  error: (msg: string, err?: any) => console.error(`❌ ${msg}`, err)
+  info: (msg: string) => console.log(`[INFO] ${msg}`),
+  error: (msg: string, err?: any) => console.error(`[ERROR] ${msg}`, err)
 };
 
 // Simple env for seed
@@ -14,7 +14,7 @@ const env = {
 
 export async function seedUsers(prisma: PrismaClient): Promise<void> {
   try {
-    logger.info('👥 Seeding users...');
+    logger.info('Seeding users...');
 
     // Get some specialties for doctors
     const specialties = await prisma.specialty.findMany({
@@ -48,10 +48,10 @@ export async function seedUsers(prisma: PrismaClient): Promise<void> {
     // No sample users - only admin will remain
 
     const userCount = await prisma.user.count();
-    logger.info(`✅ Seeded ${userCount} user (admin only)`);
-    logger.info(`📧 Admin credentials: admin@eoclinica.com.br / Admin123!`);
+    logger.info(`[SUCCESS] Seeded ${userCount} user (admin only)`);
+    logger.info(`[INFO] Admin credentials: admin@eoclinica.com.br / Admin123!`);
   } catch (error) {
-    logger.error('❌ Failed to seed users:', error);
+    logger.error('[ERROR] Failed to seed users:', error);
     throw error;
   }
 }
