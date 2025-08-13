@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "specialties" ADD COLUMN     "price" DOUBLE PRECISION NOT NULL DEFAULT 150.00;

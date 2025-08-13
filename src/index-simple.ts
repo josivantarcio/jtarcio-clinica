@@ -162,9 +162,12 @@ fastify.get('/api/v1/specialties', async (request, reply) => {
   return {
     success: true,
     data: [
-      { id: '1', name: 'Cardiologia', description: 'Especialidade do coração' },
-      { id: '2', name: 'Dermatologia', description: 'Especialidade da pele' },
-      { id: '3', name: 'Ortopedia', description: 'Especialidade dos ossos' }
+      { id: '1', name: 'Cardiologia', description: 'Especialidade do coração', duration: 45, price: 180.00 },
+      { id: '2', name: 'Dermatologia', description: 'Especialidade da pele', duration: 30, price: 150.00 },
+      { id: '3', name: 'Ortopedia', description: 'Especialidade dos ossos', duration: 45, price: 170.00 },
+      { id: '4', name: 'Clínica Geral', description: 'Especialidade médica geral', duration: 30, price: 120.00 },
+      { id: '5', name: 'Pediatria', description: 'Especialidade pediátrica', duration: 30, price: 130.00 },
+      { id: '6', name: 'Ginecologia', description: 'Especialidade feminina', duration: 45, price: 160.00 }
     ]
   };
 });

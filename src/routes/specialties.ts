@@ -1,5 +1,6 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { paginationSchema, responseSchema } from '@/types/common';
+import { prisma } from '@/config/database';
 
 export async function specialtyRoutes(fastify: FastifyInstance): Promise<void> {
   // Get all specialties
@@ -21,6 +22,7 @@ export async function specialtyRoutes(fastify: FastifyInstance): Promise<void> {
               name: { type: 'string' },
               description: { type: 'string' },
               duration: { type: 'number' },
+              price: { type: 'number' },
               isActive: { type: 'boolean' },
               createdAt: { type: 'string', format: 'date-time' },
               updatedAt: { type: 'string', format: 'date-time' },
@@ -30,14 +32,37 @@ export async function specialtyRoutes(fastify: FastifyInstance): Promise<void> {
       },
     },
   }, async (request: FastifyRequest<{ Querystring: any }>, reply: FastifyReply) => {
-    // TODO: Implement get specialties logic
-    return reply.status(501).send({
-      success: false,
-      error: {
-        code: 'NOT_IMPLEMENTED',
-        message: 'Get specialties endpoint not yet implemented',
-      },
-    });
+    try {
+      const { page = 1, pageSize = 20, search, isActive } = request.query;
+      
+      const where = {
+        ...(search && { name: { contains: search, mode: 'insensitive' as const } }),
+        ...(isActive !== undefined && { isActive }),
+      };
+      
+      const specialties = await prisma.specialty.findMany({
+        where,
+        orderBy: { name: 'asc' },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      });
+      
+      fastify.log.info('Found specialties:', specialties);
+      
+      return reply.send({
+        success: true,
+        data: specialties,
+      });
+    } catch (error) {
+      fastify.log.error('Error fetching specialties:', error);
+      return reply.status(500).send({
+        success: false,
+        error: {
+          code: 'FETCH_FAILED',
+          message: 'Failed to fetch specialties',
+        },
+      });
+    }
   });
 
   // Get specialty by ID

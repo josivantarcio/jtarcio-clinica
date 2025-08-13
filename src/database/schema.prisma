@@ -178,6 +178,7 @@ model Specialty {
   name          String   @unique
   description   String?
   duration      Int      @default(30) // default consultation duration in minutes
+  price         Float    @default(150.00) // consultation price in BRL
   isActive      Boolean  @default(true)
   
   // Relationships
