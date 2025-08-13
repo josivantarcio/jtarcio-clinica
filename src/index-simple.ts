@@ -1,5 +1,6 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
+import { prisma } from './config/database';
 
 // Criar instância do Fastify
 const fastify = Fastify({
@@ -157,19 +158,85 @@ fastify.get('/api/v1/users', async (request, reply) => {
   };
 });
 
-// Especialidades
+// Especialidades - agora usando dados reais do banco
 fastify.get('/api/v1/specialties', async (request, reply) => {
-  return {
-    success: true,
-    data: [
-      { id: '1', name: 'Cardiologia', description: 'Especialidade do coração', duration: 45, price: 180.00 },
-      { id: '2', name: 'Dermatologia', description: 'Especialidade da pele', duration: 30, price: 150.00 },
-      { id: '3', name: 'Ortopedia', description: 'Especialidade dos ossos', duration: 45, price: 170.00 },
-      { id: '4', name: 'Clínica Geral', description: 'Especialidade médica geral', duration: 30, price: 120.00 },
-      { id: '5', name: 'Pediatria', description: 'Especialidade pediátrica', duration: 30, price: 130.00 },
-      { id: '6', name: 'Ginecologia', description: 'Especialidade feminina', duration: 45, price: 160.00 }
-    ]
-  };
+  try {
+    const specialties = await prisma.specialty.findMany({
+      where: { isActive: true },
+      orderBy: { name: 'asc' }
+    });
+    
+    return {
+      success: true,
+      data: specialties
+    };
+  } catch (error) {
+    console.error('Error fetching specialties:', error);
+    return {
+      success: false,
+      error: {
+        code: 'FETCH_FAILED',
+        message: 'Failed to fetch specialties'
+      }
+    };
+  }
+});
+
+// Criar nova especialidade (admin)
+fastify.post('/api/v1/specialties', async (request, reply) => {
+  try {
+    const { name, description, duration, price } = request.body as any;
+    
+    const specialty = await prisma.specialty.create({
+      data: {
+        name,
+        description,
+        duration: duration || 30,
+        price: price || null
+      }
+    });
+    
+    return {
+      success: true,
+      data: specialty
+    };
+  } catch (error) {
+    console.error('Error creating specialty:', error);
+    return {
+      success: false,
+      error: {
+        code: 'CREATE_FAILED',
+        message: 'Failed to create specialty'
+      }
+    };
+  }
+});
+
+// Atualizar especialidade (admin)
+fastify.patch('/api/v1/specialties/:id', async (request, reply) => {
+  try {
+    const { id } = request.params as any;
+    const updateData = request.body as any;
+    
+    const specialty = await prisma.specialty.update({
+      where: { id },
+      data: updateData
+    });
+    
+    return {
+      success: true,
+      data: specialty
+    };
+  } catch (error) {
+    console.error('Error updating specialty:', error);
+    return {
+      success: false,
+      error: {
+        code: 'UPDATE_FAILED',
+        message: 'Failed to update specialty'
+      }
+    };
+  }
 });
 
 // Appointments

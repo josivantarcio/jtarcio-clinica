@@ -8,6 +8,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { 
   Plus, 
   Search, 
@@ -27,7 +31,9 @@ import {
   Download,
   GraduationCap,
   Award,
-  Users
+  Users,
+  X,
+  Save
 } from 'lucide-react'
 import { apiClient } from '@/lib/api'
 import { Doctor, Specialty } from '@/types'
@@ -50,6 +56,15 @@ export default function DoctorsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
   const [filterSpecialty, setFilterSpecialty] = useState('all')
+  const [showSpecialtiesModal, setShowSpecialtiesModal] = useState(false)
+  const [specialties, setSpecialties] = useState<Specialty[]>([])
+  const [newSpecialty, setNewSpecialty] = useState({
+    name: '',
+    description: '',
+    duration: 30,
+    price: ''
+  })
+  const [editingSpecialty, setEditingSpecialty] = useState<Specialty | null>(null)
 
   useEffect(() => {
     // Hydrate the persisted store
@@ -100,6 +115,61 @@ export default function DoctorsPage() {
       setDoctors([])
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadSpecialties = async () => {
+    try {
+      const response = await apiClient.getSpecialties()
+      if (response.success && response.data) {
+        setSpecialties(response.data)
+      }
+    } catch (error) {
+      console.error('Error loading specialties:', error)
+    }
+  }
+
+  const handleCreateSpecialty = async () => {
+    try {
+      const priceValue = newSpecialty.price ? parseFloat(newSpecialty.price) : null
+      const response = await fetch('/api/v1/specialties', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: newSpecialty.name,
+          description: newSpecialty.description,
+          duration: newSpecialty.duration,
+          price: priceValue
+        })
+      })
+      
+      if (response.ok) {
+        await loadSpecialties()
+        setNewSpecialty({ name: '', description: '', duration: 30, price: '' })
+      }
+    } catch (error) {
+      console.error('Error creating specialty:', error)
+    }
+  }
+
+  const handleUpdateSpecialty = async (id: string, updateData: any) => {
+    try {
+      const response = await fetch(`/api/v1/specialties/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updateData)
+      })
+      
+      if (response.ok) {
+        await loadSpecialties()
+        setEditingSpecialty(null)
+      }
+    } catch (error) {
+      console.error('Error updating specialty:', error)
     }
   }
 
@@ -223,6 +293,16 @@ export default function DoctorsPage() {
             <Button variant="outline">
               <Download className="h-4 w-4 mr-2" />
               Exportar
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={() => {
+                setShowSpecialtiesModal(true)
+                loadSpecialties()
+              }}
+            >
+              <Stethoscope className="h-4 w-4 mr-2" />
+              Gerenciar Especialidades
             </Button>
             <Button onClick={() => router.push('/doctors/new')}>
               <Plus className="h-4 w-4 mr-2" />
@@ -457,6 +537,165 @@ export default function DoctorsPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Specialties Management Modal */}
+        <Dialog open={showSpecialtiesModal} onOpenChange={setShowSpecialtiesModal}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Stethoscope className="h-5 w-5" />
+                Gerenciar Especialidades
+              </DialogTitle>
+              <DialogDescription>
+                Cadastre e gerencie as especialidades médicas e seus valores
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-6">
+              {/* Add New Specialty Form */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Nova Especialidade</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="name">Nome da Especialidade</Label>
+                      <Input
+                        id="name"
+                        value={newSpecialty.name}
+                        onChange={(e) => setNewSpecialty({...newSpecialty, name: e.target.value})}
+                        placeholder="Ex: Cardiologia"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="price">Preço da Consulta (R$)</Label>
+                      <Input
+                        id="price"
+                        type="number"
+                        step="0.01"
+                        value={newSpecialty.price}
+                        onChange={(e) => setNewSpecialty({...newSpecialty, price: e.target.value})}
+                        placeholder="150.00"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="duration">Duração (minutos)</Label>
+                      <Input
+                        id="duration"
+                        type="number"
+                        value={newSpecialty.duration}
+                        onChange={(e) => setNewSpecialty({...newSpecialty, duration: parseInt(e.target.value)})}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="description">Descrição</Label>
+                    <Textarea
+                      id="description"
+                      value={newSpecialty.description}
+                      onChange={(e) => setNewSpecialty({...newSpecialty, description: e.target.value})}
+                      placeholder="Descrição da especialidade..."
+                      className="min-h-[100px]"
+                    />
+                  </div>
+                  <Button 
+                    onClick={handleCreateSpecialty}
+                    disabled={!newSpecialty.name}
+                    className="w-full"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Cadastrar Especialidade
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Existing Specialties List */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Especialidades Cadastradas</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {specialties.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Stethoscope className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>Nenhuma especialidade cadastrada ainda</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {specialties.map((specialty) => (
+                        <div
+                          key={specialty.id}
+                          className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
+                        >
+                          {editingSpecialty?.id === specialty.id ? (
+                            <div className="flex-1 grid grid-cols-3 gap-4">
+                              <Input
+                                value={editingSpecialty.name}
+                                onChange={(e) => setEditingSpecialty({...editingSpecialty, name: e.target.value})}
+                              />
+                              <Input
+                                type="number"
+                                step="0.01"
+                                value={editingSpecialty.price || ''}
+                                onChange={(e) => setEditingSpecialty({...editingSpecialty, price: parseFloat(e.target.value) || 0})}
+                                placeholder="Preço"
+                              />
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleUpdateSpecialty(editingSpecialty.id, {
+                                    name: editingSpecialty.name,
+                                    price: editingSpecialty.price
+                                  })}
+                                >
+                                  <Save className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setEditingSpecialty(null)}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <>
+                              <div className="flex-1">
+                                <h4 className="font-semibold">{specialty.name}</h4>
+                                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                  <span>
+                                    {specialty.price ? `R$ ${specialty.price.toFixed(2)}` : 'Preço não definido'}
+                                  </span>
+                                  <span>{specialty.duration} min</span>
+                                </div>
+                                {specialty.description && (
+                                  <p className="text-sm text-muted-foreground mt-1">
+                                    {specialty.description}
+                                  </p>
+                                )}
+                              </div>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setEditingSpecialty(specialty)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Footer with Copyright - Following the pattern */}
         <footer className="text-center text-sm text-muted-foreground py-4">

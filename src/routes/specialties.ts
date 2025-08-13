@@ -47,8 +47,6 @@ export async function specialtyRoutes(fastify: FastifyInstance): Promise<void> {
         take: pageSize,
       });
       
-      fastify.log.info('Found specialties:', specialties);
-      
       return reply.send({
         success: true,
         data: specialties,

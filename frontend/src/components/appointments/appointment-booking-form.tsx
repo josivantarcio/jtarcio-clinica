@@ -193,7 +193,7 @@ export function AppointmentBookingForm({ onSuccess }: AppointmentBookingFormProp
                 ))}
               </div>
             ) : (
-              <div className="grid gap-3">
+              <div className="grid md:grid-cols-2 gap-4">
                 {specialties.map((specialty) => (
                   <label key={specialty.id} className="cursor-pointer">
                     <input
@@ -202,21 +202,36 @@ export function AppointmentBookingForm({ onSuccess }: AppointmentBookingFormProp
                       value={specialty.id}
                       className="sr-only peer"
                     />
-                    <div className="p-4 border rounded-lg peer-checked:border-primary peer-checked:bg-primary/5 hover:bg-muted/50 transition-colors">
-                      <div className="flex justify-between items-start">
+                    <div className="p-6 border-2 border-gray-200 rounded-xl peer-checked:border-primary peer-checked:bg-primary/5 hover:border-primary/50 hover:bg-gray-50 transition-all duration-200 h-full">
+                      <div className="flex flex-col justify-between h-full">
                         <div>
-                          <h3 className="font-semibold">{specialty.name}</h3>
-                          <p className="text-sm text-muted-foreground">
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                              <Stethoscope className="h-6 w-6 text-primary" />
+                            </div>
+                            {specialty.price ? (
+                              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                                {formatCurrency(specialty.price)}
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="bg-gray-50 text-gray-500">
+                                Consulte
+                              </Badge>
+                            )}
+                          </div>
+                          <h3 className="text-lg font-semibold mb-2">{specialty.name}</h3>
+                          <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
                             {specialty.description}
                           </p>
                         </div>
-                        <div className="text-right">
-                          <Badge variant="outline">
-                            {formatCurrency(specialty.price)}
-                          </Badge>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {specialty.duration}min
-                          </p>
+                        <div className="flex items-center justify-between text-xs text-muted-foreground border-t pt-3">
+                          <div className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            <span>{specialty.duration} minutos</span>
+                          </div>
+                          <span className="peer-checked:text-primary peer-checked:font-medium">
+                            Selecionar
+                          </span>
                         </div>
                       </div>
                     </div>
