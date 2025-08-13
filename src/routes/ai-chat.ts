@@ -5,7 +5,7 @@ import Redis from 'ioredis';
 
 export default async function aiChatRoutes(
   fastify: FastifyInstance,
-  options: FastifyPluginOptions
+  _options: FastifyPluginOptions
 ) {
   // Get dependencies from Fastify decorators
   const prisma = fastify.prisma as PrismaClient;

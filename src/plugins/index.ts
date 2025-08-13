@@ -117,7 +117,7 @@ export async function registerPlugins(fastify: FastifyInstance): Promise<void> {
 
   // Global error handler
   fastify.setErrorHandler((error, request, reply) => {
-    const { validation, validationContext } = error;
+    const { validation } = error;
 
     // Handle validation errors
     if (validation) {
