@@ -202,7 +202,7 @@ export function AppointmentBookingForm({ onSuccess }: AppointmentBookingFormProp
                       value={specialty.id}
                       className="sr-only peer"
                     />
-                    <div className="p-6 border-2 border-gray-200 rounded-xl peer-checked:border-primary peer-checked:bg-primary/5 hover:border-primary/50 hover:bg-gray-50 transition-all duration-200 h-full">
+                    <div className="p-6 border-2 border-gray-200 rounded-xl peer-checked:border-primary peer-checked:bg-primary/5 peer-checked:text-primary hover:border-primary/50 hover:bg-primary/10 hover:shadow-md transition-all duration-200 h-full">
                       <div className="flex flex-col justify-between h-full">
                         <div>
                           <div className="flex items-center justify-between mb-3">
@@ -210,11 +210,11 @@ export function AppointmentBookingForm({ onSuccess }: AppointmentBookingFormProp
                               <Stethoscope className="h-6 w-6 text-primary" />
                             </div>
                             {specialty.price ? (
-                              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 peer-checked:bg-primary/20 peer-checked:text-primary peer-checked:border-primary/30">
                                 {formatCurrency(specialty.price)}
                               </Badge>
                             ) : (
-                              <Badge variant="outline" className="bg-gray-50 text-gray-500">
+                              <Badge variant="outline" className="bg-gray-50 text-gray-500 peer-checked:bg-primary/20 peer-checked:text-primary peer-checked:border-primary/30">
                                 Consulte
                               </Badge>
                             )}
@@ -224,13 +224,13 @@ export function AppointmentBookingForm({ onSuccess }: AppointmentBookingFormProp
                             {specialty.description}
                           </p>
                         </div>
-                        <div className="flex items-center justify-between text-xs text-muted-foreground border-t pt-3">
-                          <div className="flex items-center gap-1">
+                        <div className="flex items-center justify-between text-xs text-muted-foreground border-t pt-3 peer-checked:border-primary/30">
+                          <div className="flex items-center gap-1 peer-checked:text-primary/80">
                             <Clock className="h-3 w-3" />
                             <span>{specialty.duration} minutos</span>
                           </div>
-                          <span className="peer-checked:text-primary peer-checked:font-medium">
-                            Selecionar
+                          <span className="peer-checked:text-primary peer-checked:font-semibold">
+                            ✓ Selecionado
                           </span>
                         </div>
                       </div>

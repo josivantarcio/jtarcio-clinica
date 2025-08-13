@@ -11,6 +11,84 @@ This project follows [Semantic Versioning](https://semver.org/):
 
 ---
 
+## [1.1.1] - 2025-08-13 - **Sistema Administrativo de Especialidades** 🏥
+
+### 🎯 **IMPLEMENTAÇÃO CORRETA**
+
+#### Sistema Administrativo Real:
+- ✅ **Nova funcionalidade**: Botão "Gerenciar Especialidades" na página de médicos
+- ✅ **Modal completo**: Formulário para cadastrar especialidades com preços
+- ✅ **CRUD funcional**: Criar, editar especialidades via interface administrativa
+- ✅ **API real**: Conectada ao PostgreSQL (sem dados hardcoded)
+
+#### Melhorias de UX/UI:
+- ✅ **Cards visuais**: Layout moderno em grid responsivo na página de agendamento
+- ✅ **Badges inteligentes**: Exibe preço real ou "Consulte" conforme disponibilidade
+- ✅ **Hover melhorado**: Corrigido problema visual de contraste (fundo + texto)
+- ✅ **Estados visuais**: Indicação clara de seleção com "✓ Selecionado"
+
+#### Arquitetura Limpa:
+- ❌ **Removido**: Valores hardcoded fictícios
+- ✅ **Seeds limpos**: Apenas especialidades básicas (sem preços)
+- ✅ **Fluxo profissional**: Admin cadastra → Paciente vê preços reais
+
+### 🔄 **FLUXO OPERACIONAL**
+1. **Admin** → `/doctors` → "Gerenciar Especialidades"
+2. **Cadastra** especialidade + preço real
+3. **Paciente** → `/appointments/new` → Vê preços reais em cards visuais
+4. **Sistema** → Zero dados fictícios, totalmente configurável
+
+---
+
+## [1.1.0] - 2025-08-13 - **Correção dos Preços nas Especialidades** 🐛
+
+### 🐛 **PROBLEMA IDENTIFICADO E CORRIGIDO**
+
+#### Correção de "R$ NaN":
+- ✅ **Schema atualizado**: Adicionado campo 'price' no modelo Specialty
+- ✅ **Migration**: 20250813212703_add_price_to_specialty
+- ✅ **API corrigida**: Endpoint `/api/v1/specialties` retornando preços
+- ✅ **Seeds com preços**: Valores realistas por especialidade
+
+#### Preços Implementados:
+- **Cardiologia**: R$ 180,00 (45min)
+- **Dermatologia**: R$ 150,00 (30min)
+- **Ortopedia**: R$ 170,00 (45min)  
+- **Clínica Geral**: R$ 120,00 (30min)
+- **Pediatria**: R$ 130,00 (30min)
+- **Ginecologia**: R$ 160,00 (45min)
+
+### 🧪 **TESTES REALIZADOS**
+- ✅ Backend API retornando preços corretamente
+- ✅ Frontend carregando e formatando preços
+- ✅ `formatCurrency()` funcionando: "R$ 180,00" ✅
+
+---
+
+## [1.0.9] - 2025-08-13 - **Auditoria Completa da Página Consultas** 📋
+
+### ✅ **ANÁLISE COMPLETA REALIZADA**
+
+#### Cards de Estatísticas - TODOS FUNCIONAIS:
+- ✅ **Card "Hoje"**: Calcula consultas do dia atual usando filtro de data real
+- ✅ **Card "Próximas"**: Filtra consultas futuras com status SCHEDULED/CONFIRMED  
+- ✅ **Card "Concluídas"**: Conta consultas com status COMPLETED
+- ✅ **Card "Total"**: Exibe total de todas as consultas
+
+#### Funcionalidades Verificadas:
+- ✅ Integração completa com backend (`/api/v1/appointments`)
+- ✅ Filtros por role de usuário (PATIENT/DOCTOR/ADMIN)
+- ✅ Sistema de busca funcional
+- ✅ Tabs: Próximas, Hoje, Histórico
+- ✅ Estados vazios com mensagens adequadas
+
+#### Dados Fictícios: NENHUM ENCONTRADO
+- ✅ Todos os dados são carregados via API real
+- ✅ Sem dados hardcoded ou mock na interface
+- ✅ Sistema integrado com PostgreSQL
+
+---
+
 ## [1.0.1] - 2025-01-09 - **HOTFIX: Troubleshooting & Stability** 🔧
 
 ### 🛠️ **BUG FIXES**

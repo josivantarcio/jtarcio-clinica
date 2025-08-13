@@ -4,8 +4,8 @@
 ### PROJECT OVERVIEW
 
 **Last Updated**: August 13, 2025  
-**Version**: 1.1.3  
-**Status**: COMPLETED **Production Ready - Professional Version**  
+**Version**: 1.1.1  
+**Status**: COMPLETED **Production Ready - Professional Version** com Sistema Administrativo  
 
 EO Clínica is a **complete, enterprise-grade medical scheduling platform** with AI integration, built as a monorepo with modern technologies. The system is production-ready with full LGPD compliance, banking-level security, and complete automation capabilities.
 
@@ -59,6 +59,14 @@ EO Clínica is a **complete, enterprise-grade medical scheduling platform** with
 - **JWT Authentication**: Secure token-based authentication
 - **Rate Limiting**: 100 requests/15min protection
 - **Security Headers**: Complete helmet security configuration
+
+#### **🆕 Sistema Administrativo de Especialidades** - IMPLEMENTADO (v1.1.1)
+- **Interface Administrativa**: Modal completo para gerenciar especialidades
+- **CRUD Funcional**: Criar, editar especialidades e preços via interface
+- **API Real**: Integração com PostgreSQL (sem dados hardcoded)
+- **UX Melhorada**: Cards visuais responsivos na página de agendamento
+- **Hover Corrigido**: Problema de contraste visual resolvido
+- **Fluxo Profissional**: Admin configura → Paciente vê preços reais
 
 ---
 
