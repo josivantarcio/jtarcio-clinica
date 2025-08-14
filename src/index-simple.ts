@@ -13,7 +13,7 @@ const fastify = Fastify({
 fastify.register(cors, {
   origin: ['http://localhost:3001', 'http://localhost:3000'],
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
 });
 
 // Health check
