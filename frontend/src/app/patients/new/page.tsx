@@ -98,7 +98,11 @@ export default function NewPatientPage() {
         medications: form.medications ? form.medications.split(',').map(m => m.trim()) : []
       }
 
-      await apiClient.post('/users', patientData)
+      const response = await apiClient.post('/api/v1/users', patientData)
+      
+      if (!response.success) {
+        throw new Error(response.error?.message || 'Erro ao criar paciente')
+      }
       
       toast({
         title: "Sucesso!",

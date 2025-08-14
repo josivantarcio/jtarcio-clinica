@@ -289,6 +289,46 @@ class ApiClient {
       params
     })
   }
+
+  // Generic HTTP methods
+  async get<T = any>(url: string, params?: any): Promise<ApiResponse<T>> {
+    return this.request<T>({
+      method: 'GET',
+      url,
+      params
+    })
+  }
+
+  async post<T = any>(url: string, data?: any): Promise<ApiResponse<T>> {
+    return this.request<T>({
+      method: 'POST',
+      url,
+      data
+    })
+  }
+
+  async put<T = any>(url: string, data?: any): Promise<ApiResponse<T>> {
+    return this.request<T>({
+      method: 'PUT',
+      url,
+      data
+    })
+  }
+
+  async patch<T = any>(url: string, data?: any): Promise<ApiResponse<T>> {
+    return this.request<T>({
+      method: 'PATCH',
+      url,
+      data
+    })
+  }
+
+  async delete<T = any>(url: string): Promise<ApiResponse<T>> {
+    return this.request<T>({
+      method: 'DELETE',
+      url
+    })
+  }
 }
 
 // Singleton instance

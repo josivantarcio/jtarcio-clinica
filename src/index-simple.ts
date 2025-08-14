@@ -158,6 +158,99 @@ fastify.get('/api/v1/users', async (request, reply) => {
   };
 });
 
+// Criar novo usuário/paciente
+fastify.post('/api/v1/users', async (request, reply) => {
+  try {
+    const userData = request.body as any;
+    console.log('Creating user with data:', userData);
+    
+    // Validações básicas
+    if (!userData.firstName || !userData.lastName || !userData.email) {
+      reply.status(400);
+      return {
+        success: false,
+        error: {
+          code: 'MISSING_FIELDS',
+          message: 'Nome, sobrenome e email são obrigatórios'
+        }
+      };
+    }
+    
+    // Criar o usuário no banco
+    const user = await prisma.user.create({
+      data: {
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        fullName: `${userData.firstName} ${userData.lastName}`,
+        email: userData.email,
+        password: userData.password || 'TempPassword123!', // Senha temporária
+        role: userData.role || 'PATIENT',
+        phone: userData.phone || null,
+        cpf: userData.cpf || null,
+        dateOfBirth: userData.dateOfBirth ? new Date(userData.dateOfBirth) : null,
+        gender: userData.gender || null
+      }
+    });
+    
+    // Se for um paciente, criar o registro de paciente
+    if (userData.role === 'PATIENT' || !userData.role) {
+      await prisma.patient.create({
+        data: {
+          userId: user.id,
+          emergencyContactName: userData.emergencyContactName || null,
+          emergencyContactPhone: userData.emergencyContactPhone || null,
+          allergies: userData.allergies || [],
+          medications: userData.medications || [],
+          medicalHistory: {
+            allergies: userData.allergies || [],
+            medications: userData.medications || [],
+            conditions: []
+          },
+          address: userData.address ? {
+            street: userData.address.street || '',
+            neighborhood: userData.address.neighborhood || '',
+            city: userData.address.city || '',
+            state: userData.address.state || '',
+            zipCode: userData.address.zipCode || ''
+          } : null
+        }
+      });
+    }
+    
+    // Retornar usuário criado (sem senha)
+    const { password, ...userResponse } = user;
+    
+    return {
+      success: true,
+      data: userResponse,
+      message: 'Usuário criado com sucesso'
+    };
+  } catch (error: any) {
+    console.error('Error creating user:', error);
+    
+    // Verificar se é erro de email duplicado
+    if (error.code === 'P2002' && error.meta?.target?.includes('email')) {
+      reply.status(409);
+      return {
+        success: false,
+        error: {
+          code: 'EMAIL_EXISTS',
+          message: 'Este email já está em uso'
+        }
+      };
+    }
+    
+    reply.status(500);
+    return {
+      success: false,
+      error: {
+        code: 'CREATE_FAILED',
+        message: 'Erro ao criar usuário'
+      }
+    };
+  }
+});
+
 // Especialidades - agora usando dados reais do banco
 fastify.get('/api/v1/specialties', async (request, reply) => {
   try {
