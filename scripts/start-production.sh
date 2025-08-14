@@ -4,6 +4,10 @@
 # © 2025 Jtarcio Desenvolvimento
 # Script unificado para deploy completo em produção
 # Corrige todos os problemas identificados e oferece deploy zero-downtime
+#
+# ⚠️  IMPORTANTE: Este script preserva dados do banco PostgreSQL
+# ⚠️  Os volumes Docker não são removidos para manter persistência
+# ⚠️  Para limpeza completa, use: docker-compose down --volumes (manual)
 
 set -e  # Exit on error
 
@@ -90,8 +94,8 @@ complete_system_cleanup() {
         docker stop $running_containers 2>/dev/null || true
     fi
     
-    # Stop compose services specifically
-    timeout 30 docker-compose down --volumes --remove-orphans 2>/dev/null || {
+    # Stop compose services specifically (preserving data volumes)
+    timeout 30 docker-compose down --remove-orphans 2>/dev/null || {
         log_warning "Timeout no docker-compose down, forçando..."
         docker stop $(docker ps -q) 2>/dev/null || true
         docker rm $(docker ps -aq) 2>/dev/null || true
@@ -191,8 +195,8 @@ create_backup() {
 clean_docker_environment() {
     log_step "Limpando ambiente Docker completamente..."
     
-    # Stop all containers with timeout
-    timeout 30 docker-compose down --volumes --remove-orphans 2>/dev/null || {
+    # Stop all containers with timeout (preserving data volumes)
+    timeout 30 docker-compose down --remove-orphans 2>/dev/null || {
         log_warning "Timeout ao parar containers, forçando finalização..."
         docker stop $(docker ps -q) 2>/dev/null || true
         docker rm $(docker ps -aq) 2>/dev/null || true
@@ -630,8 +634,8 @@ rollback_deployment() {
         local backup_path=$(cat .last_backup_path)
         log_warning "Backup disponível em: $backup_path"
         
-        # Stop Docker services
-        docker-compose down --volumes
+        # Stop Docker services (preserving data volumes)
+        docker-compose down
         
         # Restore database if backup exists
         if [ -f "$backup_path/database_backup.sql" ]; then
@@ -727,7 +731,7 @@ cleanup() {
     pkill -f "next.*3001" 2>/dev/null || true
     pkill -f "tsx.*src/index" 2>/dev/null || true
     
-    # Stop Docker services
+    # Stop Docker services (preserving data volumes)
     log_step "Parando containers Docker..."
     docker-compose down 2>/dev/null || true
     
