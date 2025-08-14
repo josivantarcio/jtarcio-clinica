@@ -1,6 +1,11 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { updateUserSchema, userResponseSchema } from '@/types/user';
 import { paginationSchema, responseSchema } from '@/types/common';
+import { UserService } from '@/services/user.service';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+const userService = new UserService(prisma);
 
 export async function userRoutes(fastify: FastifyInstance): Promise<void> {
   // Get all users (admin only)
@@ -22,14 +27,31 @@ export async function userRoutes(fastify: FastifyInstance): Promise<void> {
       },
     },
   }, async (request: FastifyRequest<{ Querystring: any }>, reply: FastifyReply) => {
-    // TODO: Implement get all users logic
-    return reply.status(501).send({
-      success: false,
-      error: {
-        code: 'NOT_IMPLEMENTED',
-        message: 'Get users endpoint not yet implemented',
-      },
-    });
+    try {
+      const { page, limit, role, status, search } = request.query;
+      
+      const result = await userService.findAll({
+        page: page ? parseInt(page) : 1,
+        limit: limit ? parseInt(limit) : 20,
+        role,
+        status,
+        search,
+      });
+
+      return reply.status(200).send({
+        success: true,
+        data: result.users,
+        pagination: result.pagination,
+      });
+    } catch (error) {
+      return reply.status(500).send({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: error instanceof Error ? error.message : 'Failed to fetch users',
+        },
+      });
+    }
   });
 
   // Get user by ID
@@ -50,14 +72,26 @@ export async function userRoutes(fastify: FastifyInstance): Promise<void> {
       },
     },
   }, async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
-    // TODO: Implement get user by ID logic
-    return reply.status(501).send({
-      success: false,
-      error: {
-        code: 'NOT_IMPLEMENTED',
-        message: 'Get user endpoint not yet implemented',
-      },
-    });
+    try {
+      const { id } = request.params;
+      
+      const user = await userService.findById(id);
+
+      return reply.status(200).send({
+        success: true,
+        data: user,
+      });
+    } catch (error) {
+      const statusCode = error instanceof Error && error.message === 'User not found' ? 404 : 500;
+      
+      return reply.status(statusCode).send({
+        success: false,
+        error: {
+          code: statusCode === 404 ? 'NOT_FOUND' : 'INTERNAL_ERROR',
+          message: error instanceof Error ? error.message : 'Failed to fetch user',
+        },
+      });
+    }
   });
 
   // Update user
@@ -79,14 +113,27 @@ export async function userRoutes(fastify: FastifyInstance): Promise<void> {
       },
     },
   }, async (request: FastifyRequest<{ Params: { id: string }; Body: any }>, reply: FastifyReply) => {
-    // TODO: Implement update user logic
-    return reply.status(501).send({
-      success: false,
-      error: {
-        code: 'NOT_IMPLEMENTED',
-        message: 'Update user endpoint not yet implemented',
-      },
-    });
+    try {
+      const { id } = request.params;
+      const updateData = request.body;
+      
+      const updatedUser = await userService.update(id, updateData);
+
+      return reply.status(200).send({
+        success: true,
+        data: updatedUser,
+      });
+    } catch (error) {
+      const statusCode = error instanceof Error && error.message === 'User not found' ? 404 : 500;
+      
+      return reply.status(statusCode).send({
+        success: false,
+        error: {
+          code: statusCode === 404 ? 'NOT_FOUND' : 'INTERNAL_ERROR',
+          message: error instanceof Error ? error.message : 'Failed to update user',
+        },
+      });
+    }
   });
 
   // Delete user (soft delete)
@@ -104,14 +151,26 @@ export async function userRoutes(fastify: FastifyInstance): Promise<void> {
       },
     },
   }, async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
-    // TODO: Implement delete user logic
-    return reply.status(501).send({
-      success: false,
-      error: {
-        code: 'NOT_IMPLEMENTED',
-        message: 'Delete user endpoint not yet implemented',
-      },
-    });
+    try {
+      const { id } = request.params;
+      
+      await userService.delete(id);
+
+      return reply.status(200).send({
+        success: true,
+        message: 'User deleted successfully',
+      });
+    } catch (error) {
+      const statusCode = error instanceof Error && error.message === 'User not found' ? 404 : 500;
+      
+      return reply.status(statusCode).send({
+        success: false,
+        error: {
+          code: statusCode === 404 ? 'NOT_FOUND' : 'INTERNAL_ERROR',
+          message: error instanceof Error ? error.message : 'Failed to delete user',
+        },
+      });
+    }
   });
 
   // Get user's appointments
@@ -134,14 +193,32 @@ export async function userRoutes(fastify: FastifyInstance): Promise<void> {
       }),
     },
   }, async (request: FastifyRequest<{ Params: { id: string }; Querystring: any }>, reply: FastifyReply) => {
-    // TODO: Implement get user appointments logic
-    return reply.status(501).send({
-      success: false,
-      error: {
-        code: 'NOT_IMPLEMENTED',
-        message: 'Get user appointments endpoint not yet implemented',
-      },
-    });
+    try {
+      const { id } = request.params;
+      const { page, limit, status, dateFrom, dateTo } = request.query;
+      
+      const result = await userService.getUserAppointments(id, {
+        page: page ? parseInt(page) : 1,
+        limit: limit ? parseInt(limit) : 20,
+        status,
+        dateFrom: dateFrom ? new Date(dateFrom) : undefined,
+        dateTo: dateTo ? new Date(dateTo) : undefined,
+      });
+
+      return reply.status(200).send({
+        success: true,
+        data: result.appointments,
+        pagination: result.pagination,
+      });
+    } catch (error) {
+      return reply.status(500).send({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: error instanceof Error ? error.message : 'Failed to fetch user appointments',
+        },
+      });
+    }
   });
 
   // Update user status (admin only)
@@ -167,13 +244,26 @@ export async function userRoutes(fastify: FastifyInstance): Promise<void> {
       },
     },
   }, async (request: FastifyRequest<{ Params: { id: string }; Body: any }>, reply: FastifyReply) => {
-    // TODO: Implement update user status logic
-    return reply.status(501).send({
-      success: false,
-      error: {
-        code: 'NOT_IMPLEMENTED',
-        message: 'Update user status endpoint not yet implemented',
-      },
-    });
+    try {
+      const { id } = request.params;
+      const { status, reason } = request.body;
+      
+      const updatedUser = await userService.updateStatus(id, status, reason);
+
+      return reply.status(200).send({
+        success: true,
+        data: updatedUser,
+      });
+    } catch (error) {
+      const statusCode = error instanceof Error && error.message === 'User not found' ? 404 : 500;
+      
+      return reply.status(statusCode).send({
+        success: false,
+        error: {
+          code: statusCode === 404 ? 'NOT_FOUND' : 'INTERNAL_ERROR',
+          message: error instanceof Error ? error.message : 'Failed to update user status',
+        },
+      });
+    }
   });
 }

@@ -45,7 +45,6 @@ export default function PatientsPage() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
-  const [selectedPatient, setSelectedPatient] = useState<PatientWithStats | null>(null)
 
   useEffect(() => {
     // Hydrate the persisted store
@@ -74,26 +73,55 @@ export default function PatientsPage() {
     try {
       const response = await apiClient.getPatients()
       if (response.success) {
-        // Transform users to patients with mock stats
-        const patientsData: PatientWithStats[] = (response.data || []).map((userData: any, index: number) => ({
-          id: userData.id,
-          userId: userData.id,
-          user: {
-            ...userData,
-            name: userData.fullName || `${userData.firstName || ''} ${userData.lastName || ''}`.trim()
-          },
-          cpf: '000.000.000-00', // Mock data - would come from API
-          phone: '(11) 99999-9999',
-          birthDate: new Date('1990-01-01'),
-          address: 'São Paulo, SP',
-          emergencyContact: 'Contato de emergência',
-          medicalHistory: 'Histórico médico do paciente',
-          insurance: 'Plano de saúde',
-          totalAppointments: Math.floor(Math.random() * 20) + 1,
-          lastAppointment: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
-          nextAppointment: Math.random() > 0.5 ? new Date(Date.now() + Math.random() * 30 * 24 * 60 * 60 * 1000) : undefined,
-          status: index % 3 === 0 ? 'active' : index % 3 === 1 ? 'inactive' : 'pending'
-        }))
+        // Transform users to patients with real data
+        const patientsData: PatientWithStats[] = (response.data || []).map((userData: any) => {
+          // Calculate real stats from appointments
+          const appointments = userData.appointments || []
+          const totalAppointments = appointments.length
+          
+          // Find last appointment
+          const lastAppointment = appointments.length > 0 
+            ? new Date(appointments[0].scheduledAt)
+            : undefined
+          
+          // Find next appointment (future appointments)
+          const futureAppointments = appointments.filter((apt: any) => new Date(apt.scheduledAt) > new Date())
+          const nextAppointment = futureAppointments.length > 0
+            ? new Date(futureAppointments[futureAppointments.length - 1].scheduledAt)
+            : undefined
+
+          // Map status from backend enum to frontend enum
+          const statusMap: { [key: string]: 'active' | 'inactive' | 'pending' } = {
+            'ACTIVE': 'active',
+            'INACTIVE': 'inactive',
+            'SUSPENDED': 'inactive',
+            'PENDING_VERIFICATION': 'pending'
+          }
+
+          return {
+            id: userData.id,
+            userId: userData.id,
+            user: {
+              ...userData,
+              name: userData.fullName || `${userData.firstName || ''} ${userData.lastName || ''}`.trim()
+            },
+            cpf: userData.cpf || 'Não informado',
+            phone: userData.phone || 'Não informado',
+            birthDate: userData.dateOfBirth ? new Date(userData.dateOfBirth) : undefined,
+            address: userData.patientProfile?.address 
+              ? `${userData.patientProfile.address.city || ''}, ${userData.patientProfile.address.state || ''}`.trim().replace(/^,\s*|,\s*$/g, '') || 'Não informado'
+              : 'Não informado',
+            emergencyContact: userData.patientProfile?.emergencyContactName || 'Não informado',
+            medicalHistory: userData.patientProfile?.allergies?.length > 0 || userData.patientProfile?.medications?.length > 0 
+              ? 'Possui histórico médico' 
+              : 'Nenhum histórico médico',
+            insurance: 'Não informado', // This would need to be added to the schema
+            totalAppointments,
+            lastAppointment,
+            nextAppointment,
+            status: statusMap[userData.status] || 'pending'
+          }
+        })
         setPatients(patientsData)
       }
     } catch (error) {
@@ -347,7 +375,7 @@ export default function PatientsPage() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => setSelectedPatient(patient)}
+                        onClick={() => router.push(`/patients/${patient.id}`)}
                         title="Ver detalhes do paciente"
                       >
                         <Eye className="h-4 w-4" />

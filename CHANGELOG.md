@@ -1,4 +1,39 @@
-# Changelog - EO Clínica Todas as mudanças importantes neste projeto serão documentadas neste arquivo. ## [1.0.2] - 2025-08-11 ### Adicionado
+# Changelog - EO Clínica
+
+Todas as mudanças importantes neste projeto serão documentadas neste arquivo.
+
+## [1.1.1] - 2025-08-14
+
+### 🐛 Corrigido
+- **Página de Pacientes**: Removidos dados hardcoded (endereço "São Paulo, SP", telefone "(11)99999-9999")
+- **API de Usuários**: Implementada API real no backend substituindo endpoints 501 NOT_IMPLEMENTED
+- **Erro 404 Editar Paciente**: Criada rota `/patients/[id]/edit` para edição de pacientes
+- **Ícone Detalhes**: Botão "Ver detalhes" agora redireciona para página de visualização do paciente
+- **Dependência sonner**: Instalada dependência para toast notifications
+
+### ✨ Adicionado
+- **UserService**: Serviço completo para operações CRUD de usuários
+- **Página de Edição**: Interface completa para editar dados dos pacientes
+- **Página de Detalhes**: Visualização detalhada dos pacientes com abas (Consultas, Informações Médicas, Histórico)
+- **Dados Reais**: Integração com PostgreSQL via Prisma para dados reais dos pacientes
+- **Toast Notifications**: Sistema de notificações com Sonner
+
+### 🔧 Melhorado
+- **API Backend**: Endpoints funcionais em `/api/v1/users` com filtros e paginação
+- **Dados dos Pacientes**: Cálculo real de estatísticas (consultas, última consulta)
+- **Navegação**: Fluxo completo entre listagem → detalhes → edição de pacientes
+- **UX**: Melhor feedback visual com toasts para ações do usuário
+
+### 📋 Arquivos Modificados
+- `src/services/user.service.ts`: Novo serviço de usuários
+- `src/routes/users.ts`: Endpoints implementados
+- `frontend/src/app/patients/page.tsx`: Dados reais da API
+- `frontend/src/app/patients/[id]/page.tsx`: Nova página de detalhes
+- `frontend/src/app/patients/[id]/edit/page.tsx`: Nova página de edição
+- `frontend/src/app/layout.tsx`: Toaster do Sonner
+- `frontend/package.json`: Dependência sonner adicionada
+
+## [1.0.2] - 2025-08-11 ### Adicionado
 - **Componente Select UI**: Criado componente Select completo com Radix UI para formulários
 - **Script de correção de lint**: Adicionado `lint-fix.sh` para automação de correções
 - **Script de desabilitação do Redis**: Criado `disable-local-redis.sh` para resolver conflitos permanentes

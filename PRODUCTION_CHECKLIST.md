@@ -1,16 +1,29 @@
-# EO Clínica - Checklist de Produção ## **PRÉ-REQUISITOS PARA PRODUÇÃO** ### **Status do Sistema**: Pronto para Deploy
-- Banco de dados configurado
-- Variáveis de ambiente validadas
-- SSL/TLS configurado
-- Backup automatizado ativo --- ## **SEGURANÇA - PRIORIDADE CRÍTICA** ### **Autenticação e Autorização**
+# EO Clínica - Checklist de Produção
+
+## **PRÉ-REQUISITOS PARA PRODUÇÃO**
+
+### **Status do Sistema**: Em Preparação para Deploy
+- [x] Banco de dados configurado
+- [x] Variáveis de ambiente validadas
+- [x] SSL/TLS configurado
+- [x] Backup automatizado ativo
+
+---
+
+## **SEGURANÇA - PRIORIDADE CRÍTICA**
+
+### **Autenticação e Autorização**
 - [x] JWT implementado com chaves seguras
 - [x] Refresh tokens configurados
+- [ ] **Timeout de sessão (120 min) - PENDENTE**
 - [x] Rate limiting ativo
 - [x] Validação de dados robusta
-- [x] CORS configurado adequadamente ### **Proteção de Dados**
+- [x] CORS configurado adequadamente
+
+### **Proteção de Dados**
 - [x] Dados sensíveis criptografados
 - [x] Logs de auditoria ativos
-- [x] Backup automático configurado
+- [x] Backup automático configurado (7 anos - CFM)
 - [x] LGPD compliance verificado --- ## **FUNCIONALIDADES CORE - PRODUÇÃO** ### **Sistema de Agendamentos**
 - [x] API de agendamentos funcional
 - [x] Validação de conflitos
@@ -63,7 +76,15 @@ NODE_ENV=production
 3. docker-compose up -d --build
 4. docker exec app npm run migrate
 5. Verificar logs por 10 minutos
-``` ### **3. Validação Pós-Deploy**
+```
+
+### **3. CI/CD Automation - GitHub Actions**
+- [ ] **GitHub Actions não configurado - PENDENTE**
+- [ ] Workflow de testes automáticos
+- [ ] Deploy automático após merge
+- [ ] Backup automático antes do deploy
+- [ ] Rollback automático em caso de falha
+- [ ] Notificações de deploy ### **3. Validação Pós-Deploy**
 - [ ] Login administrativo funcionando
 - [ ] Criação de agendamento teste
 - [ ] Envio de notificações
@@ -99,15 +120,19 @@ NODE_ENV=production
 - [x] Permissões configuradas
 - [x] Treinamento da equipe
 - [x] Documentação atualizada
-- [x] Suporte técnico alinhado --- ## **PRÓXIMOS PASSOS** ### **Imediato (Próximas 48h)**
-1. Validar todas as funcionalidades core
-2. Executar testes de carga
-3. Configurar monitoramento
-4. Preparar equipe de suporte ### **Curto Prazo (Próximas 2 semanas)**
-1. Implementar WhatsApp Business
-2. Configurar sistema de IA básico
-3. Expandir analytics
-4. Otimizar performance ### **Médio Prazo (Próximo mês)**
+- [x] Suporte técnico alinhado --- ## **PRÓXIMOS PASSOS**
+
+### **Imediato (Próximas 48h) - CRÍTICO**
+1. **Implementar timeout de sessão (120 min)**
+2. **Configurar GitHub Actions básico**
+3. Validar todas as funcionalidades core
+4. Executar testes de carga
+
+### **Curto Prazo (Próximas 2 semanas)**
+1. **Completar automação CI/CD**
+2. **Melhorar política de backup mensal**
+3. Implementar WhatsApp Business
+4. Configurar sistema de IA básico ### **Médio Prazo (Próximo mês)**
 1. App mobile (opcional)
 2. Novas integrações
 3. Melhorias de UX
@@ -115,5 +140,48 @@ NODE_ENV=production
 - **DevOps**: [contato-devops]
 - **Desenvolvimento**: [contato-dev]
 - **Banco de Dados**: [contato-dba]
-- **Infraestrutura**: [contato-infra] --- ## **RESUMO EXECUTIVO** **Sistema 100% funcional para produção** **Dados reais configurados** **Segurança implementada** **Monitoramento ativo** **Backup automatizado** ** SISTEMA PRONTO PARA LAUNCH!** --- *Última atualização: 12 de agosto de 2025*
-*Próxima revisão: 19 de agosto de 2025* © 2025 EO Clínica - Sistema de Gestão Médica
+- **Infraestrutura**: [contato-infra] --- ---
+
+## **PENDÊNCIAS CRÍTICAS IDENTIFICADAS**
+
+### **⚠️ AÇÃO REQUERIDA ANTES DO LAUNCH**
+
+#### **1. Timeout de Sessão - SEGURANÇA**
+- **Status**: ❌ Não implementado
+- **Impacto**: Alto risco de segurança
+- **Ação**: Implementar logout automático após 120min de inatividade
+- **Localização**: `frontend/src/store/auth.ts` + backend middleware
+
+#### **2. GitHub Actions - AUTOMAÇÃO**
+- **Status**: ❌ Não configurado
+- **Impacto**: Deploy manual propenso a erros
+- **Ação**: Configurar CI/CD básico
+- **Benefícios**: Deploy seguro, backup automático, rollback
+
+#### **3. Política de Backup Mensal**
+- **Status**: ⚠️ Parcialmente implementado
+- **Impacto**: Médio - Política diária OK, mas falta limite mensal
+- **Ação**: Ajustar script de limpeza para limites mensais
+
+---
+
+## **RESUMO EXECUTIVO**
+
+**Status Atual**: 🟡 **95% Pronto para Produção**
+
+✅ **Sistema funcional e estável**
+✅ **Dados reais configurados** 
+✅ **Segurança básica implementada**
+✅ **Monitoramento ativo**
+✅ **Backup automatizado (7 anos CFM)**
+
+⚠️ **Pendências críticas**: 2 itens de segurança/automação
+
+**Recomendação**: Implementar timeout de sessão antes do launch
+
+---
+
+*Última atualização: 14 de agosto de 2025*
+*Próxima revisão: 21 de agosto de 2025*
+
+© 2025 EO Clínica - Sistema de Gestão Médica
