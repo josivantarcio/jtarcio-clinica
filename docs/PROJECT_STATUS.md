@@ -3,8 +3,8 @@
 
 ### PROJECT OVERVIEW
 
-**Last Updated**: August 13, 2025  
-**Version**: 1.1.1  
+**Last Updated**: August 14, 2025  
+**Version**: 1.1.2  
 **Status**: COMPLETED **Production Ready - Professional Version** com Sistema Administrativo  
 
 EO Clínica is a **complete, enterprise-grade medical scheduling platform** with AI integration, built as a monorepo with modern technologies. The system is production-ready with full LGPD compliance, banking-level security, and complete automation capabilities.
@@ -67,6 +67,18 @@ EO Clínica is a **complete, enterprise-grade medical scheduling platform** with
 - **UX Melhorada**: Cards visuais responsivos na página de agendamento
 - **Hover Corrigido**: Problema de contraste visual resolvido
 - **Fluxo Profissional**: Admin configura → Paciente vê preços reais
+
+#### **🚀 Sistema de Pacientes - APERFEIÇOADO (v1.1.2)**
+- **Validação CPF Brasileira**: Algoritmo completo de validação de dígitos verificadores
+- **CPF Anti-Duplicação**: Verificação em tempo real com debounce (500ms)
+- **CPF Bloqueado Pós-Salvamento**: Segurança aprimorada contra alterações
+- **Data de Nascimento Corrigida**: Fix do bug de timezone (diferença de 1 dia)
+- **Iniciais do Avatar Otimizadas**: Apenas primeiro + último nome (ex: JO)
+- **Exportação CSV Funcional**: Download real de planilhas com dados completos
+- **Relatórios Gerenciais**: Interface profissional com métricas reais
+- **Contraste UI Melhorado**: Select de filtros com cores corrigidas
+- **Persistência 100%**: Contato emergência, endereço e dados médicos salvos
+- **UX Profissional**: Formatação automática, validação instantânea, feedback visual
 
 ---
 
@@ -204,11 +216,11 @@ localhost:6380         # Redis
 
 ### **Pages Implemented** - COMPLETED
 1. **Dashboard** (`/dashboard`) - Statistics cards with real-time data
-2. **Patients** (`/patients`) - Complete patient management with search/filters
+2. **Patients** (`/patients`) - **APERFEIÇOADO** Sistema completo com validação CPF + exportação
 3. **Appointments** (`/appointments`) - Full appointment booking and management
 4. **Doctors** (`/doctors`) - Medical team management with specialties
 5. **Schedule** (`/schedule`) - Calendar view with day/week/month options
-6. **Reports** (`/reports`) - Analytics dashboard with interactive charts
+6. **Reports** (`/reports`) - **APERFEIÇOADO** Analytics profissionais com exportação CSV/PDF
 7. **Settings** (`/settings`) - 5-tab settings (Profile, Notifications, Privacy, Appearance, Security)
 8. **Authentication** (`/auth/*`) - Login/register with role-based access
 9. **AI Chat** (`/chat`) - Integrated Claude Sonnet 4 chat interface
@@ -420,4 +432,4 @@ localhost:6380         # Redis
 
 ---
 
-*Last updated: August 13, 2025 - Version 1.1.0*
+*Last updated: August 14, 2025 - Version 1.1.2*

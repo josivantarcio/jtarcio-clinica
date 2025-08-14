@@ -2,7 +2,20 @@
 
 ## Overview
 
-EO Clínica is a comprehensive medical clinic scheduling system that integrates AI-powered conversations, automated workflows, and complete medical appointment management. This is **Sector 1: Architecture and Initial Setup** of the complete system.
+EO Clínica is a comprehensive medical clinic scheduling system that integrates AI-powered conversations, automated workflows, and complete medical appointment management. **Version 1.1.2** features a fully implemented patient management system with advanced CPF validation, data export capabilities, and professional reporting interface.
+
+## 🆕 Latest Updates - Version 1.1.2 (August 14, 2025)
+
+### ✅ **Patient Management System - FULLY ENHANCED**
+- **🔐 Brazilian CPF Validation**: Complete algorithm with digit verification
+- **🚫 Duplicate Prevention**: Real-time CPF checking with 500ms debounce
+- **🔒 Security Lock**: CPF becomes uneditable after first save
+- **📅 Date Fix**: Timezone issue resolved (birth dates now display correctly)
+- **👤 Avatar Optimization**: Shows only first + last name initials (e.g., "JO")
+- **📊 Real Export**: Functional CSV export with Excel compatibility
+- **📈 Professional Reports**: Clean interface with actual system metrics
+- **🎨 UI Improvements**: Fixed contrast issues in filters and forms
+- **💾 100% Data Persistence**: Emergency contacts, medical info, and addresses now save properly
 
 ## Architecture
 
