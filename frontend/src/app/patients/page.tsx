@@ -173,27 +173,43 @@ export default function PatientsPage() {
   }
 
   const exportPatients = () => {
+    console.log('Exportando pacientes...', patients.length, 'pacientes encontrados')
+    
     if (!patients.length) {
       alert('Nenhum paciente para exportar')
       return
     }
 
-    const csvData = generatePatientsCSV()
-    downloadCSV(csvData, `pacientes_${new Date().toISOString().split('T')[0]}.csv`)
+    try {
+      const csvData = generatePatientsCSV()
+      console.log('CSV gerado:', csvData.substring(0, 200) + '...')
+      downloadCSV(csvData, `pacientes_${new Date().toISOString().split('T')[0]}.csv`)
+      
+      // Show success message
+      alert(`Exportação concluída! ${filteredPatients.length} pacientes exportados.`)
+    } catch (error) {
+      console.error('Erro na exportação:', error)
+      alert('Erro ao exportar pacientes. Verifique o console para detalhes.')
+    }
   }
 
   const generatePatientsCSV = () => {
+    console.log('Gerando CSV para', filteredPatients.length, 'pacientes filtrados')
+    
     const csvLines = [
-      // Header
-      'EO Clínica - Lista de Pacientes',
+      // Header with BOM for proper encoding
+      '\uFEFF' + 'EO Clínica - Lista de Pacientes',
       `Exportado em: ${new Date().toLocaleDateString('pt-BR')}`,
+      `Total de pacientes: ${filteredPatients.length}`,
       '',
       // Column headers
       'Nome,Email,Telefone,CPF,Endereço,Contato de Emergência,Status,Data de Cadastro'
     ]
     
     // Patient data
-    filteredPatients.forEach(patient => {
+    filteredPatients.forEach((patient, index) => {
+      console.log(`Processando paciente ${index + 1}:`, patient.user.name)
+      
       const csvLine = [
         patient.user.name || 'N/A',
         patient.user.email || 'N/A',
@@ -208,20 +224,48 @@ export default function PatientsPage() {
       csvLines.push(csvLine)
     })
     
+    console.log('CSV gerado com', csvLines.length, 'linhas')
     return csvLines.join('\n')
   }
 
   const downloadCSV = (csvContent: string, fileName: string) => {
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const link = document.createElement('a')
-    if (link.download !== undefined) {
-      const url = URL.createObjectURL(blob)
-      link.setAttribute('href', url)
-      link.setAttribute('download', fileName)
-      link.style.visibility = 'hidden'
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
+    console.log('Iniciando download:', fileName)
+    
+    try {
+      // Create blob with proper encoding for Excel compatibility
+      const blob = new Blob([csvContent], { 
+        type: 'text/csv;charset=utf-8;' 
+      })
+      
+      console.log('Blob criado:', blob.size, 'bytes')
+      
+      // Check if browser supports download
+      const link = document.createElement('a')
+      if (typeof link.download !== 'undefined') {
+        const url = URL.createObjectURL(blob)
+        link.href = url
+        link.download = fileName
+        link.style.visibility = 'hidden'
+        
+        // Add to DOM, click, and remove
+        document.body.appendChild(link)
+        console.log('Link adicionado ao DOM, iniciando click...')
+        link.click()
+        document.body.removeChild(link)
+        
+        // Clean up
+        setTimeout(() => URL.revokeObjectURL(url), 100)
+        
+        console.log('Download iniciado com sucesso!')
+      } else {
+        // Fallback for older browsers
+        console.log('Download não suportado, usando fallback...')
+        const url = window.URL.createObjectURL(blob)
+        window.open(url, '_blank')
+      }
+    } catch (error) {
+      console.error('Erro no downloadCSV:', error)
+      throw error
     }
   }
 
@@ -323,12 +367,12 @@ export default function PatientsPage() {
                 <select
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
-                  className="px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="px-3 py-2 border rounded-md bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary hover:bg-gray-50"
                 >
-                  <option value="all">Todos</option>
-                  <option value="active">Ativos</option>
-                  <option value="inactive">Inativos</option>
-                  <option value="pending">Pendentes</option>
+                  <option value="all" className="text-gray-900 bg-white">Todos</option>
+                  <option value="active" className="text-gray-900 bg-white">Ativos</option>
+                  <option value="inactive" className="text-gray-900 bg-white">Inativos</option>
+                  <option value="pending" className="text-gray-900 bg-white">Pendentes</option>
                 </select>
                 <Button variant="outline" size="sm">
                   <Filter className="h-4 w-4 mr-2" />
