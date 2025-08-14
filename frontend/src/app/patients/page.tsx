@@ -78,7 +78,10 @@ export default function PatientsPage() {
         const patientsData: PatientWithStats[] = (response.data || []).map((userData: any, index: number) => ({
           id: userData.id,
           userId: userData.id,
-          user: userData,
+          user: {
+            ...userData,
+            name: userData.fullName || `${userData.firstName || ''} ${userData.lastName || ''}`.trim()
+          },
           cpf: '000.000.000-00', // Mock data - would come from API
           phone: '(11) 99999-9999',
           birthDate: new Date('1990-01-01'),
@@ -115,7 +118,7 @@ export default function PatientsPage() {
   // Filter patients
   const filteredPatients = patients.filter(patient => {
     const matchesSearch = !searchTerm || 
-      patient.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (patient.user.name && patient.user.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
       patient.user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       patient.cpf.includes(searchTerm) ||
       patient.phone.includes(searchTerm)
@@ -292,14 +295,14 @@ export default function PatientsPage() {
                       <Avatar className="h-12 w-12">
                         <AvatarImage src={patient.user.avatar} />
                         <AvatarFallback>
-                          {patient.user.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                          {patient.user.name ? patient.user.name.split(' ').map(n => n[0]).join('').toUpperCase() : 'PN'}
                         </AvatarFallback>
                       </Avatar>
                       
                       <div className="flex-1">
                         <div className="flex items-center space-x-2 mb-1">
                           <h4 className="font-semibold text-lg">
-                            {patient.user.name}
+                            {patient.user.name || 'Nome não disponível'}
                           </h4>
                           {getStatusBadge(patient.status)}
                         </div>
