@@ -130,7 +130,7 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
           email: patientData.email || '',
           phone: patientData.phone || '',
           cpf: currentCpf,
-          dateOfBirth: patientData.dateOfBirth ? new Date(patientData.dateOfBirth).toISOString().split('T')[0] : '',
+          dateOfBirth: patientData.dateOfBirth ? patientData.dateOfBirth.split('T')[0] : '','
           gender: patientData.gender || '',
           status: patientData.status || 'ACTIVE',
           emergencyContactName: patientData.patientProfile?.emergencyContactName || '',
@@ -722,7 +722,7 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
                     <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
                     <span>
                       {patient.dateOfBirth 
-                        ? new Date(patient.dateOfBirth).toLocaleDateString('pt-BR')
+                        ? new Date(patient.dateOfBirth + 'T00:00:00').toLocaleDateString('pt-BR')
                         : 'Data não informada'
                       }
                     </span>

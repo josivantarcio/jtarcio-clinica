@@ -172,6 +172,59 @@ export default function PatientsPage() {
     )
   }
 
+  const exportPatients = () => {
+    if (!patients.length) {
+      alert('Nenhum paciente para exportar')
+      return
+    }
+
+    const csvData = generatePatientsCSV()
+    downloadCSV(csvData, `pacientes_${new Date().toISOString().split('T')[0]}.csv`)
+  }
+
+  const generatePatientsCSV = () => {
+    const csvLines = [
+      // Header
+      'EO Clínica - Lista de Pacientes',
+      `Exportado em: ${new Date().toLocaleDateString('pt-BR')}`,
+      '',
+      // Column headers
+      'Nome,Email,Telefone,CPF,Endereço,Contato de Emergência,Status,Data de Cadastro'
+    ]
+    
+    // Patient data
+    filteredPatients.forEach(patient => {
+      const csvLine = [
+        patient.user.name || 'N/A',
+        patient.user.email || 'N/A',
+        patient.phone || 'N/A',
+        patient.cpf || 'N/A',
+        patient.address || 'N/A',
+        patient.emergencyContact || 'N/A',
+        patient.status || 'N/A',
+        patient.user.createdAt ? new Date(patient.user.createdAt).toLocaleDateString('pt-BR') : 'N/A'
+      ].map(field => `"${field.toString().replace(/"/g, '""')}"`).join(',')
+      
+      csvLines.push(csvLine)
+    })
+    
+    return csvLines.join('\n')
+  }
+
+  const downloadCSV = (csvContent: string, fileName: string) => {
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob)
+      link.setAttribute('href', url)
+      link.setAttribute('download', fileName)
+      link.style.visibility = 'hidden'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    }
+  }
+
   const statsCards = [
     {
       title: 'Total de Pacientes',
@@ -220,7 +273,7 @@ export default function PatientsPage() {
             </p>
           </div>
           <div className="flex space-x-2">
-            <Button variant="outline">
+            <Button variant="outline" onClick={exportPatients}>
               <Download className="h-4 w-4 mr-2" />
               Exportar
             </Button>
@@ -323,7 +376,13 @@ export default function PatientsPage() {
                       <Avatar className="h-12 w-12">
                         <AvatarImage src={patient.user.avatar} />
                         <AvatarFallback>
-                          {patient.user.name ? patient.user.name.split(' ').map(n => n[0]).join('').toUpperCase() : 'PN'}
+                          {patient.user.name ? (() => {
+                            const names = patient.user.name.trim().split(' ').filter(n => n.length > 0)
+                            if (names.length >= 2) {
+                              return (names[0][0] + names[names.length - 1][0]).toUpperCase()
+                            }
+                            return names[0] ? names[0][0].toUpperCase() : 'PN'
+                          })() : 'PN'}
                         </AvatarFallback>
                       </Avatar>
                       
@@ -456,7 +515,7 @@ export default function PatientsPage() {
             </CardContent>
           </Card>
 
-          <Card className="cursor-pointer hover:shadow-md transition-shadow">
+          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => router.push('/reports')}>
             <CardContent className="p-6">
               <div className="flex items-center space-x-4">
                 <div className="flex items-center justify-center w-12 h-12 rounded-full bg-green-100">
@@ -465,7 +524,7 @@ export default function PatientsPage() {
                 <div>
                   <h3 className="font-semibold">Relatório</h3>
                   <p className="text-sm text-muted-foreground">
-                    Gerar relatório de pacientes
+                    Acessar relatórios gerenciais
                   </p>
                 </div>
               </div>

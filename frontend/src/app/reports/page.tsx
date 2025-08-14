@@ -216,8 +216,20 @@ export default function ReportsPage() {
   }
 
   const exportReport = (format: 'pdf' | 'excel' | 'csv') => {
-    // TODO: Implement real export functionality
-    alert(`Funcionalidade de exportação em ${format.toUpperCase()} será implementada em versão futura`)
+    if (!reportData) return
+    
+    try {
+      if (format === 'pdf') {
+        // Generate PDF report
+        window.print()
+      } else if (format === 'excel' || format === 'csv') {
+        // Generate CSV data
+        const csvData = generateCSVData()
+        downloadCSV(csvData, `relatorio_${selectedPeriod}_${new Date().toISOString().split('T')[0]}.csv`)
+      }
+    } catch (error) {
+      console.error('Erro ao exportar:', error)
+    }
   }
 
   // Show loading while checking auth
@@ -271,6 +283,73 @@ export default function ReportsPage() {
     if (growth > 0) return 'text-green-600'
     if (growth < 0) return 'text-red-600'
     return 'text-gray-600'
+  }
+
+  const generateCSVData = () => {
+    if (!reportData) return ''
+    
+    const csvLines = [
+      // Header
+      'EO Clínica - Relatório Gerencial',
+      `Período: ${selectedPeriod}`,
+      `Gerado em: ${new Date().toLocaleDateString('pt-BR')}`,
+      '',
+      // Financial data
+      'DADOS FINANCEIROS',
+      `Receita Total,${reportData.financial.totalRevenue}`,
+      `Receita Mensal,${reportData.financial.monthlyRevenue}`,
+      `Ticket Médio,${reportData.financial.averageTicket.toFixed(2)}`,
+      `Pagamentos Pendentes,${reportData.financial.pendingPayments}`,
+      `Crescimento da Receita,${reportData.financial.revenueGrowth}%`,
+      '',
+      // Appointments data
+      'DADOS DE CONSULTAS',
+      `Total de Consultas,${reportData.appointments.totalAppointments}`,
+      `Consultas Concluídas,${reportData.appointments.completedAppointments}`,
+      `Consultas Canceladas,${reportData.appointments.cancelledAppointments}`,
+      `Taxa de No-Show,${reportData.appointments.noShowRate}%`,
+      `Crescimento de Consultas,${reportData.appointments.appointmentGrowth}%`,
+      '',
+      // Patients data
+      'DADOS DE PACIENTES',
+      `Total de Pacientes,${reportData.patients.totalPatients}`,
+      `Novos Pacientes,${reportData.patients.newPatients}`,
+      `Pacientes Retornando,${reportData.patients.returningPatients}`,
+      `Taxa de Retenção,${reportData.patients.patientRetention}%`,
+      `Satisfação dos Pacientes,${reportData.patients.patientSatisfaction}/5.0`,
+      '',
+      // Doctors data
+      'DADOS DOS MÉDICOS',
+      `Total de Médicos,${reportData.doctors.totalDoctors}`,
+      `Avaliação Média,${reportData.doctors.averageRating}/5.0`,
+      `Médico Mais Procurado,${reportData.doctors.mostBookedDoctor}`,
+      `Eficiência dos Médicos,${reportData.doctors.doctorEfficiency}%`
+    ]
+    
+    if (reportData.doctors.doctorPerformance.length > 0) {
+      csvLines.push('')
+      csvLines.push('PERFORMANCE INDIVIDUAL DOS MÉDICOS')
+      csvLines.push('Nome,Consultas,Avaliação,Receita')
+      reportData.doctors.doctorPerformance.forEach(doctor => {
+        csvLines.push(`${doctor.name},${doctor.appointments},${doctor.rating},${doctor.revenue}`)
+      })
+    }
+    
+    return csvLines.join('\n')
+  }
+
+  const downloadCSV = (csvContent: string, fileName: string) => {
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob)
+      link.setAttribute('href', url)
+      link.setAttribute('download', fileName)
+      link.style.visibility = 'hidden'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    }
   }
 
   // Main Statistics Cards (following the model's design exactly)
@@ -347,13 +426,15 @@ export default function ReportsPage() {
               Atualizar
             </Button>
             
-            <div className="relative">
-              <Button variant="outline">
+            <div className="flex space-x-2">
+              <Button variant="outline" onClick={() => exportReport('csv')}>
                 <Download className="h-4 w-4 mr-2" />
-                Exportar
-                <ChevronDown className="h-4 w-4 ml-2" />
+                CSV
               </Button>
-              {/* Dropdown would be implemented with a proper dropdown component */}
+              <Button variant="outline" onClick={() => exportReport('pdf')}>
+                <Printer className="h-4 w-4 mr-2" />
+                PDF
+              </Button>
             </div>
           </div>
         </div>
