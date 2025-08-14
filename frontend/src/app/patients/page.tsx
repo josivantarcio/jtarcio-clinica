@@ -306,7 +306,7 @@ export default function PatientsPage() {
                     : 'Nenhum paciente cadastrado ainda'}
                 </p>
                 {!searchTerm && (
-                  <Button className="mt-4">
+                  <Button className="mt-4" onClick={() => router.push('/patients/new')}>
                     <Plus className="h-4 w-4 mr-2" />
                     Cadastrar Primeiro Paciente
                   </Button>
@@ -440,7 +440,7 @@ export default function PatientsPage() {
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="cursor-pointer hover:shadow-md transition-shadow">
+          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => router.push('/patients/new')}>
             <CardContent className="p-6">
               <div className="flex items-center space-x-4">
                 <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-100">
