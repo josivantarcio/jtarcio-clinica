@@ -209,6 +209,61 @@ fastify.patch('/api/v1/users/:id', async (request, reply) => {
         status: updateData.status
       }
     });
+
+    // Se existirem dados de paciente, atualizar tabela patients
+    if (updateData.emergencyContactName !== undefined || 
+        updateData.emergencyContactPhone !== undefined ||
+        updateData.allergies !== undefined ||
+        updateData.medications !== undefined ||
+        updateData.address !== undefined) {
+      
+      // Verificar se já existe registro de paciente
+      const existingPatient = await prisma.patient.findUnique({
+        where: { userId: id }
+      });
+
+      if (existingPatient) {
+        // Atualizar registro existente
+        await prisma.patient.update({
+          where: { userId: id },
+          data: {
+            emergencyContactName: updateData.emergencyContactName,
+            emergencyContactPhone: updateData.emergencyContactPhone,
+            allergies: updateData.allergies ? updateData.allergies.split(',').map((s: string) => s.trim()).filter(Boolean) : undefined,
+            medications: updateData.medications ? updateData.medications.split(',').map((s: string) => s.trim()).filter(Boolean) : undefined,
+            address: updateData.address ? {
+              street: updateData.address.street || '',
+              number: updateData.address.number || '',
+              complement: updateData.address.complement || '',
+              neighborhood: updateData.address.neighborhood || '',
+              city: updateData.address.city || '',
+              state: updateData.address.state || '',
+              zipCode: updateData.address.zipCode || ''
+            } : undefined
+          }
+        });
+      } else if (user.role === 'PATIENT') {
+        // Criar registro de paciente se não existir e user for PATIENT
+        await prisma.patient.create({
+          data: {
+            userId: id,
+            emergencyContactName: updateData.emergencyContactName || null,
+            emergencyContactPhone: updateData.emergencyContactPhone || null,
+            allergies: updateData.allergies ? updateData.allergies.split(',').map((s: string) => s.trim()).filter(Boolean) : [],
+            medications: updateData.medications ? updateData.medications.split(',').map((s: string) => s.trim()).filter(Boolean) : [],
+            address: updateData.address ? {
+              street: updateData.address.street || '',
+              number: updateData.address.number || '',
+              complement: updateData.address.complement || '',
+              neighborhood: updateData.address.neighborhood || '',
+              city: updateData.address.city || '',
+              state: updateData.address.state || '',
+              zipCode: updateData.address.zipCode || ''
+            } : null
+          }
+        });
+      }
+    }
     
     return {
       success: true,
@@ -235,6 +290,56 @@ fastify.patch('/api/v1/users/:id', async (request, reply) => {
       error: {
         code: 'UPDATE_FAILED',
         message: 'Erro ao atualizar usuário'
+      }
+    };
+  }
+});
+
+// Verificar CPF duplicado
+fastify.get('/api/v1/users/check-cpf/:cpf', async (request, reply) => {
+  try {
+    const { cpf } = request.params as any;
+    
+    if (!cpf) {
+      reply.status(400);
+      return {
+        success: false,
+        error: {
+          code: 'MISSING_CPF',
+          message: 'CPF é obrigatório'
+        }
+      };
+    }
+
+    // Buscar usuário com o CPF
+    const existingUser = await prisma.user.findFirst({
+      where: { 
+        cpf: cpf,
+        deletedAt: null 
+      },
+      select: {
+        id: true,
+        fullName: true,
+        email: true,
+        cpf: true
+      }
+    });
+
+    return {
+      success: true,
+      data: {
+        exists: !!existingUser,
+        user: existingUser || null
+      }
+    };
+  } catch (error) {
+    console.error('Error checking CPF:', error);
+    reply.status(500);
+    return {
+      success: false,
+      error: {
+        code: 'CHECK_FAILED',
+        message: 'Erro ao verificar CPF'
       }
     };
   }

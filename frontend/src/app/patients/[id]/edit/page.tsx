@@ -55,6 +55,8 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
   const [patient, setPatient] = useState<PatientData | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [cpfError, setCpfError] = useState('')
+  const [checkingCpf, setCheckingCpf] = useState(false)
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -151,9 +153,15 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
   }
 
   const handleSave = async () => {
+    // Verificar se há erro de CPF antes de salvar
+    if (cpfError) {
+      toast.error('Corrija os erros antes de salvar')
+      return
+    }
+
     setSaving(true)
     try {
-      // Update user data
+      // Update user data including patient profile data
       const userUpdateData = {
         firstName: formData.firstName,
         lastName: formData.lastName,
@@ -163,7 +171,21 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
         cpf: formData.cpf,
         dateOfBirth: formData.dateOfBirth ? new Date(formData.dateOfBirth).toISOString() : null,
         gender: formData.gender,
-        status: formData.status
+        status: formData.status,
+        // Adicionar dados do perfil de paciente
+        emergencyContactName: formData.emergencyContactName,
+        emergencyContactPhone: formData.emergencyContactPhone,
+        allergies: formData.allergies,
+        medications: formData.medications,
+        address: {
+          street: formData.address.street,
+          number: formData.address.number,
+          complement: formData.address.complement,
+          neighborhood: formData.address.neighborhood,
+          city: formData.address.city,
+          state: formData.address.state,
+          zipCode: formData.address.zipCode
+        }
       }
 
       const response = await apiClient.request({
@@ -186,6 +208,35 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
     }
   }
 
+  const checkCpfDuplicate = async (cpf: string) => {
+    if (!cpf || cpf.length < 11) {
+      setCpfError('')
+      return
+    }
+
+    setCheckingCpf(true)
+    setCpfError('')
+    
+    try {
+      const response = await apiClient.request({
+        method: 'GET',
+        url: `/api/v1/users/check-cpf/${cpf}`
+      })
+      
+      if (response.success && response.data.exists) {
+        const existingUser = response.data.user
+        // Só mostrar erro se for um usuário diferente do atual
+        if (existingUser.id !== id) {
+          setCpfError(`CPF já cadastrado para: ${existingUser.fullName} (${existingUser.email})`)
+        }
+      }
+    } catch (error) {
+      console.error('Error checking CPF:', error)
+    } finally {
+      setCheckingCpf(false)
+    }
+  }
+
   const handleInputChange = (field: string, value: string) => {
     if (field.startsWith('address.')) {
       const addressField = field.replace('address.', '')
@@ -201,6 +252,17 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
         ...prev,
         [field]: value
       }))
+
+      // Verificar CPF duplicado quando o campo CPF for alterado
+      if (field === 'cpf') {
+        // Debounce the CPF check
+        const timeoutId = setTimeout(() => {
+          checkCpfDuplicate(value)
+        }, 500)
+        
+        // Clear previous timeout
+        return () => clearTimeout(timeoutId)
+      }
     }
   }
 
@@ -351,7 +413,14 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
                       value={formData.cpf}
                       onChange={(e) => handleInputChange('cpf', e.target.value)}
                       placeholder="000.000.000-00"
+                      className={cpfError ? 'border-red-500' : ''}
                     />
+                    {checkingCpf && (
+                      <p className="text-sm text-blue-600 mt-1">Verificando CPF...</p>
+                    )}
+                    {cpfError && (
+                      <p className="text-sm text-red-600 mt-1">{cpfError}</p>
+                    )}
                   </div>
                   <div>
                     <Label htmlFor="dateOfBirth">Data de Nascimento</Label>
@@ -460,6 +529,120 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
                     placeholder="Lista de medicamentos separados por vírgula"
                     rows={2}
                   />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Address Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <MapPin className="h-5 w-5 mr-2" />
+                  Endereço
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="md:col-span-2">
+                    <Label htmlFor="street">Rua/Logradouro</Label>
+                    <Input
+                      id="street"
+                      value={formData.address.street}
+                      onChange={(e) => handleInputChange('address.street', e.target.value)}
+                      placeholder="Ex: Rua das Flores, 123"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="number">Número</Label>
+                    <Input
+                      id="number"
+                      value={formData.address.number}
+                      onChange={(e) => handleInputChange('address.number', e.target.value)}
+                      placeholder="Ex: 123"
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="complement">Complemento</Label>
+                    <Input
+                      id="complement"
+                      value={formData.address.complement}
+                      onChange={(e) => handleInputChange('address.complement', e.target.value)}
+                      placeholder="Ex: Apto 101, Bloco B"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="neighborhood">Bairro</Label>
+                    <Input
+                      id="neighborhood"
+                      value={formData.address.neighborhood}
+                      onChange={(e) => handleInputChange('address.neighborhood', e.target.value)}
+                      placeholder="Ex: Centro"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="city">Cidade</Label>
+                    <Input
+                      id="city"
+                      value={formData.address.city}
+                      onChange={(e) => handleInputChange('address.city', e.target.value)}
+                      placeholder="Ex: São Paulo"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="state">Estado</Label>
+                    <Select 
+                      value={formData.address.state} 
+                      onValueChange={(value) => handleInputChange('address.state', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecionar" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="AC">Acre</SelectItem>
+                        <SelectItem value="AL">Alagoas</SelectItem>
+                        <SelectItem value="AP">Amapá</SelectItem>
+                        <SelectItem value="AM">Amazonas</SelectItem>
+                        <SelectItem value="BA">Bahia</SelectItem>
+                        <SelectItem value="CE">Ceará</SelectItem>
+                        <SelectItem value="DF">Distrito Federal</SelectItem>
+                        <SelectItem value="ES">Espírito Santo</SelectItem>
+                        <SelectItem value="GO">Goiás</SelectItem>
+                        <SelectItem value="MA">Maranhão</SelectItem>
+                        <SelectItem value="MT">Mato Grosso</SelectItem>
+                        <SelectItem value="MS">Mato Grosso do Sul</SelectItem>
+                        <SelectItem value="MG">Minas Gerais</SelectItem>
+                        <SelectItem value="PA">Pará</SelectItem>
+                        <SelectItem value="PB">Paraíba</SelectItem>
+                        <SelectItem value="PR">Paraná</SelectItem>
+                        <SelectItem value="PE">Pernambuco</SelectItem>
+                        <SelectItem value="PI">Piauí</SelectItem>
+                        <SelectItem value="RJ">Rio de Janeiro</SelectItem>
+                        <SelectItem value="RN">Rio Grande do Norte</SelectItem>
+                        <SelectItem value="RS">Rio Grande do Sul</SelectItem>
+                        <SelectItem value="RO">Rondônia</SelectItem>
+                        <SelectItem value="RR">Roraima</SelectItem>
+                        <SelectItem value="SC">Santa Catarina</SelectItem>
+                        <SelectItem value="SP">São Paulo</SelectItem>
+                        <SelectItem value="SE">Sergipe</SelectItem>
+                        <SelectItem value="TO">Tocantins</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="zipCode">CEP</Label>
+                    <Input
+                      id="zipCode"
+                      value={formData.address.zipCode}
+                      onChange={(e) => handleInputChange('address.zipCode', e.target.value)}
+                      placeholder="Ex: 01000-000"
+                    />
+                  </div>
                 </div>
               </CardContent>
             </Card>
