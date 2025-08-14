@@ -1,4 +1,4 @@
-import { PrismaClient, User, UserRole, UserStatus, Prisma } from '@prisma/client';
+import { PrismaClient, UserRole, UserStatus, Prisma } from '@prisma/client';
 import { logger } from '@/config/logger';
 
 export class UserService {
