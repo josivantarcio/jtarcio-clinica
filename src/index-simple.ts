@@ -211,11 +211,21 @@ fastify.patch('/api/v1/users/:id', async (request, reply) => {
     });
 
     // Se existirem dados de paciente, atualizar tabela patients
+    console.log('Checking patient data update:', {
+      emergencyContactName: updateData.emergencyContactName,
+      emergencyContactPhone: updateData.emergencyContactPhone,
+      allergies: updateData.allergies,
+      medications: updateData.medications,
+      address: updateData.address
+    });
+
     if (updateData.emergencyContactName !== undefined || 
         updateData.emergencyContactPhone !== undefined ||
         updateData.allergies !== undefined ||
         updateData.medications !== undefined ||
         updateData.address !== undefined) {
+      
+      console.log('Updating patient profile data...');
       
       // Verificar se já existe registro de paciente
       const existingPatient = await prisma.patient.findUnique({
@@ -311,10 +321,20 @@ fastify.get('/api/v1/users/check-cpf/:cpf', async (request, reply) => {
       };
     }
 
-    // Buscar usuário com o CPF
+    // Clean CPF (remove formatting)
+    const cleanCpf = cpf.replace(/\D/g, '');
+    
+    // Format CPF for database comparison
+    const formattedCpf = cleanCpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+
+    // Buscar usuário com o CPF (both formats)
     const existingUser = await prisma.user.findFirst({
       where: { 
-        cpf: cpf,
+        OR: [
+          { cpf: cpf },
+          { cpf: cleanCpf },
+          { cpf: formattedCpf }
+        ],
         deletedAt: null 
       },
       select: {

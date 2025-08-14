@@ -27,6 +27,7 @@ import {
 } from 'lucide-react'
 import { apiClient } from '@/lib/api'
 import { toast } from 'sonner'
+import { validateCPF, formatCPF, cleanCPF } from '@/lib/cpf-validation'
 
 interface PatientData {
   id: string
@@ -57,6 +58,8 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
   const [saving, setSaving] = useState(false)
   const [cpfError, setCpfError] = useState('')
   const [checkingCpf, setCheckingCpf] = useState(false)
+  const [cpfLocked, setCpfLocked] = useState(false)
+  const [originalCpf, setOriginalCpf] = useState('')
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -115,13 +118,18 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
         const patientData = response.data
         setPatient(patientData)
         
+        // Store original CPF and check if should be locked
+        const currentCpf = patientData.cpf || ''
+        setOriginalCpf(currentCpf)
+        setCpfLocked(!!currentCpf) // Lock CPF if it already exists
+
         // Populate form with patient data
         setFormData({
           firstName: patientData.firstName || '',
           lastName: patientData.lastName || '',
           email: patientData.email || '',
           phone: patientData.phone || '',
-          cpf: patientData.cpf || '',
+          cpf: currentCpf,
           dateOfBirth: patientData.dateOfBirth ? new Date(patientData.dateOfBirth).toISOString().split('T')[0] : '',
           gender: patientData.gender || '',
           status: patientData.status || 'ACTIVE',
@@ -153,6 +161,13 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
   }
 
   const handleSave = async () => {
+    // Validar CPF antes de salvar
+    if (formData.cpf && !validateCPF(formData.cpf)) {
+      setCpfError('CPF inválido')
+      toast.error('CPF informado é inválido')
+      return
+    }
+
     // Verificar se há erro de CPF antes de salvar
     if (cpfError) {
       toast.error('Corrija os erros antes de salvar')
@@ -168,7 +183,7 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
         fullName: `${formData.firstName} ${formData.lastName}`.trim(),
         email: formData.email,
         phone: formData.phone,
-        cpf: formData.cpf,
+        cpf: formData.cpf ? cleanCPF(formData.cpf) : null,
         dateOfBirth: formData.dateOfBirth ? new Date(formData.dateOfBirth).toISOString() : null,
         gender: formData.gender,
         status: formData.status,
@@ -196,6 +211,11 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
 
       if (response.success) {
         toast.success('Paciente atualizado com sucesso!')
+        // Lock CPF after successful save if it wasn't already locked
+        if (formData.cpf && !cpfLocked) {
+          setCpfLocked(true)
+          setOriginalCpf(formData.cpf)
+        }
         router.push('/patients')
       } else {
         throw new Error(response.error?.message || 'Erro ao atualizar paciente')
@@ -209,8 +229,20 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
   }
 
   const checkCpfDuplicate = async (cpf: string) => {
-    if (!cpf || cpf.length < 11) {
+    if (!cpf) {
       setCpfError('')
+      return
+    }
+
+    const cleanedCpf = cleanCPF(cpf)
+    if (cleanedCpf.length < 11) {
+      setCpfError('')
+      return
+    }
+
+    // First validate CPF format
+    if (!validateCPF(cleanedCpf)) {
+      setCpfError('CPF inválido')
       return
     }
 
@@ -220,7 +252,7 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
     try {
       const response = await apiClient.request({
         method: 'GET',
-        url: `/api/v1/users/check-cpf/${cpf}`
+        url: `/api/v1/users/check-cpf/${cleanedCpf}`
       })
       
       if (response.success && response.data.exists) {
@@ -255,9 +287,16 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
 
       // Verificar CPF duplicado quando o campo CPF for alterado
       if (field === 'cpf') {
+        // Format CPF as user types
+        const formattedCpf = formatCPF(value)
+        setFormData(prev => ({
+          ...prev,
+          cpf: formattedCpf
+        }))
+        
         // Debounce the CPF check
         const timeoutId = setTimeout(() => {
-          checkCpfDuplicate(value)
+          checkCpfDuplicate(formattedCpf)
         }, 500)
         
         // Clear previous timeout
@@ -411,10 +450,17 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
                     <Input
                       id="cpf"
                       value={formData.cpf}
-                      onChange={(e) => handleInputChange('cpf', e.target.value)}
+                      onChange={(e) => !cpfLocked && handleInputChange('cpf', e.target.value)}
                       placeholder="000.000.000-00"
-                      className={cpfError ? 'border-red-500' : ''}
+                      className={cpfError ? 'border-red-500' : cpfLocked ? 'bg-gray-100' : ''}
+                      disabled={cpfLocked}
                     />
+                    {cpfLocked && (
+                      <p className="text-xs text-blue-600 mt-1 flex items-center">
+                        <Shield className="h-3 w-3 mr-1" />
+                        CPF bloqueado para edição
+                      </p>
+                    )}
                     {checkingCpf && (
                       <p className="text-sm text-blue-600 mt-1">Verificando CPF...</p>
                     )}

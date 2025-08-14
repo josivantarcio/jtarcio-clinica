@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ArrowLeft, Save, User, Phone, Mail, Calendar, MapPin, Heart, AlertTriangle } from 'lucide-react'
 import { apiClient } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
+import { validateCPF, formatCPF, cleanCPF } from '@/lib/cpf-validation'
 
 interface PatientForm {
   firstName: string
@@ -61,6 +62,8 @@ export default function NewPatientPage() {
   const router = useRouter()
   const [form, setForm] = useState<PatientForm>(initialForm)
   const [loading, setLoading] = useState(false)
+  const [cpfError, setCpfError] = useState('')
+  const [checkingCpf, setCheckingCpf] = useState(false)
 
   if (!isAuthenticated) {
     router.push('/auth/login')
@@ -77,6 +80,20 @@ export default function NewPatientPage() {
           [addressField]: value
         }
       }))
+    } else if (field === 'cpf') {
+      // Format CPF and validate
+      const formattedCpf = formatCPF(value)
+      setForm(prev => ({
+        ...prev,
+        cpf: formattedCpf
+      }))
+      
+      // Debounce CPF validation
+      const timeoutId = setTimeout(() => {
+        checkCpfDuplicate(formattedCpf)
+      }, 500)
+      
+      return () => clearTimeout(timeoutId)
     } else {
       setForm(prev => ({
         ...prev,
@@ -85,13 +102,74 @@ export default function NewPatientPage() {
     }
   }
 
+  const checkCpfDuplicate = async (cpf: string) => {
+    if (!cpf) {
+      setCpfError('')
+      return
+    }
+
+    const cleanedCpf = cleanCPF(cpf)
+    if (cleanedCpf.length < 11) {
+      setCpfError('')
+      return
+    }
+
+    // First validate CPF format
+    if (!validateCPF(cleanedCpf)) {
+      setCpfError('CPF inválido')
+      return
+    }
+
+    setCheckingCpf(true)
+    setCpfError('')
+    
+    try {
+      const response = await apiClient.request({
+        method: 'GET',
+        url: `/api/v1/users/check-cpf/${cleanedCpf}`
+      })
+      
+      if (response.success && response.data.exists) {
+        const existingUser = response.data.user
+        setCpfError(`CPF já cadastrado para: ${existingUser.fullName} (${existingUser.email})`)
+      }
+    } catch (error) {
+      console.error('Error checking CPF:', error)
+    } finally {
+      setCheckingCpf(false)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    // Validate CPF before submitting
+    if (form.cpf && !validateCPF(form.cpf)) {
+      setCpfError('CPF inválido')
+      toast({
+        title: "Erro",
+        description: "CPF informado é inválido.",
+        variant: "destructive"
+      })
+      return
+    }
+
+    // Check for CPF errors
+    if (cpfError) {
+      toast({
+        title: "Erro",
+        description: "Corrija os erros antes de continuar.",
+        variant: "destructive"
+      })
+      return
+    }
+
     setLoading(true)
 
     try {
       const patientData = {
         ...form,
+        cpf: form.cpf ? cleanCPF(form.cpf) : '',
         role: 'PATIENT',
         password: 'TempPassword123!', // Temporary password - should be changed on first login
         allergies: form.allergies ? form.allergies.split(',').map(a => a.trim()) : [],
@@ -211,9 +289,16 @@ export default function NewPatientPage() {
                     id="cpf"
                     value={form.cpf}
                     onChange={(e) => handleInputChange('cpf', e.target.value)}
-                    placeholder="123.456.789-00"
+                    placeholder="000.000.000-00"
+                    className={cpfError ? 'border-red-500' : ''}
                     required
                   />
+                  {checkingCpf && (
+                    <p className="text-sm text-blue-600 mt-1">Verificando CPF...</p>
+                  )}
+                  {cpfError && (
+                    <p className="text-sm text-red-600 mt-1">{cpfError}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="dateOfBirth">Data de Nascimento *</Label>
