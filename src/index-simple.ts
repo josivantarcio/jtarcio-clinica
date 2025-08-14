@@ -117,6 +117,129 @@ fastify.post('/api/v1/auth/login', async (request, reply) => {
   }
 });
 
+// Individual user by ID
+fastify.get('/api/v1/users/:id', async (request, reply) => {
+  try {
+    const { id } = request.params as any;
+    
+    // Buscar usuário específico no banco
+    const user = await prisma.user.findUnique({
+      where: { 
+        id: id,
+        deletedAt: null // Não buscar usuários deletados
+      },
+      select: {
+        id: true,
+        email: true,
+        phone: true,
+        cpf: true,
+        firstName: true,
+        lastName: true,
+        fullName: true,
+        dateOfBirth: true,
+        gender: true,
+        role: true,
+        status: true,
+        avatar: true,
+        createdAt: true,
+        updatedAt: true,
+        // Incluir dados do paciente se for paciente
+        patientProfile: {
+          select: {
+            id: true,
+            emergencyContactName: true,
+            emergencyContactPhone: true,
+            allergies: true,
+            medications: true,
+            address: true
+          }
+        }
+      }
+    });
+    
+    if (!user) {
+      reply.status(404);
+      return {
+        success: false,
+        error: {
+          code: 'USER_NOT_FOUND',
+          message: 'Usuário não encontrado'
+        }
+      };
+    }
+    
+    return {
+      success: true,
+      data: user
+    };
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    reply.status(500);
+    return {
+      success: false,
+      error: {
+        code: 'FETCH_FAILED',
+        message: 'Erro ao buscar usuário'
+      }
+    };
+  }
+});
+
+// Update user by ID
+fastify.patch('/api/v1/users/:id', async (request, reply) => {
+  try {
+    const { id } = request.params as any;
+    const updateData = request.body as any;
+    
+    // Atualizar usuário no banco
+    const user = await prisma.user.update({
+      where: { 
+        id: id,
+        deletedAt: null 
+      },
+      data: {
+        firstName: updateData.firstName,
+        lastName: updateData.lastName,
+        fullName: updateData.fullName,
+        email: updateData.email,
+        phone: updateData.phone,
+        cpf: updateData.cpf,
+        dateOfBirth: updateData.dateOfBirth ? new Date(updateData.dateOfBirth) : null,
+        gender: updateData.gender,
+        status: updateData.status
+      }
+    });
+    
+    return {
+      success: true,
+      data: user,
+      message: 'Usuário atualizado com sucesso'
+    };
+  } catch (error: any) {
+    console.error('Error updating user:', error);
+    
+    if (error.code === 'P2025') {
+      reply.status(404);
+      return {
+        success: false,
+        error: {
+          code: 'USER_NOT_FOUND',
+          message: 'Usuário não encontrado'
+        }
+      };
+    }
+    
+    reply.status(500);
+    return {
+      success: false,
+      error: {
+        code: 'UPDATE_FAILED',
+        message: 'Erro ao atualizar usuário'
+      }
+    };
+  }
+});
+
 // Outros endpoints básicos
 fastify.get('/api/v1/auth/me', async (request, reply) => {
   return {
