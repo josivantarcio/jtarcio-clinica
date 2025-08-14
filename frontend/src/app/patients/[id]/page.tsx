@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/store/auth'
 import { AppLayout } from '@/components/layout/app-layout'
@@ -62,7 +62,8 @@ interface PatientData {
   }>
 }
 
-export default function PatientDetailPage({ params }: { params: { id: string } }) {
+export default function PatientDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params)
   const { user, isAuthenticated, isLoading } = useAuthStore()
   const router = useRouter()
   const [patient, setPatient] = useState<PatientData | null>(null)
@@ -88,14 +89,14 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
       }
       loadPatient()
     }
-  }, [user, isAuthenticated, params.id])
+  }, [user, isAuthenticated, id])
 
   const loadPatient = async () => {
     setLoading(true)
     try {
       const response = await apiClient.request({
         method: 'GET',
-        url: `/api/v1/users/${params.id}`
+        url: `/api/v1/users/${id}`
       })
       
       if (response.success && response.data) {

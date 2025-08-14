@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/store/auth'
 import { AppLayout } from '@/components/layout/app-layout'
@@ -48,7 +48,8 @@ interface PatientData {
   }
 }
 
-export default function EditPatientPage({ params }: { params: { id: string } }) {
+export default function EditPatientPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params)
   const { user, isAuthenticated, isLoading } = useAuthStore()
   const router = useRouter()
   const [patient, setPatient] = useState<PatientData | null>(null)
@@ -98,14 +99,14 @@ export default function EditPatientPage({ params }: { params: { id: string } }) 
       }
       loadPatient()
     }
-  }, [user, isAuthenticated, params.id])
+  }, [user, isAuthenticated, id])
 
   const loadPatient = async () => {
     setLoading(true)
     try {
       const response = await apiClient.request({
         method: 'GET',
-        url: `/api/v1/users/${params.id}`
+        url: `/api/v1/users/${id}`
       })
       
       if (response.success && response.data) {
@@ -167,7 +168,7 @@ export default function EditPatientPage({ params }: { params: { id: string } }) 
 
       const response = await apiClient.request({
         method: 'PATCH',
-        url: `/api/v1/users/${params.id}`,
+        url: `/api/v1/users/${id}`,
         data: userUpdateData
       })
 
