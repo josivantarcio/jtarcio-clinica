@@ -26,11 +26,18 @@ export interface Doctor {
   userId: string
   user: User
   crm: string
-  specialties: Specialty[]
-  bio?: string
-  experience?: string
-  education?: string
+  specialtyId: string
+  specialty?: Specialty
+  subSpecialties: string[]
+  biography?: string
+  experience?: number
+  consultationFee?: number
+  consultationDuration: number
+  isActive: boolean
+  acceptsNewPatients: boolean
   phone?: string
+  createdAt: string | Date
+  updatedAt: string | Date
 }
 
 export interface Specialty {
@@ -44,20 +51,41 @@ export interface Specialty {
 export interface Appointment {
   id: string
   patientId: string
-  patient: Patient
+  patient?: {
+    id: string
+    fullName: string
+    email: string
+    phone: string
+    cpf: string
+    user?: User
+  }
   doctorId: string
-  doctor: Doctor
+  doctor?: {
+    id: string
+    crm: string
+    user: {
+      fullName: string
+      name?: string
+      email: string
+    }
+    specialty?: {
+      name: string
+    }
+  }
   specialtyId: string
-  specialty: Specialty
-  scheduledAt: Date
+  specialty?: Specialty
+  scheduledAt: string | Date
   duration: number
+  endTime: string | Date
   status: AppointmentStatus
-  type: AppointmentType
+  type?: AppointmentType
+  reason?: string
   notes?: string
   cancellationReason?: string
-  completedAt?: Date
-  createdAt: Date
-  updatedAt: Date
+  cancelledAt?: string | Date
+  completedAt?: string | Date
+  createdAt: string | Date
+  updatedAt: string | Date
 }
 
 export type AppointmentStatus = 
@@ -67,6 +95,7 @@ export type AppointmentStatus =
   | 'COMPLETED' 
   | 'CANCELLED' 
   | 'NO_SHOW'
+  | 'RESCHEDULED'
 
 export type AppointmentType = 'CONSULTATION' | 'FOLLOW_UP' | 'EMERGENCY' | 'PROCEDURE'
 

@@ -94,16 +94,45 @@ export default function DoctorsPage() {
       const response = await apiClient.getDoctors()
       if (response.success && response.data) {
         // Transform API data to doctors with calculated stats
-        const doctorsData: DoctorWithStats[] = response.data.map((doctor: any) => ({
-          ...doctor,
-          totalPatients: 0, // Will be calculated from actual appointments
-          totalAppointments: 0, // Will be calculated from actual appointments  
-          rating: 5.0, // Default rating for new doctors
-          reviewsCount: 0, // Will be implemented later
-          nextAppointment: undefined, // Will be calculated from actual appointments
-          status: 'active', // Default status
-          specialtyNames: doctor.specialties?.map((s: any) => s.name) || []
-        }))
+        const doctorsData: DoctorWithStats[] = response.data
+          .filter((user: any) => user.doctorProfile) // Only users with doctor profile
+          .map((user: any) => {
+            const doctor = user.doctorProfile
+            return {
+              id: doctor.id,
+              userId: user.id,
+              user: {
+                id: user.id,
+                email: user.email,
+                name: user.fullName,
+                role: user.role,
+                avatar: user.avatar,
+                createdAt: user.createdAt,
+                updatedAt: user.updatedAt
+              },
+              crm: doctor.crm,
+              specialtyId: doctor.specialty?.id || '',
+              specialty: doctor.specialty,
+              subSpecialties: doctor.subSpecialties || [],
+              biography: doctor.biography,
+              experience: doctor.experience,
+              consultationFee: doctor.consultationFee,
+              consultationDuration: doctor.consultationDuration || 30,
+              isActive: doctor.isActive,
+              acceptsNewPatients: doctor.acceptsNewPatients,
+              phone: user.phone,
+              createdAt: user.createdAt,
+              updatedAt: user.updatedAt,
+              // Stats (will be calculated from actual data later)
+              totalPatients: 0,
+              totalAppointments: 0,
+              rating: 5.0,
+              reviewsCount: 0,
+              nextAppointment: undefined,
+              status: doctor.isActive ? 'active' : 'inactive',
+              specialtyNames: doctor.specialty ? [doctor.specialty.name] : []
+            }
+          })
         setDoctors(doctorsData)
       } else {
         // No doctors found - clean state
@@ -188,9 +217,9 @@ export default function DoctorsPage() {
   // Filter doctors
   const filteredDoctors = doctors.filter(doctor => {
     const matchesSearch = !searchTerm || 
-      doctor.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doctor.user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doctor.crm.includes(searchTerm) ||
+      doctor.user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      doctor.user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      doctor.crm?.includes(searchTerm) ||
       doctor.specialtyNames.some(spec => spec.toLowerCase().includes(searchTerm.toLowerCase()))
 
     const matchesStatus = filterStatus === 'all' || doctor.status === filterStatus
@@ -428,7 +457,13 @@ export default function DoctorsPage() {
                       <Avatar className="h-16 w-16">
                         <AvatarImage src={doctor.user.avatar} />
                         <AvatarFallback className="text-lg font-semibold">
-                          {doctor.user.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                          {(() => {
+                            const names = (doctor.user.name || '').trim().split(' ').filter(n => n.length > 0)
+                            if (names.length >= 2) {
+                              return (names[0][0] + names[names.length - 1][0]).toUpperCase()
+                            }
+                            return names[0] ? names[0][0].toUpperCase() : 'DR'
+                          })()}
                         </AvatarFallback>
                       </Avatar>
                       
@@ -454,13 +489,13 @@ export default function DoctorsPage() {
                           <div className="flex items-center space-x-2">
                             <Award className="h-4 w-4 text-blue-600" />
                             <span className="font-medium text-blue-600">
-                              {doctor.specialtyNames.join(', ')}
+                              {doctor.specialty?.name || 'Especialidade não definida'}
                             </span>
                           </div>
                           <div className="flex items-center space-x-1">
                             <GraduationCap className="h-4 w-4 text-muted-foreground" />
                             <span className="text-sm text-muted-foreground">
-                              {doctor.crm}
+                              CRM: {doctor.crm}
                             </span>
                           </div>
                         </div>
@@ -471,10 +506,12 @@ export default function DoctorsPage() {
                             <Mail className="h-4 w-4" />
                             <span>{doctor.user.email}</span>
                           </div>
-                          <div className="flex items-center space-x-2">
-                            <Phone className="h-4 w-4" />
-                            <span>{doctor.phone}</span>
-                          </div>
+                          {doctor.phone && (
+                            <div className="flex items-center space-x-2">
+                              <Phone className="h-4 w-4" />
+                              <span>{doctor.phone}</span>
+                            </div>
+                          )}
                         </div>
 
                         {/* Stats */}
@@ -503,9 +540,9 @@ export default function DoctorsPage() {
                         </div>
 
                         {/* Bio */}
-                        {doctor.bio && (
+                        {doctor.biography && (
                           <p className="text-sm text-muted-foreground bg-muted/30 p-3 rounded">
-                            {doctor.bio}
+                            {doctor.biography}
                           </p>
                         )}
                       </div>

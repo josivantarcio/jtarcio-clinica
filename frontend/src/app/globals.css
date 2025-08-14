@@ -144,3 +144,171 @@ body {
 .animate-slide-down {
   animation: slideDown 0.3s ease-out;
 }
+
+/* React Big Calendar Custom Styles */
+.custom-calendar {
+  font-family: inherit;
+}
+
+.custom-calendar .rbc-calendar {
+  background: transparent;
+}
+
+.custom-calendar .rbc-toolbar {
+  display: none; /* We use our custom toolbar */
+}
+
+.custom-calendar .rbc-header {
+  background: hsl(var(--muted));
+  color: hsl(var(--muted-foreground));
+  padding: 0.5rem;
+  font-weight: 600;
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.custom-calendar .rbc-date-cell {
+  background: transparent;
+  border-right: 1px solid hsl(var(--border));
+}
+
+.custom-calendar .rbc-date-cell:last-child {
+  border-right: none;
+}
+
+.custom-calendar .rbc-time-slot {
+  border-top: 1px solid hsl(var(--border));
+}
+
+.custom-calendar .rbc-timeslot-group {
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.custom-calendar .rbc-day-slot .rbc-time-slot {
+  border-top: 1px solid hsl(var(--border));
+}
+
+.custom-calendar .rbc-time-view {
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.5rem;
+}
+
+.custom-calendar .rbc-time-header {
+  background: hsl(var(--muted));
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.custom-calendar .rbc-time-content {
+  border-left: 1px solid hsl(var(--border));
+}
+
+.custom-calendar .rbc-time-gutter .rbc-timeslot-group {
+  background: hsl(var(--muted) / 0.3);
+  font-size: 0.75rem;
+  color: hsl(var(--muted-foreground));
+}
+
+.custom-calendar .rbc-event {
+  background: transparent;
+  border: none;
+  padding: 0;
+  border-radius: 0.25rem;
+  box-shadow: none;
+}
+
+.custom-calendar .rbc-event:focus,
+.custom-calendar .rbc-event:hover {
+  outline: none;
+  box-shadow: 0 0 0 2px hsl(var(--ring));
+}
+
+.custom-calendar .rbc-day-bg {
+  background: transparent;
+}
+
+.custom-calendar .rbc-day-bg:hover {
+  background: hsl(var(--muted) / 0.3);
+}
+
+.custom-calendar .rbc-today {
+  background: hsl(var(--primary) / 0.1);
+}
+
+.custom-calendar .rbc-off-range-bg {
+  background: hsl(var(--muted) / 0.5);
+}
+
+/* Month view styles */
+.custom-calendar .rbc-month-view {
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.custom-calendar .rbc-month-row {
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.custom-calendar .rbc-month-row:last-child {
+  border-bottom: none;
+}
+
+.custom-calendar .rbc-date-cell {
+  padding: 0.5rem;
+  min-height: 100px;
+  vertical-align: top;
+}
+
+.custom-calendar .rbc-date-cell a {
+  font-weight: 500;
+  color: hsl(var(--foreground));
+  text-decoration: none;
+}
+
+.custom-calendar .rbc-date-cell.rbc-off-range a {
+  color: hsl(var(--muted-foreground));
+}
+
+.custom-calendar .rbc-date-cell.rbc-today a {
+  color: hsl(var(--primary));
+  font-weight: 600;
+}
+
+.custom-calendar .rbc-show-more {
+  background: hsl(var(--muted));
+  color: hsl(var(--muted-foreground));
+  border-radius: 0.25rem;
+  padding: 0.125rem 0.25rem;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+  border: none;
+  cursor: pointer;
+}
+
+.custom-calendar .rbc-show-more:hover {
+  background: hsl(var(--muted-foreground));
+  color: hsl(var(--muted));
+}
+
+/* Week/Day view specific styles */
+.custom-calendar .rbc-time-header-content {
+  border-left: 1px solid hsl(var(--border));
+}
+
+.custom-calendar .rbc-time-header-cell {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.custom-calendar .rbc-allday-cell {
+  background: hsl(var(--muted) / 0.5);
+}
+
+.custom-calendar .rbc-time-column {
+  min-height: 600px;
+}
+
+.custom-calendar .rbc-current-time-indicator {
+  background: hsl(var(--primary));
+  height: 2px;
+  border-radius: 1px;
+}

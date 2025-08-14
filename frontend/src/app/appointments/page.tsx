@@ -8,6 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { AppointmentCalendar } from '@/components/calendar/appointment-calendar'
+import { AppointmentModal } from '@/components/appointments/appointment-modal'
 import { 
   Plus, 
   Calendar, 
@@ -20,10 +22,12 @@ import {
   AlertCircle,
   Filter,
   Search,
-  MoreVertical
+  MoreVertical,
+  CalendarDays
 } from 'lucide-react'
 import { apiClient } from '@/lib/api'
 import { Appointment } from '@/types'
+import { View } from 'react-big-calendar'
 
 export default function AppointmentsPage() {
   const { user, isAuthenticated, isLoading } = useAuthStore()
@@ -32,6 +36,9 @@ export default function AppointmentsPage() {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
+  const [calendarView, setCalendarView] = useState<View>('week')
+  const [viewMode, setViewMode] = useState<'calendar' | 'list'>('list')
 
   useEffect(() => {
     // Hydrate the persisted store
@@ -53,9 +60,21 @@ export default function AppointmentsPage() {
   const loadAppointments = async () => {
     setLoading(true)
     try {
-      const response = await apiClient.getAppointments()
+      // Definir parâmetros baseados no role do usuário
+      const params: any = {}
+      
+      if (user?.role === 'PATIENT') {
+        params.patientId = user.id
+      } else if (user?.role === 'DOCTOR') {
+        params.doctorId = user.id
+      }
+      // ADMIN e RECEPTIONIST veem todas as consultas
+      
+      const response = await apiClient.getAppointments(params)
       if (response.success) {
         setAppointments(response.data || [])
+      } else {
+        console.error('Error loading appointments:', response.error)
       }
     } catch (error) {
       console.error('Error loading appointments:', error)
@@ -173,10 +192,35 @@ export default function AppointmentsPage() {
               {user?.role === 'RECEPTIONIST' && 'Gerencie agendamentos e atendimentos'}
             </p>
           </div>
-          <Button onClick={() => router.push('/appointments/new')}>
-            <Plus className="h-4 w-4 mr-2" />
-            Nova Consulta
-          </Button>
+          
+          <div className="flex items-center gap-2">
+            {/* View Toggle */}
+            <div className="flex bg-muted rounded-lg p-1">
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('list')}
+                className="h-8"
+              >
+                <User className="h-4 w-4 mr-1" />
+                Lista
+              </Button>
+              <Button
+                variant={viewMode === 'calendar' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('calendar')}
+                className="h-8"
+              >
+                <CalendarDays className="h-4 w-4 mr-1" />
+                Calendário
+              </Button>
+            </div>
+            
+            <Button onClick={() => router.push('/appointments/new')}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nova Consulta
+            </Button>
+          </div>
         </div>
 
         {/* Quick Stats */}
@@ -258,7 +302,26 @@ export default function AppointmentsPage() {
           </CardContent>
         </Card>
 
-        {/* Appointments Tabs */}
+        {/* Calendar View */}
+        {viewMode === 'calendar' && (
+          <AppointmentCalendar
+            appointments={appointments}
+            onAppointmentSelect={setSelectedAppointment}
+            onSlotSelect={(slotInfo) => {
+              // Navigate to new appointment with pre-filled time
+              const searchParams = new URLSearchParams({
+                date: slotInfo.start.toISOString(),
+                duration: '30'
+              })
+              router.push(`/appointments/new?${searchParams.toString()}`)
+            }}
+            view={calendarView}
+            onViewChange={setCalendarView}
+          />
+        )}
+
+        {/* List View - Appointments Tabs */}
+        {viewMode === 'list' && (
         <Tabs defaultValue="upcoming" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="upcoming">Próximas ({upcomingAppointments.length})</TabsTrigger>
@@ -497,6 +560,41 @@ export default function AppointmentsPage() {
             </Card>
           </TabsContent>
         </Tabs>
+        )}
+
+        {/* Appointment Detail Modal */}
+        <AppointmentModal
+          appointment={selectedAppointment}
+          open={!!selectedAppointment}
+          onClose={() => setSelectedAppointment(null)}
+          onConfirm={async (appointment) => {
+            try {
+              await apiClient.updateAppointment(appointment.id, { status: 'CONFIRMED' })
+              await loadAppointments() // Reload appointments
+            } catch (error) {
+              console.error('Error confirming appointment:', error)
+            }
+          }}
+          onCancel={async (appointment) => {
+            try {
+              await apiClient.cancelAppointment(appointment.id, 'Cancelado pelo usuário')
+              await loadAppointments() // Reload appointments
+            } catch (error) {
+              console.error('Error canceling appointment:', error)
+            }
+          }}
+          onComplete={async (appointment) => {
+            try {
+              await apiClient.updateAppointment(appointment.id, { status: 'COMPLETED' })
+              await loadAppointments() // Reload appointments
+            } catch (error) {
+              console.error('Error completing appointment:', error)
+            }
+          }}
+          onReschedule={(appointment) => {
+            router.push(`/appointments/new?reschedule=${appointment.id}`)
+          }}
+        />
       </div>
     </AppLayout>
   )

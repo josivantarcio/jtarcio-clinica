@@ -426,6 +426,29 @@ fastify.get('/api/v1/users', async (request, reply) => {
               medications: true,
               address: true
             }
+          } : false,
+          // Se for médico, incluir dados do médico
+          doctorProfile: role === 'DOCTOR' ? {
+            select: {
+              id: true,
+              crm: true,
+              subSpecialties: true,
+              biography: true,
+              experience: true,
+              consultationFee: true,
+              consultationDuration: true,
+              isActive: true,
+              acceptsNewPatients: true,
+              specialty: {
+                select: {
+                  id: true,
+                  name: true,
+                  description: true,
+                  duration: true,
+                  price: true
+                }
+              }
+            }
           } : false
         },
         orderBy: { createdAt: 'desc' },
@@ -550,6 +573,129 @@ fastify.post('/api/v1/users', async (request, reply) => {
   }
 });
 
+// Criar novo médico
+fastify.post('/api/v1/doctors', async (request, reply) => {
+  try {
+    const doctorData = request.body as any;
+    console.log('Creating doctor with data:', JSON.stringify(doctorData, null, 2));
+    
+    // Validações básicas
+    if (!doctorData.user?.firstName || !doctorData.user?.lastName || !doctorData.user?.email || !doctorData.crm) {
+      reply.status(400);
+      return {
+        success: false,
+        error: {
+          code: 'MISSING_FIELDS',
+          message: 'Nome, sobrenome, email e CRM são obrigatórios'
+        }
+      };
+    }
+    
+    // Criar o usuário primeiro
+    const user = await prisma.user.create({
+      data: {
+        firstName: doctorData.user.firstName,
+        lastName: doctorData.user.lastName,
+        fullName: `${doctorData.user.firstName} ${doctorData.user.lastName}`,
+        email: doctorData.user.email,
+        password: doctorData.user.password || 'TempPassword123!', // Senha temporária
+        role: 'DOCTOR',
+        phone: doctorData.phone || null,
+        cpf: doctorData.cpf || null,
+        dateOfBirth: doctorData.dateOfBirth ? new Date(doctorData.dateOfBirth) : null,
+        gender: doctorData.gender || null
+      }
+    });
+    
+    // Criar o perfil de médico
+    const doctor = await prisma.doctor.create({
+      data: {
+        userId: user.id,
+        crm: doctorData.crm,
+        specialtyId: doctorData.specialtyId || doctorData.specialties?.[0] || 'cmebnka9q000uaj4w96eajstj', // Default to Clínica Geral
+        subSpecialties: doctorData.specialties || [],
+        biography: doctorData.bio || null,
+        experience: doctorData.experience ? parseInt(doctorData.experience) : null,
+        consultationFee: doctorData.consultationFee ? parseFloat(doctorData.consultationFee) : null,
+        consultationDuration: doctorData.consultationDuration || 30
+      }
+    });
+    
+    // Retornar médico criado com dados do usuário
+    const newDoctor = await prisma.doctor.findUnique({
+      where: { id: doctor.id },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            fullName: true,
+            email: true,
+            phone: true,
+            cpf: true,
+            dateOfBirth: true,
+            gender: true,
+            role: true,
+            status: true,
+            avatar: true
+          }
+        },
+        specialty: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            duration: true,
+            price: true
+          }
+        }
+      }
+    });
+    
+    return {
+      success: true,
+      data: newDoctor,
+      message: 'Médico criado com sucesso'
+    };
+  } catch (error: any) {
+    console.error('Error creating doctor:', error);
+    
+    // Verificar se é erro de email duplicado
+    if (error.code === 'P2002' && error.meta?.target?.includes('email')) {
+      reply.status(409);
+      return {
+        success: false,
+        error: {
+          code: 'EMAIL_EXISTS',
+          message: 'Este email já está em uso'
+        }
+      };
+    }
+    
+    // Verificar se é erro de CRM duplicado
+    if (error.code === 'P2002' && error.meta?.target?.includes('crm')) {
+      reply.status(409);
+      return {
+        success: false,
+        error: {
+          code: 'CRM_EXISTS',
+          message: 'Este CRM já está em uso'
+        }
+      };
+    }
+    
+    reply.status(500);
+    return {
+      success: false,
+      error: {
+        code: 'CREATE_FAILED',
+        message: 'Erro ao criar médico'
+      }
+    };
+  }
+});
+
 // Especialidades - agora usando dados reais do banco
 fastify.get('/api/v1/specialties', async (request, reply) => {
   try {
@@ -631,26 +777,532 @@ fastify.patch('/api/v1/specialties/:id', async (request, reply) => {
   }
 });
 
-// Appointments
+// Appointments - Listar consultas com filtros
 fastify.get('/api/v1/appointments', async (request, reply) => {
-  return {
-    success: true,
-    data: [],
-    pagination: {
-      page: 1,
-      pageSize: 10,
-      total: 0,
-      totalPages: 0
+  try {
+    const query = request.query as any;
+    const doctorId = query?.doctorId;
+    const patientId = query?.patientId;
+    const status = query?.status;
+    const date = query?.date;
+    const page = parseInt(query?.page) || 1;
+    const pageSize = parseInt(query?.pageSize) || 10;
+    
+    // Construir filtros
+    const where: any = {
+      deletedAt: null
+    };
+    
+    if (doctorId) where.doctorId = doctorId;
+    if (patientId) where.patientId = patientId;
+    if (status) where.status = status;
+    if (date) {
+      // Filtrar por data específica
+      const startOfDay = new Date(date);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(date);
+      endOfDay.setHours(23, 59, 59, 999);
+      
+      where.scheduledAt = {
+        gte: startOfDay,
+        lte: endOfDay
+      };
     }
-  };
+    
+    // Buscar consultas
+    const [appointments, total] = await Promise.all([
+      prisma.appointment.findMany({
+        where,
+        include: {
+          patient: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+              phone: true,
+              cpf: true
+            }
+          },
+          doctor: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+              // Get doctor profile if exists
+              doctorProfile: {
+                select: {
+                  crm: true,
+                  specialty: {
+                    select: {
+                      name: true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          specialty: {
+            select: {
+              name: true,
+              price: true
+            }
+          }
+        },
+        orderBy: { scheduledAt: 'asc' },
+        skip: (page - 1) * pageSize,
+        take: pageSize
+      }),
+      prisma.appointment.count({ where })
+    ]);
+    
+    return {
+      success: true,
+      data: appointments,
+      pagination: {
+        page,
+        pageSize,
+        total,
+        totalPages: Math.ceil(total / pageSize)
+      }
+    };
+  } catch (error) {
+    console.error('Error fetching appointments:', error);
+    reply.status(500);
+    return {
+      success: false,
+      error: {
+        code: 'FETCH_FAILED',
+        message: 'Erro ao buscar consultas'
+      }
+    };
+  }
 });
 
-// Availability
+// Criar nova consulta
+fastify.post('/api/v1/appointments', async (request, reply) => {
+  try {
+    const appointmentData = request.body as any;
+    
+    // Validações básicas
+    if (!appointmentData.patientId || !appointmentData.doctorId || !appointmentData.specialtyId || !appointmentData.scheduledAt) {
+      reply.status(400);
+      return {
+        success: false,
+        error: {
+          code: 'MISSING_FIELDS',
+          message: 'Paciente, médico, especialidade e data/hora são obrigatórios'
+        }
+      };
+    }
+    
+    const scheduledAt = new Date(appointmentData.scheduledAt);
+    const duration = appointmentData.duration || 30;
+    const endTime = new Date(scheduledAt.getTime() + (duration * 60000));
+    
+    // Verificar conflito de horário com o médico
+    const conflictingAppointment = await prisma.appointment.findFirst({
+      where: {
+        doctorId: appointmentData.doctorId,
+        deletedAt: null,
+        status: {
+          not: 'CANCELLED'
+        },
+        OR: [
+          // Nova consulta começa durante uma existente
+          {
+            AND: [
+              { scheduledAt: { lte: scheduledAt } },
+              { endTime: { gt: scheduledAt } }
+            ]
+          },
+          // Nova consulta termina durante uma existente
+          {
+            AND: [
+              { scheduledAt: { lt: endTime } },
+              { endTime: { gte: endTime } }
+            ]
+          },
+          // Nova consulta engloba uma existente
+          {
+            AND: [
+              { scheduledAt: { gte: scheduledAt } },
+              { endTime: { lte: endTime } }
+            ]
+          }
+        ]
+      }
+    });
+    
+    if (conflictingAppointment) {
+      reply.status(409);
+      return {
+        success: false,
+        error: {
+          code: 'TIME_CONFLICT',
+          message: 'Horário já ocupado para este médico',
+          conflictingAppointment: {
+            id: conflictingAppointment.id,
+            scheduledAt: conflictingAppointment.scheduledAt,
+            endTime: conflictingAppointment.endTime
+          }
+        }
+      };
+    }
+    
+    // Verificar se a data não está no passado
+    if (scheduledAt <= new Date()) {
+      reply.status(400);
+      return {
+        success: false,
+        error: {
+          code: 'INVALID_DATE',
+          message: 'Não é possível agendar consultas no passado'
+        }
+      };
+    }
+    
+    // Criar a consulta
+    const appointment = await prisma.appointment.create({
+      data: {
+        patientId: appointmentData.patientId,
+        doctorId: appointmentData.doctorId,
+        specialtyId: appointmentData.specialtyId,
+        scheduledAt,
+        duration,
+        endTime,
+        reason: appointmentData.reason,
+        notes: appointmentData.notes,
+        fee: appointmentData.fee
+      },
+      include: {
+        patient: {
+          select: {
+            fullName: true,
+            email: true,
+            phone: true
+          }
+        },
+        doctor: {
+          select: {
+            user: {
+              select: { fullName: true }
+            },
+            crm: true
+          }
+        },
+        specialty: {
+          select: {
+            name: true,
+            price: true
+          }
+        }
+      }
+    });
+    
+    return {
+      success: true,
+      data: appointment,
+      message: 'Consulta agendada com sucesso'
+    };
+  } catch (error: any) {
+    console.error('Error creating appointment:', error);
+    
+    if (error.code === 'P2002') {
+      reply.status(409);
+      return {
+        success: false,
+        error: {
+          code: 'DUPLICATE_ENTRY',
+          message: 'Conflito de dados na criação da consulta'
+        }
+      };
+    }
+    
+    reply.status(500);
+    return {
+      success: false,
+      error: {
+        code: 'CREATE_FAILED',
+        message: 'Erro ao criar consulta'
+      }
+    };
+  }
+});
+
+// Atualizar consulta
+fastify.patch('/api/v1/appointments/:id', async (request, reply) => {
+  try {
+    const { id } = request.params as any;
+    const updateData = request.body as any;
+    
+    // Buscar consulta existente
+    const existingAppointment = await prisma.appointment.findUnique({
+      where: { id, deletedAt: null }
+    });
+    
+    if (!existingAppointment) {
+      reply.status(404);
+      return {
+        success: false,
+        error: {
+          code: 'APPOINTMENT_NOT_FOUND',
+          message: 'Consulta não encontrada'
+        }
+      };
+    }
+    
+    // Se está mudando horário, verificar conflitos
+    if (updateData.scheduledAt && updateData.scheduledAt !== existingAppointment.scheduledAt.toISOString()) {
+      const newScheduledAt = new Date(updateData.scheduledAt);
+      const duration = updateData.duration || existingAppointment.duration;
+      const newEndTime = new Date(newScheduledAt.getTime() + (duration * 60000));
+      
+      const conflictingAppointment = await prisma.appointment.findFirst({
+        where: {
+          doctorId: existingAppointment.doctorId,
+          deletedAt: null,
+          status: { not: 'CANCELLED' },
+          id: { not: id }, // Excluir a própria consulta
+          OR: [
+            {
+              AND: [
+                { scheduledAt: { lte: newScheduledAt } },
+                { endTime: { gt: newScheduledAt } }
+              ]
+            },
+            {
+              AND: [
+                { scheduledAt: { lt: newEndTime } },
+                { endTime: { gte: newEndTime } }
+              ]
+            }
+          ]
+        }
+      });
+      
+      if (conflictingAppointment) {
+        reply.status(409);
+        return {
+          success: false,
+          error: {
+            code: 'TIME_CONFLICT',
+            message: 'Novo horário conflita com consulta existente'
+          }
+        };
+      }
+      
+      updateData.endTime = newEndTime;
+    }
+    
+    // Atualizar consulta
+    const updatedAppointment = await prisma.appointment.update({
+      where: { id },
+      data: {
+        ...updateData,
+        updatedAt: new Date()
+      },
+      include: {
+        patient: {
+          select: {
+            fullName: true,
+            email: true,
+            phone: true
+          }
+        },
+        doctor: {
+          select: {
+            user: {
+              select: { fullName: true }
+            }
+          }
+        },
+        specialty: {
+          select: {
+            name: true
+          }
+        }
+      }
+    });
+    
+    return {
+      success: true,
+      data: updatedAppointment,
+      message: 'Consulta atualizada com sucesso'
+    };
+  } catch (error) {
+    console.error('Error updating appointment:', error);
+    reply.status(500);
+    return {
+      success: false,
+      error: {
+        code: 'UPDATE_FAILED',
+        message: 'Erro ao atualizar consulta'
+      }
+    };
+  }
+});
+
+// Cancelar consulta
+fastify.patch('/api/v1/appointments/:id/cancel', async (request, reply) => {
+  try {
+    const { id } = request.params as any;
+    const { reason } = request.body as any;
+    
+    const cancelledAppointment = await prisma.appointment.update({
+      where: { id, deletedAt: null },
+      data: {
+        status: 'CANCELLED',
+        cancelledAt: new Date(),
+        cancelReason: reason || 'Cancelamento solicitado',
+        updatedAt: new Date()
+      }
+    });
+    
+    return {
+      success: true,
+      data: cancelledAppointment,
+      message: 'Consulta cancelada com sucesso'
+    };
+  } catch (error) {
+    console.error('Error cancelling appointment:', error);
+    reply.status(500);
+    return {
+      success: false,
+      error: {
+        code: 'CANCEL_FAILED',
+        message: 'Erro ao cancelar consulta'
+      }
+    };
+  }
+});
+
+// Availability - Obter disponibilidade de médico
 fastify.get('/api/v1/availability', async (request, reply) => {
-  return {
-    success: true,
-    data: []
-  };
+  try {
+    const query = request.query as any;
+    const doctorId = query?.doctorId;
+    const date = query?.date; // YYYY-MM-DD format
+    
+    if (!doctorId) {
+      reply.status(400);
+      return {
+        success: false,
+        error: {
+          code: 'MISSING_DOCTOR_ID',
+          message: 'ID do médico é obrigatório'
+        }
+      };
+    }
+    
+    // Buscar disponibilidade base do médico
+    const availability = await prisma.availability.findMany({
+      where: {
+        doctorId: doctorId,
+        isActive: true
+      }
+    });
+    
+    if (!date) {
+      // Retornar disponibilidade geral (horários configurados)
+      return {
+        success: true,
+        data: availability
+      };
+    }
+    
+    // Para data específica, calcular slots disponíveis
+    const targetDate = new Date(date);
+    const dayOfWeek = targetDate.getDay();
+    
+    const dayAvailability = availability.filter(avail => avail.dayOfWeek === dayOfWeek);
+    
+    if (!dayAvailability.length) {
+      return {
+        success: true,
+        data: [],
+        message: 'Médico não tem disponibilidade neste dia da semana'
+      };
+    }
+    
+    // Buscar consultas já agendadas na data
+    const startOfDay = new Date(targetDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(targetDate);
+    endOfDay.setHours(23, 59, 59, 999);
+    
+    const bookedAppointments = await prisma.appointment.findMany({
+      where: {
+        doctorId: doctorId,
+        scheduledAt: {
+          gte: startOfDay,
+          lte: endOfDay
+        },
+        status: {
+          not: 'CANCELLED'
+        },
+        deletedAt: null
+      },
+      select: {
+        scheduledAt: true,
+        endTime: true
+      }
+    });
+    
+    // Gerar slots disponíveis
+    const availableSlots = [];
+    
+    for (const avail of dayAvailability) {
+      const [startHour, startMinute] = avail.startTime.split(':').map(Number);
+      const [endHour, endMinute] = avail.endTime.split(':').map(Number);
+      
+      let currentTime = new Date(targetDate);
+      currentTime.setHours(startHour, startMinute, 0, 0);
+      
+      const endTime = new Date(targetDate);
+      endTime.setHours(endHour, endMinute, 0, 0);
+      
+      while (currentTime < endTime) {
+        const slotEnd = new Date(currentTime.getTime() + (avail.slotDuration * 60000));
+        
+        // Verificar se slot conflita com consulta existente
+        const hasConflict = bookedAppointments.some(appointment => {
+          const appointmentStart = new Date(appointment.scheduledAt);
+          const appointmentEnd = new Date(appointment.endTime);
+          
+          return (
+            (currentTime >= appointmentStart && currentTime < appointmentEnd) ||
+            (slotEnd > appointmentStart && slotEnd <= appointmentEnd) ||
+            (currentTime <= appointmentStart && slotEnd >= appointmentEnd)
+          );
+        });
+        
+        if (!hasConflict && currentTime > new Date()) { // Não incluir horários passados
+          availableSlots.push({
+            startTime: currentTime.toISOString(),
+            endTime: slotEnd.toISOString(),
+            duration: avail.slotDuration
+          });
+        }
+        
+        currentTime = new Date(currentTime.getTime() + (avail.slotDuration * 60000));
+      }
+    }
+    
+    return {
+      success: true,
+      data: availableSlots
+    };
+  } catch (error) {
+    console.error('Error fetching availability:', error);
+    reply.status(500);
+    return {
+      success: false,
+      error: {
+        code: 'FETCH_FAILED',
+        message: 'Erro ao buscar disponibilidade'
+      }
+    };
+  }
 });
 
 // Analytics

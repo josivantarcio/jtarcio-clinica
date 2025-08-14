@@ -18,37 +18,68 @@ import { apiClient } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
 
 const newDoctorSchema = z.object({
-  name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
+  firstName: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
+  lastName: z.string().min(2, 'Sobrenome deve ter pelo menos 2 caracteres'),
   email: z.string().email('Email inválido'),
   password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
   crm: z.string().min(5, 'CRM é obrigatório'),
   phone: z.string().min(10, 'Telefone inválido'),
-  specialty: z.string().min(1, 'Especialidade é obrigatória'),
+  cpf: z.string().optional().refine(\n    (cpf) => {\n      if (!cpf) return true; // CPF é opcional\n      // Remove formatação\n      const cleanCpf = cpf.replace(/\\D/g, '');\n      return cleanCpf.length === 11;\n    },\n    { message: 'CPF deve ter 11 dígitos' }\n  ),
+  specialtyId: z.string().min(1, 'Especialidade é obrigatória'),
   experience: z.string().optional(),
   education: z.string().optional(),
-  bio: z.string().optional()
+  bio: z.string().optional(),
+  consultationFee: z.string().optional()
 })
 
 type NewDoctorForm = z.infer<typeof newDoctorSchema>
 
-const specialties = [
-  'Cardiologia',
-  'Dermatologia', 
-  'Ortopedia',
-  'Pediatria',
-  'Neurologia',
-  'Ginecologia',
-  'Psiquiatria',
-  'Oftalmologia',
-  'Otorrinolaringologia',
-  'Urologia',
-  'Endocrinologia',
-  'Gastroenterologia',
-  'Pneumologia',
-  'Reumatologia',
-  'Oncologia',
-  'Clínico Geral'
-]
+// Componente para seleção de especialidades
+function SpecialtySelect({ onValueChange, error }: { onValueChange: (value: string) => void, error?: any }) {
+  const [specialties, setSpecialties] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const loadSpecialties = async () => {
+      try {
+        const response = await apiClient.getSpecialties()
+        if (response.success && response.data) {
+          setSpecialties(response.data)
+        }
+      } catch (error) {
+        console.error('Error loading specialties:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadSpecialties()
+  }, [])
+
+  if (loading) {
+    return (
+      <Select disabled>
+        <SelectTrigger>
+          <SelectValue placeholder="Carregando especialidades..." />
+        </SelectTrigger>
+      </Select>
+    )
+  }
+
+  return (
+    <Select onValueChange={onValueChange}>
+      <SelectTrigger className={error ? 'border-red-500' : ''}>
+        <SelectValue placeholder="Selecione a especialidade" />
+      </SelectTrigger>
+      <SelectContent>
+        {specialties.map((specialty) => (
+          <SelectItem key={specialty.id} value={specialty.id}>
+            {specialty.name} - {specialty.duration}min - R$ {specialty.price?.toFixed(2)}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  )
+}
 
 export default function NewDoctorPage() {
   const { user, isAuthenticated, isLoading } = useAuthStore()
@@ -90,17 +121,20 @@ export default function NewDoctorPage() {
     try {
       const response = await apiClient.createDoctor({
         user: {
-          name: data.name,
+          firstName: data.firstName,
+          lastName: data.lastName,
           email: data.email,
           password: data.password,
           role: 'DOCTOR'
         },
         crm: data.crm,
         phone: data.phone,
-        specialties: [data.specialty],
+        cpf: data.cpf,
+        specialtyId: data.specialtyId,
         experience: data.experience || '',
         education: data.education || '',
-        bio: data.bio || ''
+        bio: data.bio || '',
+        consultationFee: data.consultationFee
       })
 
       if (response.success) {
@@ -180,17 +214,33 @@ export default function NewDoctorPage() {
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="name">Nome Completo *</Label>
+                      <Label htmlFor="firstName">Nome *</Label>
                       <Input
-                        id="name"
-                        placeholder="Dr(a). Nome Sobrenome"
-                        {...register('name')}
-                        className={errors.name ? 'border-red-500' : ''}
+                        id="firstName"
+                        placeholder="Nome"
+                        {...register('firstName')}
+                        className={errors.firstName ? 'border-red-500' : ''}
                       />
-                      {errors.name && (
-                        <p className="text-sm text-red-500">{errors.name.message}</p>
+                      {errors.firstName && (
+                        <p className="text-sm text-red-500">{errors.firstName.message}</p>
                       )}
                     </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="lastName">Sobrenome *</Label>
+                      <Input
+                        id="lastName"
+                        placeholder="Sobrenome"
+                        {...register('lastName')}
+                        className={errors.lastName ? 'border-red-500' : ''}
+                      />
+                      {errors.lastName && (
+                        <p className="text-sm text-red-500">{errors.lastName.message}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
                     <div className="space-y-2">
                       <Label htmlFor="email">Email *</Label>
@@ -238,6 +288,17 @@ export default function NewDoctorPage() {
                       )}
                     </div>
                   </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="cpf">CPF</Label>
+                      <Input
+                        id="cpf"
+                        placeholder="000.000.000-00"
+                        {...register('cpf')}
+                      />
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
 
@@ -268,23 +329,26 @@ export default function NewDoctorPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="specialty">Especialidade Principal *</Label>
-                      <Select onValueChange={(value) => setValue('specialty', value)}>
-                        <SelectTrigger className={errors.specialty ? 'border-red-500' : ''}>
-                          <SelectValue placeholder="Selecione a especialidade" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {specialties.map((specialty) => (
-                            <SelectItem key={specialty} value={specialty}>
-                              {specialty}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {errors.specialty && (
-                        <p className="text-sm text-red-500">{errors.specialty.message}</p>
-                      )}
+                      <Label htmlFor="consultationFee">Valor da Consulta (R$)</Label>
+                      <Input
+                        id="consultationFee"
+                        type="number"
+                        step="0.01"
+                        placeholder="150.00"
+                        {...register('consultationFee')}
+                      />
                     </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="specialtyId">Especialidade Principal *</Label>
+                    <SpecialtySelect 
+                      onValueChange={(value) => setValue('specialtyId', value)}
+                      error={errors.specialtyId}
+                    />
+                    {errors.specialtyId && (
+                      <p className="text-sm text-red-500">{errors.specialtyId.message}</p>
+                    )}
                   </div>
 
                   <div className="space-y-2">

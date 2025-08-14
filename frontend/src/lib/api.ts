@@ -171,11 +171,28 @@ class ApiClient {
     })
   }
 
-  async cancelAppointment(id: string, data: any) {
+  async cancelAppointment(id: string, reason?: string) {
     return this.request<any>({
-      method: 'POST',
+      method: 'PATCH',
       url: `/api/v1/appointments/${id}/cancel`,
-      data
+      data: { reason }
+    })
+  }
+
+  async updateAppointment(id: string, updateData: any) {
+    return this.request<any>({
+      method: 'PATCH',
+      url: `/api/v1/appointments/${id}`,
+      data: updateData
+    })
+  }
+
+  // Doctor Availability
+  async getDoctorAvailability(doctorId: string, date?: string) {
+    return this.request<any[]>({
+      method: 'GET',
+      url: '/api/v1/availability',
+      params: { doctorId, date }
     })
   }
 
@@ -222,17 +239,20 @@ class ApiClient {
 
   async createDoctor(doctorData: {
     user: {
-      name: string
+      firstName: string
+      lastName: string
       email: string
       password: string
       role: string
     }
     crm: string
-    phone: string
-    specialties: string[]
+    phone?: string
+    cpf?: string
+    specialtyId: string
     experience?: string
     education?: string
     bio?: string
+    consultationFee?: string
   }) {
     return this.request<any>({
       method: 'POST',
