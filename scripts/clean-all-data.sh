@@ -69,7 +69,7 @@ log_info "Parando todos os containers..."
 docker-compose down --volumes --remove-orphans 2>/dev/null || true
 
 # Remove any remaining EO Clinica containers
-local project_containers=$(docker ps -a --filter "name=eo-clinica" --format "{{.Names}}" 2>/dev/null || true)
+project_containers=$(docker ps -a --filter "name=eo-clinica" --format "{{.Names}}" 2>/dev/null || true)
 if [ ! -z "$project_containers" ]; then
     log_info "Removendo containers específicos do projeto..."
     echo "$project_containers" | xargs docker stop 2>/dev/null || true
