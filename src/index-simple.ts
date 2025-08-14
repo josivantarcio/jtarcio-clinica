@@ -132,30 +132,81 @@ fastify.get('/api/v1/auth/me', async (request, reply) => {
   };
 });
 
-// Usuários/Pacientes - agora retorna lista vazia (somente admin existe)
+// Usuários/Pacientes - buscar dados reais do banco
 fastify.get('/api/v1/users', async (request, reply) => {
-  const query = request.query as any;
-  const role = query?.role;
-  
-  // Lista vazia - não há mais dados fictícios
-  const allUsers: any[] = [];
-  
-  // Filtrar por role se especificado
-  let filteredUsers = allUsers;
-  if (role) {
-    filteredUsers = allUsers.filter(user => user.role === role);
-  }
-  
-  return {
-    success: true,
-    data: filteredUsers,
-    pagination: {
-      page: 1,
-      pageSize: 10,
-      total: filteredUsers.length,
-      totalPages: 1
+  try {
+    const query = request.query as any;
+    const role = query?.role;
+    const page = parseInt(query?.page) || 1;
+    const pageSize = parseInt(query?.pageSize) || 10;
+    
+    // Configurar filtros
+    const where: any = {
+      deletedAt: null // Não buscar usuários deletados
+    };
+    
+    if (role) {
+      where.role = role;
     }
-  };
+    
+    // Buscar usuários no banco com paginação
+    const [users, total] = await Promise.all([
+      prisma.user.findMany({
+        where,
+        select: {
+          id: true,
+          email: true,
+          phone: true,
+          cpf: true,
+          firstName: true,
+          lastName: true,
+          fullName: true,
+          dateOfBirth: true,
+          gender: true,
+          role: true,
+          status: true,
+          avatar: true,
+          createdAt: true,
+          updatedAt: true,
+          // Se for paciente, incluir dados do paciente
+          patientProfile: role === 'PATIENT' ? {
+            select: {
+              id: true,
+              emergencyContactName: true,
+              emergencyContactPhone: true,
+              allergies: true,
+              medications: true,
+              address: true
+            }
+          } : false
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * pageSize,
+        take: pageSize
+      }),
+      prisma.user.count({ where })
+    ]);
+    
+    return {
+      success: true,
+      data: users,
+      pagination: {
+        page,
+        pageSize,
+        total,
+        totalPages: Math.ceil(total / pageSize)
+      }
+    };
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    return {
+      success: false,
+      error: {
+        code: 'FETCH_FAILED',
+        message: 'Erro ao buscar usuários'
+      }
+    };
+  }
 });
 
 // Criar novo usuário/paciente
