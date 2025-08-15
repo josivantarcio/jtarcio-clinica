@@ -174,20 +174,19 @@ export default function SchedulePage() {
         isFirstTime: apt.isFirstTime || false
       }))
       
-      // Calculate slots based on working hours and day type
-      const isWeekend = currentDay.getDay() === 0 || currentDay.getDay() === 6
-      const isSaturday = currentDay.getDay() === 6
+      // Calculate slots based on doctor availability (if selectedDoctor !== 'all')
+      // For now, we'll use default working hours until API is implemented
+      // TODO: Fetch actual doctor availability from API /availability/doctor/{doctorId}/settings
+      const dayOfWeek = currentDay.getDay()
       
       let totalSlots = 0
-      if (!isWeekend) {
-        // Monday to Friday: 8h-18h = 20 slots of 30 min each
-        totalSlots = 20
-      } else if (isSaturday) {
-        // Saturday: 8h-14h = 12 slots of 30 min each
-        totalSlots = 12
-      } else {
-        // Sunday: Closed
-        totalSlots = 0
+      // Default working hours (should come from availability table)
+      if (dayOfWeek >= 1 && dayOfWeek <= 5) { // Monday to Friday
+        totalSlots = 20 // 8h-18h = 20 slots of 30 min each
+      } else if (dayOfWeek === 6) { // Saturday
+        totalSlots = 12 // 8h-14h = 12 slots of 30 min each
+      } else { // Sunday
+        totalSlots = 0 // Closed
       }
       
       const usedSlots = formattedAppointments.length
@@ -212,20 +211,18 @@ export default function SchedulePage() {
       const currentDay = new Date(startDate)
       currentDay.setDate(startDate.getDate() + i)
       
-      // Calculate slots based on working hours and day type
-      const isWeekend = currentDay.getDay() === 0 || currentDay.getDay() === 6
-      const isSaturday = currentDay.getDay() === 6
+      // Calculate slots based on doctor availability
+      // TODO: Fetch actual doctor availability from API
+      const dayOfWeek = currentDay.getDay()
       
       let totalSlots = 0
-      if (!isWeekend) {
-        // Monday to Friday: 8h-18h = 20 slots of 30 min each
-        totalSlots = 20
-      } else if (isSaturday) {
-        // Saturday: 8h-14h = 12 slots of 30 min each
-        totalSlots = 12
-      } else {
-        // Sunday: Closed
-        totalSlots = 0
+      // Default working hours (should come from availability table)
+      if (dayOfWeek >= 1 && dayOfWeek <= 5) { // Monday to Friday
+        totalSlots = 20 // 8h-18h = 20 slots of 30 min each
+      } else if (dayOfWeek === 6) { // Saturday
+        totalSlots = 12 // 8h-14h = 12 slots of 30 min each
+      } else { // Sunday
+        totalSlots = 0 // Closed
       }
       
       schedule.push({
