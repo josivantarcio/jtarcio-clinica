@@ -4,7 +4,7 @@
 
 EO Clínica is a comprehensive medical clinic scheduling system that integrates AI-powered conversations, automated workflows, and complete medical appointment management. **Version 1.2.0** features fully implemented patient management, doctor management, and consultation scheduling systems with advanced validations and professional interfaces.
 
-## 🆕 Latest Updates - Version 1.2.4 (August 15, 2025)
+## 🆕 Latest Updates - Version 1.2.5 (August 15, 2025)
 
 ### ✅ **Major UI/UX and Functionality Improvements**
 
@@ -36,6 +36,9 @@ EO Clínica is a comprehensive medical clinic scheduling system that integrates 
 - **📄 Doctor Profile Pages**: Complete /doctors/[id] and /doctors/[id]/edit routes
 - **⭐ Realistic Ratings**: Fixed rating system to start at 0 instead of 5 stars
 - **🎨 Consistent Colors**: Green hover effects in specialty management modal
+- **🧮 Smart Experience System**: Automatic calculation from graduation/CRM registration dates
+- **🗓️ Date Intelligence**: Graduation date + CRM registration → auto-updated experience
+- **🕐 Timezone Fixes**: Corrected date handling to prevent day-shift issues
 
 #### **Consultation Module - NEW**
 - **📅 Interactive Calendar**: Modern calendar interface with appointment visualization
@@ -45,7 +48,7 @@ EO Clínica is a comprehensive medical clinic scheduling system that integrates 
 - **📱 Responsive Design**: Works seamlessly on all devices
 - **🔍 Advanced Filtering**: Filter by date, doctor, patient, and status
 
-#### **Recent Bug Fixes & Improvements (v1.2.4)**
+#### **Recent Bug Fixes & Improvements (v1.2.5)**
 - **🔧 Appointments API Fix**: Fixed 500 error when filtering by multiple status values (SCHEDULED,CONFIRMED)
 - **🎨 Design Consistency**: Unified hover effects using focus states for better UX (`focus:bg-primary/10`)
 - **📁 File Export**: Corrected Excel export to generate proper .xlsx files with semicolon separators
@@ -63,6 +66,10 @@ EO Clínica is a comprehensive medical clinic scheduling system that integrates 
 - **⭐ Rating System**: Corrected initial rating from 5.0 to 0 for realistic display
 - **🎨 UI Polish**: Green hover colors in specialty management for visual consistency
 - **📊 Rating Investigation**: Confirmed no backend Review/Rating tables - system ready for future implementation
+- **🗓️ Smart Experience**: Replaced manual experience field with auto-calculated from graduation/CRM dates
+- **🕐 Date Bug Fix**: Corrected patient birth date timezone issue (was showing one day less)
+- **📚 Date Utilities**: Created comprehensive date-utils library for consistent handling
+- **🧮 Auto-Updates**: Medical experience now updates automatically without manual intervention
 
 ## Architecture
 
@@ -381,4 +388,4 @@ MIT License - see LICENSE file for details.
 
 ---
 
-**EO Clínica System v1.2.4 - Complete Medical Management with Full Doctor Profile System** ✅
+**EO Clínica System v1.2.5 - Complete Medical Management with Intelligent Experience Calculation** ✅
