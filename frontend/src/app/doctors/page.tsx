@@ -145,7 +145,7 @@ export default function DoctorsPage() {
               // Stats (will be calculated from actual data later)
               totalPatients: 0,
               totalAppointments: 0,
-              rating: 5.0,
+              rating: 0,
               reviewsCount: 0,
               nextAppointment: undefined,
               status: doctor.isActive ? 'active' : 'inactive',
@@ -791,7 +791,7 @@ export default function DoctorsPage() {
                       {specialties.map((specialty) => (
                         <div
                           key={specialty.id}
-                          className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
+                          className="flex items-center justify-between p-4 border rounded-lg hover:bg-primary/10 transition-colors duration-200"
                         >
                           {editingSpecialty?.id === specialty.id ? (
                             <div className="flex-1 grid grid-cols-3 gap-4">
