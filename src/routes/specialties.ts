@@ -41,11 +41,12 @@ export async function specialtyRoutes(fastify: FastifyInstance): Promise<void> {
         ...(isActive !== undefined && { isActive }),
       };
 
-      // Filter only specialties that have active doctors
+      // Filter only specialties that have active doctors with specialty assigned
       if (withActiveDoctors) {
         where.doctors = {
           some: {
             isActive: true,
+            specialtyId: { not: null }, // Must have specialty assigned
             user: {
               status: 'ACTIVE',
               deletedAt: null
@@ -62,6 +63,7 @@ export async function specialtyRoutes(fastify: FastifyInstance): Promise<void> {
               doctors: {
                 where: {
                   isActive: true,
+                  specialtyId: { not: null }, // Only count doctors with specialty assigned
                   user: {
                     status: 'ACTIVE',
                     deletedAt: null
