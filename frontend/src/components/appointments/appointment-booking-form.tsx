@@ -101,7 +101,13 @@ export function AppointmentBookingForm({ onSuccess }: AppointmentBookingFormProp
   }
   
   const onSubmit = async (data: BookingFormData) => {
+    console.log('=== INÍCIO DO AGENDAMENTO ===')
+    console.log('Data do formulário:', data)
+    console.log('Data selecionada:', selectedDate)
+    console.log('Horário selecionado:', selectedTime)
+    
     if (!selectedDate || !selectedTime) {
+      console.log('❌ Erro: Data ou horário não selecionados')
       toast({
         title: 'Erro',
         description: 'Selecione data e horário',
@@ -110,31 +116,46 @@ export function AppointmentBookingForm({ onSuccess }: AppointmentBookingFormProp
       return
     }
     
-    const [hours, minutes] = selectedTime.split(':').map(Number)
-    const scheduledAt = new Date(selectedDate)
-    scheduledAt.setHours(hours, minutes)
-    
-    const bookingData = {
-      ...data,
-      scheduledAt
-    }
-    
-    const success = await createAppointment(bookingData)
-    
-    if (success) {
-      toast({
-        title: 'Sucesso!',
-        description: 'Consulta agendada com sucesso'
-      })
-      reset()
-      setStep(1)
-      setSelectedDate(undefined)
-      setSelectedTime('')
-      onSuccess?.()
-    } else {
+    try {
+      const [hours, minutes] = selectedTime.split(':').map(Number)
+      const scheduledAt = new Date(selectedDate)
+      scheduledAt.setHours(hours, minutes)
+      
+      const bookingData = {
+        ...data,
+        scheduledAt
+      }
+      
+      console.log('📤 Enviando dados:', bookingData)
+      
+      const success = await createAppointment(bookingData)
+      
+      console.log('📥 Resposta da API:', success)
+      
+      if (success) {
+        console.log('✅ Agendamento realizado com sucesso!')
+        toast({
+          title: 'Sucesso!',
+          description: 'Consulta agendada com sucesso'
+        })
+        reset()
+        setStep(1)
+        setSelectedDate(undefined)
+        setSelectedTime('')
+        onSuccess?.()
+      } else {
+        console.log('❌ Falha no agendamento')
+        toast({
+          title: 'Erro',
+          description: 'Não foi possível agendar a consulta',
+          variant: 'destructive'
+        })
+      }
+    } catch (error) {
+      console.error('💥 Erro durante agendamento:', error)
       toast({
         title: 'Erro',
-        description: 'Não foi possível agendar a consulta',
+        description: 'Erro interno. Tente novamente.',
         variant: 'destructive'
       })
     }
@@ -543,17 +564,21 @@ export function AppointmentBookingForm({ onSuccess }: AppointmentBookingFormProp
             {/* Additional Fields */}
             <div className="space-y-4">
               <div>
-                <Label htmlFor="type">Tipo de Consulta</Label>
+                <Label htmlFor="type" className="text-sm font-medium">Tipo de Consulta</Label>
                 <select 
                   {...register('type')}
-                  className="w-full mt-1 p-2 border rounded-md"
+                  className="w-full mt-2 p-3 border-2 rounded-lg bg-white text-green-700 font-medium focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 hover:border-green-400 transition-colors"
+                  style={{ 
+                    background: 'white',
+                    color: '#15803d' // green-700
+                  }}
                 >
-                  <option value="">Selecione o tipo</option>
-                  <option value="CONSULTATION">Consulta</option>
-                  <option value="FOLLOW_UP">Retorno</option>
+                  <option value="" className="text-green-600 bg-white">Selecione o tipo de consulta</option>
+                  <option value="CONSULTATION" className="text-green-700 bg-white">🩺 Consulta - Primeira vez</option>
+                  <option value="FOLLOW_UP" className="text-green-700 bg-white">🔄 Retorno - Acompanhamento</option>
                 </select>
                 {errors.type && (
-                  <p className="text-sm text-destructive">{errors.type.message}</p>
+                  <p className="text-sm text-red-600 mt-1 font-medium">{errors.type.message}</p>
                 )}
               </div>
               
