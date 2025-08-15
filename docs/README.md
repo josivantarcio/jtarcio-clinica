@@ -4,9 +4,9 @@
 
 EO Clínica is a comprehensive medical clinic scheduling system that integrates AI-powered conversations, automated workflows, and complete medical appointment management. **Version 1.2.0** features fully implemented patient management, doctor management, and consultation scheduling systems with advanced validations and professional interfaces.
 
-## 🆕 Latest Updates - Version 1.2.0 (August 14, 2025)
+## 🆕 Latest Updates - Version 1.2.1 (August 15, 2025)
 
-### ✅ **Complete Medical Management System - FULLY IMPLEMENTED**
+### ✅ **Major UI/UX and Functionality Improvements**
 
 #### **Patient Management System - ENHANCED**
 - **🔐 Brazilian CPF Validation**: Complete algorithm with digit verification
@@ -14,9 +14,12 @@ EO Clínica is a comprehensive medical clinic scheduling system that integrates 
 - **🔒 Security Lock**: CPF becomes uneditable after first save
 - **📅 Date Fix**: Timezone issue resolved (birth dates now display correctly)
 - **👤 Avatar Optimization**: Shows only first + last name initials (e.g., "JO")
-- **📊 Real Export**: Functional CSV export with Excel compatibility
+- **📊 Excel Export**: Functional Excel export (.xlsx) with proper encoding and formatting
 - **📈 Professional Reports**: Clean interface with actual system metrics
-- **🎨 UI Improvements**: Fixed contrast issues in filters and forms
+- **🎨 UI Consistency**: Applied beautiful green hover colors from appointments page to patient filters
+- **🧹 Interface Cleanup**: Removed unused "Mais Filtros" button for cleaner design
+- **⚡ Status Management**: Dropdown functionality to activate/deactivate patients (no deletion)
+- **🔄 Real-time Updates**: Patient status changes reflect immediately in the interface
 - **💾 100% Data Persistence**: Emergency contacts, medical info, and addresses now save properly
 
 #### **Doctor Management System - NEW**
@@ -34,6 +37,14 @@ EO Clínica is a comprehensive medical clinic scheduling system that integrates 
 - **🎯 Professional UI**: Medical-grade interface with status color coding
 - **📱 Responsive Design**: Works seamlessly on all devices
 - **🔍 Advanced Filtering**: Filter by date, doctor, patient, and status
+
+#### **Recent Bug Fixes & Improvements (v1.2.1)**
+- **🔧 Appointments API Fix**: Fixed 500 error when filtering by multiple status values (SCHEDULED,CONFIRMED)
+- **🎨 Design Consistency**: Unified hover effects using `hover:border-primary/50` and `hover:bg-primary/10`
+- **📁 File Export**: Corrected Excel export to generate proper .xlsx files with semicolon separators
+- **🔐 API Enhancement**: Added `updateUser` method to API client for status management
+- **💡 UX Improvements**: Added dropdown click-outside functionality for better user experience
+- **🎯 Status Updates**: Implemented real-time patient activation/deactivation with visual feedback
 
 ## Architecture
 

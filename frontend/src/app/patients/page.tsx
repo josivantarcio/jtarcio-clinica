@@ -26,7 +26,9 @@ import {
   Eye,
   Edit,
   Trash2,
-  Download
+  Download,
+  CheckCircle,
+  Loader2
 } from 'lucide-react'
 import { apiClient } from '@/lib/api'
 import { Patient, Appointment } from '@/types'
@@ -45,6 +47,8 @@ export default function PatientsPage() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
+  const [dropdownOpen, setDropdownOpen] = useState<string | null>(null)
+  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null)
 
   useEffect(() => {
     // Hydrate the persisted store
@@ -67,6 +71,20 @@ export default function PatientsPage() {
       loadPatients()
     }
   }, [user, isAuthenticated])
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownOpen) {
+        setDropdownOpen(null)
+      }
+    }
+
+    if (dropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [dropdownOpen])
 
   const loadPatients = async () => {
     setLoading(true)
@@ -173,40 +191,42 @@ export default function PatientsPage() {
   }
 
   const exportPatients = () => {
-    console.log('Exportando pacientes...', patients.length, 'pacientes encontrados')
+    console.log('Exportando pacientes...', filteredPatients.length, 'pacientes encontrados')
     
-    if (!patients.length) {
+    if (!filteredPatients.length) {
       alert('Nenhum paciente para exportar')
       return
     }
 
     try {
-      const csvData = generatePatientsCSV()
-      console.log('CSV gerado:', csvData.substring(0, 200) + '...')
-      downloadCSV(csvData, `pacientes_${new Date().toISOString().split('T')[0]}.csv`)
+      const excelData = generatePatientsExcel()
+      console.log('Excel gerado:', excelData.substring(0, 200) + '...')
+      downloadExcel(excelData, `pacientes_${new Date().toISOString().split('T')[0]}.xlsx`)
       
       // Show success message
-      alert(`Exportação concluída! ${filteredPatients.length} pacientes exportados.`)
+      alert(`Exportação concluída! ${filteredPatients.length} pacientes exportados para Excel.`)
     } catch (error) {
       console.error('Erro na exportação:', error)
       alert('Erro ao exportar pacientes. Verifique o console para detalhes.')
     }
   }
 
-  const generatePatientsCSV = () => {
-    console.log('Gerando CSV para', filteredPatients.length, 'pacientes filtrados')
+  const generatePatientsExcel = () => {
+    console.log('Gerando Excel para', filteredPatients.length, 'pacientes filtrados')
     
+    // Excel-compatible CSV with proper encoding and separators
     const csvLines = [
-      // Header with BOM for proper encoding
-      '\uFEFF' + 'EO Clínica - Lista de Pacientes',
+      // Header with BOM for proper Excel encoding
+      '\uFEFF',
+      'EO Clínica - Lista de Pacientes',
       `Exportado em: ${new Date().toLocaleDateString('pt-BR')}`,
       `Total de pacientes: ${filteredPatients.length}`,
       '',
       // Column headers
-      'Nome,Email,Telefone,CPF,Endereço,Contato de Emergência,Status,Data de Cadastro'
+      'Nome;Email;Telefone;CPF;Endereço;Contato de Emergência;Status;Data de Cadastro'
     ]
     
-    // Patient data
+    // Patient data with semicolon separator for Excel
     filteredPatients.forEach((patient, index) => {
       console.log(`Processando paciente ${index + 1}:`, patient.user.name)
       
@@ -217,27 +237,27 @@ export default function PatientsPage() {
         patient.cpf || 'N/A',
         patient.address || 'N/A',
         patient.emergencyContact || 'N/A',
-        patient.status || 'N/A',
+        patient.status === 'active' ? 'Ativo' : patient.status === 'inactive' ? 'Inativo' : 'Pendente',
         patient.user.createdAt ? new Date(patient.user.createdAt).toLocaleDateString('pt-BR') : 'N/A'
-      ].map(field => `"${field.toString().replace(/"/g, '""')}"`).join(',')
+      ].map(field => field.toString().replace(/;/g, ',')).join(';')
       
       csvLines.push(csvLine)
     })
     
-    console.log('CSV gerado com', csvLines.length, 'linhas')
+    console.log('Excel gerado com', csvLines.length, 'linhas')
     return csvLines.join('\n')
   }
 
-  const downloadCSV = (csvContent: string, fileName: string) => {
-    console.log('Iniciando download:', fileName)
+  const downloadExcel = (excelContent: string, fileName: string) => {
+    console.log('Iniciando download Excel:', fileName)
     
     try {
-      // Create blob with proper encoding for Excel compatibility
-      const blob = new Blob([csvContent], { 
-        type: 'text/csv;charset=utf-8;' 
+      // Create blob with proper Excel encoding 
+      const blob = new Blob([excelContent], { 
+        type: 'application/vnd.ms-excel;charset=utf-8;' 
       })
       
-      console.log('Blob criado:', blob.size, 'bytes')
+      console.log('Blob Excel criado:', blob.size, 'bytes')
       
       // Check if browser supports download
       const link = document.createElement('a')
@@ -249,14 +269,14 @@ export default function PatientsPage() {
         
         // Add to DOM, click, and remove
         document.body.appendChild(link)
-        console.log('Link adicionado ao DOM, iniciando click...')
+        console.log('Link adicionado ao DOM, iniciando download Excel...')
         link.click()
         document.body.removeChild(link)
         
         // Clean up
         setTimeout(() => URL.revokeObjectURL(url), 100)
         
-        console.log('Download iniciado com sucesso!')
+        console.log('Download Excel iniciado com sucesso!')
       } else {
         // Fallback for older browsers
         console.log('Download não suportado, usando fallback...')
@@ -264,8 +284,55 @@ export default function PatientsPage() {
         window.open(url, '_blank')
       }
     } catch (error) {
-      console.error('Erro no downloadCSV:', error)
+      console.error('Erro no downloadExcel:', error)
       throw error
+    }
+  }
+
+  const togglePatientStatus = async (patientId: string, currentStatus: string) => {
+    // Set loading state
+    setUpdatingStatus(patientId)
+    
+    try {
+      console.log('Alterando status do paciente:', { patientId, currentStatus })
+      
+      const newStatus = currentStatus === 'active' ? 'INACTIVE' : 'ACTIVE'
+      const statusLabel = newStatus === 'ACTIVE' ? 'ativado' : 'inativado'
+      
+      console.log('Novo status será:', newStatus)
+      
+      const response = await apiClient.updateUser(patientId, { status: newStatus })
+      
+      console.log('Resposta da API:', response)
+      
+      if (response.success) {
+        // Update patient in the local state
+        setPatients(prevPatients => 
+          prevPatients.map(patient => 
+            patient.id === patientId 
+              ? { ...patient, status: newStatus === 'ACTIVE' ? 'active' : 'inactive' }
+              : patient
+          )
+        )
+        
+        // Show success message
+        console.log(`Status alterado com sucesso para: ${newStatus}`)
+        alert(`Paciente ${statusLabel} com sucesso!`)
+        
+        // Reload patients data to ensure consistency
+        await loadPatients()
+      } else {
+        console.error('Erro na resposta da API:', response.error)
+        alert(`Erro ao atualizar status do paciente: ${response.error?.message || 'Erro desconhecido'}`)
+      }
+    } catch (error) {
+      console.error('Error updating patient status:', error)
+      alert(`Erro ao atualizar status do paciente: ${error instanceof Error ? error.message : 'Erro desconhecido'}`)
+    } finally {
+      // Clear loading state
+      setUpdatingStatus(null)
+      // Close dropdown
+      setDropdownOpen(null)
     }
   }
 
@@ -367,17 +434,13 @@ export default function PatientsPage() {
                 <select
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
-                  className="px-3 py-2 border rounded-md bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary hover:bg-gray-50"
+                  className="px-3 py-2 border rounded-md bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary focus:bg-primary/10 focus:shadow-md hover:bg-gray-50 transition-all duration-200"
                 >
-                  <option value="all" className="text-gray-900 bg-white">Todos</option>
-                  <option value="active" className="text-gray-900 bg-white">Ativos</option>
-                  <option value="inactive" className="text-gray-900 bg-white">Inativos</option>
-                  <option value="pending" className="text-gray-900 bg-white">Pendentes</option>
+                  <option value="all" className="text-gray-900 bg-white hover:bg-primary/10">Todos</option>
+                  <option value="active" className="text-gray-900 bg-white hover:bg-primary/10">Ativos</option>
+                  <option value="inactive" className="text-gray-900 bg-white hover:bg-primary/10">Inativos</option>
+                  <option value="pending" className="text-gray-900 bg-white hover:bg-primary/10">Pendentes</option>
                 </select>
-                <Button variant="outline" size="sm">
-                  <Filter className="h-4 w-4 mr-2" />
-                  Mais Filtros
-                </Button>
               </div>
             </div>
           </CardContent>
@@ -499,17 +562,63 @@ export default function PatientsPage() {
                       >
                         <Plus className="h-4 w-4" />
                       </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        title="Mais opções"
-                        onClick={() => {
-                          // TODO: Implementar dropdown com mais opções
-                          console.log('More options for patient:', patient.id)
-                        }}
-                      >
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
+                      <div className="relative">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          title="Mais opções"
+                          onClick={() => {
+                            setDropdownOpen(dropdownOpen === patient.id ? null : patient.id)
+                          }}
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                        
+                        {dropdownOpen === patient.id && (
+                          <div className="absolute right-0 top-full mt-2 w-52 bg-white border border-gray-200 rounded-lg shadow-xl z-50 py-1">
+                            <div className="px-3 py-2 text-xs font-medium text-gray-500 border-b border-gray-100">
+                              Status do Paciente
+                            </div>
+                            <button
+                              className="w-full px-4 py-3 text-left text-sm hover:bg-gray-50 transition-colors flex items-center group disabled:opacity-50 disabled:cursor-not-allowed"
+                              onClick={() => togglePatientStatus(patient.id, patient.status)}
+                              disabled={updatingStatus === patient.id}
+                            >
+                              {updatingStatus === patient.id ? (
+                                <>
+                                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 mr-3">
+                                    <Loader2 className="h-4 w-4 text-blue-600 animate-spin" />
+                                  </div>
+                                  <div>
+                                    <div className="font-medium text-gray-900">Atualizando...</div>
+                                    <div className="text-xs text-gray-500">Aguarde</div>
+                                  </div>
+                                </>
+                              ) : patient.status === 'active' ? (
+                                <>
+                                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-orange-100 mr-3 group-hover:bg-orange-200 transition-colors">
+                                    <AlertTriangle className="h-4 w-4 text-orange-600" />
+                                  </div>
+                                  <div>
+                                    <div className="font-medium text-gray-900">Inativar Paciente</div>
+                                    <div className="text-xs text-gray-500">Desabilitar acesso ao sistema</div>
+                                  </div>
+                                </>
+                              ) : (
+                                <>
+                                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-green-100 mr-3 group-hover:bg-green-200 transition-colors">
+                                    <CheckCircle className="h-4 w-4 text-green-600" />
+                                  </div>
+                                  <div>
+                                    <div className="font-medium text-gray-900">Ativar Paciente</div>
+                                    <div className="text-xs text-gray-500">Permitir acesso ao sistema</div>
+                                  </div>
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -541,56 +650,6 @@ export default function PatientsPage() {
           </CardContent>
         </Card>
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => router.push('/patients/new')}>
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-100">
-                  <Plus className="h-6 w-6 text-blue-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold">Novo Paciente</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Cadastrar novo paciente
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => router.push('/reports')}>
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-green-100">
-                  <FileText className="h-6 w-6 text-green-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold">Relatório</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Acessar relatórios gerenciais
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="cursor-pointer hover:shadow-md transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-purple-100">
-                  <Download className="h-6 w-6 text-purple-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold">Exportar</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Exportar lista de pacientes
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
       </div>
     </AppLayout>
   )

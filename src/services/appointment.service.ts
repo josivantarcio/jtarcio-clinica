@@ -693,7 +693,14 @@ export class AppointmentService {
 
     // Apply other filters
     if (filters.status) {
-      where.status = filters.status;
+      // Handle multiple status values (comma-separated)
+      if (typeof filters.status === 'string' && filters.status.includes(',')) {
+        where.status = { in: filters.status.split(',') };
+      } else if (Array.isArray(filters.status)) {
+        where.status = { in: filters.status };
+      } else {
+        where.status = filters.status;
+      }
     }
 
     if (filters.dateFrom || filters.dateTo) {

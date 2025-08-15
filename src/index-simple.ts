@@ -795,7 +795,16 @@ fastify.get('/api/v1/appointments', async (request, reply) => {
     
     if (doctorId) where.doctorId = doctorId;
     if (patientId) where.patientId = patientId;
-    if (status) where.status = status;
+    if (status) {
+      // Handle multiple status values (comma-separated)
+      if (typeof status === 'string' && status.includes(',')) {
+        where.status = { in: status.split(',') };
+      } else if (Array.isArray(status)) {
+        where.status = { in: status };
+      } else {
+        where.status = status;
+      }
+    }
     if (date) {
       // Filtrar por data específica
       const startOfDay = new Date(date);

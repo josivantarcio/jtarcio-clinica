@@ -237,6 +237,14 @@ class ApiClient {
     })
   }
 
+  async updateUser(id: string, updateData: any) {
+    return this.request<any>({
+      method: 'PATCH',
+      url: `/api/v1/users/${id}`,
+      data: updateData
+    })
+  }
+
   async createDoctor(doctorData: {
     user: {
       firstName: string
