@@ -6,23 +6,49 @@ class ApiClient {
   private token: string | null = null
 
   constructor() {
+    const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
+    console.log('🌐 Inicializando API Client com baseURL:', baseURL)
+    
     this.client = axios.create({
-      baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
-      timeout: 10000,
+      baseURL,
+      timeout: 15000, // Increased timeout
       headers: {
         'Content-Type': 'application/json',
       },
+      withCredentials: false, // Simplified for basic setup
     })
 
+    // Tenta carregar token do localStorage na inicialização
+    this.initializeToken()
     this.setupInterceptors()
   }
 
+  private initializeToken() {
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('auth_token')
+      if (token) {
+        this.token = token
+        console.log('🔑 Token carregado automaticamente do localStorage:', token.substring(0, 20) + '...')
+      } else {
+        console.log('⚠️ Nenhum token encontrado no localStorage')
+      }
+    } else {
+      console.log('🔧 Executando no servidor - localStorage não disponível')
+    }
+  }
+
   private setupInterceptors() {
-    // Request interceptor to add auth token
+    // Request interceptor to add auth token (optional for simple backend)
     this.client.interceptors.request.use(
       (config) => {
-        if (this.token) {
+        // Only add auth header if we have a token
+        if (this.token && this.token !== 'fake-jwt-token-for-testing') {
           config.headers.Authorization = `Bearer ${this.token}`
+          console.log('🔐 Adding Authorization header to request')
+        } else if (this.token === 'fake-jwt-token-for-testing') {
+          console.log('🧪 Using fake token - skipping Authorization header for simple backend')
+        } else {
+          console.log('🔓 No token - proceeding without authentication')
         }
         return config
       },
@@ -38,10 +64,14 @@ class ApiClient {
       },
       (error) => {
         if (error.response?.status === 401) {
-          // Token expired or invalid
-          this.clearToken()
-          if (typeof window !== 'undefined') {
-            window.location.href = '/auth/login'
+          // Token expired or invalid - but only redirect if using real auth
+          if (this.token && this.token !== 'fake-jwt-token-for-testing') {
+            this.clearToken()
+            if (typeof window !== 'undefined') {
+              window.location.href = '/auth/login'
+            }
+          } else {
+            console.log('🧪 401 error with fake token - ignoring redirect')
           }
         }
         return Promise.reject(error)
@@ -79,10 +109,48 @@ class ApiClient {
 
   async request<T>(config: AxiosRequestConfig): Promise<ApiResponse<T>> {
     try {
+      console.log(`🌐 API Request: ${config.method?.toUpperCase()} ${config.url}`, {
+        baseURL: this.client.defaults.baseURL,
+        hasToken: !!this.token,
+        headers: config.headers
+      })
+      
       const response = await this.client.request<ApiResponse<T>>(config)
+      console.log(`✅ API Success: ${config.method?.toUpperCase()} ${config.url} - Status: ${response.status}`)
       return response.data
     } catch (error: any) {
-      console.error('API request failed:', error)
+      console.error(`❌ API request failed: ${config.method?.toUpperCase()} ${config.url}`)
+      
+      // Log detalhado do erro
+      if (error.response) {
+        console.error('📄 Response Error:', {
+          status: error.response.status,
+          statusText: error.response.statusText,
+          data: error.response.data,
+          url: error.config?.url,
+          method: error.config?.method,
+          requestHeaders: error.config?.headers
+        })
+      } else if (error.request) {
+        console.error('📡 Network Error:', {
+          message: 'No response received from server - check if backend is running',
+          baseURL: this.client.defaults.baseURL,
+          timeout: this.client.defaults.timeout,
+          url: config.url,
+          method: config.method,
+          error: error.code
+        })
+      } else {
+        console.error('⚙️ Request Setup Error:', {
+          message: error.message,
+          stack: error.stack,
+          config: {
+            url: config.url,
+            method: config.method,
+            baseURL: this.client.defaults.baseURL
+          }
+        })
+      }
       
       if (error.response?.data?.error) {
         return {
@@ -94,8 +162,13 @@ class ApiClient {
       return {
         success: false,
         error: {
-          code: 'REQUEST_FAILED',
-          message: error.message || 'Request failed'
+          code: error.code || 'REQUEST_FAILED',
+          message: error.message || 'Request failed',
+          details: {
+            url: config.url,
+            method: config.method,
+            status: error.response?.status
+          }
         }
       }
     }
@@ -292,6 +365,14 @@ class ApiClient {
     return this.request<any>({
       method: 'GET',
       url: `/api/v1/chat/history/${conversationId}`
+    })
+  }
+
+  // Health check
+  async healthCheck() {
+    return this.request<{ status: string }>({
+      method: 'GET',
+      url: '/api/v1/health'
     })
   }
 
