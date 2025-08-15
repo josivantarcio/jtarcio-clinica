@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { ArrowLeft, Save, User, Stethoscope, GraduationCap, Phone, Mail, FileText } from 'lucide-react'
+import { ArrowLeft, Save, User, Stethoscope, GraduationCap, Phone, Mail, FileText, X, Plus } from 'lucide-react'
 import { apiClient } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
 
@@ -33,7 +33,8 @@ const newDoctorSchema = z.object({
     },
     { message: 'CPF deve ter 11 dígitos' }
   ),
-  specialtyId: z.string().min(1, 'Especialidade é obrigatória'),
+  specialtyId: z.string().min(1, 'Especialidade principal é obrigatória'),
+  subSpecialties: z.array(z.string()).optional(),
   graduationDate: z.string().optional(),
   crmRegistrationDate: z.string().optional(),
   education: z.string().optional(),
@@ -90,10 +91,126 @@ function SpecialtySelect({ onValueChange, error }: { onValueChange: (value: stri
   )
 }
 
+// Componente para seleção múltipla de subespecialidades
+function SubSpecialtiesSelect({ 
+  selectedSubSpecialties, 
+  onSubSpecialtiesChange, 
+  mainSpecialtyId 
+}: { 
+  selectedSubSpecialties: string[], 
+  onSubSpecialtiesChange: (subs: string[]) => void,
+  mainSpecialtyId?: string
+}) {
+  const [specialties, setSpecialties] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const loadSpecialties = async () => {
+      try {
+        const response = await apiClient.getSpecialties()
+        if (response.success && response.data) {
+          // Filtra para excluir a especialidade principal
+          const filteredSpecialties = response.data.filter(
+            (specialty: any) => specialty.id !== mainSpecialtyId
+          )
+          setSpecialties(filteredSpecialties)
+        }
+      } catch (error) {
+        console.error('Error loading specialties:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadSpecialties()
+  }, [mainSpecialtyId])
+
+  const addSubSpecialty = (specialtyId: string) => {
+    if (!selectedSubSpecialties.includes(specialtyId)) {
+      onSubSpecialtiesChange([...selectedSubSpecialties, specialtyId])
+    }
+  }
+
+  const removeSubSpecialty = (specialtyId: string) => {
+    onSubSpecialtiesChange(selectedSubSpecialties.filter(id => id !== specialtyId))
+  }
+
+  const availableSpecialties = specialties.filter(
+    specialty => !selectedSubSpecialties.includes(specialty.id)
+  )
+
+  if (loading) {
+    return <div className="text-sm text-muted-foreground">Carregando subespecialidades...</div>
+  }
+
+  return (
+    <div className="space-y-3">
+      {/* Especialidades selecionadas */}
+      {selectedSubSpecialties.length > 0 && (
+        <div className="space-y-2">
+          <div className="text-sm font-medium">Subespecializações Selecionadas:</div>
+          <div className="flex flex-wrap gap-2">
+            {selectedSubSpecialties.map(specialtyId => {
+              const specialty = specialties.find(s => s.id === specialtyId)
+              return (
+                <div
+                  key={specialtyId}
+                  className="flex items-center bg-green-50 text-green-700 px-3 py-1 rounded-full text-sm border border-green-200"
+                >
+                  <span>{specialty?.name || 'Especialidade'}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeSubSpecialty(specialtyId)}
+                    className="ml-2 hover:text-green-900 transition-colors"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Seletor para adicionar nova subespecialização */}
+      {availableSpecialties.length > 0 && (
+        <div className="space-y-2">
+          <div className="text-sm font-medium">Adicionar Subespecialização:</div>
+          <Select onValueChange={addSubSpecialty}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione uma subespecialização adicional" />
+            </SelectTrigger>
+            <SelectContent>
+              {availableSpecialties.map((specialty) => (
+                <SelectItem key={specialty.id} value={specialty.id}>
+                  <div className="flex items-center space-x-2">
+                    <Plus className="h-3 w-3 text-green-600" />
+                    <span>{specialty.name}</span>
+                    <span className="text-xs text-muted-foreground">
+                      ({specialty.duration}min - R$ {specialty.price?.toFixed(2)})
+                    </span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      {selectedSubSpecialties.length === 0 && (
+        <div className="text-sm text-muted-foreground">
+          Nenhuma subespecialização selecionada. Você pode adicionar especialidades complementares.
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function NewDoctorPage() {
   const { user, isAuthenticated, isLoading } = useAuthStore()
   const router = useRouter()
   const [saving, setSaving] = useState(false)
+  const [selectedSpecialtyId, setSelectedSpecialtyId] = useState<string>('')
+  const [selectedSubSpecialties, setSelectedSubSpecialties] = useState<string[]>([])
 
   const {
     register,
@@ -140,6 +257,7 @@ export default function NewDoctorPage() {
         phone: data.phone,
         cpf: data.cpf,
         specialtyId: data.specialtyId,
+        subSpecialties: selectedSubSpecialties,
         experience: data.experience || '',
         education: data.education || '',
         bio: data.bio || '',
@@ -352,12 +470,31 @@ export default function NewDoctorPage() {
                   <div className="space-y-2">
                     <Label htmlFor="specialtyId">Especialidade Principal *</Label>
                     <SpecialtySelect 
-                      onValueChange={(value) => setValue('specialtyId', value)}
+                      onValueChange={(value) => {
+                        setValue('specialtyId', value)
+                        setSelectedSpecialtyId(value)
+                        // Remove especialidade principal das subespecializações se estiver lá
+                        setSelectedSubSpecialties(prev => prev.filter(id => id !== value))
+                      }}
                       error={errors.specialtyId}
                     />
                     {errors.specialtyId && (
                       <p className="text-sm text-red-500">{errors.specialtyId.message}</p>
                     )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Subespecializações (Opcionais)</Label>
+                    <div className="p-4 border rounded-lg bg-gray-50/50">
+                      <SubSpecialtiesSelect
+                        selectedSubSpecialties={selectedSubSpecialties}
+                        onSubSpecialtiesChange={setSelectedSubSpecialties}
+                        mainSpecialtyId={selectedSpecialtyId}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Adicione especialidades complementares que o médico também atende
+                    </p>
                   </div>
 
                   <div className="space-y-2">
@@ -446,10 +583,20 @@ export default function NewDoctorPage() {
                 </div>
 
                 <div>
+                  <h4 className="font-medium mb-2">Especialidades</h4>
+                  <ul className="text-muted-foreground space-y-1 text-sm">
+                    <li>• <strong>Principal:</strong> Especialidade obrigatória do médico</li>
+                    <li>• <strong>Subespecializações:</strong> Áreas complementares (opcionais)</li>
+                    <li>• Todas aparecerão no agendamento online</li>
+                    <li>• Podem ser alteradas após cadastro</li>
+                  </ul>
+                </div>
+
+                <div>
                   <h4 className="font-medium mb-2">Configurações</h4>
                   <p className="text-muted-foreground">
-                    O médico poderá configurar horários de atendimento, 
-                    especialidades adicionais e perfil após o primeiro acesso.
+                    O médico poderá configurar horários de atendimento e 
+                    perfil após o primeiro acesso.
                   </p>
                 </div>
               </CardContent>
