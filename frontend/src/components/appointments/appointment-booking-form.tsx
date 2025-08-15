@@ -295,11 +295,11 @@ export function AppointmentBookingForm({ onSuccess }: AppointmentBookingFormProp
                       <div className="flex items-center space-x-4">
                         <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center">
                           <span className="font-semibold text-primary">
-                            {doctor.user.name.charAt(0)}
+                            {doctor.user?.name?.charAt(0) || 'DR'}
                           </span>
                         </div>
                         <div className="flex-1">
-                          <h3 className="font-semibold">Dr. {doctor.user.name}</h3>
+                          <h3 className="font-semibold">Dr. {doctor.user?.name || 'Nome não informado'}</h3>
                           <p className="text-sm text-muted-foreground">
                             CRM: {doctor.crm}
                           </p>
@@ -437,7 +437,7 @@ export function AppointmentBookingForm({ onSuccess }: AppointmentBookingFormProp
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Médico:</span>
-                <span className="font-medium">Dr. {selectedDoctor?.user.name}</span>
+                <span className="font-medium">Dr. {selectedDoctor?.user?.name || 'Nome não informado'}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Data e Horário:</span>

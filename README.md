@@ -2,7 +2,7 @@
 
 ## Visão Geral
 
-Sistema completo de agendamento médico com inteligência artificial integrada, desenvolvido com Node.js, TypeScript, Next.js e Claude Sonnet 4.
+Sistema completo de agendamento médico com inteligência artificial integrada, desenvolvido com Node.js, TypeScript, Next.js e Claude Sonnet 4. Sistema production-ready com funcionalidades avançadas de gestão médica, validações CPF brasileiras, sistema de especialidades, calendário interativo e interface moderna.
 
 ## Início Rápido
 
@@ -57,10 +57,16 @@ npm run db:seed
 
 ## Documentação
 
-- **Documentação Completa**: [`/docs`](./docs/)
+- **Documentação Completa**: [`/docs`](./docs/) - 24 arquivos de documentação técnica
+- **Status do Projeto**: [`/docs/PROJECT_STATUS.md`](./docs/PROJECT_STATUS.md) - Status detalhado v1.2.0
 - **Guia de Solução de Problemas**: [`/docs/TROUBLESHOOTING.md`](./docs/TROUBLESHOOTING.md)
+- **Arquitetura do Sistema**: [`/docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md)
 - **Configuração de Portas**: [`/docs/PORTS.md`](./docs/PORTS.md)
-- **Prompts de IA**: [`/prompt`](./prompt/)
+- **Guia de Deploy**: [`/docs/DEPLOYMENT_GUIDE.md`](./docs/DEPLOYMENT_GUIDE.md)
+- **Integração IA**: [`/docs/AI_INTEGRATION.md`](./docs/AI_INTEGRATION.md)
+- **Segurança & LGPD**: [`/docs/SECURITY_GUIDE.md`](./docs/SECURITY_GUIDE.md)
+- **Schema do Banco**: [`/docs/DATABASE_SCHEMA.md`](./docs/DATABASE_SCHEMA.md)
+- **Prompts de IA**: [`/prompt`](./prompt/) - 6 setores de desenvolvimento
 
 ## Problemas Comuns
 
@@ -76,12 +82,14 @@ npm run db:seed
 
 ## Stack Tecnológico
 
-- **Backend**: Node.js + TypeScript + Fastify
-- **Frontend**: Next.js 14 + React 18 + Tailwind CSS
-- **Banco**: PostgreSQL + Redis + ChromaDB
-- **IA**: Claude Sonnet 4
-- **Automação**: N8N Workflows
-- **Container**: Docker + Docker Compose
+- **Backend**: Node.js 18+ + TypeScript 5.2+ + Fastify 4.24+
+- **Frontend**: Next.js 15.4.6 + React 19.1.0 + Tailwind CSS v4
+- **Banco**: PostgreSQL 15 + Redis 7 + ChromaDB 1.7+
+- **IA**: Claude Sonnet 4 (Anthropic API)
+- **Automação**: N8N Workflows + Custom Nodes
+- **Container**: Docker + Docker Compose (Monorepo)
+- **ORM**: Prisma 5.22+ + Generated Client
+- **UI**: Radix UI + Framer Motion + Lucide Icons
 
 ## Arquitetura
 
@@ -93,7 +101,17 @@ Frontend (Next.js) ←→ API (Fastify) ←→ PostgreSQL
 
 ## Status do Projeto
 
-COMPLETED **100% Funcional** - Sistema completo de produção pronto
+✅ **PRODUCTION READY v1.2.5** - Sistema completo com gestão de pacientes, médicos, consultas e especialidades implementadas
+
+### 🚀 Funcionalidades Implementadas
+- ✅ **Gestão de Pacientes**: CRUD completo com validação CPF brasileira e exportação Excel
+- ✅ **Gestão de Médicos**: Sistema completo com especialidades, CRM e cálculo automático de experiência
+- ✅ **Sistema de Consultas**: Calendário interativo com agendamento, reagendamento e controle de status
+- ✅ **Especialidades Médicas**: 12 especialidades pré-configuradas com preços e durações
+- ✅ **Autenticação**: Sistema multi-role (Admin, Médico, Paciente, Recepcionista)
+- ✅ **Interface Moderna**: Next.js 15 + React 19 com design responsivo e profissional
+- ✅ **API RESTful**: Backend completo com validações, logs de auditoria e conformidade LGPD
+- ✅ **Banco de Dados**: Schema PostgreSQL completo com 12+ entidades relacionadas
 
 ---
 

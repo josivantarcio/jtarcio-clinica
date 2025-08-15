@@ -546,8 +546,8 @@ export default function DoctorsPage() {
                           </div>
                         </div>
 
-                        {/* Specialties and CRM */}
-                        <div className="flex items-center space-x-4">
+                        {/* Specialties, CRM and Experience */}
+                        <div className="flex items-center space-x-4 flex-wrap">
                           <div className="flex items-center space-x-2">
                             <Award className="h-4 w-4 text-blue-600" />
                             <span className="font-medium text-blue-600">
@@ -560,6 +560,14 @@ export default function DoctorsPage() {
                               CRM: {doctor.crm}
                             </span>
                           </div>
+                          {doctor.experience && doctor.experience > 0 && (
+                            <div className="flex items-center space-x-1">
+                              <Clock className="h-4 w-4 text-green-600" />
+                              <span className="text-sm font-medium text-green-600">
+                                {doctor.experience} {doctor.experience === 1 ? 'ano' : 'anos'} de experiência
+                              </span>
+                            </div>
+                          )}
                         </div>
 
                         {/* Contact info */}

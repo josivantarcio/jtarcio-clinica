@@ -2,9 +2,16 @@
 
 ## Overview
 
-EO Clínica is a comprehensive medical clinic scheduling system that integrates AI-powered conversations, automated workflows, and complete medical appointment management. **Version 1.2.0** features fully implemented patient management, doctor management, and consultation scheduling systems with advanced validations and professional interfaces.
+EO Clínica is a comprehensive medical clinic scheduling system that integrates AI-powered conversations, automated workflows, and complete medical appointment management. **Version 1.2.5** features fully implemented patient management, doctor management, consultation scheduling systems with intelligent medical experience calculation, advanced validations and professional interfaces.
 
 ## 🆕 Latest Updates - Version 1.2.5 (August 15, 2025)
+
+### ✨ **Sistema Inteligente de Experiência Médica - NOVO**
+- **🧮 Cálculo Automático**: Experiência calculada automaticamente a partir da data de formatura ou registro no CRM
+- **🕐 Correção de Timezone**: Resolvido bug de diferença de 1 dia nas datas de nascimento  
+- **📚 Biblioteca de Utilitários**: Criada biblioteca `date-utils` para manipulação consistente de datas
+- **🗓️ Data Inteligente**: Sistema detecta automaticamente anos de experiência sem input manual
+- **🔧 Correções de Sintaxe**: Corrigido erro de escape unicode em validação CPF
 
 ### ✅ **Major UI/UX and Functionality Improvements**
 
@@ -389,3 +396,13 @@ MIT License - see LICENSE file for details.
 ---
 
 **EO Clínica System v1.2.5 - Complete Medical Management with Intelligent Experience Calculation** ✅
+
+### 📊 Resumo das Atualizações v1.2.5
+- ✅ **24 Arquivos de Documentação** técnica completa
+- ✅ **Sistema Inteligente** de cálculo de experiência médica
+- ✅ **Correções de Timezone** em datas de nascimento
+- ✅ **Biblioteca de Utilitários** para manipulação de datas
+- ✅ **Interface Moderna** com Next.js 15 + React 19
+- ✅ **API RESTful Completa** com validações e logs de auditoria
+- ✅ **Schema PostgreSQL** com 12+ entidades relacionadas
+- ✅ **Conformidade LGPD** e segurança de nível bancário

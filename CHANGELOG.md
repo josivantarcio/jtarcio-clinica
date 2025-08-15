@@ -2,6 +2,60 @@
 
 Todas as mudanças importantes neste projeto serão documentadas neste arquivo.
 
+## [1.2.5] - 2025-08-15
+
+### ✨ Sistema Inteligente de Experiência Médica
+- **🧮 Cálculo Automático**: Experiência calculada automaticamente a partir da data de formatura ou registro no CRM
+- **🕐 Correção de Timezone**: Resolvido bug de diferença de 1 dia nas datas de nascimento
+- **📚 Biblioteca de Utilitários**: Criada biblioteca `date-utils` para manipulação consistente de datas
+- **🔧 Correções de Sintaxe**: Corrigido erro de escape unicode em validação CPF
+- **🗓️ Data Inteligente**: Sistema detecta automaticamente anos de experiência sem input manual
+
+### 🩺 Sistema de Médicos Aprimorado
+- **⭐ Rating Realista**: Corrigido sistema de avaliação para iniciar em 0 (não mais 5.0 fixo)
+- **📄 Rotas Completas**: Criadas páginas `/doctors/[id]` e `/doctors/[id]/edit` (corrigido 404)
+- **🎨 Consistência Visual**: Aplicados efeitos hover verdes em gerenciamento de especialidades
+- **🔍 Investigação João Silva**: Confirmado que não é dados estáticos - removido das seeds
+- **📊 Sistema de Avaliações**: Preparado para implementação futura (sem tabelas Review/Rating no backend)
+
+### 🔧 Correções Técnicas
+- **🗃️ API de Appointments**: Corrigido erro 500 ao filtrar múltiplos status (SCHEDULED,CONFIRMED)
+- **🎯 Estados de Foco**: Implementados efeitos hover usando `focus:bg-primary/10` para melhor UX
+- **📁 Exportação Excel**: Corrigida geração de arquivos .xlsx com formatação adequada
+- **🔐 API de Usuários**: Adicionado método `updateUser` para gerenciamento de status
+- **⚡ Estados de Loading**: Spinners e estados desabilitados durante atualizações de status
+- **📊 Consistência de Dados**: Reload automático após mudanças de status
+
+### 📋 Arquivos Modificados
+- `frontend/src/lib/date-utils.ts`: Nova biblioteca de utilitários de data
+- `frontend/src/app/doctors/[id]/page.tsx`: Nova página de detalhes do médico
+- `frontend/src/app/doctors/[id]/edit/page.tsx`: Nova página de edição do médico
+- `frontend/src/app/doctors/new/page.tsx`: Correção de escape unicode
+- `src/routes/appointments.ts`: Correção de filtros múltiplos
+- Database Seeds: Removido João Silva estático
+
+## [1.2.0] - 2025-08-14
+
+### 🚀 Sistema de Consultas Implementado
+- **📅 Calendário Interativo**: Interface moderna de calendário com visualização de consultas
+- **⏰ Gestão de Horários**: Sistema completo de slots de tempo com detecção de conflitos
+- **🔄 Ciclo de Vida**: Gerenciamento completo do status das consultas (agendada → concluída)
+- **🎯 Interface Profissional**: Design médico com codificação de cores por status
+- **📱 Design Responsivo**: Funciona perfeitamente em todos os dispositivos
+
+### 🩺 Sistema de Médicos Completo
+- **👨‍⚕️ Cadastro Médico**: Formulários completos com validação CRM e especialidades
+- **🏥 Integração de Especialidades**: Seleção dinâmica com preços e durações
+- **📊 Interface Moderna**: Listagem profissional com estatísticas e busca
+- **🔄 Gerenciamento de Status**: Ativação/desativação com estados de loading
+- **🎨 Consistência Visual**: Efeitos hover verdes aplicados uniformemente
+
+### 🧾 Sistema de Especialidades Administrativo
+- **⚙️ Interface Admin**: Modal completo para gerenciar especialidades médicas
+- **💰 Gestão de Preços**: CRUD funcional para especialidades e preços
+- **📊 Integração Real**: Conectado ao PostgreSQL (sem dados hardcoded)
+- **🎨 UX Aprimorada**: Cards visuais responsivos na página de agendamento
+
 ## [1.1.1] - 2025-08-14
 
 ### 🐛 Corrigido
