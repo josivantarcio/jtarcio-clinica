@@ -4,7 +4,7 @@
 
 EO Clínica is a comprehensive medical clinic scheduling system that integrates AI-powered conversations, automated workflows, and complete medical appointment management. **Version 1.2.0** features fully implemented patient management, doctor management, and consultation scheduling systems with advanced validations and professional interfaces.
 
-## 🆕 Latest Updates - Version 1.2.1 (August 15, 2025)
+## 🆕 Latest Updates - Version 1.2.3 (August 15, 2025)
 
 ### ✅ **Major UI/UX and Functionality Improvements**
 
@@ -22,13 +22,17 @@ EO Clínica is a comprehensive medical clinic scheduling system that integrates 
 - **🔄 Real-time Updates**: Patient status changes reflect immediately in the interface
 - **💾 100% Data Persistence**: Emergency contacts, medical info, and addresses now save properly
 
-#### **Doctor Management System - NEW**
+#### **Doctor Management System - ENHANCED**
 - **👨‍⚕️ Complete Doctor Registration**: Full medical professional profiles with validation
 - **🏥 Specialty Integration**: Dynamic specialty selection with pricing and duration
 - **🔐 CRM Validation**: Unique medical registration number system
 - **📊 Professional Interface**: Modern doctor listing with statistics and search
 - **⚕️ Specialty Management**: Admin interface for medical specialty CRUD operations
 - **📈 Real-time Stats**: Doctor metrics, active status, and appointment tracking
+- **🎨 Interface Consistency**: Applied same green hover colors as patient filters
+- **👁️ Functional Icons**: Ver perfil, editar, ver agenda, and dropdown "mais opções"
+- **🔄 Status Management**: Complete activate/deactivate doctors with loading states
+- **🧹 Clean Interface**: Removed unnecessary filter button for more search space
 
 #### **Consultation Module - NEW**
 - **📅 Interactive Calendar**: Modern calendar interface with appointment visualization
@@ -38,13 +42,19 @@ EO Clínica is a comprehensive medical clinic scheduling system that integrates 
 - **📱 Responsive Design**: Works seamlessly on all devices
 - **🔍 Advanced Filtering**: Filter by date, doctor, patient, and status
 
-#### **Recent Bug Fixes & Improvements (v1.2.1)**
+#### **Recent Bug Fixes & Improvements (v1.2.3)**
 - **🔧 Appointments API Fix**: Fixed 500 error when filtering by multiple status values (SCHEDULED,CONFIRMED)
-- **🎨 Design Consistency**: Unified hover effects using `hover:border-primary/50` and `hover:bg-primary/10`
+- **🎨 Design Consistency**: Unified hover effects using focus states for better UX (`focus:bg-primary/10`)
 - **📁 File Export**: Corrected Excel export to generate proper .xlsx files with semicolon separators
 - **🔐 API Enhancement**: Added `updateUser` method to API client for status management
-- **💡 UX Improvements**: Added dropdown click-outside functionality for better user experience
+- **💡 UX Improvements**: Professional dropdown with loading states and click-outside functionality
 - **🎯 Status Updates**: Implemented real-time patient activation/deactivation with visual feedback
+- **🧹 Interface Cleanup**: Removed redundant Quick Action cards for cleaner patient page layout
+- **⚡ Loading States**: Added spinner animations and disabled states during status updates
+- **📊 Data Consistency**: Automatic data reload after status changes to ensure UI accuracy
+- **🩺 Doctor Page Enhancement**: Complete functional icons, status management, and design consistency
+- **⭐ Rating System Analysis**: Confirmed visual star system works (data currently mock)
+- **🔍 João Silva Investigation**: Verified not static - removed from seeds, real registrations only
 
 ## Architecture
 
@@ -363,4 +373,4 @@ MIT License - see LICENSE file for details.
 
 ---
 
-**EO Clínica System v1.2.0 - Core Medical Management Complete** ✅
+**EO Clínica System v1.2.3 - Complete Medical Management with Enhanced UX** ✅
