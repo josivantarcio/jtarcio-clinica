@@ -1,6 +1,6 @@
 {
   "name": "eo-clinica-system",
-  "version": "1.2.5",
+  "version": "1.2.6",
   "description": "Medical clinic scheduling system with AI integration",
   "workspaces": [
     "frontend"

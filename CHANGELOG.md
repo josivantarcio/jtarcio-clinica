@@ -2,6 +2,27 @@
 
 Todas as mudanças importantes neste projeto serão documentadas neste arquivo.
 
+## [1.2.6] - 2025-08-15
+
+### 🔧 Correções de API e Conectividade
+- **🌐 API Client Aprimorado**: Sistema de conexão robusto com debugging avançado
+- **🔍 Logging Detalhado**: Categorização inteligente de erros (Network vs Response vs Setup)
+- **🔐 Autenticação Flexível**: Suporte a tokens fake para desenvolvimento e autenticação real
+- **⏱️ Timeout Aumentado**: Aumentado para 15 segundos para maior estabilidade
+- **🏥 Health Check**: Adicionado endpoint de verificação de saúde do sistema
+- **🐛 Correção AxiosError**: Resolvidos erros de conexão entre frontend e backend
+
+### 🛠️ Melhorias Técnicas
+- **📊 Token Management**: Carregamento automático de tokens do localStorage
+- **🔄 Error Recovery**: Tratamento inteligente de falhas de conexão
+- **🎯 Request Monitoring**: Logs detalhados para debugging de requisições
+- **🔒 Backward Compatibility**: Compatibilidade com backend simples e backend completo
+- **⚡ Connection Diagnostics**: Informações detalhadas para troubleshooting
+
+### 📋 Arquivos Modificados
+- `frontend/src/lib/api.ts`: Cliente API completamente reescrito com debugging avançado
+- `src/index-simple.ts`: Remoção de parser JSON conflitante
+
 ## [1.2.5] - 2025-08-15
 
 ### ✨ Sistema Inteligente de Experiência Médica
