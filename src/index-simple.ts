@@ -615,7 +615,8 @@ fastify.post('/api/v1/doctors', async (request, reply) => {
         specialtyId: doctorData.specialtyId || doctorData.specialties?.[0] || 'cmebnka9q000uaj4w96eajstj', // Default to Clínica Geral
         subSpecialties: doctorData.specialties || [],
         biography: doctorData.bio || null,
-        experience: doctorData.experience ? parseInt(doctorData.experience) : null,
+        graduationDate: doctorData.graduationDate ? new Date(doctorData.graduationDate) : null,
+        experience: doctorData.graduationDate ? Math.floor((new Date().getTime() - new Date(doctorData.graduationDate).getTime()) / (1000 * 60 * 60 * 24 * 365.25)) : null,
         consultationFee: doctorData.consultationFee ? parseFloat(doctorData.consultationFee) : null,
         consultationDuration: doctorData.consultationDuration || 30
       }

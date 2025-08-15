@@ -35,7 +35,7 @@ const newDoctorSchema = z.object({
   ),
   specialtyId: z.string().min(1, 'Especialidade principal é obrigatória'),
   subSpecialties: z.array(z.string()).optional(),
-  graduationDate: z.string().optional(),
+  graduationDate: z.string().min(1, 'Data de graduação é obrigatória'),
   crmRegistrationDate: z.string().optional(),
   education: z.string().optional(),
   bio: z.string().optional(),
@@ -258,7 +258,7 @@ export default function NewDoctorPage() {
         cpf: data.cpf,
         specialtyId: data.specialtyId,
         subSpecialties: selectedSubSpecialties,
-        experience: data.experience || '',
+        graduationDate: data.graduationDate,
         education: data.education || '',
         bio: data.bio || '',
         consultationFee: data.consultationFee
@@ -498,12 +498,19 @@ export default function NewDoctorPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="experience">Experiência</Label>
+                    <Label htmlFor="graduationDate">Data de Graduação *</Label>
                     <Input
-                      id="experience"
-                      placeholder="Ex: 10 anos"
-                      {...register('experience')}
+                      id="graduationDate"
+                      type="date"
+                      {...register('graduationDate')}
+                      className={errors.graduationDate ? 'border-red-500' : ''}
                     />
+                    {errors.graduationDate && (
+                      <p className="text-sm text-red-500">{errors.graduationDate.message}</p>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      A partir desta data será calculado automaticamente o tempo de experiência
+                    </p>
                   </div>
 
                   <div className="space-y-2">
