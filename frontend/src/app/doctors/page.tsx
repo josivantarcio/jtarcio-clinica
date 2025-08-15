@@ -33,7 +33,10 @@ import {
   Award,
   Users,
   X,
-  Save
+  Save,
+  CheckCircle,
+  Loader2,
+  AlertTriangle
 } from 'lucide-react'
 import { apiClient } from '@/lib/api'
 import { Doctor, Specialty } from '@/types'
@@ -65,6 +68,8 @@ export default function DoctorsPage() {
     price: ''
   })
   const [editingSpecialty, setEditingSpecialty] = useState<Specialty | null>(null)
+  const [dropdownOpen, setDropdownOpen] = useState<string | null>(null)
+  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null)
 
   useEffect(() => {
     // Hydrate the persisted store
@@ -87,6 +92,20 @@ export default function DoctorsPage() {
       loadDoctors()
     }
   }, [user, isAuthenticated])
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownOpen) {
+        setDropdownOpen(null)
+      }
+    }
+
+    if (dropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [dropdownOpen])
 
   const loadDoctors = async () => {
     setLoading(true)
@@ -199,6 +218,53 @@ export default function DoctorsPage() {
       }
     } catch (error) {
       console.error('Error updating specialty:', error)
+    }
+  }
+
+  const toggleDoctorStatus = async (doctorId: string, currentStatus: string) => {
+    // Set loading state
+    setUpdatingStatus(doctorId)
+    
+    try {
+      console.log('Alterando status do médico:', { doctorId, currentStatus })
+      
+      const newStatus = currentStatus === 'active' ? 'INACTIVE' : 'ACTIVE'
+      const statusLabel = newStatus === 'ACTIVE' ? 'ativado' : 'inativado'
+      
+      console.log('Novo status será:', newStatus)
+      
+      const response = await apiClient.updateUser(doctorId, { status: newStatus })
+      
+      console.log('Resposta da API:', response)
+      
+      if (response.success) {
+        // Update doctor in the local state
+        setDoctors(prevDoctors => 
+          prevDoctors.map(doctor => 
+            doctor.id === doctorId 
+              ? { ...doctor, status: newStatus === 'ACTIVE' ? 'active' : 'inactive' }
+              : doctor
+          )
+        )
+        
+        // Show success message
+        console.log(`Status alterado com sucesso para: ${newStatus}`)
+        alert(`Médico ${statusLabel} com sucesso!`)
+        
+        // Reload doctors data to ensure consistency
+        await loadDoctors()
+      } else {
+        console.error('Erro na resposta da API:', response.error)
+        alert(`Erro ao atualizar status do médico: ${response.error?.message || 'Erro desconhecido'}`)
+      }
+    } catch (error) {
+      console.error('Error updating doctor status:', error)
+      alert(`Erro ao atualizar status do médico: ${error instanceof Error ? error.message : 'Erro desconhecido'}`)
+    } finally {
+      // Clear loading state
+      setUpdatingStatus(null)
+      // Close dropdown
+      setDropdownOpen(null)
     }
   }
 
@@ -386,7 +452,7 @@ export default function DoctorsPage() {
                 <select
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
-                  className="px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="px-3 py-2 border rounded-md bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary focus:bg-primary/10 focus:shadow-md hover:bg-gray-50 transition-all duration-200"
                 >
                   <option value="all">Todos</option>
                   <option value="active">Ativos</option>
@@ -396,7 +462,7 @@ export default function DoctorsPage() {
                 <select
                   value={filterSpecialty}
                   onChange={(e) => setFilterSpecialty(e.target.value)}
-                  className="px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="px-3 py-2 border rounded-md bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary focus:bg-primary/10 focus:shadow-md hover:bg-gray-50 transition-all duration-200"
                 >
                   <option value="all">Todas Especialidades</option>
                   <option value="cardiologia">Cardiologia</option>
@@ -404,10 +470,6 @@ export default function DoctorsPage() {
                   <option value="ortopedia">Ortopedia</option>
                   <option value="pediatria">Pediatria</option>
                 </select>
-                <Button variant="outline" size="sm">
-                  <Filter className="h-4 w-4 mr-2" />
-                  Filtros
-                </Button>
               </div>
             </div>
           </CardContent>
@@ -550,10 +612,20 @@ export default function DoctorsPage() {
 
                     {/* Actions */}
                     <div className="flex items-center space-x-2 ml-4">
-                      <Button variant="ghost" size="sm" title="Ver perfil">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        title="Ver perfil"
+                        onClick={() => router.push(`/doctors/${doctor.id}`)}
+                      >
                         <Eye className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="sm" title="Editar">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        title="Editar"
+                        onClick={() => router.push(`/doctors/${doctor.id}/edit`)}
+                      >
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button 
@@ -564,9 +636,63 @@ export default function DoctorsPage() {
                       >
                         <Calendar className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="sm">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
+                      <div className="relative">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          title="Mais opções"
+                          onClick={() => {
+                            setDropdownOpen(dropdownOpen === doctor.id ? null : doctor.id)
+                          }}
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                        
+                        {dropdownOpen === doctor.id && (
+                          <div className="absolute right-0 top-full mt-2 w-52 bg-white border border-gray-200 rounded-lg shadow-xl z-50 py-1">
+                            <div className="px-3 py-2 text-xs font-medium text-gray-500 border-b border-gray-100">
+                              Status do Médico
+                            </div>
+                            <button
+                              className="w-full px-4 py-3 text-left text-sm hover:bg-gray-50 transition-colors flex items-center group disabled:opacity-50 disabled:cursor-not-allowed"
+                              onClick={() => toggleDoctorStatus(doctor.id, doctor.status)}
+                              disabled={updatingStatus === doctor.id}
+                            >
+                              {updatingStatus === doctor.id ? (
+                                <>
+                                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 mr-3">
+                                    <Loader2 className="h-4 w-4 text-blue-600 animate-spin" />
+                                  </div>
+                                  <div>
+                                    <div className="font-medium text-gray-900">Atualizando...</div>
+                                    <div className="text-xs text-gray-500">Aguarde</div>
+                                  </div>
+                                </>
+                              ) : doctor.status === 'active' ? (
+                                <>
+                                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-orange-100 mr-3 group-hover:bg-orange-200 transition-colors">
+                                    <AlertTriangle className="h-4 w-4 text-orange-600" />
+                                  </div>
+                                  <div>
+                                    <div className="font-medium text-gray-900">Inativar Médico</div>
+                                    <div className="text-xs text-gray-500">Desabilitar acesso ao sistema</div>
+                                  </div>
+                                </>
+                              ) : (
+                                <>
+                                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-green-100 mr-3 group-hover:bg-green-200 transition-colors">
+                                    <CheckCircle className="h-4 w-4 text-green-600" />
+                                  </div>
+                                  <div>
+                                    <div className="font-medium text-gray-900">Ativar Médico</div>
+                                    <div className="text-xs text-gray-500">Permitir acesso ao sistema</div>
+                                  </div>
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
