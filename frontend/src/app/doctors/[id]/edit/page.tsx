@@ -110,15 +110,41 @@ export default function EditDoctorPage() {
     setSaving(true)
 
     try {
-      // Here you would implement the actual update logic
-      // For now, just simulate a save
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      alert('Perfil do médico atualizado com sucesso!')
-      router.push(`/doctors/${params.id}`)
+      // Preparar dados para atualização
+      const updateData = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        phone: formData.phone,
+        // Atualizar dados do perfil médico usando nested update do Prisma
+        doctorProfile: {
+          update: {
+            crm: formData.crm,
+            biography: formData.biography,
+            consultationFee: formData.consultationFee ? parseFloat(formData.consultationFee) : null,
+            consultationDuration: formData.consultationDuration,
+            acceptsNewPatients: formData.acceptsNewPatients,
+            graduationDate: formData.graduationDate ? formatDateForAPI(formData.graduationDate) : null,
+            crmRegistrationDate: formData.crmRegistrationDate ? formatDateForAPI(formData.crmRegistrationDate) : null,
+            // Calcular experiência automaticamente
+            experience: calculateExperience(formData.graduationDate, formData.crmRegistrationDate)
+          }
+        }
+      }
+
+      console.log('📤 Enviando dados de atualização:', updateData)
+
+      const response = await apiClient.updateUser(params.id as string, updateData)
+
+      if (response.success) {
+        alert('✅ Perfil do médico atualizado com sucesso!')
+        router.push(`/doctors/${params.id}`)
+      } else {
+        console.error('❌ Erro na resposta da API:', response.error)
+        alert(`Erro ao salvar: ${response.error?.message || 'Erro desconhecido'}`)
+      }
     } catch (error) {
-      console.error('Error saving doctor:', error)
-      alert('Erro ao salvar o perfil do médico')
+      console.error('💥 Erro ao salvar perfil do médico:', error)
+      alert('Erro de conexão. Tente novamente.')
     } finally {
       setSaving(false)
     }

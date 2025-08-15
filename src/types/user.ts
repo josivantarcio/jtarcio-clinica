@@ -60,6 +60,19 @@ export const updateUserSchema = z.object({
   gender: z.enum(['M', 'F', 'OTHER']).optional(),
   avatar: z.string().url().optional(),
   timezone: z.string().optional(),
+  // Nested update for doctor profile
+  doctorProfile: z.object({
+    update: z.object({
+      crm: z.string().optional(),
+      biography: z.string().optional(),
+      consultationFee: z.number().positive().optional(),
+      consultationDuration: z.number().min(15).max(120).optional(),
+      acceptsNewPatients: z.boolean().optional(),
+      graduationDate: z.string().datetime().optional(),
+      crmRegistrationDate: z.string().datetime().optional(),
+      experience: z.number().min(0).optional(),
+    }).partial()
+  }).optional(),
 }).partial();
 
 export type UpdateUserDto = z.infer<typeof updateUserSchema>;
