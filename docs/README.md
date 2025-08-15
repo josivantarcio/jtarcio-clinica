@@ -55,6 +55,7 @@ EO Clínica is a comprehensive medical clinic scheduling system that integrates 
 - **🩺 Doctor Page Enhancement**: Complete functional icons, status management, and design consistency
 - **⭐ Rating System Analysis**: Confirmed visual star system works (data currently mock)
 - **🔍 João Silva Investigation**: Verified not static - removed from seeds, real registrations only
+- **🔧 Syntax Error Fix**: Corrected unicode escape error in doctors/new/page.tsx CPF validation
 
 ## Architecture
 
