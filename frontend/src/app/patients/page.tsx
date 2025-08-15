@@ -32,6 +32,7 @@ import {
 } from 'lucide-react'
 import { apiClient } from '@/lib/api'
 import { Patient, Appointment } from '@/types'
+import { parseDateFromAPI } from '@/lib/date-utils'
 
 interface PatientWithStats extends Patient {
   totalAppointments: number
@@ -125,7 +126,7 @@ export default function PatientsPage() {
             },
             cpf: userData.cpf || 'Não informado',
             phone: userData.phone || 'Não informado',
-            birthDate: userData.dateOfBirth ? new Date(userData.dateOfBirth) : undefined,
+            birthDate: parseDateFromAPI(userData.dateOfBirth),
             address: userData.patientProfile?.address 
               ? `${userData.patientProfile.address.city || ''}, ${userData.patientProfile.address.state || ''}`.trim().replace(/^,\s*|,\s*$/g, '') || 'Não informado'
               : 'Não informado',

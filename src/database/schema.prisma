@@ -150,7 +150,9 @@ model Doctor {
   
   // Professional details
   biography         String?
-  experience        Int? // years of experience
+  graduationDate    DateTime? // Medical school graduation date
+  crmRegistrationDate DateTime? // CRM registration date
+  experience        Int? // Calculated years of experience (computed field)
   consultationFee   Decimal?
   consultationDuration Int @default(30) // minutes
   

@@ -25,6 +25,7 @@ import {
 } from 'lucide-react'
 import { apiClient } from '@/lib/api'
 import { Doctor } from '@/types'
+import { calculateExperience, formatExperience, formatDateForDisplay } from '@/lib/date-utils'
 
 interface DoctorWithStats extends Doctor {
   totalPatients: number
@@ -283,10 +284,30 @@ export default function DoctorProfilePage() {
                       <span className="text-sm">{doctor.phone}</span>
                     </div>
                   )}
-                  {doctor.experience && (
+                  {(doctor.graduationDate || doctor.crmRegistrationDate) && (
                     <div className="flex items-center space-x-2">
                       <Clock className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">Experiência: {doctor.experience}</span>
+                      <span className="text-sm">
+                        {formatExperience(
+                          calculateExperience(doctor.graduationDate, doctor.crmRegistrationDate)
+                        )}
+                      </span>
+                    </div>
+                  )}
+                  {doctor.graduationDate && (
+                    <div className="flex items-center space-x-2">
+                      <GraduationCap className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm">
+                        Formatura: {formatDateForDisplay(doctor.graduationDate)}
+                      </span>
+                    </div>
+                  )}
+                  {doctor.crmRegistrationDate && (
+                    <div className="flex items-center space-x-2">
+                      <Award className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm">
+                        Registro CRM: {formatDateForDisplay(doctor.crmRegistrationDate)}
+                      </span>
                     </div>
                   )}
                 </div>

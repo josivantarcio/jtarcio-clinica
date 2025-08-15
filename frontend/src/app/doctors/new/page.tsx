@@ -34,7 +34,8 @@ const newDoctorSchema = z.object({
     { message: 'CPF deve ter 11 dígitos' }
   ),
   specialtyId: z.string().min(1, 'Especialidade é obrigatória'),
-  experience: z.string().optional(),
+  graduationDate: z.string().optional(),
+  crmRegistrationDate: z.string().optional(),
   education: z.string().optional(),
   bio: z.string().optional(),
   consultationFee: z.string().optional()

@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ArrowLeft, Save, User, Phone, Mail, Calendar, MapPin, Heart, AlertTriangle } from 'lucide-react'
 import { apiClient } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
+import { formatDateForAPI } from '@/lib/date-utils'
 import { validateCPF, formatCPF, cleanCPF } from '@/lib/cpf-validation'
 
 interface PatientForm {
@@ -173,7 +174,9 @@ export default function NewPatientPage() {
         role: 'PATIENT',
         password: 'TempPassword123!', // Temporary password - should be changed on first login
         allergies: form.allergies ? form.allergies.split(',').map(a => a.trim()) : [],
-        medications: form.medications ? form.medications.split(',').map(m => m.trim()) : []
+        medications: form.medications ? form.medications.split(',').map(m => m.trim()) : [],
+        // Fix timezone issue by using utility function
+        dateOfBirth: form.dateOfBirth ? formatDateForAPI(form.dateOfBirth) : null
       }
 
       const response = await apiClient.post('/api/v1/users', patientData)

@@ -13,9 +13,11 @@ import {
   ArrowLeft,
   Save,
   User,
-  Stethoscope
+  Stethoscope,
+  Calendar
 } from 'lucide-react'
 import { apiClient } from '@/lib/api'
+import { calculateExperience, formatExperience, formatDateForInput, formatDateForAPI } from '@/lib/date-utils'
 
 export default function EditDoctorPage() {
   const { user, isAuthenticated, isLoading } = useAuthStore()
@@ -32,7 +34,8 @@ export default function EditDoctorPage() {
     phone: '',
     crm: '',
     specialtyId: '',
-    experience: '',
+    graduationDate: '',
+    crmRegistrationDate: '',
     biography: '',
     consultationFee: '',
     consultationDuration: 30,
@@ -80,7 +83,8 @@ export default function EditDoctorPage() {
             phone: foundDoctor.phone || '',
             crm: doctor.crm || '',
             specialtyId: doctor.specialtyId || '',
-            experience: doctor.experience || '',
+            graduationDate: formatDateForInput(doctor.graduationDate),
+            crmRegistrationDate: formatDateForInput(doctor.crmRegistrationDate),
             biography: doctor.biography || '',
             consultationFee: doctor.consultationFee?.toString() || '',
             consultationDuration: doctor.consultationDuration || 30,
@@ -265,15 +269,38 @@ export default function EditDoctorPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="experience">Experiência</Label>
+                  <Label htmlFor="graduationDate">Data de Formatura</Label>
                   <Input
-                    id="experience"
-                    type="text"
-                    value={formData.experience}
-                    onChange={(e) => handleInputChange('experience', e.target.value)}
-                    placeholder="Ex: 10 anos, Residência em Cardiologia"
+                    id="graduationDate"
+                    type="date"
+                    value={formData.graduationDate}
+                    onChange={(e) => handleInputChange('graduationDate', e.target.value)}
                   />
                 </div>
+
+                <div>
+                  <Label htmlFor="crmRegistrationDate">Data de Registro CRM</Label>
+                  <Input
+                    id="crmRegistrationDate"
+                    type="date"
+                    value={formData.crmRegistrationDate}
+                    onChange={(e) => handleInputChange('crmRegistrationDate', e.target.value)}
+                  />
+                </div>
+
+                {(formData.graduationDate || formData.crmRegistrationDate) && (
+                  <div className="p-4 bg-muted rounded-lg">
+                    <Label className="text-sm font-medium">Experiência Calculada</Label>
+                    <p className="text-lg font-semibold text-primary mt-1">
+                      {formatExperience(
+                        calculateExperience(formData.graduationDate, formData.crmRegistrationDate)
+                      )}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Calculado automaticamente com base na data mais recente
+                    </p>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
