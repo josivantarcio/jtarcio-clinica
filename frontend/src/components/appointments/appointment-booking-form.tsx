@@ -60,7 +60,7 @@ export function AppointmentBookingForm({ onSuccess }: AppointmentBookingFormProp
   const selectedDoctorId = watch('doctorId')
   
   useEffect(() => {
-    loadSpecialties()
+    loadSpecialties({ withActiveDoctors: true })
   }, [])
   
   useEffect(() => {
@@ -353,53 +353,129 @@ export function AppointmentBookingForm({ onSuccess }: AppointmentBookingFormProp
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
-              {/* Calendar */}
-              <div>
-                <Label className="text-sm font-medium mb-2 block">Selecione a Data</Label>
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={setSelectedDate}
-                  disabled={(date) => date < new Date()}
-                  className="rounded-md border"
-                />
+            <div className="grid lg:grid-cols-2 gap-8">
+              {/* Calendar Section */}
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-lg font-semibold mb-3 block">📅 Selecione a Data</Label>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Escolha uma data disponível para sua consulta
+                  </p>
+                </div>
+                <div className="flex justify-center">
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={setSelectedDate}
+                    disabled={(date) => {
+                      const today = new Date()
+                      today.setHours(0, 0, 0, 0)
+                      return date < today
+                    }}
+                    className="rounded-xl border-2 shadow-sm bg-card"
+                    classNames={{
+                      months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
+                      month: "space-y-4 w-full",
+                      caption: "flex justify-center pt-1 relative items-center mb-2",
+                      caption_label: "text-lg font-semibold",
+                      nav: "space-x-1 flex items-center",
+                      table: "w-full border-collapse space-y-1",
+                      head_row: "flex justify-center",
+                      head_cell: "text-muted-foreground rounded-md w-10 font-medium text-sm",
+                      row: "flex w-full mt-2 justify-center",
+                      cell: "h-10 w-10 text-center text-sm p-0 relative hover:bg-accent rounded-md transition-colors",
+                      day: "h-10 w-10 p-0 font-normal hover:bg-accent hover:text-accent-foreground rounded-md transition-colors",
+                      day_selected: "bg-primary text-primary-foreground hover:bg-primary/90",
+                      day_today: "bg-accent text-accent-foreground font-semibold",
+                      day_outside: "text-muted-foreground opacity-50",
+                      day_disabled: "text-muted-foreground opacity-30 cursor-not-allowed",
+                    }}
+                  />
+                </div>
+                {selectedDate && (
+                  <div className="mt-4 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+                    <p className="text-sm font-medium text-primary">
+                      📍 Data selecionada: {selectedDate.toLocaleDateString('pt-BR', { 
+                        weekday: 'long', 
+                        day: 'numeric', 
+                        month: 'long', 
+                        year: 'numeric' 
+                      })}
+                    </p>
+                  </div>
+                )}
               </div>
               
-              {/* Time Slots */}
-              <div>
-                <Label className="text-sm font-medium mb-2 block">Horários Disponíveis</Label>
-                {!selectedDate ? (
-                  <p className="text-muted-foreground">Selecione uma data primeiro</p>
-                ) : isLoadingSlots ? (
-                  <div className="grid grid-cols-3 gap-2">
-                    {Array.from({ length: 12 }).map((_, i) => (
-                      <div key={i} className="h-10 bg-muted animate-pulse rounded" />
-                    ))}
-                  </div>
-                ) : availableSlots.length > 0 ? (
-                  <div className="grid grid-cols-3 gap-2">
-                    {availableSlots.map((slot) => (
-                      <button
-                        key={slot}
-                        type="button"
-                        onClick={() => setSelectedTime(slot)}
-                        className={`
-                          p-2 text-sm border rounded transition-colors
-                          ${
-                            selectedTime === slot
-                              ? 'border-primary bg-primary text-primary-foreground'
-                              : 'border-input hover:bg-muted'
-                          }
-                        `}
-                      >
-                        {slot}
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground">Nenhum horário disponível</p>
-                )}
+              {/* Time Slots Section */}
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-lg font-semibold mb-3 block">⏰ Horários Disponíveis</Label>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Selecione o horário que melhor se adapta à sua agenda
+                  </p>
+                </div>
+                
+                <div className="min-h-[200px]">
+                  {!selectedDate ? (
+                    <div className="flex flex-col items-center justify-center h-32 text-center">
+                      <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mb-3">
+                        <Clock className="h-8 w-8 text-muted-foreground" />
+                      </div>
+                      <p className="text-muted-foreground font-medium">Selecione uma data primeiro</p>
+                      <p className="text-sm text-muted-foreground">Os horários aparecerão aqui</p>
+                    </div>
+                  ) : isLoadingSlots ? (
+                    <div className="space-y-3">
+                      <div className="flex justify-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                      </div>
+                      <p className="text-center text-muted-foreground">Carregando horários...</p>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        {Array.from({ length: 6 }).map((_, i) => (
+                          <div key={i} className="h-12 bg-muted animate-pulse rounded-lg" />
+                        ))}
+                      </div>
+                    </div>
+                  ) : availableSlots.length > 0 ? (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        {availableSlots.map((slot) => (
+                          <button
+                            key={slot}
+                            type="button"
+                            onClick={() => setSelectedTime(slot)}
+                            className={`
+                              p-3 text-sm font-medium border-2 rounded-lg transition-all duration-200 
+                              hover:shadow-md hover:scale-105
+                              ${
+                                selectedTime === slot
+                                  ? 'border-primary bg-primary text-primary-foreground shadow-lg scale-105'
+                                  : 'border-border bg-card hover:border-primary/50 hover:bg-primary/5'
+                              }
+                            `}
+                          >
+                            {slot}
+                          </button>
+                        ))}
+                      </div>
+                      {selectedTime && (
+                        <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                          <p className="text-sm font-medium text-green-700">
+                            ✓ Horário selecionado: {selectedTime}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-32 text-center">
+                      <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-3">
+                        <Clock className="h-8 w-8 text-red-400" />
+                      </div>
+                      <p className="text-red-600 font-medium">Nenhum horário disponível</p>
+                      <p className="text-sm text-muted-foreground">Tente outra data</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
             

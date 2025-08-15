@@ -205,10 +205,11 @@ class ApiClient {
   }
 
   // Specialties
-  async getSpecialties() {
+  async getSpecialties(params?: { withActiveDoctors?: boolean; isActive?: boolean; search?: string }) {
     return this.request<any[]>({
       method: 'GET',
-      url: '/api/v1/specialties'
+      url: '/api/v1/specialties',
+      params
     })
   }
 

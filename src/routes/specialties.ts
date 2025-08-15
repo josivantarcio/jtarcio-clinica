@@ -11,6 +11,7 @@ export async function specialtyRoutes(fastify: FastifyInstance): Promise<void> {
       querystring: paginationSchema.extend({
         search: { type: 'string' },
         isActive: { type: 'boolean' },
+        withActiveDoctors: { type: 'boolean' },
       }),
       response: {
         200: responseSchema({
@@ -33,15 +34,43 @@ export async function specialtyRoutes(fastify: FastifyInstance): Promise<void> {
     },
   }, async (request: FastifyRequest<{ Querystring: any }>, reply: FastifyReply) => {
     try {
-      const { page = 1, pageSize = 20, search, isActive } = request.query;
+      const { page = 1, pageSize = 20, search, isActive, withActiveDoctors } = request.query;
       
-      const where = {
+      const where: any = {
         ...(search && { name: { contains: search, mode: 'insensitive' as const } }),
         ...(isActive !== undefined && { isActive }),
       };
+
+      // Filter only specialties that have active doctors
+      if (withActiveDoctors) {
+        where.doctors = {
+          some: {
+            isActive: true,
+            user: {
+              status: 'ACTIVE',
+              deletedAt: null
+            }
+          }
+        };
+      }
       
       const specialties = await prisma.specialty.findMany({
         where,
+        include: {
+          _count: {
+            select: {
+              doctors: {
+                where: {
+                  isActive: true,
+                  user: {
+                    status: 'ACTIVE',
+                    deletedAt: null
+                  }
+                }
+              }
+            }
+          }
+        },
         orderBy: { name: 'asc' },
         skip: (page - 1) * pageSize,
         take: pageSize,

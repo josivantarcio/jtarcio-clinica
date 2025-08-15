@@ -8,7 +8,7 @@ interface SpecialtiesState {
   error: string | null
   
   // Actions
-  loadSpecialties: () => Promise<void>
+  loadSpecialties: (params?: { withActiveDoctors?: boolean }) => Promise<void>
   clearError: () => void
 }
 
@@ -17,11 +17,14 @@ export const useSpecialtiesStore = create<SpecialtiesState>((set) => ({
   isLoading: false,
   error: null,
 
-  loadSpecialties: async () => {
+  loadSpecialties: async (params = {}) => {
     set({ isLoading: true, error: null })
     
     try {
-      const response = await apiClient.getSpecialties()
+      const response = await apiClient.getSpecialties({
+        isActive: true,
+        ...params
+      })
       
       if (response.success && response.data) {
         set({
