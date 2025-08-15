@@ -24,7 +24,15 @@ const newDoctorSchema = z.object({
   password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
   crm: z.string().min(5, 'CRM é obrigatório'),
   phone: z.string().min(10, 'Telefone inválido'),
-  cpf: z.string().optional().refine(\n    (cpf) => {\n      if (!cpf) return true; // CPF é opcional\n      // Remove formatação\n      const cleanCpf = cpf.replace(/\\D/g, '');\n      return cleanCpf.length === 11;\n    },\n    { message: 'CPF deve ter 11 dígitos' }\n  ),
+  cpf: z.string().optional().refine(
+    (cpf) => {
+      if (!cpf) return true; // CPF é opcional
+      // Remove formatação
+      const cleanCpf = cpf.replace(/\D/g, '');
+      return cleanCpf.length === 11;
+    },
+    { message: 'CPF deve ter 11 dígitos' }
+  ),
   specialtyId: z.string().min(1, 'Especialidade é obrigatória'),
   experience: z.string().optional(),
   education: z.string().optional(),
