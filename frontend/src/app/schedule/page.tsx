@@ -161,7 +161,7 @@ export default function SchedulePage() {
       // Convert API appointments to ScheduleAppointment format
       const formattedAppointments: ScheduleAppointment[] = dayAppointments.map(apt => ({
         id: apt.id,
-        patientName: apt.patient?.user?.name || 'Paciente',
+        patientName: apt.patient?.user?.name || apt.patient?.user?.fullName || 'Nome não informado',
         patientEmail: apt.patient?.user?.email || '',
         patientPhone: apt.patient?.user?.phone || '',
         startTime: new Date(apt.scheduledAt),
@@ -169,13 +169,27 @@ export default function SchedulePage() {
         duration: apt.duration || 30,
         type: apt.type || 'CONSULTATION',
         status: apt.status,
-        specialty: apt.specialty?.name || 'Especialidade',
+        specialty: apt.specialty?.name || 'Não informada',
         notes: apt.notes,
         isFirstTime: apt.isFirstTime || false
       }))
       
-      // Calculate slots (assuming 8h-18h = 20 slots of 30 min each)
-      const totalSlots = 20
+      // Calculate slots based on working hours and day type
+      const isWeekend = currentDay.getDay() === 0 || currentDay.getDay() === 6
+      const isSaturday = currentDay.getDay() === 6
+      
+      let totalSlots = 0
+      if (!isWeekend) {
+        // Monday to Friday: 8h-18h = 20 slots of 30 min each
+        totalSlots = 20
+      } else if (isSaturday) {
+        // Saturday: 8h-14h = 12 slots of 30 min each
+        totalSlots = 12
+      } else {
+        // Sunday: Closed
+        totalSlots = 0
+      }
+      
       const usedSlots = formattedAppointments.length
       const availableSlots = Math.max(0, totalSlots - usedSlots)
       
@@ -198,9 +212,21 @@ export default function SchedulePage() {
       const currentDay = new Date(startDate)
       currentDay.setDate(startDate.getDate() + i)
       
-      // Weekend handling - reduced slots
+      // Calculate slots based on working hours and day type
       const isWeekend = currentDay.getDay() === 0 || currentDay.getDay() === 6
-      const totalSlots = isWeekend ? 0 : 20 // No appointments on weekends
+      const isSaturday = currentDay.getDay() === 6
+      
+      let totalSlots = 0
+      if (!isWeekend) {
+        // Monday to Friday: 8h-18h = 20 slots of 30 min each
+        totalSlots = 20
+      } else if (isSaturday) {
+        // Saturday: 8h-14h = 12 slots of 30 min each
+        totalSlots = 12
+      } else {
+        // Sunday: Closed
+        totalSlots = 0
+      }
       
       schedule.push({
         date: currentDay,
