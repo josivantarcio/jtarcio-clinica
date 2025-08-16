@@ -11,6 +11,42 @@ This project follows [Semantic Versioning](https://semver.org/):
 
 ---
 
+## [1.2.7] - 2025-08-15 - **Melhorias em Agendamentos e Cadastro de Médicos** 🩺
+
+### 🎯 **NOVAS FUNCIONALIDADES**
+
+#### Campo de Data de Graduação:
+- ✅ **Novo campo obrigatório**: "Data de Graduação" no cadastro de médicos (`/doctors/new`)
+- ✅ **Cálculo automático**: Backend calcula anos de experiência automaticamente
+- ✅ **Validação frontend**: Campo de data com validação e mensagens de erro
+- ✅ **UX melhorada**: Evita necessidade de atualização manual de experiência
+
+#### Filtro Inteligente de Especialidades:
+- ✅ **Filtro ativo**: Agendamentos (`/appointments/new`) mostram apenas especialidades com médicos
+- ✅ **Lógica client-side**: Busca médicos ativos e filtra especialidades correspondentes
+- ✅ **Performance otimizada**: Evita mostrar especialidades indisponíveis
+- ✅ **Médicos de exemplo**: Dr. Bruno Felipe (Cardiologia) e Dr. João Silva (Clínica Geral)
+
+### 🔧 **MELHORIAS TÉCNICAS**
+
+#### Backend:
+- Campo `graduationDate` adicionado ao modelo Doctor
+- Cálculo automático de experiência em anos baseado na data
+- Filtro `withActiveDoctors` implementado no frontend para especialidades
+
+#### Frontend:
+- Validação com Zod para data de graduação obrigatória
+- Campo de input tipo `date` com feedback visual
+- Store de especialidades com filtro client-side inteligente
+
+### 🐛 **CORREÇÕES**
+
+#### Agendamentos:
+- Resolvido problema de especialidades sem médicos aparecendo
+- Melhorada experiência do usuário no primeiro passo do agendamento
+
+---
+
 ## [1.1.1] - 2025-08-13 - **Sistema Administrativo de Especialidades** 🏥
 
 ### 🎯 **IMPLEMENTAÇÃO CORRETA**

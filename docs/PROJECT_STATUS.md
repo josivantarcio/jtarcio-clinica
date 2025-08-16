@@ -4,8 +4,8 @@
 ### PROJECT OVERVIEW
 
 **Last Updated**: August 15, 2025  
-**Version**: 1.2.5  
-**Status**: COMPLETED **Production Ready - Professional Version** com Sistema Inteligente de Experiência Médica  
+**Version**: 1.2.7  
+**Status**: COMPLETED **Production Ready - Professional Version** com Filtro Inteligente e Data de Graduação  
 
 EO Clínica is a **complete, enterprise-grade medical scheduling platform** with AI integration, built as a monorepo with modern technologies. The system is production-ready with full LGPD compliance, banking-level security, and complete automation capabilities.
 

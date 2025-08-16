@@ -36,13 +36,16 @@ export async function specialtyRoutes(fastify: FastifyInstance): Promise<void> {
     try {
       const { page = 1, pageSize = 20, search, isActive, withActiveDoctors } = request.query;
       
+      // Convert string parameters to boolean
+      const withActiveDoctorsBool = withActiveDoctors === 'true' || withActiveDoctors === true;
+      
       const where: any = {
         ...(search && { name: { contains: search, mode: 'insensitive' as const } }),
         ...(isActive !== undefined && { isActive }),
       };
 
       // Filter only specialties that have active doctors with specialty assigned
-      if (withActiveDoctors) {
+      if (withActiveDoctorsBool) {
         where.doctors = {
           some: {
             isActive: true,

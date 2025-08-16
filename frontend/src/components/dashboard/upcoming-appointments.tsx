@@ -75,15 +75,15 @@ export function UpcomingAppointments() {
                       <User className="h-6 w-6 text-primary" />
                     ) : (
                       <span className="font-semibold text-primary">
-                        {appointment.patient.user.name.charAt(0)}
+                        {appointment.patient?.fullName?.charAt(0) || 'P'}
                       </span>
                     )}
                   </div>
                   <div>
                     <p className="font-medium">
                       {user?.role === 'PATIENT' 
-                        ? `Dr. ${appointment.doctor.user.name}`
-                        : appointment.patient.user.name
+                        ? `Dr. ${appointment.doctor?.fullName || 'Nome não informado'}`
+                        : appointment.patient?.fullName || 'Nome não informado'
                       }
                     </p>
                     <p className="text-sm text-muted-foreground">

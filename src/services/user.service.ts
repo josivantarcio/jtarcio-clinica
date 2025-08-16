@@ -66,9 +66,28 @@ export class UserService {
           },
           doctorProfile: {
             select: {
+              id: true,
               crm: true,
               specialtyId: true,
-            },
+              subSpecialties: true,
+              biography: true,
+              graduationDate: true,
+              crmRegistrationDate: true,
+              experience: true,
+              consultationFee: true,
+              consultationDuration: true,
+              isActive: true,
+              acceptsNewPatients: true,
+              specialty: {
+                select: {
+                  id: true,
+                  name: true,
+                  description: true,
+                  duration: true,
+                  price: true
+                }
+              }
+            }
           },
           appointments: {
             where: { deletedAt: null },

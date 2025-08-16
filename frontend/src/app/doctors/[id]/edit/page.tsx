@@ -41,6 +41,9 @@ export default function EditDoctorPage() {
     consultationDuration: 30,
     acceptsNewPatients: true
   })
+  
+  // Adicionar estado para armazenar o userId
+  const [userId, setUserId] = useState<string | null>(null)
 
   useEffect(() => {
     // Hydrate the persisted store
@@ -76,6 +79,8 @@ export default function EditDoctorPage() {
         
         if (foundDoctor) {
           const doctor = foundDoctor.doctorProfile
+          // Armazenar o userId correto
+          setUserId(foundDoctor.id)
           setFormData({
             firstName: foundDoctor.firstName || '',
             lastName: foundDoctor.lastName || '',
@@ -132,8 +137,13 @@ export default function EditDoctorPage() {
       }
 
       console.log('📤 Enviando dados de atualização:', updateData)
+      console.log('🔑 Usando userId:', userId)
 
-      const response = await apiClient.updateUser(params.id as string, updateData)
+      if (!userId) {
+        throw new Error('ID do usuário não encontrado')
+      }
+
+      const response = await apiClient.updateUser(userId, updateData)
 
       if (response.success) {
         alert('✅ Perfil do médico atualizado com sucesso!')

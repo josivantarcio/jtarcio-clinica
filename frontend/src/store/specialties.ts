@@ -27,45 +27,8 @@ export const useSpecialtiesStore = create<SpecialtiesState>((set) => ({
       })
       
       if (response.success && response.data) {
-        let specialties = response.data
-        
-        // Se withActiveDoctors for true, filtrar apenas especialidades com médicos ativos
-        if (params.withActiveDoctors) {
-          console.log('🔍 Aplicando filtro withActiveDoctors no frontend')
-          
-          // Buscar médicos ativos
-          const doctorsResponse = await apiClient.getUsers({ role: 'DOCTOR' })
-          
-          if (doctorsResponse.success && doctorsResponse.data) {
-            // Filtrar médicos que têm perfil de doctor preenchido e estão ativos
-            const activeDoctors = doctorsResponse.data.filter((user: any) => 
-              user.doctorProfile && 
-              user.status === 'ACTIVE' &&
-              user.doctorProfile.isActive &&
-              user.doctorProfile.specialty &&
-              user.doctorProfile.specialty.id
-            )
-            
-            console.log('👨‍⚕️ Médicos ativos encontrados:', activeDoctors.length)
-            
-            // Obter IDs das especialidades dos médicos ativos
-            const activeSpecialtyIds = new Set(
-              activeDoctors.map((doctor: any) => doctor.doctorProfile.specialty.id)
-            )
-            
-            console.log('🏥 Especialidades com médicos ativos:', Array.from(activeSpecialtyIds))
-            
-            // Filtrar especialidades
-            specialties = specialties.filter((specialty: any) => 
-              activeSpecialtyIds.has(specialty.id)
-            )
-            
-            console.log('✅ Especialidades filtradas:', specialties.length)
-          }
-        }
-        
         set({
-          specialties,
+          specialties: response.data,
           isLoading: false
         })
       } else {

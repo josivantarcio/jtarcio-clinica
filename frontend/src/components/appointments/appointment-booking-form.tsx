@@ -121,8 +121,12 @@ export function AppointmentBookingForm({ onSuccess }: AppointmentBookingFormProp
       const scheduledAt = new Date(selectedDate)
       scheduledAt.setHours(hours, minutes)
       
+      // Simulate logged-in patient - in a real app this would come from authentication
+      const patientId = 'cmedgb3c50003iq743btkmh5w' // Josevan Oliveira
+      
       const bookingData = {
         ...data,
+        patientId,
         scheduledAt
       }
       
@@ -526,8 +530,35 @@ export function AppointmentBookingForm({ onSuccess }: AppointmentBookingFormProp
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            {/* Patient Information */}
+            <div className="p-4 bg-blue-50 rounded-lg space-y-3 border border-blue-200">
+              <h3 className="text-lg font-semibold text-blue-800 flex items-center gap-2">
+                <User className="h-5 w-5" />
+                Informações do Paciente
+              </h3>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-blue-700">Nome:</span>
+                  <span className="font-medium text-blue-900">Josevan Oliveira</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-blue-700">CPF:</span>
+                  <span className="font-medium text-blue-900">788.474.783-91</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-blue-700">Telefone:</span>
+                  <span className="font-medium text-blue-900">(88) 99668-6161</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-blue-700">Email:</span>
+                  <span className="font-medium text-blue-900">josivantarcio@msn.com</span>
+                </div>
+              </div>
+            </div>
+
             {/* Appointment Summary */}
             <div className="p-4 bg-muted/50 rounded-lg space-y-3">
+              <h3 className="text-lg font-semibold mb-3">Resumo da Consulta</h3>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Especialidade:</span>
                 <span className="font-medium">{selectedSpecialty?.name}</span>

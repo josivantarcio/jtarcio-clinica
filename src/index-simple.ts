@@ -274,6 +274,36 @@ fastify.patch('/api/v1/users/:id', async (request, reply) => {
         });
       }
     }
+
+    // Se existirem dados de médico, atualizar tabela doctors
+    if (updateData.doctorProfile && user.role === 'DOCTOR') {
+      console.log('Updating doctor profile data...');
+      
+      const doctorData = updateData.doctorProfile.update;
+      
+      // Verificar se já existe registro de médico
+      const existingDoctor = await prisma.doctor.findUnique({
+        where: { userId: id }
+      });
+
+      if (existingDoctor) {
+        // Atualizar registro existente
+        await prisma.doctor.update({
+          where: { userId: id },
+          data: {
+            crm: doctorData.crm,
+            biography: doctorData.biography,
+            consultationFee: doctorData.consultationFee,
+            consultationDuration: doctorData.consultationDuration,
+            acceptsNewPatients: doctorData.acceptsNewPatients,
+            graduationDate: doctorData.graduationDate ? new Date(doctorData.graduationDate) : null,
+            crmRegistrationDate: doctorData.crmRegistrationDate ? new Date(doctorData.crmRegistrationDate) : null,
+            experience: doctorData.experience
+          }
+        });
+        console.log('Doctor profile updated successfully');
+      }
+    }
     
     return {
       success: true,
@@ -434,6 +464,8 @@ fastify.get('/api/v1/users', async (request, reply) => {
               crm: true,
               subSpecialties: true,
               biography: true,
+              graduationDate: true,
+              crmRegistrationDate: true,
               experience: true,
               consultationFee: true,
               consultationDuration: true,
@@ -700,8 +732,26 @@ fastify.post('/api/v1/doctors', async (request, reply) => {
 // Especialidades - agora usando dados reais do banco
 fastify.get('/api/v1/specialties', async (request, reply) => {
   try {
+    const query = request.query as any;
+    const withActiveDoctors = query?.withActiveDoctors === 'true';
+
+    const where: any = { isActive: true };
+
+    // Filter only specialties that have active doctors with specialty assigned
+    if (withActiveDoctors) {
+      where.doctors = {
+        some: {
+          isActive: true,
+          user: {
+            status: 'ACTIVE',
+            deletedAt: null
+          }
+        }
+      };
+    }
+
     const specialties = await prisma.specialty.findMany({
-      where: { isActive: true },
+      where,
       orderBy: { name: 'asc' }
     });
     
@@ -994,10 +1044,12 @@ fastify.post('/api/v1/appointments', async (request, reply) => {
         },
         doctor: {
           select: {
-            user: {
-              select: { fullName: true }
-            },
-            crm: true
+            fullName: true,
+            doctorProfile: {
+              select: {
+                crm: true
+              }
+            }
           }
         },
         specialty: {
