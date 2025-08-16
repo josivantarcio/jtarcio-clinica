@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
 import { Calendar } from '@/components/ui/calendar'
-import { Loader2, CheckCircle, Clock, User, Stethoscope } from 'lucide-react'
+import { Loader2, CheckCircle, Clock, User, Stethoscope, Calendar as CalendarIcon } from 'lucide-react'
 import { useDoctorsStore } from '@/store/doctors'
 import { useAppointmentsStore } from '@/store/appointments'
 import { formatCurrency, formatDateTime } from '@/lib/utils'
@@ -47,6 +47,30 @@ interface BookingFormWithDataProps {
 }
 
 export function BookingFormWithData({ initialSpecialties }: BookingFormWithDataProps) {
+  // Custom scrollbar styles
+  React.useEffect(() => {
+    const style = document.createElement('style')
+    style.textContent = `
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: rgb(241 245 249 / 0.3);
+        border-radius: 10px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: linear-gradient(180deg, rgb(34 197 94), rgb(22 163 74));
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(180deg, rgb(22 163 74), rgb(21 128 61));
+      }
+    `
+    document.head.appendChild(style)
+    return () => document.head.removeChild(style)
+  }, [])
+
   const [step, setStep] = useState(1)
   const [selectedDate, setSelectedDate] = useState<Date | undefined>()
   const [selectedTime, setSelectedTime] = useState<string>('')
@@ -278,7 +302,7 @@ export function BookingFormWithData({ initialSpecialties }: BookingFormWithDataP
   const prevStep = () => setStep(step - 1)
   
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 relative overflow-hidden">
       {/* Progress Steps */}
       <div className="flex items-center justify-center space-x-4 mb-8">
         {[1, 2, 3, 4].map((s) => (
@@ -483,7 +507,7 @@ export function BookingFormWithData({ initialSpecialties }: BookingFormWithDataP
       
       {/* Step 3: Date & Time Selection */}
       {step === 3 && (
-        <Card>
+        <Card className="relative overflow-hidden">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Clock className="h-5 w-5" />
@@ -514,7 +538,7 @@ export function BookingFormWithData({ initialSpecialties }: BookingFormWithDataP
               </div>
             </div>
 
-            <div className="grid lg:grid-cols-2 gap-6 lg:gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
               {/* Date Selection */}
               <div className="space-y-4">
                 <div>
@@ -524,30 +548,69 @@ export function BookingFormWithData({ initialSpecialties }: BookingFormWithDataP
                   </p>
                 </div>
                 
-                <div className="flex justify-center">
-                  <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={setSelectedDate}
-                    disabled={(date) => 
-                      date < new Date() || 
-                      date.getDay() === 0 || // Sunday
-                      date.getDay() === 6    // Saturday
-                    }
-                    className="rounded-md border shadow-sm bg-white"
-                  />
+                <div className="flex justify-center overflow-hidden">
+                  <div className="relative">
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={setSelectedDate}
+                      disabled={(date) => 
+                        date < new Date() || 
+                        date.getDay() === 0 || // Sunday
+                        date.getDay() === 6    // Saturday
+                      }
+                      formatters={{
+                        formatCaption: (date: Date) => {
+                          const months = [
+                            'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+                            'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+                          ];
+                          return `${months[date.getMonth()]} ${date.getFullYear()}`;
+                        }
+                      }}
+                      className="rounded-2xl border-0 shadow-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white max-w-full overflow-hidden backdrop-blur-sm"
+                      classNames={{
+                        months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
+                        month: "space-y-4 p-4",
+                        caption: "flex justify-center pt-2 pb-4 relative items-center",
+                        caption_label: "text-white font-bold text-lg tracking-wide drop-shadow-sm",
+                        nav: "space-x-1 flex items-center",
+                        nav_button: "h-8 w-8 bg-slate-700/50 hover:bg-slate-600/70 border-slate-500/30 text-white/90 hover:text-white rounded-full transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 backdrop-blur-sm",
+                        nav_button_previous: "absolute left-2",
+                        nav_button_next: "absolute right-2",
+                        table: "w-full border-collapse space-y-1",
+                        head_row: "flex mb-2",
+                        head_cell: "text-slate-300 font-semibold text-xs uppercase tracking-wider w-10 h-8 flex items-center justify-center",
+                        row: "flex w-full mt-1",
+                        cell: "h-10 w-10 text-center text-sm p-0 relative focus-within:relative focus-within:z-20",
+                        day: "h-10 w-10 p-0 font-medium text-white/90 hover:text-white rounded-xl transition-all duration-200 hover:bg-slate-600/50 hover:shadow-lg hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-400/50 focus:ring-offset-2 focus:ring-offset-slate-800",
+                        day_selected: "bg-gradient-to-br from-green-500 to-green-600 text-white font-bold shadow-xl ring-2 ring-green-400/30 ring-offset-2 ring-offset-slate-800 hover:from-green-400 hover:to-green-500 transform scale-110",
+                        day_today: "bg-gradient-to-br from-blue-500/30 to-blue-600/30 text-white font-bold ring-1 ring-blue-400/50 shadow-lg",
+                        day_disabled: "text-slate-500 opacity-30 cursor-not-allowed hover:bg-transparent hover:scale-100",
+                        day_outside: "text-slate-600 opacity-40 hover:text-slate-500"
+                      }}
+                      components={{
+                        IconLeft: ({ ...props }) => <ChevronLeft className="h-4 w-4 drop-shadow-sm" />,
+                        IconRight: ({ ...props }) => <ChevronRight className="h-4 w-4 drop-shadow-sm" />,
+                      }}
+                    />
+                    {/* Glassmorphism overlay effect */}
+                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/5 to-transparent pointer-events-none"></div>
+                  </div>
                 </div>
                 
                 {selectedDate && (
-                  <div className="text-center">
-                    <p className="text-sm font-medium text-primary">
-                      Data selecionada: {selectedDate.toLocaleDateString('pt-BR', {
-                        weekday: 'long',
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })}
-                    </p>
+                  <div className="text-center mt-4">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-50 to-green-100 border border-green-200 rounded-xl shadow-lg">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                      <p className="text-sm font-semibold text-green-700">
+                        {selectedDate.toLocaleDateString('pt-BR', {
+                          weekday: 'long',
+                          day: 'numeric',
+                          month: 'long'
+                        })}
+                      </p>
+                    </div>
                   </div>
                 )}
               </div>
@@ -569,7 +632,7 @@ export function BookingFormWithData({ initialSpecialties }: BookingFormWithDataP
                 
                 {!selectedDate ? (
                   <div className="text-center py-8 lg:py-12 border-2 border-dashed border-muted rounded-lg">
-                    <Calendar className="h-10 w-10 lg:h-12 lg:w-12 text-muted-foreground mx-auto mb-3 lg:mb-4" />
+                    <Clock className="h-10 w-10 lg:h-12 lg:w-12 text-muted-foreground mx-auto mb-3 lg:mb-4" />
                     <h4 className="font-medium text-muted-foreground mb-2">Aguardando seleção de data</h4>
                     <p className="text-sm text-muted-foreground px-2">
                       Escolha uma data no calendário <span className="lg:hidden">acima</span><span className="hidden lg:inline">ao lado</span> para ver os horários
@@ -591,9 +654,9 @@ export function BookingFormWithData({ initialSpecialties }: BookingFormWithDataP
                   </div>
                 ) : availableSlots.length > 0 ? (
                   <div className="space-y-4">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-72 overflow-y-auto">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
                       {availableSlots.map((slot) => (
-                        <label key={slot} className="cursor-pointer">
+                        <label key={slot} className="cursor-pointer group">
                           <input
                             type="radio"
                             value={slot}
@@ -601,18 +664,25 @@ export function BookingFormWithData({ initialSpecialties }: BookingFormWithDataP
                             onChange={(e) => setSelectedTime(e.target.value)}
                             className="sr-only peer"
                           />
-                          <div className="p-3 text-center border-2 border-gray-200 rounded-lg peer-checked:border-primary peer-checked:bg-primary/5 peer-checked:text-primary hover:border-primary/50 hover:bg-primary/5 hover:shadow-md transition-all duration-200 focus-within:ring-2 focus-within:ring-primary/20">
-                            <span className="text-sm font-medium">{slot}</span>
+                          <div className="relative p-3 text-center border-2 border-slate-200/30 rounded-xl peer-checked:border-green-400 peer-checked:bg-gradient-to-br peer-checked:from-green-50 peer-checked:to-green-100 peer-checked:text-green-700 peer-checked:shadow-lg peer-checked:shadow-green-200/50 hover:border-slate-300 hover:bg-slate-50/80 hover:shadow-lg hover:shadow-slate-200/30 hover:scale-[1.02] transition-all duration-300 focus-within:ring-2 focus-within:ring-green-400/30 min-w-0 backdrop-blur-sm">
+                            <span className="text-sm font-semibold block truncate peer-checked:font-bold">{slot}</span>
+                            {/* Selected indicator */}
+                            <div className="absolute top-1 right-1 w-2 h-2 bg-green-500 rounded-full opacity-0 peer-checked:opacity-100 transition-opacity duration-200 shadow-sm"></div>
+                            {/* Hover glow effect */}
+                            <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 peer-checked:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
                           </div>
                         </label>
-                      ))}
+                      ))}'
                     </div>
                     
                     {selectedTime && (
                       <div className="text-center">
-                        <p className="text-sm font-medium text-primary">
-                          Horário selecionado: {selectedTime}
-                        </p>
+                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-50 to-green-100 border border-green-200 rounded-xl shadow-lg">
+                          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                          <p className="text-sm font-semibold text-green-700">
+                            Horário selecionado: {selectedTime}
+                          </p>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -651,7 +721,7 @@ export function BookingFormWithData({ initialSpecialties }: BookingFormWithDataP
 
       {/* Step 4: Confirmation */}
       {step === 4 && (
-        <Card>
+        <Card className="relative z-50 bg-white">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CheckCircle className="h-5 w-5" />
@@ -661,9 +731,9 @@ export function BookingFormWithData({ initialSpecialties }: BookingFormWithDataP
               Revise os dados e confirme seu agendamento da consulta
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-6 relative z-50">
             {/* Appointment Summary */}
-            <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl p-6 border">
+            <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl p-6 border relative z-50 bg-white/95 backdrop-blur-sm">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center">
                   <CheckCircle className="h-6 w-6 text-primary" />
@@ -674,15 +744,15 @@ export function BookingFormWithData({ initialSpecialties }: BookingFormWithDataP
                 </div>
               </div>
               
-              <div className="grid sm:grid-cols-2 gap-4 lg:gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6">
                 <div className="space-y-4">
                   <div className="flex items-start gap-3 p-3 bg-white/50 rounded-lg">
-                    <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center mt-0.5">
+                    <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center mt-0.5 shrink-0">
                       <Stethoscope className="h-4 w-4 text-primary" />
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Especialidade</p>
-                      <p className="font-semibold text-gray-900">{selectedSpecialty?.name}</p>
+                      <p className="font-semibold text-gray-900 truncate">{selectedSpecialty?.name}</p>
                       <p className="text-sm text-muted-foreground">
                         Duração: {selectedSpecialty?.duration} minutos
                       </p>
@@ -690,13 +760,13 @@ export function BookingFormWithData({ initialSpecialties }: BookingFormWithDataP
                   </div>
 
                   <div className="flex items-start gap-3 p-3 bg-white/50 rounded-lg">
-                    <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center mt-0.5">
+                    <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center mt-0.5 shrink-0">
                       <User className="h-4 w-4 text-primary" />
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Médico</p>
-                      <p className="font-semibold text-gray-900">Dr. {selectedDoctor?.user?.name}</p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="font-semibold text-gray-900 truncate">Dr. {selectedDoctor?.user?.name}</p>
+                      <p className="text-sm text-muted-foreground truncate">
                         CRM: {selectedDoctor?.crm}
                       </p>
                     </div>
@@ -705,12 +775,12 @@ export function BookingFormWithData({ initialSpecialties }: BookingFormWithDataP
 
                 <div className="space-y-4">
                   <div className="flex items-start gap-3 p-3 bg-white/50 rounded-lg">
-                    <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center mt-0.5">
-                      <Calendar className="h-4 w-4 text-primary" />
+                    <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center mt-0.5 shrink-0">
+                      <CalendarIcon className="h-4 w-4 text-primary" />
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Data</p>
-                      <p className="font-semibold text-gray-900">
+                      <p className="font-semibold text-gray-900 break-words">
                         {selectedDate?.toLocaleDateString('pt-BR', {
                           weekday: 'long',
                           year: 'numeric',
@@ -722,10 +792,10 @@ export function BookingFormWithData({ initialSpecialties }: BookingFormWithDataP
                   </div>
 
                   <div className="flex items-start gap-3 p-3 bg-white/50 rounded-lg">
-                    <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center mt-0.5">
+                    <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center mt-0.5 shrink-0">
                       <Clock className="h-4 w-4 text-primary" />
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Horário</p>
                       <p className="font-semibold text-gray-900">{selectedTime}</p>
                     </div>
@@ -770,7 +840,7 @@ export function BookingFormWithData({ initialSpecialties }: BookingFormWithDataP
                   </div>
                 </div>
                 
-                <div className="grid sm:grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="patientFirstName" className="text-sm font-medium">Nome *</Label>
                     <Input
@@ -778,7 +848,7 @@ export function BookingFormWithData({ initialSpecialties }: BookingFormWithDataP
                       value={patientData.firstName}
                       onChange={(e) => setPatientData(prev => ({ ...prev, firstName: e.target.value }))}
                       placeholder="Digite o nome"
-                      className="bg-white"
+                      className="bg-white w-full"
                       required
                     />
                   </div>
@@ -951,7 +1021,7 @@ export function BookingFormWithData({ initialSpecialties }: BookingFormWithDataP
                     !patientData.gender
                   ))
                 }
-                className="w-full sm:w-auto min-w-48 h-12 text-base font-semibold"
+                className="w-full sm:w-auto sm:min-w-48 h-12 text-base font-semibold"
               >
                 {bookingAppointment ? (
                   <>

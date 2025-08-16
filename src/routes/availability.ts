@@ -1,5 +1,5 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import { availabilityQuerySchema, timeSlotSchema } from '@/types/appointment';
+import { timeSlotSchema } from '@/types/appointment';
 import { responseSchema } from '@/types/common';
 
 export async function availabilityRoutes(fastify: FastifyInstance): Promise<void> {

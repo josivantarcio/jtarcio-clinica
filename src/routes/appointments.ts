@@ -1,6 +1,5 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import {
-  createAppointmentSchema,
   updateAppointmentSchema,
   rescheduleAppointmentSchema,
   cancelAppointmentSchema,
@@ -8,7 +7,6 @@ import {
   completeAppointmentSchema,
   searchAppointmentsSchema,
   appointmentSchema,
-  CreateAppointmentDto,
   RescheduleAppointmentDto,
   CancelAppointmentDto,
   CompleteAppointmentDto
@@ -32,7 +30,7 @@ export async function appointmentRoutes(fastify: FastifyInstance): Promise<void>
   }, async (request: FastifyRequest<{ Body: AppointmentBooking }>, reply: FastifyReply) => {
     try {
       const services = ServiceFactory.getInstance();
-      const userId = request.user?.id; // Assuming auth middleware sets user
+      const _userId = request.user?.id; // Assuming auth middleware sets user
       
       const result = await services.appointmentService.bookAppointment(request.body);
       
@@ -83,7 +81,7 @@ export async function appointmentRoutes(fastify: FastifyInstance): Promise<void>
   }, async (request: FastifyRequest<{ Querystring: any }>, reply: FastifyReply) => {
     try {
       const services = ServiceFactory.getInstance();
-      const userId = request.user?.id;
+      const _userId = request.user?.id;
       const userRole = request.user?.role || 'PATIENT';
       
       const filters = {
@@ -136,7 +134,7 @@ export async function appointmentRoutes(fastify: FastifyInstance): Promise<void>
   }, async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
     try {
       const services = ServiceFactory.getInstance();
-      const userId = request.user?.id;
+      const _userId = request.user?.id;
       
       const appointment = await services.appointmentService.getAppointmentById(
         request.params.id, 
@@ -220,7 +218,7 @@ export async function appointmentRoutes(fastify: FastifyInstance): Promise<void>
   }, async (request: FastifyRequest<{ Params: { id: string }; Body: RescheduleAppointmentDto }>, reply: FastifyReply) => {
     try {
       const services = ServiceFactory.getInstance();
-      const userId = request.user?.id;
+      const _userId = request.user?.id;
       
       const result = await services.appointmentService.rescheduleAppointment(
         request.params.id,
@@ -286,7 +284,7 @@ export async function appointmentRoutes(fastify: FastifyInstance): Promise<void>
   }, async (request: FastifyRequest<{ Params: { id: string }; Body: CancelAppointmentDto }>, reply: FastifyReply) => {
     try {
       const services = ServiceFactory.getInstance();
-      const userId = request.user?.id;
+      const _userId = request.user?.id;
       
       const result = await services.appointmentService.cancelAppointment(
         request.params.id,
@@ -433,7 +431,7 @@ export async function appointmentRoutes(fastify: FastifyInstance): Promise<void>
   }, async (request: FastifyRequest<{ Params: { patientId: string }; Querystring: { limit?: number } }>, reply: FastifyReply) => {
     try {
       const services = ServiceFactory.getInstance();
-      const userId = request.user?.id;
+      const _userId = request.user?.id;
       const userRole = request.user?.role;
       
       // Check authorization - patients can only view their own history

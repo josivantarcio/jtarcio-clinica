@@ -26,7 +26,7 @@ export async function registerRoutes(fastify: FastifyInstance): Promise<void> {
   await fastify.register(analyticsRoutes, { prefix: apiPrefix });
 
   // Root endpoint
-  fastify.get('/', async (request, reply) => {
+  fastify.get('/', async (_request, _reply) => {
     return {
       message: 'EO Clinica System API',
       version: '1.1.0',
@@ -41,7 +41,7 @@ export async function registerRoutes(fastify: FastifyInstance): Promise<void> {
   });
 
   // API status endpoint
-  fastify.get(`${apiPrefix}`, async (request, reply) => {
+  fastify.get(`${apiPrefix}`, async (_request, _reply) => {
     return {
       message: 'EO Clinica API v1',
       status: 'operational',

@@ -300,7 +300,7 @@ export default async function aiChatRoutes(
         500: errorResponseSchema
       }
     },
-    preHandler: async (request, reply) => {
+    preHandler: async (_request, _reply) => {
       // Optional: Add authentication check for stats endpoint
       // For now, allow public access to basic stats
     }

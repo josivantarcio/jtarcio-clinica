@@ -322,7 +322,7 @@ export async function analyticsRoutes(fastify: FastifyInstance) {
     }
   }, async (request, reply) => {
     try {
-      const { period = 'month', granularity = 'day' } = request.query as any
+      const { period = 'month', granularity: _granularity = 'day' } = request.query as any
       
       const now = new Date()
       let rangeStart: Date
