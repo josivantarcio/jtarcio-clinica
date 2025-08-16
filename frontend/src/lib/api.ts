@@ -6,8 +6,13 @@ class ApiClient {
   private token: string | null = null
 
   constructor() {
-    const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
-    console.log('🌐 Inicializando API Client com baseURL:', baseURL)
+    // Em produção ou quando estiver no navegador, usa o proxy do Next.js
+    // Em desenvolvimento no servidor, usa o backend direto
+    const baseURL = typeof window !== 'undefined' 
+      ? '' // Usa o proxy do Next.js (rotas /api/*)
+      : process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
+    
+    console.log('🌐 Inicializando API Client com baseURL:', baseURL || 'proxy local')
     
     this.client = axios.create({
       baseURL,

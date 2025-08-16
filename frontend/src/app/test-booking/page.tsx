@@ -1,45 +1,18 @@
-import { Suspense } from 'react'
-import { AppLayout } from '@/components/layout/app-layout'
-import { BookingFormWithData } from '@/components/appointments/booking-form-with-data'
+'use client'
+
+import { AppointmentBookingForm } from '@/components/appointments/appointment-booking-form'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Calendar, Clock, User, Stethoscope } from 'lucide-react'
 
-// Função para buscar especialidades no servidor
-async function getActiveSpecialties() {
-  try {
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
-    const timestamp = Date.now()
-    const response = await fetch(`${baseUrl}/api/v1/specialties?withActiveDoctors=true&_t=${timestamp}`, {
-      cache: 'no-store', // Sempre buscar dados atualizados
-      next: { revalidate: 0 } // Forçar revalidação
-    })
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
-    }
-    
-    const data = await response.json()
-    return data.success ? data.data : []
-  } catch (error) {
-    console.error('Erro ao buscar especialidades:', error)
-    return []
-  }
-}
-
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
-
-export default async function NewAppointmentPage() {
-  const specialties = await getActiveSpecialties()
-
+export default function TestBookingPage() {
   return (
-    <AppLayout>
-      <div className="max-w-4xl mx-auto space-y-6">
+    <div className="min-h-screen bg-background">
+      <div className="max-w-4xl mx-auto p-6 space-y-6">
         {/* Header */}
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">Agendar Consulta</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Teste: Agendar Consulta</h1>
           <p className="text-muted-foreground">
-            Escolha a especialidade, médico e horário de sua preferência
+            Teste do sistema de agendamento - 4 passos
           </p>
         </div>
 
@@ -100,12 +73,8 @@ export default async function NewAppointmentPage() {
         </Card>
 
         {/* Booking Form */}
-        <Suspense fallback={<div>Carregando formulário...</div>}>
-          <BookingFormWithData 
-            initialSpecialties={specialties} 
-          />
-        </Suspense>
+        <AppointmentBookingForm onSuccess={() => alert('Agendamento realizado com sucesso!')} />
       </div>
-    </AppLayout>
+    </div>
   )
 }

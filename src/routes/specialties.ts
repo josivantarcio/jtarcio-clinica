@@ -51,7 +51,7 @@ export async function specialtyRoutes(fastify: FastifyInstance): Promise<void> {
             isActive: true,
             specialtyId: { not: null }, // Must have specialty assigned
             user: {
-              status: 'ACTIVE',
+              status: { in: ['ACTIVE', 'PENDING_VERIFICATION'] }, // Accept both active and pending verification doctors
               deletedAt: null
             }
           }
@@ -68,7 +68,7 @@ export async function specialtyRoutes(fastify: FastifyInstance): Promise<void> {
                   isActive: true,
                   specialtyId: { not: null }, // Only count doctors with specialty assigned
                   user: {
-                    status: 'ACTIVE',
+                    status: { in: ['ACTIVE', 'PENDING_VERIFICATION'] }, // Accept both active and pending verification doctors
                     deletedAt: null
                   }
                 }

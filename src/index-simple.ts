@@ -743,7 +743,7 @@ fastify.get('/api/v1/specialties', async (request, reply) => {
         some: {
           isActive: true,
           user: {
-            status: 'ACTIVE',
+            status: { in: ['ACTIVE', 'PENDING_VERIFICATION'] }, // Accept both active and pending verification doctors
             deletedAt: null
           }
         }

@@ -1,8 +1,7 @@
 import { Suspense } from 'react'
-import { AppLayout } from '@/components/layout/app-layout'
-import { BookingFormWithData } from '@/components/appointments/booking-form-with-data'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Calendar, Clock, User, Stethoscope } from 'lucide-react'
+import { BookingFormWithData } from '@/components/appointments/booking-form-with-data'
 
 // Função para buscar especialidades no servidor
 async function getActiveSpecialties() {
@@ -29,17 +28,17 @@ async function getActiveSpecialties() {
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
-export default async function NewAppointmentPage() {
+export default async function BookingFixedPage() {
   const specialties = await getActiveSpecialties()
 
   return (
-    <AppLayout>
-      <div className="max-w-4xl mx-auto space-y-6">
+    <div className="min-h-screen bg-background">
+      <div className="max-w-4xl mx-auto p-6 space-y-6">
         {/* Header */}
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">Agendar Consulta</h1>
+          <h1 className="text-3xl font-bold tracking-tight">✅ Agendar Consulta (Versão Corrigida)</h1>
           <p className="text-muted-foreground">
-            Escolha a especialidade, médico e horário de sua preferência
+            Sistema funcionando: {specialties.length} especialidade(s) disponível(is)
           </p>
         </div>
 
@@ -99,13 +98,32 @@ export default async function NewAppointmentPage() {
           </CardContent>
         </Card>
 
+        {/* Debug Info */}
+        <Card className="border-green-200 bg-green-50">
+          <CardHeader>
+            <CardTitle className="text-green-800">Status do Sistema</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2 text-sm">
+              <p><strong>Especialidades encontradas:</strong> {specialties.length}</p>
+              {specialties.map((specialty: any) => (
+                <div key={specialty.id} className="p-2 bg-white rounded border">
+                  <strong>{specialty.name}</strong> - {specialty.description}
+                  <br />
+                  <span className="text-xs text-gray-600">
+                    Duração: {specialty.duration}min | Preço: R$ {specialty.price}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Booking Form */}
         <Suspense fallback={<div>Carregando formulário...</div>}>
-          <BookingFormWithData 
-            initialSpecialties={specialties} 
-          />
+          <BookingFormWithData initialSpecialties={specialties} />
         </Suspense>
       </div>
-    </AppLayout>
+    </div>
   )
 }

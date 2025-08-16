@@ -11,6 +11,22 @@ This project follows [Semantic Versioning](https://semver.org/):
 
 ---
 
+## [1.2.9] - 2025-08-16 - **Correção Crítica de Especialidades e Sintaxe** 🔧
+
+### 🐛 **CORREÇÕES CRÍTICAS**
+
+#### Sistema de Especialidades - CORRIGIDO:
+- ✅ **Filtro de Status**: Corrigido filtro em `specialties.ts` para incluir médicos com status `PENDING_VERIFICATION`
+- ✅ **Aparição de Especialidades**: Especialidades de médicos recém-cadastrados agora aparecem no agendamento
+- ✅ **Erro de Sintaxe**: Corrigido string não terminada em `patients/[id]/edit/page.tsx:133`
+
+#### Melhorias no Backend:
+- ✅ **Endpoint /doctors**: Implementado endpoint POST `/api/v1/doctors` faltante
+- ✅ **Segurança de Senhas**: Adicionado hash bcrypt para senhas de médicos
+- ✅ **Transações de Banco**: Implementado criação atômica de usuário + médico
+
+---
+
 ## [1.2.8] - 2025-08-16 - **Correções de Estabilidade e Interface** 🔧
 
 ### 🐛 **CORREÇÕES CRÍTICAS**

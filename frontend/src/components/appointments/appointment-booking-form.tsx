@@ -60,8 +60,25 @@ export function AppointmentBookingForm({ onSuccess }: AppointmentBookingFormProp
   const selectedDoctorId = watch('doctorId')
   
   useEffect(() => {
-    loadSpecialties({ withActiveDoctors: true })
+    console.log('🔍 AppointmentBookingForm montado - carregando especialidades...')
+    
+    // Garantir que está no cliente antes de fazer a chamada
+    if (typeof window !== 'undefined') {
+      loadSpecialities()
+    }
   }, [])
+
+  const loadSpecialities = async () => {
+    try {
+      console.log('📡 Carregando especialidades com médicos ativos...')
+      console.log('🌐 URL base da API:', process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000')
+      
+      await loadSpecialties({ withActiveDoctors: true })
+      console.log('✅ Especialidades carregadas com sucesso')
+    } catch (error) {
+      console.error('❌ Erro ao carregar especialidades:', error)
+    }
+  }
   
   useEffect(() => {
     if (selectedSpecialtyId) {
@@ -216,6 +233,23 @@ export function AppointmentBookingForm({ onSuccess }: AppointmentBookingFormProp
                 {Array.from({ length: 4 }).map((_, i) => (
                   <div key={i} className="h-16 bg-muted animate-pulse rounded-lg" />
                 ))}
+              </div>
+            ) : specialties.length === 0 ? (
+              <div className="text-center py-8">
+                <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Stethoscope className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <h3 className="font-semibold text-lg mb-2">Nenhuma especialidade disponível</h3>
+                <p className="text-muted-foreground mb-4">
+                  No momento, não há especialidades com médicos ativos disponíveis para agendamento.
+                </p>
+                <button 
+                  type="button"
+                  onClick={loadSpecialities}
+                  className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+                >
+                  Tentar Novamente
+                </button>
               </div>
             ) : (
               <div className="grid md:grid-cols-2 gap-4">

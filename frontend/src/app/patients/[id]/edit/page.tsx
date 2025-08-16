@@ -130,7 +130,7 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
           email: patientData.email || '',
           phone: patientData.phone || '',
           cpf: currentCpf,
-          dateOfBirth: patientData.dateOfBirth ? patientData.dateOfBirth.split('T')[0] : '','
+          dateOfBirth: patientData.dateOfBirth ? patientData.dateOfBirth.split('T')[0] : '',
           gender: patientData.gender || '',
           status: patientData.status || 'ACTIVE',
           emergencyContactName: patientData.patientProfile?.emergencyContactName || '',

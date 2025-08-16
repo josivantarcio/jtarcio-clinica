@@ -17,6 +17,7 @@ export async function registerRoutes(fastify: FastifyInstance): Promise<void> {
   // Register all route modules
   await fastify.register(authRoutes, { prefix: `${apiPrefix}/auth` });
   await fastify.register(userRoutes, { prefix: `${apiPrefix}/users` });
+  await fastify.register(userRoutes, { prefix: `${apiPrefix}` }); // For /doctors endpoint
   await fastify.register(appointmentRoutes, { prefix: `${apiPrefix}/appointments` });
   await fastify.register(specialtyRoutes, { prefix: `${apiPrefix}/specialties` });
   await fastify.register(availabilityRoutes, { prefix: `${apiPrefix}/availability` });
@@ -48,6 +49,7 @@ export async function registerRoutes(fastify: FastifyInstance): Promise<void> {
       endpoints: [
         `${apiPrefix}/auth`,
         `${apiPrefix}/users`,
+        `${apiPrefix}/doctors`,
         `${apiPrefix}/appointments`,
         `${apiPrefix}/specialties`,
         `${apiPrefix}/availability`,

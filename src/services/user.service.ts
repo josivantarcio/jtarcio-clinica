@@ -1,5 +1,7 @@
 import { PrismaClient, UserRole, UserStatus, Prisma } from '@prisma/client';
 import { logger } from '@/config/logger';
+import bcrypt from 'bcryptjs';
+import { env } from '@/config/env';
 
 export class UserService {
   private prisma: PrismaClient;
@@ -291,6 +293,84 @@ export class UserService {
       };
     } catch (error) {
       logger.error(`Error fetching appointments for user ${userId}:`, error);
+      throw error;
+    }
+  }
+
+  async createDoctor(doctorData: {
+    user: {
+      firstName: string;
+      lastName: string;
+      email: string;
+      password: string;
+      role: string;
+    };
+    crm: string;
+    phone?: string;
+    cpf?: string;
+    specialtyId: string;
+    subSpecialties?: string[];
+    graduationDate: string;
+    crmRegistrationDate?: string;
+    education?: string;
+    bio?: string;
+    consultationFee?: string;
+  }) {
+    try {
+      logger.info(`Creating doctor: ${doctorData.user.email}`);
+
+      // Hash the password
+      const hashedPassword = await bcrypt.hash(doctorData.user.password, env.SALT_ROUNDS);
+
+      // Calculate experience based on graduation date
+      const graduationDate = new Date(doctorData.graduationDate);
+      const currentDate = new Date();
+      const experience = Math.floor((currentDate.getTime() - graduationDate.getTime()) / (1000 * 60 * 60 * 24 * 365));
+
+      // Create user and doctor profile in a transaction
+      const result = await this.prisma.$transaction(async (prisma) => {
+        // Create user
+        const user = await prisma.user.create({
+          data: {
+            firstName: doctorData.user.firstName,
+            lastName: doctorData.user.lastName,
+            fullName: `${doctorData.user.firstName} ${doctorData.user.lastName}`,
+            email: doctorData.user.email,
+            password: hashedPassword,
+            phone: doctorData.phone,
+            cpf: doctorData.cpf,
+            role: 'DOCTOR',
+            status: 'ACTIVE', // Set as active by default
+          },
+        });
+
+        // Create doctor profile
+        const doctorProfile = await prisma.doctor.create({
+          data: {
+            userId: user.id,
+            crm: doctorData.crm,
+            specialtyId: doctorData.specialtyId,
+            subSpecialties: doctorData.subSpecialties || [],
+            biography: doctorData.bio || '',
+            graduationDate: graduationDate,
+            crmRegistrationDate: doctorData.crmRegistrationDate ? new Date(doctorData.crmRegistrationDate) : null,
+            experience: experience,
+            consultationFee: doctorData.consultationFee || '0',
+            consultationDuration: 30, // Default 30 minutes
+            isActive: true,
+            acceptsNewPatients: true,
+          },
+        });
+
+        return { user, doctorProfile };
+      });
+
+      logger.info(`Doctor created successfully: ${result.user.email} (${result.doctorProfile.crm})`);
+
+      // Return user with doctor profile
+      return await this.findById(result.user.id);
+    } catch (error) {
+      logger.error(`Error creating doctor:`, error);
       throw error;
     }
   }
