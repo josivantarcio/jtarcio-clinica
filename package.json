@@ -10,6 +10,7 @@
     "dev": "tsx watch src/index.ts",
     "build": "echo 'Using tsx in production'",
     "start": "tsx src/index-simple.ts",
+    "start:stable": "tsx --no-watch src/index-simple.ts",
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",
     "db:studio": "prisma studio",
