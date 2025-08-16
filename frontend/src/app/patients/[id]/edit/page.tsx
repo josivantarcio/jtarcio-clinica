@@ -27,6 +27,7 @@ import {
 } from 'lucide-react'
 import { apiClient } from '@/lib/api'
 import { toast } from 'sonner'
+import { formatDateForInput, formatDateForAPI } from '@/lib/date-utils'
 import { validateCPF, formatCPF, cleanCPF } from '@/lib/cpf-validation'
 
 interface PatientData {
@@ -130,7 +131,7 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
           email: patientData.email || '',
           phone: patientData.phone || '',
           cpf: currentCpf,
-          dateOfBirth: patientData.dateOfBirth ? patientData.dateOfBirth.split('T')[0] : '',
+          dateOfBirth: formatDateForInput(patientData.dateOfBirth),
           gender: patientData.gender || '',
           status: patientData.status || 'ACTIVE',
           emergencyContactName: patientData.patientProfile?.emergencyContactName || '',
@@ -184,7 +185,7 @@ export default function EditPatientPage({ params }: { params: Promise<{ id: stri
         email: formData.email,
         phone: formData.phone,
         cpf: formData.cpf ? cleanCPF(formData.cpf) : null,
-        dateOfBirth: formData.dateOfBirth ? new Date(formData.dateOfBirth).toISOString() : null,
+        dateOfBirth: formData.dateOfBirth ? formatDateForAPI(formData.dateOfBirth) : null,
         gender: formData.gender,
         status: formData.status,
         // Adicionar dados do perfil de paciente

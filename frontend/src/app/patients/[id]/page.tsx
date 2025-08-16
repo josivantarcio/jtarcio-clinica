@@ -27,6 +27,7 @@ import {
 } from 'lucide-react'
 import { apiClient } from '@/lib/api'
 import { toast } from 'sonner'
+import { formatDateForDisplay, parseDateFromAPI } from '@/lib/date-utils'
 
 interface PatientData {
   id: string
@@ -153,7 +154,9 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
 
   const calculateAge = (birthDate: string) => {
     const today = new Date()
-    const birth = new Date(birthDate)
+    const birth = parseDateFromAPI(birthDate)
+    if (!birth) return 0
+    
     let age = today.getFullYear() - birth.getFullYear()
     const monthDiff = today.getMonth() - birth.getMonth()
     
@@ -263,7 +266,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                     <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
                     <span>
                       {patient.dateOfBirth 
-                        ? `${calculateAge(patient.dateOfBirth)} anos (${new Date(patient.dateOfBirth).toLocaleDateString('pt-BR')})`
+                        ? `${calculateAge(patient.dateOfBirth)} anos (${formatDateForDisplay(patient.dateOfBirth)})`
                         : 'Data não informada'
                       }
                     </span>
