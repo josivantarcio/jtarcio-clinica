@@ -24,9 +24,12 @@ export interface WebhookResponse {
 abstract class BaseWebhookHandler {
   abstract handle(payload: WebhookPayload): Promise<WebhookResponse>;
 
-  protected validatePayload(payload: WebhookPayload, requiredFields: string[]): string[] {
+  protected validatePayload(
+    payload: WebhookPayload,
+    requiredFields: string[],
+  ): string[] {
     const errors: string[] = [];
-    
+
     for (const field of requiredFields) {
       if (!payload[field]) {
         errors.push(`Missing required field: ${field}`);
@@ -36,11 +39,14 @@ abstract class BaseWebhookHandler {
     return errors;
   }
 
-  protected async triggerWorkflow(workflowName: string, data: any): Promise<any> {
+  protected async triggerWorkflow(
+    workflowName: string,
+    data: any,
+  ): Promise<any> {
     try {
       const workflows = await workflowManager.listWorkflows(true);
       const targetWorkflow = workflows.find(w => w.name === workflowName);
-      
+
       if (!targetWorkflow) {
         throw new Error(`Workflow not found: ${workflowName}`);
       }
@@ -62,12 +68,15 @@ export class GoogleCalendarWebhookHandler extends BaseWebhookHandler {
     try {
       logger.info('Processing Google Calendar webhook', payload);
 
-      const errors = this.validatePayload(payload, ['resourceId', 'resourceUri']);
+      const errors = this.validatePayload(payload, [
+        'resourceId',
+        'resourceUri',
+      ]);
       if (errors.length > 0) {
         return {
           success: false,
           message: 'Invalid payload',
-          errors
+          errors,
         };
       }
 
@@ -78,29 +87,33 @@ export class GoogleCalendarWebhookHandler extends BaseWebhookHandler {
         channelId: payload.channelId,
         channelToken: payload.channelToken,
         changeType: this.determineChangeType(payload),
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
 
       // Trigger calendar sync workflow
-      const result = await this.triggerWorkflow('google-calendar-sync', calendarChange);
+      const result = await this.triggerWorkflow(
+        'google-calendar-sync',
+        calendarChange,
+      );
 
       return {
         success: true,
         message: 'Calendar webhook processed successfully',
-        data: { executionId: result.id }
+        data: { executionId: result.id },
       };
-
     } catch (error) {
       logger.error('Google Calendar webhook processing failed', error);
       return {
         success: false,
         message: 'Webhook processing failed',
-        errors: [error.message]
+        errors: [error.message],
       };
     }
   }
 
-  private determineChangeType(payload: WebhookPayload): 'created' | 'updated' | 'deleted' | 'unknown' {
+  private determineChangeType(
+    payload: WebhookPayload,
+  ): 'created' | 'updated' | 'deleted' | 'unknown' {
     // Google Calendar doesn't provide explicit change type, so we need to detect it
     if (payload.eventType === 'created') return 'created';
     if (payload.eventType === 'deleted') return 'deleted';
@@ -123,7 +136,7 @@ export class WhatsAppWebhookHandler extends BaseWebhookHandler {
         return {
           success: false,
           message: 'Invalid WhatsApp webhook payload',
-          errors
+          errors,
         };
       }
 
@@ -136,7 +149,10 @@ export class WhatsAppWebhookHandler extends BaseWebhookHandler {
             if (change.field === 'messages' && change.value.messages) {
               // Process incoming messages
               for (const message of change.value.messages) {
-                const response = await this.processWhatsAppMessage(message, change.value);
+                const response = await this.processWhatsAppMessage(
+                  message,
+                  change.value,
+                );
                 responses.push(response);
               }
             }
@@ -152,20 +168,22 @@ export class WhatsAppWebhookHandler extends BaseWebhookHandler {
       return {
         success: true,
         message: 'WhatsApp webhook processed successfully',
-        data: { responses }
+        data: { responses },
       };
-
     } catch (error) {
       logger.error('WhatsApp webhook processing failed', error);
       return {
         success: false,
         message: 'WhatsApp webhook processing failed',
-        errors: [error.message]
+        errors: [error.message],
       };
     }
   }
 
-  private async processWhatsAppMessage(message: any, context: any): Promise<any> {
+  private async processWhatsAppMessage(
+    message: any,
+    context: any,
+  ): Promise<any> {
     const messageData = {
       messageId: message.id,
       from: message.from,
@@ -174,13 +192,16 @@ export class WhatsAppWebhookHandler extends BaseWebhookHandler {
       text: message.text?.body,
       interactive: message.interactive,
       context: context.metadata,
-      contacts: context.contacts
+      contacts: context.contacts,
     };
 
     // Determine message type and trigger appropriate workflow
     if (message.type === 'interactive') {
       // Handle button/menu interactions
-      return await this.triggerWorkflow('whatsapp-interactive-response', messageData);
+      return await this.triggerWorkflow(
+        'whatsapp-interactive-response',
+        messageData,
+      );
     } else if (message.type === 'text') {
       // Handle text messages (confirmations, etc.)
       return await this.triggerWorkflow('whatsapp-text-response', messageData);
@@ -209,7 +230,7 @@ export class PaymentWebhookHandler extends BaseWebhookHandler {
         return {
           success: false,
           message: 'Invalid payment webhook payload',
-          errors
+          errors,
         };
       }
 
@@ -220,7 +241,7 @@ export class PaymentWebhookHandler extends BaseWebhookHandler {
         currency: payload.currency,
         patientId: payload.metadata?.patient_id,
         appointmentId: payload.metadata?.appointment_id,
-        timestamp: payload.created || new Date().toISOString()
+        timestamp: payload.created || new Date().toISOString(),
       };
 
       // Trigger payment processing workflow
@@ -229,15 +250,14 @@ export class PaymentWebhookHandler extends BaseWebhookHandler {
       return {
         success: true,
         message: 'Payment webhook processed successfully',
-        data: { executionId: result.id }
+        data: { executionId: result.id },
       };
-
     } catch (error) {
       logger.error('Payment webhook processing failed', error);
       return {
         success: false,
         message: 'Payment webhook processing failed',
-        errors: [error.message]
+        errors: [error.message],
       };
     }
   }
@@ -257,7 +277,7 @@ export class AppointmentConfirmationWebhookHandler extends BaseWebhookHandler {
         return {
           success: false,
           message: 'Invalid confirmation webhook payload',
-          errors
+          errors,
         };
       }
 
@@ -268,7 +288,7 @@ export class AppointmentConfirmationWebhookHandler extends BaseWebhookHandler {
         confirmationCode: payload.confirmationCode,
         source: payload.source || 'external',
         timestamp: new Date().toISOString(),
-        additionalData: payload.additionalData || {}
+        additionalData: payload.additionalData || {},
       };
 
       let workflowName: string;
@@ -291,15 +311,14 @@ export class AppointmentConfirmationWebhookHandler extends BaseWebhookHandler {
       return {
         success: true,
         message: 'Appointment confirmation processed successfully',
-        data: { executionId: result.id, action: payload.action }
+        data: { executionId: result.id, action: payload.action },
       };
-
     } catch (error) {
       logger.error('Appointment confirmation webhook processing failed', error);
       return {
         success: false,
         message: 'Appointment confirmation processing failed',
-        errors: [error.message]
+        errors: [error.message],
       };
     }
   }
@@ -319,18 +338,24 @@ export class WebhookRouter {
     this.handlers.set('google-calendar', new GoogleCalendarWebhookHandler());
     this.handlers.set('whatsapp', new WhatsAppWebhookHandler());
     this.handlers.set('payment', new PaymentWebhookHandler());
-    this.handlers.set('appointment-confirmation', new AppointmentConfirmationWebhookHandler());
+    this.handlers.set(
+      'appointment-confirmation',
+      new AppointmentConfirmationWebhookHandler(),
+    );
   }
 
-  async handleWebhook(type: string, payload: WebhookPayload): Promise<WebhookResponse> {
+  async handleWebhook(
+    type: string,
+    payload: WebhookPayload,
+  ): Promise<WebhookResponse> {
     const handler = this.handlers.get(type);
-    
+
     if (!handler) {
       logger.error('Unknown webhook type', { type });
       return {
         success: false,
         message: `Unknown webhook type: ${type}`,
-        errors: ['Unsupported webhook type']
+        errors: ['Unsupported webhook type'],
       };
     }
 
@@ -356,7 +381,7 @@ export const createWebhookMiddleware = (webhookRouter: WebhookRouter) => {
         type: webhookType,
         method: req.method,
         headers: req.headers,
-        ip: req.ip
+        ip: req.ip,
       });
 
       // Verify webhook signature if needed
@@ -368,13 +393,12 @@ export const createWebhookMiddleware = (webhookRouter: WebhookRouter) => {
       // Send response
       const statusCode = result.success ? 200 : 400;
       res.status(statusCode).json(result);
-
     } catch (error) {
       logger.error('Webhook middleware error', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error',
-        errors: [error.message]
+        errors: [error.message],
       });
     }
   };
@@ -383,7 +407,10 @@ export const createWebhookMiddleware = (webhookRouter: WebhookRouter) => {
 /**
  * Verify webhook signatures for security
  */
-async function verifyWebhookSignature(req: Request, webhookType: string): Promise<void> {
+async function verifyWebhookSignature(
+  req: Request,
+  webhookType: string,
+): Promise<void> {
   // Implementation depends on the webhook provider
   switch (webhookType) {
     case 'whatsapp':
@@ -399,7 +426,7 @@ async function verifyWebhookSignature(req: Request, webhookType: string): Promis
 async function verifyWhatsAppSignature(req: Request): Promise<void> {
   const signature = req.get('X-Hub-Signature-256');
   const verifyToken = process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN;
-  
+
   if (!signature || !verifyToken) {
     throw new Error('Missing WhatsApp webhook signature or verify token');
   }
@@ -409,8 +436,9 @@ async function verifyWhatsAppSignature(req: Request): Promise<void> {
 }
 
 async function verifyPaymentSignature(req: Request): Promise<void> {
-  const signature = req.get('Stripe-Signature') || req.get('X-Payment-Signature');
-  
+  const signature =
+    req.get('Stripe-Signature') || req.get('X-Payment-Signature');
+
   if (!signature) {
     throw new Error('Missing payment webhook signature');
   }

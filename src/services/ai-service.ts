@@ -1,6 +1,6 @@
 /**
  * AI Service Integration Layer
- * 
+ *
  * This service provides a unified interface to all AI capabilities
  * for the medical clinic system, including conversation management,
  * appointment booking assistance, and medical knowledge access.
@@ -16,7 +16,7 @@ import {
   ConversationManager,
   Intent,
   StreamingConversationResponse,
-  AIUtils
+  AIUtils,
 } from '../integrations/ai/index.js';
 
 export interface AIServiceConfig {
@@ -87,7 +87,7 @@ export class AIService {
     this.prisma = prisma;
     this.redis = redis;
     this.aiFactory = AIServiceFactory.getInstance();
-    
+
     this.config = {
       enableAI: env.ENABLE_AI_INTEGRATION,
       anthropicApiKey: env.ANTHROPIC_API_KEY,
@@ -96,8 +96,8 @@ export class AIService {
       rateLimiting: {
         messagesPerMinute: 30,
         streamingPerMinute: 20,
-        batchPerFiveMinutes: 5
-      }
+        batchPerFiveMinutes: 5,
+      },
     };
   }
 
@@ -121,16 +121,20 @@ export class AIService {
       this.validateConfiguration();
 
       // Initialize AI services
-      this.conversationManager = await this.aiFactory.initialize(this.prisma, this.redis);
+      this.conversationManager = await this.aiFactory.initialize(
+        this.prisma,
+        this.redis,
+      );
 
       this.initialized = true;
       logger.info('AI Service initialized successfully');
-
     } catch (error) {
       logger.error('Failed to initialize AI Service', {
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
-      throw new Error(`AI Service initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `AI Service initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   }
 
@@ -143,7 +147,7 @@ export class AIService {
       if (!this.config.enableAI || !this.conversationManager) {
         return {
           success: false,
-          error: 'AI service is not available'
+          error: 'AI service is not available',
         };
       }
 
@@ -152,17 +156,20 @@ export class AIService {
       if (!validation.valid) {
         return {
           success: false,
-          error: validation.error
+          error: validation.error,
         };
       }
 
       // Check rate limits
-      const rateLimitCheck = await this.checkRateLimit(request.userId, 'message');
+      const rateLimitCheck = await this.checkRateLimit(
+        request.userId,
+        'message',
+      );
       if (!rateLimitCheck.allowed) {
         return {
           success: false,
           error: 'Rate limit exceeded. Please try again later.',
-          rateLimited: true
+          rateLimited: true,
         };
       }
 
@@ -171,17 +178,18 @@ export class AIService {
         request.userId,
         request.message,
         request.sessionId,
-        request.conversationId
+        request.conversationId,
       );
 
       // Generate session ID if not provided
-      const sessionId = request.sessionId || `session_${Date.now()}_${request.userId}`;
+      const sessionId =
+        request.sessionId || `session_${Date.now()}_${request.userId}`;
 
       logger.info('Message processed successfully', {
         userId: request.userId,
         sessionId,
         intent: response.intent,
-        confidence: response.confidence
+        confidence: response.confidence,
       });
 
       return {
@@ -195,19 +203,18 @@ export class AIService {
           nextSteps: response.nextSteps,
           isCompleted: response.isCompleted,
           requiresInput: response.requiresInput,
-          metadata: response.data
-        }
+          metadata: response.data,
+        },
       };
-
     } catch (error) {
       logger.error('Error processing chat message', {
         userId: request.userId,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
 
       return {
         success: false,
-        error: 'Failed to process message. Please try again.'
+        error: 'Failed to process message. Please try again.',
       };
     }
   }
@@ -215,13 +222,15 @@ export class AIService {
   /**
    * Process message with streaming response
    */
-  async processMessageStreaming(request: ChatRequest): Promise<StreamingChatResponse> {
+  async processMessageStreaming(
+    request: ChatRequest,
+  ): Promise<StreamingChatResponse> {
     try {
       // Check if AI is enabled
       if (!this.config.enableAI || !this.conversationManager) {
         return {
           success: false,
-          error: 'AI service is not available'
+          error: 'AI service is not available',
         };
       }
 
@@ -230,50 +239,53 @@ export class AIService {
       if (!validation.valid) {
         return {
           success: false,
-          error: validation.error
+          error: validation.error,
         };
       }
 
       // Check rate limits
-      const rateLimitCheck = await this.checkRateLimit(request.userId, 'streaming');
+      const rateLimitCheck = await this.checkRateLimit(
+        request.userId,
+        'streaming',
+      );
       if (!rateLimitCheck.allowed) {
         return {
           success: false,
           error: 'Streaming rate limit exceeded. Please try again later.',
-          rateLimited: true
+          rateLimited: true,
         };
       }
 
       // Generate session ID if not provided
-      const sessionId = request.sessionId || `session_${Date.now()}_${request.userId}`;
+      const sessionId =
+        request.sessionId || `session_${Date.now()}_${request.userId}`;
 
       // Create streaming response
       const stream = this.conversationManager.processMessageStreaming(
         request.userId,
         request.message,
         sessionId,
-        request.conversationId
+        request.conversationId,
       );
 
       logger.info('Streaming message processing started', {
         userId: request.userId,
-        sessionId
+        sessionId,
       });
 
       return {
         success: true,
-        stream
+        stream,
       };
-
     } catch (error) {
       logger.error('Error processing streaming message', {
         userId: request.userId,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
 
       return {
         success: false,
-        error: 'Failed to process streaming message. Please try again.'
+        error: 'Failed to process streaming message. Please try again.',
       };
     }
   }
@@ -284,7 +296,7 @@ export class AIService {
   async getConversationHistory(
     userId: string,
     conversationId?: string,
-    limit: number = 20
+    limit: number = 20,
   ): Promise<{
     success: boolean;
     data?: {
@@ -303,14 +315,14 @@ export class AIService {
       const conversation = await this.prisma.conversation.findFirst({
         where: {
           userId,
-          ...(conversationId && { id: conversationId })
+          ...(conversationId && { id: conversationId }),
         },
         include: {
           messages: {
             orderBy: { createdAt: 'asc' },
-            take: limit
-          }
-        }
+            take: limit,
+          },
+        },
       });
 
       if (!conversation) {
@@ -318,8 +330,8 @@ export class AIService {
           success: true,
           data: {
             messages: [],
-            totalCount: 0
-          }
+            totalCount: 0,
+          },
         };
       }
 
@@ -331,22 +343,21 @@ export class AIService {
             id: msg.id,
             content: msg.content,
             role: msg.role,
-            createdAt: msg.createdAt
+            createdAt: msg.createdAt,
           })),
-          totalCount: conversation.messages.length
-        }
+          totalCount: conversation.messages.length,
+        },
       };
-
     } catch (error) {
       logger.error('Error getting conversation history', {
         userId,
         conversationId,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
 
       return {
         success: false,
-        error: 'Failed to get conversation history'
+        error: 'Failed to get conversation history',
       };
     }
   }
@@ -370,8 +381,8 @@ export class AIService {
           title: 'Nova Conversa',
           summary: null,
           isCompleted: false,
-          aiContext: {}
-        }
+          aiContext: {},
+        },
       });
 
       const sessionId = `session_${Date.now()}_${userId}`;
@@ -379,7 +390,7 @@ export class AIService {
       logger.info('New conversation created', {
         userId,
         conversationId: conversation.id,
-        sessionId
+        sessionId,
       });
 
       return {
@@ -387,19 +398,18 @@ export class AIService {
         data: {
           conversationId: conversation.id,
           sessionId,
-          createdAt: conversation.createdAt
-        }
+          createdAt: conversation.createdAt,
+        },
       };
-
     } catch (error) {
       logger.error('Error creating conversation', {
         userId,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
 
       return {
         success: false,
-        error: 'Failed to create conversation'
+        error: 'Failed to create conversation',
       };
     }
   }
@@ -423,10 +433,10 @@ export class AIService {
           services: {
             anthropic: false,
             chromadb: false,
-            conversationManager: false
+            conversationManager: false,
           },
           initialized: false,
-          lastCheck: now
+          lastCheck: now,
         };
       }
 
@@ -439,15 +449,14 @@ export class AIService {
         services: {
           anthropic: health.services.anthropic,
           chromadb: health.services.chromadb,
-          conversationManager: health.services.conversationManager
+          conversationManager: health.services.conversationManager,
         },
         initialized: health.initialized,
-        lastCheck: now
+        lastCheck: now,
       };
-
     } catch (error) {
       logger.error('Health check failed', {
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
 
       return {
@@ -455,10 +464,10 @@ export class AIService {
         services: {
           anthropic: false,
           chromadb: false,
-          conversationManager: false
+          conversationManager: false,
         },
         initialized: this.initialized,
-        lastCheck: now
+        lastCheck: now,
       };
     }
   }
@@ -475,7 +484,7 @@ export class AIService {
       if (!this.conversationManager) {
         return {
           success: false,
-          error: 'AI service not initialized'
+          error: 'AI service not initialized',
         };
       }
 
@@ -491,20 +500,19 @@ export class AIService {
           database: dbStats,
           config: {
             enabled: this.config.enableAI,
-            initialized: this.initialized
+            initialized: this.initialized,
           },
-          timestamp: new Date().toISOString()
-        }
+          timestamp: new Date().toISOString(),
+        },
       };
-
     } catch (error) {
       logger.error('Error getting AI stats', {
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
 
       return {
         success: false,
-        error: 'Failed to get statistics'
+        error: 'Failed to get statistics',
       };
     }
   }
@@ -512,7 +520,10 @@ export class AIService {
   /**
    * Clear conversation context
    */
-  async clearContext(userId: string, sessionId: string): Promise<{
+  async clearContext(
+    userId: string,
+    sessionId: string,
+  ): Promise<{
     success: boolean;
     error?: string;
   }> {
@@ -523,17 +534,16 @@ export class AIService {
       logger.info('Conversation context cleared', { userId, sessionId });
 
       return { success: true };
-
     } catch (error) {
       logger.error('Error clearing context', {
         userId,
         sessionId,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
 
       return {
         success: false,
-        error: 'Failed to clear context'
+        error: 'Failed to clear context',
       };
     }
   }
@@ -552,7 +562,7 @@ export class AIService {
       logger.info('AI Service shutdown completed');
     } catch (error) {
       logger.error('Error during AI Service shutdown', {
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   }
@@ -572,12 +582,15 @@ export class AIService {
 
   private async checkRateLimit(
     userId: string,
-    type: 'message' | 'streaming' | 'batch'
+    type: 'message' | 'streaming' | 'batch',
   ): Promise<{ allowed: boolean; remaining: number }> {
     const limits = {
       message: { window: 60, max: this.config.rateLimiting.messagesPerMinute },
-      streaming: { window: 60, max: this.config.rateLimiting.streamingPerMinute },
-      batch: { window: 300, max: this.config.rateLimiting.batchPerFiveMinutes }
+      streaming: {
+        window: 60,
+        max: this.config.rateLimiting.streamingPerMinute,
+      },
+      batch: { window: 300, max: this.config.rateLimiting.batchPerFiveMinutes },
     };
 
     const limit = limits[type];
@@ -590,7 +603,7 @@ export class AIService {
 
     return {
       allowed: current <= limit.max,
-      remaining: Math.max(0, limit.max - current)
+      remaining: Math.max(0, limit.max - current),
     };
   }
 
@@ -600,30 +613,34 @@ export class AIService {
       services: {
         anthropic: this.initialized,
         chromadb: this.initialized,
-        conversationManager: this.initialized
+        conversationManager: this.initialized,
       },
       initialized: this.initialized,
-      lastCheck: this.lastHealthCheck
+      lastCheck: this.lastHealthCheck,
     };
   }
 
-  private async getDatabaseStats(userId?: string): Promise<Record<string, any>> {
+  private async getDatabaseStats(
+    userId?: string,
+  ): Promise<Record<string, any>> {
     try {
       const [conversationCount, messageCount] = await Promise.all([
         this.prisma.conversation.count({
-          where: userId ? { userId } : undefined
+          where: userId ? { userId } : undefined,
         }),
         this.prisma.message.count({
-          where: userId ? { 
-            conversation: { userId }
-          } : undefined
-        })
+          where: userId
+            ? {
+                conversation: { userId },
+              }
+            : undefined,
+        }),
       ]);
 
       return {
         conversations: conversationCount,
         messages: messageCount,
-        ...(userId && { userSpecific: true })
+        ...(userId && { userSpecific: true }),
       };
     } catch (error) {
       logger.error('Error getting database stats', { error });
@@ -644,7 +661,9 @@ export class AIService {
    * Check if AI service is ready
    */
   isReady(): boolean {
-    return this.initialized && this.config.enableAI && !!this.conversationManager;
+    return (
+      this.initialized && this.config.enableAI && !!this.conversationManager
+    );
   }
 }
 

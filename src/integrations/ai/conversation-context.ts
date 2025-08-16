@@ -41,32 +41,32 @@ export interface ConversationContext {
   userId: string;
   sessionId: string;
   conversationId?: string;
-  
+
   // Current state
   currentIntent: Intent;
   currentStep: string;
   isCompleted: boolean;
-  
+
   // Message history
   conversationHistory: ConversationMessage[];
-  
+
   // Extracted data
   extractedEntities: ExtractedEntities[];
   slotsFilled: SlotMap;
-  
+
   // Conversation flow
   flowState: string;
   nextExpectedInput: string[];
-  
+
   // Metadata
   createdAt: Date;
   updatedAt: Date;
   lastActivity: Date;
-  
+
   // Context for AI
   conversationSummary?: string;
   patientContext?: any; // Previous appointments, preferences, etc.
-  
+
   // Error handling
   errorCount: number;
   clarificationCount: number;
@@ -87,7 +87,7 @@ export class ConversationContextManager {
   async createContext(
     userId: string,
     sessionId: string,
-    initialIntent: Intent = Intent.UNKNOWN
+    initialIntent: Intent = Intent.UNKNOWN,
   ): Promise<ConversationContext> {
     const context: ConversationContext = {
       userId,
@@ -104,15 +104,15 @@ export class ConversationContextManager {
       updatedAt: new Date(),
       lastActivity: new Date(),
       errorCount: 0,
-      clarificationCount: 0
+      clarificationCount: 0,
     };
 
     await this.saveContext(context);
-    
+
     logger.info('Created new conversation context', {
       userId,
       sessionId,
-      initialIntent
+      initialIntent,
     });
 
     return context;
@@ -121,17 +121,20 @@ export class ConversationContextManager {
   /**
    * Get existing conversation context
    */
-  async getContext(userId: string, sessionId: string): Promise<ConversationContext | null> {
+  async getContext(
+    userId: string,
+    sessionId: string,
+  ): Promise<ConversationContext | null> {
     try {
       const key = this.getContextKey(userId, sessionId);
       const contextData = await this.redis.get(key);
-      
+
       if (!contextData) {
         return null;
       }
 
       const context = JSON.parse(contextData) as ConversationContext;
-      
+
       // Convert date strings back to Date objects
       context.createdAt = new Date(context.createdAt);
       context.updatedAt = new Date(context.updatedAt);
@@ -145,7 +148,7 @@ export class ConversationContextManager {
       logger.error('Failed to get conversation context', {
         userId,
         sessionId,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
       return null;
     }
@@ -156,13 +159,13 @@ export class ConversationContextManager {
    */
   async updateContext(
     context: ConversationContext,
-    updates: Partial<ConversationContext>
+    updates: Partial<ConversationContext>,
   ): Promise<ConversationContext> {
     const updatedContext = {
       ...context,
       ...updates,
       updatedAt: new Date(),
-      lastActivity: new Date()
+      lastActivity: new Date(),
     };
 
     await this.saveContext(updatedContext);
@@ -170,7 +173,7 @@ export class ConversationContextManager {
     logger.debug('Updated conversation context', {
       userId: context.userId,
       sessionId: context.sessionId,
-      updates: Object.keys(updates)
+      updates: Object.keys(updates),
     });
 
     return updatedContext;
@@ -181,17 +184,17 @@ export class ConversationContextManager {
    */
   async addMessage(
     context: ConversationContext,
-    message: ConversationMessage
+    message: ConversationMessage,
   ): Promise<ConversationContext> {
     const updatedHistory = [...context.conversationHistory, message];
-    
+
     // Trim history if too long
     if (updatedHistory.length > this.maxHistoryLength) {
       updatedHistory.splice(0, updatedHistory.length - this.maxHistoryLength);
     }
 
     return await this.updateContext(context, {
-      conversationHistory: updatedHistory
+      conversationHistory: updatedHistory,
     });
   }
 
@@ -201,7 +204,7 @@ export class ConversationContextManager {
   async updateSlots(
     context: ConversationContext,
     entities: ExtractedEntities,
-    confidence: number = 0.8
+    confidence: number = 0.8,
   ): Promise<ConversationContext> {
     const updatedSlots = { ...context.slotsFilled };
     const timestamp = new Date();
@@ -212,7 +215,7 @@ export class ConversationContextManager {
         value: entities.pessoa.nome,
         confidence,
         extractedAt: timestamp,
-        confirmed: false
+        confirmed: false,
       };
     }
 
@@ -221,7 +224,7 @@ export class ConversationContextManager {
         value: entities.pessoa.nomeCompleto,
         confidence,
         extractedAt: timestamp,
-        confirmed: false
+        confirmed: false,
       };
     }
 
@@ -230,7 +233,7 @@ export class ConversationContextManager {
         value: entities.documento.cpf,
         confidence,
         extractedAt: timestamp,
-        confirmed: false
+        confirmed: false,
       };
     }
 
@@ -239,7 +242,7 @@ export class ConversationContextManager {
         value: entities.contato.telefone,
         confidence,
         extractedAt: timestamp,
-        confirmed: false
+        confirmed: false,
       };
     }
 
@@ -248,7 +251,7 @@ export class ConversationContextManager {
         value: entities.contato.email,
         confidence,
         extractedAt: timestamp,
-        confirmed: false
+        confirmed: false,
       };
     }
 
@@ -257,7 +260,7 @@ export class ConversationContextManager {
         value: entities.especialidade[0],
         confidence,
         extractedAt: timestamp,
-        confirmed: false
+        confirmed: false,
       };
     }
 
@@ -266,7 +269,7 @@ export class ConversationContextManager {
         value: entities.temporal.data,
         confidence,
         extractedAt: timestamp,
-        confirmed: false
+        confirmed: false,
       };
     }
 
@@ -275,7 +278,7 @@ export class ConversationContextManager {
         value: entities.temporal.horario,
         confidence,
         extractedAt: timestamp,
-        confirmed: false
+        confirmed: false,
       };
     }
 
@@ -284,7 +287,7 @@ export class ConversationContextManager {
         value: entities.temporal.periodo,
         confidence,
         extractedAt: timestamp,
-        confirmed: false
+        confirmed: false,
       };
     }
 
@@ -293,7 +296,7 @@ export class ConversationContextManager {
         value: entities.sintoma,
         confidence,
         extractedAt: timestamp,
-        confirmed: false
+        confirmed: false,
       };
     }
 
@@ -302,7 +305,7 @@ export class ConversationContextManager {
         value: entities.urgencia.nivel,
         confidence,
         extractedAt: timestamp,
-        confirmed: false
+        confirmed: false,
       };
     }
 
@@ -311,13 +314,13 @@ export class ConversationContextManager {
         value: entities.agendamentoExistente.id,
         confidence,
         extractedAt: timestamp,
-        confirmed: false
+        confirmed: false,
       };
     }
 
     return await this.updateContext(context, {
       slotsFilled: updatedSlots,
-      extractedEntities: [...context.extractedEntities, entities]
+      extractedEntities: [...context.extractedEntities, entities],
     });
   }
 
@@ -326,16 +329,16 @@ export class ConversationContextManager {
    */
   async confirmSlot(
     context: ConversationContext,
-    slotName: keyof SlotMap
+    slotName: keyof SlotMap,
   ): Promise<ConversationContext> {
     const updatedSlots = { ...context.slotsFilled };
-    
+
     if (updatedSlots[slotName]) {
       updatedSlots[slotName]!.confirmed = true;
     }
 
     return await this.updateContext(context, {
-      slotsFilled: updatedSlots
+      slotsFilled: updatedSlots,
     });
   }
 
@@ -377,7 +380,7 @@ export class ConversationContextManager {
       .filter(([, slot]) => slot.confirmed)
       .map(([key, slot]) => `${key}: ${slot.value}`)
       .join(', ');
-    
+
     if (confirmedSlots) {
       summary.push(`Confirmed info: ${confirmedSlots}`);
     }
@@ -418,13 +421,15 @@ export class ConversationContextManager {
       }
 
       if (cleanedCount > 0) {
-        logger.info('Cleaned up expired conversation contexts', { count: cleanedCount });
+        logger.info('Cleaned up expired conversation contexts', {
+          count: cleanedCount,
+        });
       }
 
       return cleanedCount;
     } catch (error) {
       logger.error('Failed to cleanup expired contexts', {
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
       return 0;
     }
@@ -437,14 +442,14 @@ export class ConversationContextManager {
     try {
       const key = this.getContextKey(userId, sessionId);
       const result = await this.redis.del(key);
-      
+
       logger.info('Deleted conversation context', { userId, sessionId });
       return result > 0;
     } catch (error) {
       logger.error('Failed to delete conversation context', {
         userId,
         sessionId,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
       return false;
     }
@@ -455,11 +460,7 @@ export class ConversationContextManager {
    */
   private async saveContext(context: ConversationContext): Promise<void> {
     const key = this.getContextKey(context.userId, context.sessionId);
-    await this.redis.setex(
-      key,
-      this.contextTTL,
-      JSON.stringify(context)
-    );
+    await this.redis.setex(key, this.contextTTL, JSON.stringify(context));
   }
 
   /**
@@ -496,13 +497,13 @@ export class ConversationContextManager {
    */
   private getExpectedInputs(intent: Intent, step: string): string[] {
     const inputMap: Record<string, string[]> = {
-      'collecting_patient_info': ['name', 'cpf', 'phone', 'specialty'],
-      'collecting_appointment_details': ['date', 'time', 'symptoms'],
-      'identifying_appointment': ['appointment_id', 'date', 'doctor'],
-      'identifying_patient': ['name', 'cpf', 'phone'],
-      'assessing_emergency': ['symptoms', 'urgency_level'],
-      'providing_information': ['question_topic'],
-      'understanding_intent': ['user_intent']
+      collecting_patient_info: ['name', 'cpf', 'phone', 'specialty'],
+      collecting_appointment_details: ['date', 'time', 'symptoms'],
+      identifying_appointment: ['appointment_id', 'date', 'doctor'],
+      identifying_patient: ['name', 'cpf', 'phone'],
+      assessing_emergency: ['symptoms', 'urgency_level'],
+      providing_information: ['question_topic'],
+      understanding_intent: ['user_intent'],
     };
 
     return inputMap[step] || [];

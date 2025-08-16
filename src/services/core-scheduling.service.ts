@@ -1,19 +1,30 @@
-import { 
-  SchedulingCriteria, 
-  AvailableSlot, 
-  Conflict, 
-  ConflictType, 
+import {
+  SchedulingCriteria,
+  AvailableSlot,
+  Conflict,
+  ConflictType,
   ConflictSeverity,
   OptimizationResult,
   ScheduleSlot,
   ResolutionStrategy,
   ConflictResolution,
-  ConflictAction
+  ConflictAction,
 } from '@/types/scheduling';
 import { AppointmentType, AppointmentStatus } from '@/types/appointment';
-import { BusinessRules, SPECIALTY_CONFIG, APPOINTMENT_TYPE_CONFIG } from '@/config/business-rules';
+import {
+  BusinessRules,
+  SPECIALTY_CONFIG,
+  APPOINTMENT_TYPE_CONFIG,
+} from '@/config/business-rules';
 import { PrismaClient } from '../../database/generated/client';
-import { addMinutes, isWithinInterval, parseISO, format, isSameDay, differenceInMinutes } from 'date-fns';
+import {
+  addMinutes,
+  isWithinInterval,
+  parseISO,
+  format,
+  isSameDay,
+  differenceInMinutes,
+} from 'date-fns';
 import { Logger } from 'winston';
 import Redis from 'ioredis';
 
@@ -29,7 +40,9 @@ export class CoreSchedulingService {
   /**
    * Find available slots based on scheduling criteria
    */
-  async findAvailableSlots(criteria: SchedulingCriteria): Promise<AvailableSlot[]> {
+  async findAvailableSlots(
+    criteria: SchedulingCriteria,
+  ): Promise<AvailableSlot[]> {
     const { prisma, redis, logger } = this.deps;
 
     try {
@@ -37,29 +50,35 @@ export class CoreSchedulingService {
 
       // Get specialty configuration
       const specialty = await prisma.specialty.findUniqueOrThrow({
-        where: { id: criteria.specialtyId }
+        where: { id: criteria.specialtyId },
       });
 
       const specialtyConfig = BusinessRules.getSpecialtyConfig(specialty.name);
-      const typeConfig = BusinessRules.getAppointmentTypeConfig(criteria.appointmentType);
+      const typeConfig = BusinessRules.getAppointmentTypeConfig(
+        criteria.appointmentType,
+      );
 
       // Calculate effective duration including buffers
       const effectiveDuration = this.calculateEffectiveDuration(
         criteria.duration || specialtyConfig.duration,
         specialtyConfig.bufferTime,
-        typeConfig.bufferMultiplier
+        typeConfig.bufferMultiplier,
       );
 
       // Get doctors for the specialty
-      const doctors = criteria.doctorId 
-        ? [await prisma.doctor.findUniqueOrThrow({ where: { id: criteria.doctorId } })]
+      const doctors = criteria.doctorId
+        ? [
+            await prisma.doctor.findUniqueOrThrow({
+              where: { id: criteria.doctorId },
+            }),
+          ]
         : await prisma.doctor.findMany({
-            where: { 
+            where: {
               specialtyId: criteria.specialtyId,
               isActive: true,
-              acceptsNewPatients: true
+              acceptsNewPatients: true,
             },
-            include: { availability: true }
+            include: { availability: true },
           });
 
       // Generate time slots for each doctor
@@ -70,23 +89,29 @@ export class CoreSchedulingService {
           doctor,
           criteria,
           effectiveDuration,
-          specialtyConfig
+          specialtyConfig,
         );
         allSlots.push(...doctorSlots);
       }
 
       // Filter out conflicting slots
-      const availableSlots = await this.filterConflictingSlots(allSlots, criteria);
+      const availableSlots = await this.filterConflictingSlots(
+        allSlots,
+        criteria,
+      );
 
       // Score and sort slots by optimality
-      const scoredSlots = this.scoreSlots(availableSlots, criteria, specialtyConfig);
+      const scoredSlots = this.scoreSlots(
+        availableSlots,
+        criteria,
+        specialtyConfig,
+      );
 
       // Cache results for performance
       await this.cacheAvailabilityResults(criteria, scoredSlots);
 
       logger.info(`Found ${scoredSlots.length} available slots`);
       return scoredSlots.sort((a, b) => b.confidenceScore - a.confidenceScore);
-
     } catch (error) {
       logger.error('Error finding available slots', { error, criteria });
       throw error;
@@ -106,16 +131,20 @@ export class CoreSchedulingService {
         where: {
           doctorId: appointmentData.doctorId,
           scheduledAt: {
-            lte: appointmentData.endTime
+            lte: appointmentData.endTime,
           },
           endTime: {
-            gte: appointmentData.scheduledAt
+            gte: appointmentData.scheduledAt,
           },
           status: {
-            in: [AppointmentStatus.SCHEDULED, AppointmentStatus.CONFIRMED, AppointmentStatus.IN_PROGRESS]
+            in: [
+              AppointmentStatus.SCHEDULED,
+              AppointmentStatus.CONFIRMED,
+              AppointmentStatus.IN_PROGRESS,
+            ],
           },
-          id: { not: appointmentData.id }
-        }
+          id: { not: appointmentData.id },
+        },
       });
 
       if (overlappingAppointments.length > 0) {
@@ -126,12 +155,17 @@ export class CoreSchedulingService {
           description: 'Doctor has overlapping appointments',
           involvedAppointments: overlappingAppointments.map(a => a.id),
           autoResolvable: false,
-          createdAt: new Date()
+          createdAt: new Date(),
         });
       }
 
       // Check business hours
-      if (!this.isWithinBusinessHours(appointmentData.scheduledAt, appointmentData.endTime)) {
+      if (
+        !this.isWithinBusinessHours(
+          appointmentData.scheduledAt,
+          appointmentData.endTime,
+        )
+      ) {
         conflicts.push({
           id: `conflict-${Date.now()}-business-hours`,
           type: ConflictType.OUTSIDE_BUSINESS_HOURS,
@@ -144,15 +178,15 @@ export class CoreSchedulingService {
             strategy: ResolutionStrategy.AUTO_RESCHEDULE,
             suggestedActions: [],
             estimatedImpact: 0.2,
-            requiresApproval: false
-          }
+            requiresApproval: false,
+          },
         });
       }
 
       // Check doctor availability
       const doctor = await prisma.doctor.findUnique({
         where: { id: appointmentData.doctorId },
-        include: { availability: true }
+        include: { availability: true },
       });
 
       if (!doctor || !doctor.isActive) {
@@ -163,7 +197,7 @@ export class CoreSchedulingService {
           description: 'Doctor is not available',
           involvedAppointments: [appointmentData.id],
           autoResolvable: true,
-          createdAt: new Date()
+          createdAt: new Date(),
         });
       }
 
@@ -172,7 +206,6 @@ export class CoreSchedulingService {
       conflicts.push(...bufferConflicts);
 
       return conflicts;
-
     } catch (error) {
       logger.error('Error checking conflicts', { error, appointmentData });
       throw error;
@@ -182,7 +215,10 @@ export class CoreSchedulingService {
   /**
    * Optimize doctor's schedule for a specific date
    */
-  async optimizeSchedule(doctorId: string, date: Date): Promise<OptimizationResult> {
+  async optimizeSchedule(
+    doctorId: string,
+    date: Date,
+  ): Promise<OptimizationResult> {
     const { prisma, logger } = this.deps;
 
     try {
@@ -194,39 +230,48 @@ export class CoreSchedulingService {
           doctorId,
           scheduledAt: {
             gte: new Date(date.setHours(0, 0, 0, 0)),
-            lt: new Date(date.setHours(23, 59, 59, 999))
+            lt: new Date(date.setHours(23, 59, 59, 999)),
           },
           status: {
-            in: [AppointmentStatus.SCHEDULED, AppointmentStatus.CONFIRMED]
-          }
+            in: [AppointmentStatus.SCHEDULED, AppointmentStatus.CONFIRMED],
+          },
         },
         include: {
           specialty: true,
           patient: {
-            include: { user: true }
-          }
-        }
+            include: { user: true },
+          },
+        },
       });
 
       // Create current schedule representation
       const originalSchedule = this.createScheduleSlots(currentAppointments);
 
       // Apply optimization algorithms
-      const optimizedSchedule = await this.applyScheduleOptimization(originalSchedule, doctorId, date);
+      const optimizedSchedule = await this.applyScheduleOptimization(
+        originalSchedule,
+        doctorId,
+        date,
+      );
 
       // Calculate improvements
-      const improvements = this.calculateOptimizationImprovements(originalSchedule, optimizedSchedule);
+      const improvements = this.calculateOptimizationImprovements(
+        originalSchedule,
+        optimizedSchedule,
+      );
 
       // Generate change recommendations
-      const changes = this.generateScheduleChanges(originalSchedule, optimizedSchedule);
+      const changes = this.generateScheduleChanges(
+        originalSchedule,
+        optimizedSchedule,
+      );
 
       return {
         originalSchedule,
         optimizedSchedule,
         improvements,
-        changes
+        changes,
       };
-
     } catch (error) {
       logger.error('Error optimizing schedule', { error, doctorId, date });
       throw error;
@@ -252,9 +297,9 @@ export class CoreSchedulingService {
   // Private helper methods
 
   private calculateEffectiveDuration(
-    baseDuration: number, 
-    bufferTime: number, 
-    bufferMultiplier: number
+    baseDuration: number,
+    bufferTime: number,
+    bufferMultiplier: number,
   ): number {
     return baseDuration + Math.round(bufferTime * bufferMultiplier);
   }
@@ -263,7 +308,7 @@ export class CoreSchedulingService {
     doctor: any,
     criteria: SchedulingCriteria,
     effectiveDuration: number,
-    specialtyConfig: any
+    specialtyConfig: any,
   ): Promise<AvailableSlot[]> {
     const slots: AvailableSlot[] = [];
     const { prisma } = this.deps;
@@ -274,7 +319,9 @@ export class CoreSchedulingService {
 
     while (currentDate <= endDate) {
       const dayOfWeek = currentDate.getDay();
-      const availability = doctor.availability.find((a: any) => a.dayOfWeek === dayOfWeek && a.isActive);
+      const availability = doctor.availability.find(
+        (a: any) => a.dayOfWeek === dayOfWeek && a.isActive,
+      );
 
       if (availability) {
         const daySlots = this.generateDaySlots(
@@ -282,7 +329,7 @@ export class CoreSchedulingService {
           currentDate,
           availability,
           effectiveDuration,
-          specialtyConfig
+          specialtyConfig,
         );
         slots.push(...daySlots);
       }
@@ -298,10 +345,12 @@ export class CoreSchedulingService {
     date: Date,
     availability: any,
     duration: number,
-    specialtyConfig: any
+    specialtyConfig: any,
   ): AvailableSlot[] {
     const slots: AvailableSlot[] = [];
-    const [startHour, startMinute] = availability.startTime.split(':').map(Number);
+    const [startHour, startMinute] = availability.startTime
+      .split(':')
+      .map(Number);
     const [endHour, endMinute] = availability.endTime.split(':').map(Number);
 
     let currentTime = new Date(date);
@@ -314,7 +363,7 @@ export class CoreSchedulingService {
       // Skip lunch hour if configured
       if (!this.isLunchTime(currentTime)) {
         const slotEnd = addMinutes(currentTime, duration);
-        
+
         slots.push({
           id: `slot-${doctorId}-${format(currentTime, 'yyyy-MM-dd-HH-mm')}`,
           doctorId,
@@ -326,8 +375,8 @@ export class CoreSchedulingService {
           metadata: {
             slotType: 'REGULAR',
             utilizationScore: 0,
-            patientPreferenceMatch: 0
-          }
+            patientPreferenceMatch: 0,
+          },
         });
       }
 
@@ -338,7 +387,10 @@ export class CoreSchedulingService {
     return slots;
   }
 
-  private async filterConflictingSlots(slots: AvailableSlot[], criteria: SchedulingCriteria): Promise<AvailableSlot[]> {
+  private async filterConflictingSlots(
+    slots: AvailableSlot[],
+    criteria: SchedulingCriteria,
+  ): Promise<AvailableSlot[]> {
     const { prisma } = this.deps;
     const filteredSlots: AvailableSlot[] = [];
 
@@ -348,15 +400,19 @@ export class CoreSchedulingService {
         where: {
           doctorId: slot.doctorId,
           scheduledAt: {
-            lt: slot.endTime
+            lt: slot.endTime,
           },
           endTime: {
-            gt: slot.startTime
+            gt: slot.startTime,
           },
           status: {
-            in: [AppointmentStatus.SCHEDULED, AppointmentStatus.CONFIRMED, AppointmentStatus.IN_PROGRESS]
-          }
-        }
+            in: [
+              AppointmentStatus.SCHEDULED,
+              AppointmentStatus.CONFIRMED,
+              AppointmentStatus.IN_PROGRESS,
+            ],
+          },
+        },
       });
 
       if (conflictingAppointments.length === 0) {
@@ -367,15 +423,22 @@ export class CoreSchedulingService {
     return filteredSlots;
   }
 
-  private scoreSlots(slots: AvailableSlot[], criteria: SchedulingCriteria, specialtyConfig: any): AvailableSlot[] {
+  private scoreSlots(
+    slots: AvailableSlot[],
+    criteria: SchedulingCriteria,
+    specialtyConfig: any,
+  ): AvailableSlot[] {
     return slots.map(slot => {
       let score = 0.5; // Base score
 
       // Time preference matching
       if (criteria.preferredTimes?.length) {
         const slotTime = format(slot.startTime, 'HH:mm');
-        const preferenceMatch = criteria.preferredTimes.some(prefTime => 
-          Math.abs(this.timeToMinutes(slotTime) - this.timeToMinutes(prefTime)) <= 30
+        const preferenceMatch = criteria.preferredTimes.some(
+          prefTime =>
+            Math.abs(
+              this.timeToMinutes(slotTime) - this.timeToMinutes(prefTime),
+            ) <= 30,
         );
         if (preferenceMatch) score += 0.3;
       }
@@ -385,7 +448,8 @@ export class CoreSchedulingService {
 
       // Emergency appointment handling
       if (criteria.isEmergency) {
-        const hoursFromNow = differenceInMinutes(slot.startTime, new Date()) / 60;
+        const hoursFromNow =
+          differenceInMinutes(slot.startTime, new Date()) / 60;
         if (hoursFromNow <= 4) score += 0.2;
       }
 
@@ -394,14 +458,17 @@ export class CoreSchedulingService {
 
       return {
         ...slot,
-        confidenceScore: Math.min(score, 1.0)
+        confidenceScore: Math.min(score, 1.0),
       };
     });
   }
 
-  private async cacheAvailabilityResults(criteria: SchedulingCriteria, slots: AvailableSlot[]): Promise<void> {
+  private async cacheAvailabilityResults(
+    criteria: SchedulingCriteria,
+    slots: AvailableSlot[],
+  ): Promise<void> {
     const { redis, logger } = this.deps;
-    
+
     try {
       const cacheKey = `availability:${criteria.specialtyId}:${criteria.startDate.toISOString()}:${criteria.endDate.toISOString()}`;
       await redis.setex(cacheKey, 300, JSON.stringify(slots)); // Cache for 5 minutes
@@ -410,13 +477,15 @@ export class CoreSchedulingService {
     }
   }
 
-  private async checkBufferConflicts(appointmentData: any): Promise<Conflict[]> {
+  private async checkBufferConflicts(
+    appointmentData: any,
+  ): Promise<Conflict[]> {
     const { prisma } = this.deps;
     const conflicts: Conflict[] = [];
 
     // Get specialty config for buffer requirements
     const specialty = await prisma.specialty.findUnique({
-      where: { id: appointmentData.specialtyId }
+      where: { id: appointmentData.specialtyId },
     });
 
     if (!specialty) return conflicts;
@@ -429,17 +498,20 @@ export class CoreSchedulingService {
       where: {
         doctorId: appointmentData.doctorId,
         endTime: {
-          lte: appointmentData.scheduledAt
+          lte: appointmentData.scheduledAt,
         },
         status: {
-          in: [AppointmentStatus.SCHEDULED, AppointmentStatus.CONFIRMED]
-        }
+          in: [AppointmentStatus.SCHEDULED, AppointmentStatus.CONFIRMED],
+        },
       },
-      orderBy: { endTime: 'desc' }
+      orderBy: { endTime: 'desc' },
     });
 
     if (prevAppointment) {
-      const bufferTime = differenceInMinutes(appointmentData.scheduledAt, prevAppointment.endTime);
+      const bufferTime = differenceInMinutes(
+        appointmentData.scheduledAt,
+        prevAppointment.endTime,
+      );
       if (bufferTime < requiredBuffer) {
         conflicts.push({
           id: `conflict-${Date.now()}-buffer-before`,
@@ -448,7 +520,7 @@ export class CoreSchedulingService {
           description: `Insufficient buffer time before appointment (${bufferTime}min < ${requiredBuffer}min required)`,
           involvedAppointments: [appointmentData.id, prevAppointment.id],
           autoResolvable: true,
-          createdAt: new Date()
+          createdAt: new Date(),
         });
       }
     }
@@ -459,15 +531,18 @@ export class CoreSchedulingService {
   private isWithinBusinessHours(startTime: Date, endTime: Date): boolean {
     const startTimeStr = format(startTime, 'HH:mm');
     const endTimeStr = format(endTime, 'HH:mm');
-    
-    return BusinessRules.isBusinessHour(startTimeStr) && BusinessRules.isBusinessHour(endTimeStr);
+
+    return (
+      BusinessRules.isBusinessHour(startTimeStr) &&
+      BusinessRules.isBusinessHour(endTimeStr)
+    );
   }
 
   private isLunchTime(time: Date): boolean {
     const timeStr = format(time, 'HH:mm');
     const lunchStart = '12:00';
     const lunchEnd = '13:00';
-    
+
     return timeStr >= lunchStart && timeStr <= lunchEnd;
   }
 
@@ -499,15 +574,15 @@ export class CoreSchedulingService {
       metadata: {
         specialtyId: appointment.specialtyId,
         patientId: appointment.patientId,
-        status: appointment.status
-      }
+        status: appointment.status,
+      },
     }));
   }
 
   private async applyScheduleOptimization(
     originalSchedule: ScheduleSlot[],
     doctorId: string,
-    date: Date
+    date: Date,
   ): Promise<ScheduleSlot[]> {
     // Apply various optimization strategies
     let optimizedSchedule = [...originalSchedule];
@@ -526,8 +601,10 @@ export class CoreSchedulingService {
 
   private minimizeGaps(schedule: ScheduleSlot[]): ScheduleSlot[] {
     // Sort appointments by start time
-    const sorted = schedule.sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
-    
+    const sorted = schedule.sort(
+      (a, b) => a.startTime.getTime() - b.startTime.getTime(),
+    );
+
     // Logic to minimize gaps would go here
     // For now, return as-is
     return sorted;
@@ -539,36 +616,40 @@ export class CoreSchedulingService {
     return schedule;
   }
 
-  private async optimizeForTravelTime(schedule: ScheduleSlot[]): Promise<ScheduleSlot[]> {
+  private async optimizeForTravelTime(
+    schedule: ScheduleSlot[],
+  ): Promise<ScheduleSlot[]> {
     // This would integrate with location/travel time APIs
     return schedule;
   }
 
   private calculateOptimizationImprovements(
     original: ScheduleSlot[],
-    optimized: ScheduleSlot[]
+    optimized: ScheduleSlot[],
   ): OptimizationResult['improvements'] {
     return {
       utilizationIncrease: 0.05, // 5% improvement
-      bufferOptimization: 0.10, // 10% better buffer usage
+      bufferOptimization: 0.1, // 10% better buffer usage
       patientSatisfactionScore: 0.85,
-      doctorEfficiencyScore: 0.90
+      doctorEfficiencyScore: 0.9,
     };
   }
 
   private generateScheduleChanges(
     original: ScheduleSlot[],
-    optimized: ScheduleSlot[]
+    optimized: ScheduleSlot[],
   ): OptimizationResult['changes'] {
     const changes: OptimizationResult['changes'] = [];
-    
+
     // Compare schedules and generate change recommendations
     // This would include detailed change tracking
-    
+
     return changes;
   }
 
-  private async generateConflictResolution(conflict: Conflict): Promise<ConflictResolution> {
+  private async generateConflictResolution(
+    conflict: Conflict,
+  ): Promise<ConflictResolution> {
     const actions: ConflictAction[] = [];
 
     switch (conflict.type) {
@@ -577,7 +658,7 @@ export class CoreSchedulingService {
           type: 'RESCHEDULE',
           appointmentId: conflict.involvedAppointments[0],
           reason: 'Move to business hours',
-          priority: 1
+          priority: 1,
         });
         break;
 
@@ -586,7 +667,7 @@ export class CoreSchedulingService {
           type: 'RESCHEDULE',
           appointmentId: conflict.involvedAppointments[0],
           reason: 'Add required buffer time',
-          priority: 2
+          priority: 2,
         });
         break;
 
@@ -598,7 +679,7 @@ export class CoreSchedulingService {
       strategy: ResolutionStrategy.AUTO_RESCHEDULE,
       suggestedActions: actions,
       estimatedImpact: 0.3,
-      requiresApproval: false
+      requiresApproval: false,
     };
   }
 }

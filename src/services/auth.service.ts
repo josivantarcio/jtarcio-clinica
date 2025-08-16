@@ -26,7 +26,8 @@ export interface AuthResponse {
 export class AuthService {
   private readonly JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key';
   private readonly JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
-  private readonly REFRESH_TOKEN_EXPIRES_IN = process.env.REFRESH_TOKEN_EXPIRES_IN || '30d';
+  private readonly REFRESH_TOKEN_EXPIRES_IN =
+    process.env.REFRESH_TOKEN_EXPIRES_IN || '30d';
 
   async login(loginData: LoginData): Promise<AuthResponse> {
     const { email, password } = loginData;
@@ -88,32 +89,32 @@ export class AuthService {
 
   private generateAccessToken(userId: string, role: string): string {
     return jwt.sign(
-      { 
-        userId, 
+      {
+        userId,
         role,
-        type: 'access'
+        type: 'access',
       },
       this.JWT_SECRET,
-      { 
+      {
         expiresIn: this.JWT_EXPIRES_IN,
         issuer: 'eo-clinica',
-        audience: 'eo-clinica-client'
-      }
+        audience: 'eo-clinica-client',
+      },
     );
   }
 
   private generateRefreshToken(userId: string): string {
     return jwt.sign(
-      { 
+      {
         userId,
-        type: 'refresh'
+        type: 'refresh',
       },
       this.JWT_SECRET,
-      { 
+      {
         expiresIn: this.REFRESH_TOKEN_EXPIRES_IN,
         issuer: 'eo-clinica',
-        audience: 'eo-clinica-client'
-      }
+        audience: 'eo-clinica-client',
+      },
     );
   }
 
@@ -125,10 +126,12 @@ export class AuthService {
     }
   }
 
-  async refreshAccessToken(refreshToken: string): Promise<{ accessToken: string }> {
+  async refreshAccessToken(
+    refreshToken: string,
+  ): Promise<{ accessToken: string }> {
     try {
       const decoded = jwt.verify(refreshToken, this.JWT_SECRET) as any;
-      
+
       if (decoded.type !== 'refresh') {
         throw new Error('INVALID_TOKEN_TYPE');
       }
@@ -144,7 +147,7 @@ export class AuthService {
       }
 
       const accessToken = this.generateAccessToken(user.id, user.role);
-      
+
       return { accessToken };
     } catch (error) {
       throw new Error('INVALID_REFRESH_TOKEN');

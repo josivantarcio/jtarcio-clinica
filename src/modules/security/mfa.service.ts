@@ -54,7 +54,9 @@ export class MFAService {
 
       // Store encrypted secret and backup codes in database
       const encryptedSecret = await encryptionService.encryptPII(secret.base32);
-      const encryptedBackupCodes = await encryptionService.encryptPII(JSON.stringify(backupCodes));
+      const encryptedBackupCodes = await encryptionService.encryptPII(
+        JSON.stringify(backupCodes),
+      );
 
       await this.prisma.user.update({
         where: { id: userId },
@@ -85,7 +87,10 @@ export class MFAService {
   /**
    * Verify TOTP token and enable MFA
    */
-  async verifyAndEnableTOTP(userId: string, token: string): Promise<MFAVerificationResult> {
+  async verifyAndEnableTOTP(
+    userId: string,
+    token: string,
+  ): Promise<MFAVerificationResult> {
     try {
       const user = await this.prisma.user.findUnique({
         where: { id: userId },
@@ -102,7 +107,9 @@ export class MFAService {
       }
 
       // Decrypt secret
-      const secret = await encryptionService.decryptPII(encryptedData.mfaSecret);
+      const secret = await encryptionService.decryptPII(
+        encryptedData.mfaSecret,
+      );
 
       // Verify token
       const verified = speakeasy.totp.verify({
@@ -125,7 +132,10 @@ export class MFAService {
         });
 
         logger.info('TOTP enabled successfully', { userId });
-        return { success: true, message: 'TOTP authentication enabled successfully' };
+        return {
+          success: true,
+          message: 'TOTP authentication enabled successfully',
+        };
       } else {
         logger.warn('Invalid TOTP token provided', { userId });
         return { success: false, message: 'Invalid authentication code' };
@@ -139,7 +149,10 @@ export class MFAService {
   /**
    * Verify TOTP token for authentication
    */
-  async verifyTOTP(userId: string, token: string): Promise<MFAVerificationResult> {
+  async verifyTOTP(
+    userId: string,
+    token: string,
+  ): Promise<MFAVerificationResult> {
     try {
       const user = await this.prisma.user.findUnique({
         where: { id: userId },
@@ -162,7 +175,9 @@ export class MFAService {
       }
 
       // Decrypt secret
-      const secret = await encryptionService.decryptPII(encryptedData.mfaSecret);
+      const secret = await encryptionService.decryptPII(
+        encryptedData.mfaSecret,
+      );
 
       // Verify token
       const verified = speakeasy.totp.verify({
@@ -178,13 +193,16 @@ export class MFAService {
         return { success: true, message: 'Authentication successful' };
       } else {
         await this.recordFailedAttempt(userId, 'totp');
-        const remainingAttempts = await this.getRemainingAttempts(userId, 'totp');
-        
+        const remainingAttempts = await this.getRemainingAttempts(
+          userId,
+          'totp',
+        );
+
         logger.warn('Invalid TOTP token', { userId, remainingAttempts });
-        return { 
-          success: false, 
+        return {
+          success: false,
           message: 'Invalid authentication code',
-          remainingAttempts 
+          remainingAttempts,
         };
       }
     } catch (error) {
@@ -196,7 +214,10 @@ export class MFAService {
   /**
    * Send SMS code for MFA
    */
-  async sendSMSCode(userId: string, phoneNumber: string): Promise<SMSCodeResult> {
+  async sendSMSCode(
+    userId: string,
+    phoneNumber: string,
+  ): Promise<SMSCodeResult> {
     try {
       // Check rate limiting
       const rateLimitResult = await this.checkRateLimit(userId, 'sms');
@@ -236,7 +257,10 @@ export class MFAService {
   /**
    * Verify SMS code
    */
-  async verifySMSCode(userId: string, code: string): Promise<MFAVerificationResult> {
+  async verifySMSCode(
+    userId: string,
+    code: string,
+  ): Promise<MFAVerificationResult> {
     try {
       // Check rate limiting
       const rateLimitResult = await this.checkRateLimit(userId, 'sms');
@@ -247,25 +271,31 @@ export class MFAService {
       // Get stored code
       const storedCode = await this.getSMSCode(userId);
       if (!storedCode) {
-        return { success: false, message: 'No authentication code found or expired' };
+        return {
+          success: false,
+          message: 'No authentication code found or expired',
+        };
       }
 
       // Verify code
       if (storedCode.code === code && storedCode.expiresAt > new Date()) {
         await this.clearSMSCode(userId);
         await this.clearRateLimit(userId, 'sms');
-        
+
         logger.info('SMS code verification successful', { userId });
         return { success: true, message: 'Authentication successful' };
       } else {
         await this.recordFailedAttempt(userId, 'sms');
-        const remainingAttempts = await this.getRemainingAttempts(userId, 'sms');
-        
+        const remainingAttempts = await this.getRemainingAttempts(
+          userId,
+          'sms',
+        );
+
         logger.warn('Invalid SMS code', { userId, remainingAttempts });
-        return { 
-          success: false, 
+        return {
+          success: false,
           message: 'Invalid or expired authentication code',
-          remainingAttempts 
+          remainingAttempts,
         };
       }
     } catch (error) {
@@ -277,7 +307,10 @@ export class MFAService {
   /**
    * Verify backup code
    */
-  async verifyBackupCode(userId: string, code: string): Promise<MFAVerificationResult> {
+  async verifyBackupCode(
+    userId: string,
+    code: string,
+  ): Promise<MFAVerificationResult> {
     try {
       const user = await this.prisma.user.findUnique({
         where: { id: userId },
@@ -294,7 +327,9 @@ export class MFAService {
       }
 
       // Decrypt backup codes
-      const backupCodesJson = await encryptionService.decryptPII(encryptedData.backupCodes);
+      const backupCodesJson = await encryptionService.decryptPII(
+        encryptedData.backupCodes,
+      );
       const backupCodes: string[] = JSON.parse(backupCodesJson);
 
       // Check if code is valid and unused
@@ -306,7 +341,9 @@ export class MFAService {
 
       // Remove used code
       backupCodes.splice(codeIndex, 1);
-      const updatedEncryptedCodes = await encryptionService.encryptPII(JSON.stringify(backupCodes));
+      const updatedEncryptedCodes = await encryptionService.encryptPII(
+        JSON.stringify(backupCodes),
+      );
 
       await this.prisma.user.update({
         where: { id: userId },
@@ -318,10 +355,13 @@ export class MFAService {
         },
       });
 
-      logger.info('Backup code used successfully', { userId, remainingCodes: backupCodes.length });
-      return { 
-        success: true, 
-        message: `Authentication successful. ${backupCodes.length} backup codes remaining.` 
+      logger.info('Backup code used successfully', {
+        userId,
+        remainingCodes: backupCodes.length,
+      });
+      return {
+        success: true,
+        message: `Authentication successful. ${backupCodes.length} backup codes remaining.`,
       };
     } catch (error) {
       logger.error('Failed to verify backup code', { error, userId });
@@ -335,7 +375,7 @@ export class MFAService {
   async disableMFA(userId: string): Promise<boolean> {
     try {
       const encryptedData = await this.getUserEncryptedData(userId);
-      
+
       await this.prisma.user.update({
         where: { id: userId },
         data: {
@@ -367,10 +407,12 @@ export class MFAService {
   async generateNewBackupCodes(userId: string): Promise<string[]> {
     try {
       const backupCodes = this.generateBackupCodes();
-      const encryptedBackupCodes = await encryptionService.encryptPII(JSON.stringify(backupCodes));
-      
+      const encryptedBackupCodes = await encryptionService.encryptPII(
+        JSON.stringify(backupCodes),
+      );
+
       const encryptedData = await this.getUserEncryptedData(userId);
-      
+
       await this.prisma.user.update({
         where: { id: userId },
         data: {
@@ -429,11 +471,15 @@ export class MFAService {
     return (user?.encryptedData as any) || {};
   }
 
-  private async storeSMSCode(userId: string, encryptedCode: string, expiresAt: Date): Promise<void> {
+  private async storeSMSCode(
+    userId: string,
+    encryptedCode: string,
+    expiresAt: Date,
+  ): Promise<void> {
     // Store in a temporary table or cache (Redis)
     // For now, we'll use the user's encrypted data
     const encryptedData = await this.getUserEncryptedData(userId);
-    
+
     await this.prisma.user.update({
       where: { id: userId },
       data: {
@@ -446,9 +492,11 @@ export class MFAService {
     });
   }
 
-  private async getSMSCode(userId: string): Promise<{ code: string; expiresAt: Date } | null> {
+  private async getSMSCode(
+    userId: string,
+  ): Promise<{ code: string; expiresAt: Date } | null> {
     const encryptedData = await this.getUserEncryptedData(userId);
-    
+
     if (!encryptedData.smsCode || !encryptedData.smsCodeExpiresAt) {
       return null;
     }
@@ -461,7 +509,7 @@ export class MFAService {
 
   private async clearSMSCode(userId: string): Promise<void> {
     const encryptedData = await this.getUserEncryptedData(userId);
-    
+
     await this.prisma.user.update({
       where: { id: userId },
       data: {
@@ -474,7 +522,10 @@ export class MFAService {
     });
   }
 
-  private async checkRateLimit(userId: string, type: 'totp' | 'sms'): Promise<MFAVerificationResult> {
+  private async checkRateLimit(
+    userId: string,
+    type: 'totp' | 'sms',
+  ): Promise<MFAVerificationResult> {
     const encryptedData = await this.getUserEncryptedData(userId);
     const rateLimitKey = `${type}RateLimit`;
     const rateLimitData = encryptedData[rateLimitKey];
@@ -483,8 +534,13 @@ export class MFAService {
       const { attempts, lastAttempt } = rateLimitData;
       const timeSinceLastAttempt = Date.now() - new Date(lastAttempt).getTime();
 
-      if (attempts >= this.maxAttempts && timeSinceLastAttempt < this.lockoutDuration) {
-        const remainingTime = Math.ceil((this.lockoutDuration - timeSinceLastAttempt) / 1000 / 60);
+      if (
+        attempts >= this.maxAttempts &&
+        timeSinceLastAttempt < this.lockoutDuration
+      ) {
+        const remainingTime = Math.ceil(
+          (this.lockoutDuration - timeSinceLastAttempt) / 1000 / 60,
+        );
         return {
           success: false,
           message: `Too many failed attempts. Try again in ${remainingTime} minutes.`,
@@ -495,7 +551,10 @@ export class MFAService {
     return { success: true, message: 'Rate limit OK' };
   }
 
-  private async recordFailedAttempt(userId: string, type: 'totp' | 'sms'): Promise<void> {
+  private async recordFailedAttempt(
+    userId: string,
+    type: 'totp' | 'sms',
+  ): Promise<void> {
     const encryptedData = await this.getUserEncryptedData(userId);
     const rateLimitKey = `${type}RateLimit`;
     const currentRateLimit = encryptedData[rateLimitKey] || { attempts: 0 };
@@ -514,7 +573,10 @@ export class MFAService {
     });
   }
 
-  private async clearRateLimit(userId: string, type: 'totp' | 'sms'): Promise<void> {
+  private async clearRateLimit(
+    userId: string,
+    type: 'totp' | 'sms',
+  ): Promise<void> {
     const encryptedData = await this.getUserEncryptedData(userId);
     const rateLimitKey = `${type}RateLimit`;
 
@@ -529,7 +591,10 @@ export class MFAService {
     });
   }
 
-  private async getRemainingAttempts(userId: string, type: 'totp' | 'sms'): Promise<number> {
+  private async getRemainingAttempts(
+    userId: string,
+    type: 'totp' | 'sms',
+  ): Promise<number> {
     const encryptedData = await this.getUserEncryptedData(userId);
     const rateLimitKey = `${type}RateLimit`;
     const rateLimitData = encryptedData[rateLimitKey];

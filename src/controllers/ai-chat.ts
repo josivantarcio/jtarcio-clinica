@@ -10,24 +10,39 @@ const chatMessageSchema = z.object({
   message: z.string().min(1).max(2000),
   sessionId: z.string().optional(),
   conversationId: z.string().optional(),
-  userId: z.string().optional()
+  userId: z.string().optional(),
 });
 
 const streamingChatSchema = chatMessageSchema.extend({
-  stream: z.boolean().default(true)
+  stream: z.boolean().default(true),
 });
 
 const conversationHistorySchema = z.object({
   sessionId: z.string(),
-  limit: z.number().min(1).max(50).default(20)
+  limit: z.number().min(1).max(50).default(20),
 });
 
 interface ChatController {
-  processMessage: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
-  processMessageStreaming: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
-  getConversationHistory: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
-  createConversation: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
-  getHealthStatus: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
+  processMessage: (
+    request: FastifyRequest,
+    reply: FastifyReply,
+  ) => Promise<void>;
+  processMessageStreaming: (
+    request: FastifyRequest,
+    reply: FastifyReply,
+  ) => Promise<void>;
+  getConversationHistory: (
+    request: FastifyRequest,
+    reply: FastifyReply,
+  ) => Promise<void>;
+  createConversation: (
+    request: FastifyRequest,
+    reply: FastifyReply,
+  ) => Promise<void>;
+  getHealthStatus: (
+    request: FastifyRequest,
+    reply: FastifyReply,
+  ) => Promise<void>;
   getStats: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
 }
 
@@ -53,7 +68,10 @@ export class AIChatController implements ChatController {
   /**
    * Process a chat message and return response
    */
-  async processMessage(request: FastifyRequest, reply: FastifyReply): Promise<void> {
+  async processMessage(
+    request: FastifyRequest,
+    reply: FastifyReply,
+  ): Promise<void> {
     try {
       const body = chatMessageSchema.parse(request.body);
       const userId = body.userId || this.extractUserIdFromRequest(request);
@@ -61,21 +79,21 @@ export class AIChatController implements ChatController {
       if (!userId) {
         return reply.code(401).send({
           success: false,
-          error: 'User authentication required'
+          error: 'User authentication required',
         });
       }
 
       logger.info('Processing chat message', {
         userId,
         sessionId: body.sessionId,
-        messageLength: body.message.length
+        messageLength: body.message.length,
       });
 
       const response = await this.conversationManager.processMessage(
         userId,
         body.message,
         body.sessionId,
-        body.conversationId
+        body.conversationId,
       );
 
       reply.send({
@@ -87,27 +105,26 @@ export class AIChatController implements ChatController {
           isCompleted: response.isCompleted,
           requiresInput: response.requiresInput,
           confidence: response.confidence,
-          sessionData: response.data
-        }
+          sessionData: response.data,
+        },
       });
-
     } catch (error) {
       logger.error('Error processing chat message', {
         error: error instanceof Error ? error.message : 'Unknown error',
-        body: request.body
+        body: request.body,
       });
 
       if (error instanceof z.ZodError) {
         return reply.code(400).send({
           success: false,
           error: 'Invalid request data',
-          details: error.errors
+          details: error.errors,
         });
       }
 
       reply.code(500).send({
         success: false,
-        error: 'Internal server error'
+        error: 'Internal server error',
       });
     }
   }
@@ -115,7 +132,10 @@ export class AIChatController implements ChatController {
   /**
    * Process message with streaming response
    */
-  async processMessageStreaming(request: FastifyRequest, reply: FastifyReply): Promise<void> {
+  async processMessageStreaming(
+    request: FastifyRequest,
+    reply: FastifyReply,
+  ): Promise<void> {
     try {
       const body = streamingChatSchema.parse(request.body);
       const userId = body.userId || this.extractUserIdFromRequest(request);
@@ -123,23 +143,23 @@ export class AIChatController implements ChatController {
       if (!userId) {
         return reply.code(401).send({
           success: false,
-          error: 'User authentication required'
+          error: 'User authentication required',
         });
       }
 
       logger.info('Processing streaming chat message', {
         userId,
         sessionId: body.sessionId,
-        messageLength: body.message.length
+        messageLength: body.message.length,
       });
 
       // Set headers for Server-Sent Events
       reply.raw.writeHead(200, {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
+        Connection: 'keep-alive',
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Cache-Control'
+        'Access-Control-Allow-Headers': 'Cache-Control',
       });
 
       // Send initial connection event
@@ -151,7 +171,7 @@ export class AIChatController implements ChatController {
           userId,
           body.message,
           body.sessionId,
-          body.conversationId
+          body.conversationId,
         )) {
           const data = JSON.stringify(chunk);
           reply.raw.write(`event: message\n`);
@@ -165,31 +185,33 @@ export class AIChatController implements ChatController {
         }
       } catch (streamError) {
         const errorData = JSON.stringify({
-          error: streamError instanceof Error ? streamError.message : 'Unknown error'
+          error:
+            streamError instanceof Error
+              ? streamError.message
+              : 'Unknown error',
         });
         reply.raw.write('event: error\n');
         reply.raw.write(`data: ${errorData}\n\n`);
       }
 
       reply.raw.end();
-
     } catch (error) {
       logger.error('Error in streaming chat', {
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
 
       if (error instanceof z.ZodError) {
         return reply.code(400).send({
           success: false,
           error: 'Invalid request data',
-          details: error.errors
+          details: error.errors,
         });
       }
 
       if (!reply.sent) {
         reply.code(500).send({
           success: false,
-          error: 'Internal server error'
+          error: 'Internal server error',
         });
       }
     }
@@ -198,7 +220,10 @@ export class AIChatController implements ChatController {
   /**
    * Get conversation history
    */
-  async getConversationHistory(request: FastifyRequest, reply: FastifyReply): Promise<void> {
+  async getConversationHistory(
+    request: FastifyRequest,
+    reply: FastifyReply,
+  ): Promise<void> {
     try {
       const query = conversationHistorySchema.parse(request.query);
       const userId = this.extractUserIdFromRequest(request);
@@ -206,7 +231,7 @@ export class AIChatController implements ChatController {
       if (!userId) {
         return reply.code(401).send({
           success: false,
-          error: 'User authentication required'
+          error: 'User authentication required',
         });
       }
 
@@ -218,9 +243,9 @@ export class AIChatController implements ChatController {
         include: {
           messages: {
             orderBy: { createdAt: 'asc' },
-            take: query.limit
-          }
-        }
+            take: query.limit,
+          },
+        },
       });
 
       if (!conversation) {
@@ -228,8 +253,8 @@ export class AIChatController implements ChatController {
           success: true,
           data: {
             messages: [],
-            totalCount: 0
-          }
+            totalCount: 0,
+          },
         });
       }
 
@@ -241,29 +266,28 @@ export class AIChatController implements ChatController {
             id: msg.id,
             content: msg.content,
             role: msg.role,
-            createdAt: msg.createdAt
+            createdAt: msg.createdAt,
           })),
           totalCount: conversation.messages.length,
-          isCompleted: conversation.isCompleted
-        }
+          isCompleted: conversation.isCompleted,
+        },
       });
-
     } catch (error) {
       logger.error('Error getting conversation history', {
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
 
       if (error instanceof z.ZodError) {
         return reply.code(400).send({
           success: false,
           error: 'Invalid query parameters',
-          details: error.errors
+          details: error.errors,
         });
       }
 
       reply.code(500).send({
         success: false,
-        error: 'Internal server error'
+        error: 'Internal server error',
       });
     }
   }
@@ -271,14 +295,17 @@ export class AIChatController implements ChatController {
   /**
    * Create new conversation
    */
-  async createConversation(request: FastifyRequest, reply: FastifyReply): Promise<void> {
+  async createConversation(
+    request: FastifyRequest,
+    reply: FastifyReply,
+  ): Promise<void> {
     try {
       const userId = this.extractUserIdFromRequest(request);
 
       if (!userId) {
         return reply.code(401).send({
           success: false,
-          error: 'User authentication required'
+          error: 'User authentication required',
         });
       }
 
@@ -288,13 +315,13 @@ export class AIChatController implements ChatController {
           title: 'Nova Conversa',
           summary: null,
           isCompleted: false,
-          aiContext: {}
-        }
+          aiContext: {},
+        },
       });
 
       logger.info('Created new conversation', {
         userId,
-        conversationId: conversation.id
+        conversationId: conversation.id,
       });
 
       reply.send({
@@ -302,18 +329,17 @@ export class AIChatController implements ChatController {
         data: {
           conversationId: conversation.id,
           sessionId: `session_${Date.now()}_${userId}`,
-          createdAt: conversation.createdAt
-        }
+          createdAt: conversation.createdAt,
+        },
       });
-
     } catch (error) {
       logger.error('Error creating conversation', {
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
 
       reply.code(500).send({
         success: false,
-        error: 'Internal server error'
+        error: 'Internal server error',
       });
     }
   }
@@ -321,7 +347,10 @@ export class AIChatController implements ChatController {
   /**
    * Get AI system health status
    */
-  async getHealthStatus(request: FastifyRequest, reply: FastifyReply): Promise<void> {
+  async getHealthStatus(
+    request: FastifyRequest,
+    reply: FastifyReply,
+  ): Promise<void> {
     try {
       const health = await this.conversationManager.healthCheck();
 
@@ -335,20 +364,19 @@ export class AIChatController implements ChatController {
           timestamp: new Date().toISOString(),
           services: {
             anthropic: health.anthropic ? 'healthy' : 'unhealthy',
-            chromadb: health.chroma ? 'healthy' : 'unhealthy'
+            chromadb: health.chroma ? 'healthy' : 'unhealthy',
           },
-          overall: health.overall
-        }
+          overall: health.overall,
+        },
       });
-
     } catch (error) {
       logger.error('Error checking health status', {
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
 
       reply.code(500).send({
         success: false,
-        error: 'Health check failed'
+        error: 'Health check failed',
       });
     }
   }
@@ -365,16 +393,16 @@ export class AIChatController implements ChatController {
         by: ['userId'],
         where: userId ? { userId } : {},
         _count: {
-          id: true
-        }
+          id: true,
+        },
       });
 
       // Get message stats
       const messageStats = await this.prisma.message.groupBy({
         by: ['role'],
         _count: {
-          id: true
-        }
+          id: true,
+        },
       });
 
       // Get AI service stats
@@ -384,29 +412,36 @@ export class AIChatController implements ChatController {
         success: true,
         data: {
           conversations: {
-            total: conversationStats.reduce((acc, stat) => acc + stat._count.id, 0),
-            byUser: userId ? conversationStats.find(s => s.userId === userId)?._count.id || 0 : undefined
+            total: conversationStats.reduce(
+              (acc, stat) => acc + stat._count.id,
+              0,
+            ),
+            byUser: userId
+              ? conversationStats.find(s => s.userId === userId)?._count.id || 0
+              : undefined,
           },
           messages: {
             total: messageStats.reduce((acc, stat) => acc + stat._count.id, 0),
-            byRole: messageStats.reduce((acc, stat) => {
-              acc[stat.role] = stat._count.id;
-              return acc;
-            }, {} as Record<string, number>)
+            byRole: messageStats.reduce(
+              (acc, stat) => {
+                acc[stat.role] = stat._count.id;
+                return acc;
+              },
+              {} as Record<string, number>,
+            ),
           },
           aiServices: aiStats,
-          timestamp: new Date().toISOString()
-        }
+          timestamp: new Date().toISOString(),
+        },
       });
-
     } catch (error) {
       logger.error('Error getting stats', {
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
 
       reply.code(500).send({
         success: false,
-        error: 'Failed to get statistics'
+        error: 'Failed to get statistics',
       });
     }
   }
@@ -418,14 +453,14 @@ export class AIChatController implements ChatController {
     // This would typically extract from JWT token in Authorization header
     // For now, we'll use a mock implementation
     const authHeader = request.headers.authorization;
-    
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return null;
     }
 
     // Mock user ID extraction - in real implementation, verify JWT
     const token = authHeader.substring(7);
-    
+
     // Simple mock - in production, verify and decode JWT
     if (token && token.length > 10) {
       return `user_${token.substring(0, 10)}`;
@@ -443,19 +478,19 @@ export class AIChatController implements ChatController {
     socket.on('chat_message', async (data: any) => {
       try {
         const { message, sessionId, conversationId } = data;
-        
+
         // Process message through streaming
         for await (const chunk of this.conversationManager.processMessageStreaming(
           userId,
           message,
           sessionId,
-          conversationId
+          conversationId,
         )) {
           socket.emit('chat_response', chunk);
         }
       } catch (error) {
         socket.emit('chat_error', {
-          error: error instanceof Error ? error.message : 'Unknown error'
+          error: error instanceof Error ? error.message : 'Unknown error',
         });
       }
     });

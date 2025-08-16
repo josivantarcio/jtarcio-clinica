@@ -1,11 +1,15 @@
-import { 
+import {
   AvailableSlot,
   SchedulingCriteria,
   ConflictType,
-  Conflict 
+  Conflict,
 } from '@/types/scheduling';
 import { AppointmentStatus } from '@/types/appointment';
-import { BusinessRules, RESOURCE_CONFIG, TIME_CONSTRAINTS } from '@/config/business-rules';
+import {
+  BusinessRules,
+  RESOURCE_CONFIG,
+  TIME_CONSTRAINTS,
+} from '@/config/business-rules';
 import { PrismaClient } from '../../database/generated/client';
 import {
   startOfDay,
@@ -17,7 +21,7 @@ import {
   isSameDay,
   isWithinInterval,
   addDays,
-  subDays
+  subDays,
 } from 'date-fns';
 import { Logger } from 'winston';
 import Redis from 'ioredis';
@@ -96,8 +100,8 @@ export class AvailabilityManagementService {
       includeBuffer: true,
       allowOverbooking: false,
       emergencyOverride: false,
-      realTimeSync: true
-    }
+      realTimeSync: true,
+    },
   ): Promise<MultiResourceSlot[]> {
     const { prisma, redis, logger } = this.deps;
 
@@ -113,21 +117,34 @@ export class AvailabilityManagementService {
       }
 
       // Get base doctor availability
-      const doctorSlots = await this.getDoctorAvailabilitySlots(criteria, context);
+      const doctorSlots = await this.getDoctorAvailabilitySlots(
+        criteria,
+        context,
+      );
 
       // Enhance with resource allocation if requested
       let enhancedSlots = doctorSlots;
       if (context.checkResources) {
-        enhancedSlots = await this.allocateResourcesToSlots(doctorSlots, criteria, context);
+        enhancedSlots = await this.allocateResourcesToSlots(
+          doctorSlots,
+          criteria,
+          context,
+        );
       }
 
       // Apply buffer time if requested
       if (context.includeBuffer) {
-        enhancedSlots = this.applyBufferTimeConstraints(enhancedSlots, criteria);
+        enhancedSlots = this.applyBufferTimeConstraints(
+          enhancedSlots,
+          criteria,
+        );
       }
 
       // Check for real-time conflicts
-      const conflictCheckedSlots = await this.checkRealTimeConflicts(enhancedSlots, context);
+      const conflictCheckedSlots = await this.checkRealTimeConflicts(
+        enhancedSlots,
+        context,
+      );
 
       // Cache results
       await this.cacheAvailabilityResults(criteria, conflictCheckedSlots);
@@ -135,9 +152,10 @@ export class AvailabilityManagementService {
       // Trigger real-time updates to connected clients
       await this.broadcastAvailabilityUpdates(criteria, conflictCheckedSlots);
 
-      logger.info(`Found ${conflictCheckedSlots.length} available slots with resources`);
+      logger.info(
+        `Found ${conflictCheckedSlots.length} available slots with resources`,
+      );
       return conflictCheckedSlots;
-
     } catch (error) {
       logger.error('Error getting real-time availability', { error, criteria });
       throw error;
@@ -150,7 +168,7 @@ export class AvailabilityManagementService {
   async reserveSlotTemporarily(
     slotId: string,
     patientId: string,
-    durationMinutes: number = 10
+    durationMinutes: number = 10,
   ): Promise<{
     reservationId: string;
     expiresAt: Date;
@@ -167,13 +185,13 @@ export class AvailabilityManagementService {
         slotId,
         patientId,
         reservedAt: new Date(),
-        expiresAt
+        expiresAt,
       };
 
       await redis.setex(
         `temp-reservation:${reservationId}`,
         durationMinutes * 60,
-        JSON.stringify(reservationData)
+        JSON.stringify(reservationData),
       );
 
       // Update slot availability cache
@@ -182,16 +200,24 @@ export class AvailabilityManagementService {
       // Get slot details
       const slot = await this.getSlotWithResources(slotId);
 
-      logger.info('Slot reserved temporarily', { reservationId, slotId, patientId, expiresAt });
+      logger.info('Slot reserved temporarily', {
+        reservationId,
+        slotId,
+        patientId,
+        expiresAt,
+      });
 
       return {
         reservationId,
         expiresAt,
-        slot
+        slot,
       };
-
     } catch (error) {
-      logger.error('Error reserving slot temporarily', { error, slotId, patientId });
+      logger.error('Error reserving slot temporarily', {
+        error,
+        slotId,
+        patientId,
+      });
       throw error;
     }
   }
@@ -208,18 +234,24 @@ export class AvailabilityManagementService {
 
       if (reservationData) {
         const reservation = JSON.parse(reservationData);
-        
+
         // Update slot availability
-        await this.updateSlotReservationStatus(reservation.slotId, false, reservationId);
-        
+        await this.updateSlotReservationStatus(
+          reservation.slotId,
+          false,
+          reservationId,
+        );
+
         // Remove reservation
         await redis.del(reservationKey);
 
         logger.info('Temporary reservation released', { reservationId });
       }
-
     } catch (error) {
-      logger.error('Error releasing temporary reservation', { error, reservationId });
+      logger.error('Error releasing temporary reservation', {
+        error,
+        reservationId,
+      });
       throw error;
     }
   }
@@ -230,7 +262,13 @@ export class AvailabilityManagementService {
   async checkMultiResourceAvailability(
     requirements: ResourceRequirement[],
     timeSlot: { start: Date; end: Date },
-    context: AvailabilityContext = { checkResources: true, includeBuffer: true, allowOverbooking: false, emergencyOverride: false, realTimeSync: true }
+    context: AvailabilityContext = {
+      checkResources: true,
+      includeBuffer: true,
+      allowOverbooking: false,
+      emergencyOverride: false,
+      realTimeSync: true,
+    },
   ): Promise<{
     isAvailable: boolean;
     availableResources: ResourceAvailability[];
@@ -241,7 +279,10 @@ export class AvailabilityManagementService {
     const { prisma, logger } = this.deps;
 
     try {
-      logger.info('Checking multi-resource availability', { requirements, timeSlot });
+      logger.info('Checking multi-resource availability', {
+        requirements,
+        timeSlot,
+      });
 
       const availableResources: ResourceAvailability[] = [];
       const unavailableResources: ResourceAvailability[] = [];
@@ -252,14 +293,14 @@ export class AvailabilityManagementService {
         const resourceAvailability = await this.checkResourceAvailability(
           requirement,
           timeSlot,
-          context
+          context,
         );
 
         if (resourceAvailability.isAvailable) {
           availableResources.push(resourceAvailability);
         } else {
           unavailableResources.push(resourceAvailability);
-          
+
           // Generate conflict information
           conflicts.push({
             id: `resource-conflict-${requirement.type}-${Date.now()}`,
@@ -268,7 +309,7 @@ export class AvailabilityManagementService {
             description: `${requirement.type} ${requirement.category} not available`,
             involvedAppointments: resourceAvailability.currentBookings,
             autoResolvable: !requirement.isRequired,
-            createdAt: new Date()
+            createdAt: new Date(),
           });
         }
       }
@@ -278,7 +319,8 @@ export class AvailabilityManagementService {
         .filter(r => r.isRequired)
         .every(r => availableResources.some(ar => ar.type === r.type));
 
-      const isAvailable = requiredResourcesAvailable || context.emergencyOverride;
+      const isAvailable =
+        requiredResourcesAvailable || context.emergencyOverride;
 
       // Find alternative slots if current slot is not available
       let alternativeSlots: AvailableSlot[] = [];
@@ -286,7 +328,7 @@ export class AvailabilityManagementService {
         alternativeSlots = await this.findAlternativeMultiResourceSlots(
           requirements,
           timeSlot,
-          context
+          context,
         );
       }
 
@@ -295,11 +337,13 @@ export class AvailabilityManagementService {
         availableResources,
         unavailableResources,
         alternativeSlots,
-        conflicts
+        conflicts,
       };
-
     } catch (error) {
-      logger.error('Error checking multi-resource availability', { error, requirements });
+      logger.error('Error checking multi-resource availability', {
+        error,
+        requirements,
+      });
       throw error;
     }
   }
@@ -309,13 +353,21 @@ export class AvailabilityManagementService {
    */
   async getBulkAvailability(
     criteriaList: SchedulingCriteria[],
-    context: AvailabilityContext = { checkResources: true, includeBuffer: true, allowOverbooking: false, emergencyOverride: false, realTimeSync: true }
+    context: AvailabilityContext = {
+      checkResources: true,
+      includeBuffer: true,
+      allowOverbooking: false,
+      emergencyOverride: false,
+      realTimeSync: true,
+    },
   ): Promise<Map<string, MultiResourceSlot[]>> {
     const { logger } = this.deps;
     const results = new Map<string, MultiResourceSlot[]>();
 
     try {
-      logger.info(`Processing bulk availability check for ${criteriaList.length} criteria`);
+      logger.info(
+        `Processing bulk availability check for ${criteriaList.length} criteria`,
+      );
 
       // Process in parallel for better performance
       const promises = criteriaList.map(async (criteria, index) => {
@@ -329,13 +381,14 @@ export class AvailabilityManagementService {
         if (result.status === 'fulfilled') {
           results.set(index.toString(), result.value.slots);
         } else {
-          logger.warn(`Failed to get availability for criteria ${index}`, { error: result.reason });
+          logger.warn(`Failed to get availability for criteria ${index}`, {
+            error: result.reason,
+          });
           results.set(index.toString(), []);
         }
       });
 
       return results;
-
     } catch (error) {
       logger.error('Error in bulk availability check', { error });
       throw error;
@@ -347,7 +400,7 @@ export class AvailabilityManagementService {
    */
   async getAvailabilityInsights(
     doctorId: string,
-    dateRange: { start: Date; end: Date }
+    dateRange: { start: Date; end: Date },
   ): Promise<{
     totalSlots: number;
     availableSlots: number;
@@ -366,7 +419,7 @@ export class AvailabilityManagementService {
       // Get doctor's availability configuration
       const doctor = await prisma.doctor.findUniqueOrThrow({
         where: { id: doctorId },
-        include: { availability: true }
+        include: { availability: true },
       });
 
       // Calculate total possible slots
@@ -378,10 +431,16 @@ export class AvailabilityManagementService {
           doctorId,
           scheduledAt: {
             gte: dateRange.start,
-            lte: dateRange.end
+            lte: dateRange.end,
           },
-          status: { in: [AppointmentStatus.SCHEDULED, AppointmentStatus.CONFIRMED, AppointmentStatus.COMPLETED] }
-        }
+          status: {
+            in: [
+              AppointmentStatus.SCHEDULED,
+              AppointmentStatus.CONFIRMED,
+              AppointmentStatus.COMPLETED,
+            ],
+          },
+        },
       });
 
       const bookedSlots = appointments.length;
@@ -392,13 +451,20 @@ export class AvailabilityManagementService {
       const peakHours = this.calculatePeakHours(appointments);
 
       // Calculate average gap between appointments
-      const averageGap = this.calculateAverageGapBetweenAppointments(appointments);
+      const averageGap =
+        this.calculateAverageGapBetweenAppointments(appointments);
 
       // Calculate resource utilization (placeholder - would integrate with actual resource data)
-      const resourceUtilization = await this.calculateResourceUtilization(doctorId, dateRange);
+      const resourceUtilization = await this.calculateResourceUtilization(
+        doctorId,
+        dateRange,
+      );
 
       // Generate demand predictions
-      const predictedDemand = await this.generateDemandPredictions(doctorId, dateRange);
+      const predictedDemand = await this.generateDemandPredictions(
+        doctorId,
+        dateRange,
+      );
 
       return {
         totalSlots,
@@ -408,11 +474,13 @@ export class AvailabilityManagementService {
         peakHours,
         averageGapBetweenAppointments: averageGap,
         resourceUtilization,
-        predictedDemand
+        predictedDemand,
       };
-
     } catch (error) {
-      logger.error('Error generating availability insights', { error, doctorId });
+      logger.error('Error generating availability insights', {
+        error,
+        doctorId,
+      });
       throw error;
     }
   }
@@ -421,26 +489,35 @@ export class AvailabilityManagementService {
 
   private async getDoctorAvailabilitySlots(
     criteria: SchedulingCriteria,
-    context: AvailabilityContext
+    context: AvailabilityContext,
   ): Promise<AvailableSlot[]> {
     const { prisma } = this.deps;
     const slots: AvailableSlot[] = [];
 
     // Get doctors based on criteria
-    const doctors = criteria.doctorId 
-      ? [await prisma.doctor.findUniqueOrThrow({ where: { id: criteria.doctorId }, include: { availability: true } })]
+    const doctors = criteria.doctorId
+      ? [
+          await prisma.doctor.findUniqueOrThrow({
+            where: { id: criteria.doctorId },
+            include: { availability: true },
+          }),
+        ]
       : await prisma.doctor.findMany({
-          where: { 
+          where: {
             specialtyId: criteria.specialtyId,
             isActive: true,
-            acceptsNewPatients: true
+            acceptsNewPatients: true,
           },
-          include: { availability: true }
+          include: { availability: true },
         });
 
     // Generate slots for each doctor
     for (const doctor of doctors) {
-      const doctorSlots = await this.generateDoctorTimeSlots(doctor, criteria, context);
+      const doctorSlots = await this.generateDoctorTimeSlots(
+        doctor,
+        criteria,
+        context,
+      );
       slots.push(...doctorSlots);
     }
 
@@ -450,7 +527,7 @@ export class AvailabilityManagementService {
   private async generateDoctorTimeSlots(
     doctor: any,
     criteria: SchedulingCriteria,
-    context: AvailabilityContext
+    context: AvailabilityContext,
   ): Promise<AvailableSlot[]> {
     const { prisma } = this.deps;
     const slots: AvailableSlot[] = [];
@@ -461,8 +538,8 @@ export class AvailabilityManagementService {
     while (currentDate <= endDate) {
       // Get availability for this day
       const dayOfWeek = currentDate.getDay();
-      const availability = doctor.availability.find((a: any) => 
-        a.dayOfWeek === dayOfWeek && a.isActive
+      const availability = doctor.availability.find(
+        (a: any) => a.dayOfWeek === dayOfWeek && a.isActive,
       );
 
       if (availability) {
@@ -472,12 +549,16 @@ export class AvailabilityManagementService {
             doctorId: doctor.id,
             scheduledAt: {
               gte: startOfDay(currentDate),
-              lte: endOfDay(currentDate)
+              lte: endOfDay(currentDate),
             },
-            status: { 
-              in: [AppointmentStatus.SCHEDULED, AppointmentStatus.CONFIRMED, AppointmentStatus.IN_PROGRESS] 
-            }
-          }
+            status: {
+              in: [
+                AppointmentStatus.SCHEDULED,
+                AppointmentStatus.CONFIRMED,
+                AppointmentStatus.IN_PROGRESS,
+              ],
+            },
+          },
         });
 
         // Generate time slots for the day
@@ -487,9 +568,9 @@ export class AvailabilityManagementService {
           availability,
           existingAppointments,
           criteria,
-          context
+          context,
         );
-        
+
         slots.push(...daySlots);
       }
 
@@ -505,10 +586,12 @@ export class AvailabilityManagementService {
     availability: any,
     existingAppointments: any[],
     criteria: SchedulingCriteria,
-    context: AvailabilityContext
+    context: AvailabilityContext,
   ): AvailableSlot[] {
     const slots: AvailableSlot[] = [];
-    const [startHour, startMinute] = availability.startTime.split(':').map(Number);
+    const [startHour, startMinute] = availability.startTime
+      .split(':')
+      .map(Number);
     const [endHour, endMinute] = availability.endTime.split(':').map(Number);
 
     let currentTime = new Date(date);
@@ -532,7 +615,9 @@ export class AvailabilityManagementService {
       });
 
       // Check business rules
-      const isBusinessHour = BusinessRules.isBusinessHour(format(currentTime, 'HH:mm'));
+      const isBusinessHour = BusinessRules.isBusinessHour(
+        format(currentTime, 'HH:mm'),
+      );
 
       if (!hasConflict && isBusinessHour) {
         slots.push({
@@ -546,8 +631,8 @@ export class AvailabilityManagementService {
           metadata: {
             slotType: 'REGULAR',
             utilizationScore: 0.5,
-            patientPreferenceMatch: 0.5
-          }
+            patientPreferenceMatch: 0.5,
+          },
         });
       }
 
@@ -561,27 +646,36 @@ export class AvailabilityManagementService {
   private async allocateResourcesToSlots(
     slots: AvailableSlot[],
     criteria: SchedulingCriteria,
-    context: AvailabilityContext
+    context: AvailabilityContext,
   ): Promise<MultiResourceSlot[]> {
     const { prisma } = this.deps;
     const enhancedSlots: MultiResourceSlot[] = [];
 
     // Get specialty resource requirements
     const specialty = await prisma.specialty.findUnique({
-      where: { id: criteria.specialtyId }
+      where: { id: criteria.specialtyId },
     });
 
-    const specialtyConfig = specialty ? BusinessRules.getSpecialtyConfig(specialty.name) : null;
+    const specialtyConfig = specialty
+      ? BusinessRules.getSpecialtyConfig(specialty.name)
+      : null;
 
     for (const slot of slots) {
-      const resourceRequirements = this.generateResourceRequirements(specialtyConfig, criteria);
-      const allocation = await this.findResourceAllocation(slot, resourceRequirements, context);
+      const resourceRequirements = this.generateResourceRequirements(
+        specialtyConfig,
+        criteria,
+      );
+      const allocation = await this.findResourceAllocation(
+        slot,
+        resourceRequirements,
+        context,
+      );
 
       enhancedSlots.push({
         ...slot,
         allocatedResources: allocation.resources,
         resourceConflicts: allocation.conflicts,
-        allocationConfidence: allocation.confidence
+        allocationConfidence: allocation.confidence,
       });
     }
 
@@ -590,7 +684,7 @@ export class AvailabilityManagementService {
 
   private generateResourceRequirements(
     specialtyConfig: any,
-    criteria: SchedulingCriteria
+    criteria: SchedulingCriteria,
   ): ResourceRequirement[] {
     const requirements: ResourceRequirement[] = [];
 
@@ -600,7 +694,7 @@ export class AvailabilityManagementService {
       category: 'CONSULTATION',
       quantity: 1,
       duration: criteria.duration || 30,
-      isRequired: true
+      isRequired: true,
     });
 
     // Add equipment if specialty requires it
@@ -610,7 +704,7 @@ export class AvailabilityManagementService {
         category: 'MEDICAL',
         quantity: 1,
         duration: criteria.duration || 30,
-        isRequired: true
+        isRequired: true,
       });
     }
 
@@ -620,7 +714,7 @@ export class AvailabilityManagementService {
   private async findResourceAllocation(
     slot: AvailableSlot,
     requirements: ResourceRequirement[],
-    context: AvailabilityContext
+    context: AvailabilityContext,
   ): Promise<{
     resources: { roomId?: string; equipmentIds: string[]; staffIds: string[] };
     conflicts: Conflict[];
@@ -631,16 +725,16 @@ export class AvailabilityManagementService {
       resources: {
         roomId: `room-${slot.doctorId}-1`,
         equipmentIds: [],
-        staffIds: []
+        staffIds: [],
       },
       conflicts: [],
-      confidence: 0.9
+      confidence: 0.9,
     };
   }
 
   private applyBufferTimeConstraints(
     slots: MultiResourceSlot[],
-    criteria: SchedulingCriteria
+    criteria: SchedulingCriteria,
   ): MultiResourceSlot[] {
     // Apply buffer time logic
     return slots; // Simplified implementation
@@ -648,7 +742,7 @@ export class AvailabilityManagementService {
 
   private async checkRealTimeConflicts(
     slots: MultiResourceSlot[],
-    context: AvailabilityContext
+    context: AvailabilityContext,
   ): Promise<MultiResourceSlot[]> {
     // Check for real-time conflicts and remove invalid slots
     return slots; // Simplified implementation
@@ -657,21 +751,21 @@ export class AvailabilityManagementService {
   private async checkResourceAvailability(
     requirement: ResourceRequirement,
     timeSlot: { start: Date; end: Date },
-    context: AvailabilityContext
+    context: AvailabilityContext,
   ): Promise<ResourceAvailability> {
     // Check if specific resource is available during the time slot
     return {
       resourceId: `${requirement.type}-1`,
       type: requirement.category,
       isAvailable: true,
-      currentBookings: []
+      currentBookings: [],
     };
   }
 
   private async findAlternativeMultiResourceSlots(
     requirements: ResourceRequirement[],
     timeSlot: { start: Date; end: Date },
-    context: AvailabilityContext
+    context: AvailabilityContext,
   ): Promise<AvailableSlot[]> {
     // Find alternative slots when resources are not available
     return [];
@@ -682,20 +776,32 @@ export class AvailabilityManagementService {
     return (hour >= 9 && hour <= 11) || (hour >= 14 && hour <= 16);
   }
 
-  private calculateTotalPossibleSlots(doctor: any, dateRange: { start: Date; end: Date }): number {
+  private calculateTotalPossibleSlots(
+    doctor: any,
+    dateRange: { start: Date; end: Date },
+  ): number {
     // Calculate total possible slots based on availability configuration
     let totalSlots = 0;
     let currentDate = new Date(dateRange.start);
 
     while (currentDate <= dateRange.end) {
       const dayOfWeek = currentDate.getDay();
-      const availability = doctor.availability.find((a: any) => a.dayOfWeek === dayOfWeek && a.isActive);
-      
+      const availability = doctor.availability.find(
+        (a: any) => a.dayOfWeek === dayOfWeek && a.isActive,
+      );
+
       if (availability) {
-        const [startHour, startMinute] = availability.startTime.split(':').map(Number);
-        const [endHour, endMinute] = availability.endTime.split(':').map(Number);
-        const workingMinutes = (endHour * 60 + endMinute) - (startHour * 60 + startMinute);
-        const slotsPerDay = Math.floor(workingMinutes / (availability.slotDuration || 30));
+        const [startHour, startMinute] = availability.startTime
+          .split(':')
+          .map(Number);
+        const [endHour, endMinute] = availability.endTime
+          .split(':')
+          .map(Number);
+        const workingMinutes =
+          endHour * 60 + endMinute - (startHour * 60 + startMinute);
+        const slotsPerDay = Math.floor(
+          workingMinutes / (availability.slotDuration || 30),
+        );
         totalSlots += slotsPerDay;
       }
 
@@ -705,7 +811,9 @@ export class AvailabilityManagementService {
     return totalSlots;
   }
 
-  private calculatePeakHours(appointments: any[]): { hour: number; utilization: number }[] {
+  private calculatePeakHours(
+    appointments: any[],
+  ): { hour: number; utilization: number }[] {
     const hourCounts = new Map<number, number>();
 
     appointments.forEach(apt => {
@@ -723,14 +831,16 @@ export class AvailabilityManagementService {
   private calculateAverageGapBetweenAppointments(appointments: any[]): number {
     if (appointments.length < 2) return 0;
 
-    const sortedAppointments = appointments.sort((a, b) => a.scheduledAt.getTime() - b.scheduledAt.getTime());
+    const sortedAppointments = appointments.sort(
+      (a, b) => a.scheduledAt.getTime() - b.scheduledAt.getTime(),
+    );
     let totalGapMinutes = 0;
     let gapCount = 0;
 
     for (let i = 1; i < sortedAppointments.length; i++) {
       const prevEnd = sortedAppointments[i - 1].endTime;
       const currentStart = sortedAppointments[i].scheduledAt;
-      
+
       if (isSameDay(prevEnd, currentStart)) {
         const gap = differenceInMinutes(currentStart, prevEnd);
         if (gap > 0) {
@@ -745,18 +855,18 @@ export class AvailabilityManagementService {
 
   private async calculateResourceUtilization(
     doctorId: string,
-    dateRange: { start: Date; end: Date }
+    dateRange: { start: Date; end: Date },
   ): Promise<{ resourceType: string; utilizationRate: number }[]> {
     // Placeholder for resource utilization calculation
     return [
       { resourceType: 'ROOM', utilizationRate: 0.75 },
-      { resourceType: 'EQUIPMENT', utilizationRate: 0.60 }
+      { resourceType: 'EQUIPMENT', utilizationRate: 0.6 },
     ];
   }
 
   private async generateDemandPredictions(
     doctorId: string,
-    dateRange: { start: Date; end: Date }
+    dateRange: { start: Date; end: Date },
   ): Promise<{ date: string; estimatedBookings: number }[]> {
     // Placeholder for demand prediction
     const predictions: { date: string; estimatedBookings: number }[] = [];
@@ -765,7 +875,7 @@ export class AvailabilityManagementService {
     while (currentDate <= dateRange.end) {
       predictions.push({
         date: format(currentDate, 'yyyy-MM-dd'),
-        estimatedBookings: Math.floor(Math.random() * 10) + 5 // Placeholder
+        estimatedBookings: Math.floor(Math.random() * 10) + 5, // Placeholder
       });
       currentDate = addDays(currentDate, 1);
     }
@@ -773,10 +883,12 @@ export class AvailabilityManagementService {
     return predictions;
   }
 
-  private async getCachedAvailability(criteria: SchedulingCriteria): Promise<AvailableSlot[] | null> {
+  private async getCachedAvailability(
+    criteria: SchedulingCriteria,
+  ): Promise<AvailableSlot[] | null> {
     const { redis } = this.deps;
     const cacheKey = `${this.CACHE_PREFIX}:${JSON.stringify(criteria)}`;
-    
+
     try {
       const cached = await redis.get(cacheKey);
       return cached ? JSON.parse(cached) : null;
@@ -785,10 +897,13 @@ export class AvailabilityManagementService {
     }
   }
 
-  private async cacheAvailabilityResults(criteria: SchedulingCriteria, slots: MultiResourceSlot[]): Promise<void> {
+  private async cacheAvailabilityResults(
+    criteria: SchedulingCriteria,
+    slots: MultiResourceSlot[],
+  ): Promise<void> {
     const { redis } = this.deps;
     const cacheKey = `${this.CACHE_PREFIX}:${JSON.stringify(criteria)}`;
-    
+
     try {
       await redis.setex(cacheKey, this.CACHE_TTL, JSON.stringify(slots));
     } catch (error) {
@@ -799,7 +914,7 @@ export class AvailabilityManagementService {
 
   private async enhanceWithResourceAllocation(
     slots: AvailableSlot[],
-    context: AvailabilityContext
+    context: AvailabilityContext,
   ): Promise<MultiResourceSlot[]> {
     // Convert basic slots to multi-resource slots
     return slots.map(slot => ({
@@ -807,16 +922,16 @@ export class AvailabilityManagementService {
       allocatedResources: {
         roomId: `room-${slot.doctorId}-1`,
         equipmentIds: [],
-        staffIds: []
+        staffIds: [],
       },
       resourceConflicts: [],
-      allocationConfidence: 0.8
+      allocationConfidence: 0.8,
     }));
   }
 
   private async broadcastAvailabilityUpdates(
     criteria: SchedulingCriteria,
-    slots: MultiResourceSlot[]
+    slots: MultiResourceSlot[],
   ): Promise<void> {
     // Broadcast real-time updates to connected clients
     // Implementation would depend on WebSocket/SSE setup
@@ -825,11 +940,11 @@ export class AvailabilityManagementService {
   private async updateSlotReservationStatus(
     slotId: string,
     isReserved: boolean,
-    reservationId: string
+    reservationId: string,
   ): Promise<void> {
     const { redis } = this.deps;
     const statusKey = `slot-reservation:${slotId}`;
-    
+
     if (isReserved) {
       await redis.setex(statusKey, 600, reservationId); // 10 minute default
     } else {
@@ -837,7 +952,9 @@ export class AvailabilityManagementService {
     }
   }
 
-  private async getSlotWithResources(slotId: string): Promise<MultiResourceSlot> {
+  private async getSlotWithResources(
+    slotId: string,
+  ): Promise<MultiResourceSlot> {
     // Get slot details with resource allocation
     // Placeholder implementation
     return {
@@ -851,15 +968,15 @@ export class AvailabilityManagementService {
       allocatedResources: {
         roomId: 'room-1',
         equipmentIds: [],
-        staffIds: []
+        staffIds: [],
       },
       resourceConflicts: [],
       allocationConfidence: 0.9,
       metadata: {
         slotType: 'REGULAR',
         utilizationScore: 0.7,
-        patientPreferenceMatch: 0.8
-      }
+        patientPreferenceMatch: 0.8,
+      },
     };
   }
 

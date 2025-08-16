@@ -9,7 +9,7 @@ export enum Intent {
   CONSULTAR_AGENDAMENTO = 'CONSULTAR_AGENDAMENTO',
   EMERGENCIA = 'EMERGENCIA',
   INFORMACOES_GERAIS = 'INFORMACOES_GERAIS',
-  UNKNOWN = 'UNKNOWN'
+  UNKNOWN = 'UNKNOWN',
 }
 
 // Entity types for extraction
@@ -143,36 +143,41 @@ Responda APENAS com JSON no formato:
    * Process user message through NLP pipeline
    */
   async processMessage(
-    message: string, 
+    message: string,
     userId: string,
-    context?: ConversationMessage[]
+    context?: ConversationMessage[],
   ): Promise<NLPResult> {
     const startTime = Date.now();
-    
+
     try {
-      logger.info('Starting NLP processing', { userId, messageLength: message.length });
+      logger.info('Starting NLP processing', {
+        userId,
+        messageLength: message.length,
+      });
 
       // Step 1: Intent Classification
       const intent = await this.classifyIntent(message, userId, context);
-      
+
       // Step 2: Entity Extraction
       const entities = await this.extractEntities(message, userId);
 
       const processingTime = Date.now() - startTime;
-      
+
       const result: NLPResult = {
         intent,
         confidence: this.calculateConfidence(intent, entities),
         entities,
         originalText: message,
-        processedAt: new Date()
+        processedAt: new Date(),
       };
 
-      logger.info('NLP processing completed', { 
-        userId, 
-        intent, 
+      logger.info('NLP processing completed', {
+        userId,
+        intent,
         processingTime,
-        entitiesFound: Object.keys(entities).filter(key => entities[key as keyof ExtractedEntities] != null).length
+        entitiesFound: Object.keys(entities).filter(
+          key => entities[key as keyof ExtractedEntities] != null,
+        ).length,
       });
 
       return result;
@@ -180,7 +185,7 @@ Responda APENAS com JSON no formato:
       logger.error('NLP processing failed', {
         userId,
         error: error instanceof Error ? error.message : 'Unknown error',
-        message: message.substring(0, 100)
+        message: message.substring(0, 100),
       });
 
       // Return fallback result
@@ -189,7 +194,7 @@ Responda APENAS com JSON no formato:
         confidence: 0,
         entities: {},
         originalText: message,
-        processedAt: new Date()
+        processedAt: new Date(),
       };
     }
   }
@@ -198,25 +203,25 @@ Responda APENAS com JSON no formato:
    * Classify user intent
    */
   private async classifyIntent(
-    message: string, 
+    message: string,
     userId: string,
-    context?: ConversationMessage[]
+    context?: ConversationMessage[],
   ): Promise<Intent> {
     try {
       // Prepare messages with context if available
       const messages: ConversationMessage[] = [];
-      
+
       // Add context if provided (last few messages)
       if (context && context.length > 0) {
         messages.push({
           role: 'user',
-          content: `Contexto da conversa:\n${context.map(msg => `${msg.role}: ${msg.content}`).join('\n')}\n\n`
+          content: `Contexto da conversa:\n${context.map(msg => `${msg.role}: ${msg.content}`).join('\n')}\n\n`,
         });
       }
 
       messages.push({
         role: 'user',
-        content: this.intentPrompt.replace('{message}', message)
+        content: this.intentPrompt.replace('{message}', message),
       });
 
       const response = await this.anthropicClient.generateResponse(
@@ -225,12 +230,12 @@ Responda APENAS com JSON no formato:
         {
           maxTokens: 50,
           temperature: 0.1,
-          system: 'Você é um classificador de intenções preciso e conciso.'
-        }
+          system: 'Você é um classificador de intenções preciso e conciso.',
+        },
       );
 
       const intentText = response.trim().toUpperCase();
-      
+
       // Validate intent
       if (Object.values(Intent).includes(intentText as Intent)) {
         return intentText as Intent;
@@ -241,9 +246,9 @@ Responda APENAS com JSON no formato:
     } catch (error) {
       logger.error('Intent classification failed', {
         userId,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
-      
+
       return this.fallbackIntentClassification(message);
     }
   }
@@ -251,12 +256,17 @@ Responda APENAS com JSON no formato:
   /**
    * Extract entities from message
    */
-  private async extractEntities(message: string, userId: string): Promise<ExtractedEntities> {
+  private async extractEntities(
+    message: string,
+    userId: string,
+  ): Promise<ExtractedEntities> {
     try {
-      const messages: ConversationMessage[] = [{
-        role: 'user',
-        content: this.entityPrompt.replace('{message}', message)
-      }];
+      const messages: ConversationMessage[] = [
+        {
+          role: 'user',
+          content: this.entityPrompt.replace('{message}', message),
+        },
+      ];
 
       const response = await this.anthropicClient.generateResponse(
         messages,
@@ -264,8 +274,9 @@ Responda APENAS com JSON no formato:
         {
           maxTokens: 500,
           temperature: 0.1,
-          system: 'Você é um extrator de entidades preciso que retorna apenas JSON válido.'
-        }
+          system:
+            'Você é um extrator de entidades preciso que retorna apenas JSON válido.',
+        },
       );
 
       // Parse JSON response
@@ -277,9 +288,9 @@ Responda APENAS com JSON no formato:
     } catch (error) {
       logger.error('Entity extraction failed', {
         userId,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
-      
+
       return this.fallbackEntityExtraction(message);
     }
   }
@@ -289,33 +300,50 @@ Responda APENAS com JSON no formato:
    */
   private fallbackIntentClassification(message: string): Intent {
     const lowerMessage = message.toLowerCase();
-    
+
     // Emergency keywords
-    if (lowerMessage.includes('emergência') || lowerMessage.includes('urgente') || 
-        lowerMessage.includes('dor forte') || lowerMessage.includes('não aguenta')) {
+    if (
+      lowerMessage.includes('emergência') ||
+      lowerMessage.includes('urgente') ||
+      lowerMessage.includes('dor forte') ||
+      lowerMessage.includes('não aguenta')
+    ) {
       return Intent.EMERGENCIA;
     }
 
     // Scheduling keywords
-    if (lowerMessage.includes('agendar') || lowerMessage.includes('marcar') || 
-        lowerMessage.includes('consulta') || lowerMessage.includes('horário')) {
+    if (
+      lowerMessage.includes('agendar') ||
+      lowerMessage.includes('marcar') ||
+      lowerMessage.includes('consulta') ||
+      lowerMessage.includes('horário')
+    ) {
       return Intent.AGENDAR_CONSULTA;
     }
 
     // Rescheduling keywords
-    if (lowerMessage.includes('reagendar') || lowerMessage.includes('remarcar') || 
-        lowerMessage.includes('mudar horário')) {
+    if (
+      lowerMessage.includes('reagendar') ||
+      lowerMessage.includes('remarcar') ||
+      lowerMessage.includes('mudar horário')
+    ) {
       return Intent.REAGENDAR_CONSULTA;
     }
 
     // Cancellation keywords
-    if (lowerMessage.includes('cancelar') || lowerMessage.includes('desmarcar')) {
+    if (
+      lowerMessage.includes('cancelar') ||
+      lowerMessage.includes('desmarcar')
+    ) {
       return Intent.CANCELAR_CONSULTA;
     }
 
     // Consultation keywords
-    if (lowerMessage.includes('consultar') || lowerMessage.includes('verificar') || 
-        lowerMessage.includes('minha consulta')) {
+    if (
+      lowerMessage.includes('consultar') ||
+      lowerMessage.includes('verificar') ||
+      lowerMessage.includes('minha consulta')
+    ) {
       return Intent.CONSULTAR_AGENDAMENTO;
     }
 
@@ -341,9 +369,15 @@ Responda APENAS com JSON no formato:
     }
 
     // Extract common specialties
-    const specialties = ['cardiologia', 'ortopedia', 'pediatria', 'ginecologia', 'neurologia'];
-    const foundSpecialties = specialties.filter(specialty => 
-      message.toLowerCase().includes(specialty)
+    const specialties = [
+      'cardiologia',
+      'ortopedia',
+      'pediatria',
+      'ginecologia',
+      'neurologia',
+    ];
+    const foundSpecialties = specialties.filter(specialty =>
+      message.toLowerCase().includes(specialty),
     );
     if (foundSpecialties.length > 0) {
       entities.especialidade = foundSpecialties;
@@ -355,7 +389,10 @@ Responda APENAS com JSON no formato:
   /**
    * Calculate confidence score based on intent and entities
    */
-  private calculateConfidence(intent: Intent, entities: ExtractedEntities): number {
+  private calculateConfidence(
+    intent: Intent,
+    entities: ExtractedEntities,
+  ): number {
     let confidence = 0.5; // Base confidence
 
     // Higher confidence for specific intents
@@ -388,7 +425,7 @@ Responda APENAS com JSON no formato:
           }
         } else if (typeof value === 'object') {
           const cleanedObject = Object.fromEntries(
-            Object.entries(value).filter(([, v]) => v != null && v !== '')
+            Object.entries(value).filter(([, v]) => v != null && v !== ''),
           );
           if (Object.keys(cleanedObject).length > 0) {
             cleaned[key as keyof ExtractedEntities] = cleanedObject as any;
@@ -411,16 +448,26 @@ Responda APENAS com JSON no formato:
   }> {
     // Simple keyword-based sentiment analysis
     const positiveWords = ['obrigado', 'ótimo', 'perfeito', 'excelente', 'bom'];
-    const negativeWords = ['ruim', 'terrível', 'horrível', 'péssimo', 'problema'];
+    const negativeWords = [
+      'ruim',
+      'terrível',
+      'horrível',
+      'péssimo',
+      'problema',
+    ];
 
     const lowerMessage = message.toLowerCase();
-    const positiveCount = positiveWords.filter(word => lowerMessage.includes(word)).length;
-    const negativeCount = negativeWords.filter(word => lowerMessage.includes(word)).length;
+    const positiveCount = positiveWords.filter(word =>
+      lowerMessage.includes(word),
+    ).length;
+    const negativeCount = negativeWords.filter(word =>
+      lowerMessage.includes(word),
+    ).length;
 
     if (positiveCount > negativeCount) {
-      return { sentiment: 'positive', confidence: 0.6 + (positiveCount * 0.1) };
+      return { sentiment: 'positive', confidence: 0.6 + positiveCount * 0.1 };
     } else if (negativeCount > positiveCount) {
-      return { sentiment: 'negative', confidence: 0.6 + (negativeCount * 0.1) };
+      return { sentiment: 'negative', confidence: 0.6 + negativeCount * 0.1 };
     }
 
     return { sentiment: 'neutral', confidence: 0.5 };

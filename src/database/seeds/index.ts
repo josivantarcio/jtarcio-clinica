@@ -6,7 +6,7 @@ import { seedSystemConfigurations } from './system-configurations';
 // Simple logger for seed
 const logger = {
   info: (msg: string) => console.log(`[INFO] ${msg}`),
-  error: (msg: string, err?: any) => console.error(`[ERROR] ${msg}`, err)
+  error: (msg: string, err?: any) => console.error(`[ERROR] ${msg}`, err),
 };
 
 const prisma = new PrismaClient();
@@ -31,7 +31,7 @@ async function main(): Promise<void> {
 
 // Run seeds if called directly
 if (require.main === module) {
-  main().catch((error) => {
+  main().catch(error => {
     console.error(error);
     process.exit(1);
   });

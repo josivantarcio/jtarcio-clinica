@@ -71,7 +71,10 @@ export const createAppointmentSchema = z.object({
   scheduledAt: dateTimeSchema.transform(str => new Date(str)),
   duration: z.number().int().positive().default(30),
   type: AppointmentTypeSchema.default('CONSULTATION'),
-  reason: z.string().min(10, 'Reason must be at least 10 characters').optional(),
+  reason: z
+    .string()
+    .min(10, 'Reason must be at least 10 characters')
+    .optional(),
   symptoms: z.string().optional(),
   notes: z.string().optional(),
 });
@@ -79,16 +82,18 @@ export const createAppointmentSchema = z.object({
 export type CreateAppointmentDto = z.infer<typeof createAppointmentSchema>;
 
 // Update appointment DTO
-export const updateAppointmentSchema = z.object({
-  scheduledAt: dateTimeSchema.transform(str => new Date(str)).optional(),
-  duration: z.number().int().positive().optional(),
-  type: AppointmentTypeSchema.optional(),
-  reason: z.string().min(10).optional(),
-  symptoms: z.string().optional(),
-  notes: z.string().optional(),
-  diagnosis: z.string().optional(),
-  prescription: z.string().optional(),
-}).partial();
+export const updateAppointmentSchema = z
+  .object({
+    scheduledAt: dateTimeSchema.transform(str => new Date(str)).optional(),
+    duration: z.number().int().positive().optional(),
+    type: AppointmentTypeSchema.optional(),
+    reason: z.string().min(10).optional(),
+    symptoms: z.string().optional(),
+    notes: z.string().optional(),
+    diagnosis: z.string().optional(),
+    prescription: z.string().optional(),
+  })
+  .partial();
 
 export type UpdateAppointmentDto = z.infer<typeof updateAppointmentSchema>;
 
@@ -98,7 +103,9 @@ export const rescheduleAppointmentSchema = z.object({
   reason: z.string().min(10, 'Reschedule reason is required'),
 });
 
-export type RescheduleAppointmentDto = z.infer<typeof rescheduleAppointmentSchema>;
+export type RescheduleAppointmentDto = z.infer<
+  typeof rescheduleAppointmentSchema
+>;
 
 // Cancel appointment DTO
 export const cancelAppointmentSchema = z.object({
@@ -143,7 +150,9 @@ export type SearchAppointmentsQuery = z.infer<typeof searchAppointmentsSchema>;
 export const availabilityQuerySchema = z.object({
   doctorId: uuidSchema,
   specialtyId: uuidSchema,
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format (YYYY-MM-DD)'),
+  date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format (YYYY-MM-DD)'),
   duration: z.number().int().positive().default(30),
 });
 
@@ -151,8 +160,12 @@ export type AvailabilityQuery = z.infer<typeof availabilityQuerySchema>;
 
 // Time slot schema
 export const timeSlotSchema = z.object({
-  startTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Invalid time format (HH:mm)'),
-  endTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Invalid time format (HH:mm)'),
+  startTime: z
+    .string()
+    .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Invalid time format (HH:mm)'),
+  endTime: z
+    .string()
+    .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Invalid time format (HH:mm)'),
   isAvailable: z.boolean(),
   appointmentId: uuidSchema.optional(),
 });

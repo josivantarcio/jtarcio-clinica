@@ -1,6 +1,17 @@
-import { PrismaClient, Appointment, Doctor, Specialty, Patient, AppointmentStatus as PrismaAppointmentStatus } from '../database/generated/client';
+import {
+  PrismaClient,
+  Appointment,
+  Doctor,
+  Specialty,
+  Patient,
+  AppointmentStatus as PrismaAppointmentStatus,
+} from '../database/generated/client';
 import { AppointmentStatus, AppointmentType } from '../types/appointment';
-import { SchedulingCriteria, AvailableSlot, QueueEntry } from '../types/scheduling';
+import {
+  SchedulingCriteria,
+  AvailableSlot,
+  QueueEntry,
+} from '../types/scheduling';
 import { startOfDay, endOfDay, addDays, format } from 'date-fns';
 import { Logger } from 'winston';
 import Redis from 'ioredis';
@@ -51,17 +62,22 @@ export class SchedulingRepository {
     AVAILABILITY: 600, // 10 minutes
     DOCTORS: 1800, // 30 minutes
     SPECIALTIES: 3600, // 1 hour
-    QUEUE: 60 // 1 minute
+    QUEUE: 60, // 1 minute
   };
 
   private readonly CACHE_KEYS = {
     APPOINTMENT: (id: string) => `appointment:${id}`,
-    DOCTOR_APPOINTMENTS: (doctorId: string, date: string) => `doctor-appointments:${doctorId}:${date}`,
-    DOCTOR_AVAILABILITY: (doctorId: string) => `doctor-availability:${doctorId}`,
-    SPECIALTY_DOCTORS: (specialtyId: string) => `specialty-doctors:${specialtyId}`,
-    PATIENT_APPOINTMENTS: (patientId: string) => `patient-appointments:${patientId}`,
+    DOCTOR_APPOINTMENTS: (doctorId: string, date: string) =>
+      `doctor-appointments:${doctorId}:${date}`,
+    DOCTOR_AVAILABILITY: (doctorId: string) =>
+      `doctor-availability:${doctorId}`,
+    SPECIALTY_DOCTORS: (specialtyId: string) =>
+      `specialty-doctors:${specialtyId}`,
+    PATIENT_APPOINTMENTS: (patientId: string) =>
+      `patient-appointments:${patientId}`,
     QUEUE_ENTRY: (entryId: string) => `queue-entry:${entryId}`,
-    AVAILABILITY_SLOTS: (doctorId: string, date: string) => `availability-slots:${doctorId}:${date}`
+    AVAILABILITY_SLOTS: (doctorId: string, date: string) =>
+      `availability-slots:${doctorId}:${date}`,
   };
 
   constructor(private deps: SchedulingRepositoryDeps) {}
@@ -86,7 +102,7 @@ export class SchedulingRepository {
         data: {
           ...data,
           endTime: new Date(data.scheduledAt.getTime() + data.duration * 60000),
-          status: PrismaAppointmentStatus.SCHEDULED
+          status: PrismaAppointmentStatus.SCHEDULED,
         },
         include: {
           patient: {
@@ -96,19 +112,19 @@ export class SchedulingRepository {
               lastName: true,
               email: true,
               phone: true,
-              patientProfile: true
-            }
+              patientProfile: true,
+            },
           },
           doctor: {
             select: {
               id: true,
               firstName: true,
               lastName: true,
-              doctorProfile: true
-            }
+              doctorProfile: true,
+            },
           },
-          specialty: true
-        }
+          specialty: true,
+        },
       });
 
       // Invalidate related caches
@@ -116,14 +132,15 @@ export class SchedulingRepository {
 
       logger.info('Appointment created', { appointmentId: appointment.id });
       return appointment;
-
     } catch (error) {
       logger.error('Error creating appointment', { error, data });
       throw error;
     }
   }
 
-  async getAppointmentById(id: string): Promise<AppointmentWithRelations | null> {
+  async getAppointmentById(
+    id: string,
+  ): Promise<AppointmentWithRelations | null> {
     const { prisma, redis, logger } = this.deps;
     const cacheKey = this.CACHE_KEYS.APPOINTMENT(id);
 
@@ -145,28 +162,31 @@ export class SchedulingRepository {
               lastName: true,
               email: true,
               phone: true,
-              patientProfile: true
-            }
+              patientProfile: true,
+            },
           },
           doctor: {
             select: {
               id: true,
               firstName: true,
               lastName: true,
-              doctorProfile: true
-            }
+              doctorProfile: true,
+            },
           },
-          specialty: true
-        }
+          specialty: true,
+        },
       });
 
       // Cache result
       if (appointment) {
-        await redis.setex(cacheKey, this.CACHE_TTL.APPOINTMENTS, JSON.stringify(appointment));
+        await redis.setex(
+          cacheKey,
+          this.CACHE_TTL.APPOINTMENTS,
+          JSON.stringify(appointment),
+        );
       }
 
       return appointment;
-
     } catch (error) {
       logger.error('Error getting appointment by ID', { error, id });
       throw error;
@@ -174,8 +194,8 @@ export class SchedulingRepository {
   }
 
   async updateAppointment(
-    id: string, 
-    data: Partial<Appointment>
+    id: string,
+    data: Partial<Appointment>,
   ): Promise<AppointmentWithRelations> {
     const { prisma, logger } = this.deps;
 
@@ -191,19 +211,19 @@ export class SchedulingRepository {
               lastName: true,
               email: true,
               phone: true,
-              patientProfile: true
-            }
+              patientProfile: true,
+            },
           },
           doctor: {
             select: {
               id: true,
               firstName: true,
               lastName: true,
-              doctorProfile: true
-            }
+              doctorProfile: true,
+            },
           },
-          specialty: true
-        }
+          specialty: true,
+        },
       });
 
       // Invalidate caches
@@ -211,7 +231,6 @@ export class SchedulingRepository {
 
       logger.info('Appointment updated', { appointmentId: id });
       return appointment;
-
     } catch (error) {
       logger.error('Error updating appointment', { error, id, data });
       throw error;
@@ -224,9 +243,9 @@ export class SchedulingRepository {
     try {
       // Get appointment for cache invalidation
       const appointment = await this.getAppointmentById(id);
-      
+
       await prisma.appointment.delete({
-        where: { id }
+        where: { id },
       });
 
       // Invalidate caches
@@ -235,7 +254,6 @@ export class SchedulingRepository {
       }
 
       logger.info('Appointment deleted', { appointmentId: id });
-
     } catch (error) {
       logger.error('Error deleting appointment', { error, id });
       throw error;
@@ -261,32 +279,37 @@ export class SchedulingRepository {
         include: {
           availability: {
             where: { isActive: true },
-            orderBy: { dayOfWeek: 'asc' }
+            orderBy: { dayOfWeek: 'asc' },
           },
           user: {
             select: {
               id: true,
               firstName: true,
-              lastName: true
-            }
-          }
-        }
+              lastName: true,
+            },
+          },
+        },
       });
 
       // Cache result
       if (doctor) {
-        await redis.setex(cacheKey, this.CACHE_TTL.DOCTORS, JSON.stringify(doctor));
+        await redis.setex(
+          cacheKey,
+          this.CACHE_TTL.DOCTORS,
+          JSON.stringify(doctor),
+        );
       }
 
       return doctor;
-
     } catch (error) {
       logger.error('Error getting doctor by ID', { error, id });
       throw error;
     }
   }
 
-  async getDoctorsBySpecialty(specialtyId: string): Promise<DoctorWithAvailability[]> {
+  async getDoctorsBySpecialty(
+    specialtyId: string,
+  ): Promise<DoctorWithAvailability[]> {
     const { prisma, redis, logger } = this.deps;
     const cacheKey = this.CACHE_KEYS.SPECIALTY_DOCTORS(specialtyId);
 
@@ -299,40 +322,50 @@ export class SchedulingRepository {
 
       // Fetch from database
       const doctors = await prisma.doctor.findMany({
-        where: { 
+        where: {
           specialtyId,
-          isActive: true 
+          isActive: true,
         },
         include: {
           availability: {
             where: { isActive: true },
-            orderBy: { dayOfWeek: 'asc' }
+            orderBy: { dayOfWeek: 'asc' },
           },
           user: {
             select: {
               id: true,
               firstName: true,
-              lastName: true
-            }
-          }
-        }
+              lastName: true,
+            },
+          },
+        },
       });
 
       // Cache result
-      await redis.setex(cacheKey, this.CACHE_TTL.DOCTORS, JSON.stringify(doctors));
+      await redis.setex(
+        cacheKey,
+        this.CACHE_TTL.DOCTORS,
+        JSON.stringify(doctors),
+      );
 
       return doctors;
-
     } catch (error) {
-      logger.error('Error getting doctors by specialty', { error, specialtyId });
+      logger.error('Error getting doctors by specialty', {
+        error,
+        specialtyId,
+      });
       throw error;
     }
   }
 
   async getDoctorAppointments(
-    doctorId: string, 
+    doctorId: string,
     date: Date,
-    statuses: PrismaAppointmentStatus[] = [PrismaAppointmentStatus.SCHEDULED, PrismaAppointmentStatus.CONFIRMED, PrismaAppointmentStatus.IN_PROGRESS]
+    statuses: PrismaAppointmentStatus[] = [
+      PrismaAppointmentStatus.SCHEDULED,
+      PrismaAppointmentStatus.CONFIRMED,
+      PrismaAppointmentStatus.IN_PROGRESS,
+    ],
   ): Promise<AppointmentWithRelations[]> {
     const { prisma, redis, logger } = this.deps;
     const dateStr = format(date, 'yyyy-MM-dd');
@@ -352,9 +385,9 @@ export class SchedulingRepository {
           doctorId,
           scheduledAt: {
             gte: startOfDay(date),
-            lte: endOfDay(date)
+            lte: endOfDay(date),
           },
-          status: { in: statuses }
+          status: { in: statuses },
         },
         include: {
           patient: {
@@ -364,29 +397,36 @@ export class SchedulingRepository {
               lastName: true,
               email: true,
               phone: true,
-              patientProfile: true
-            }
+              patientProfile: true,
+            },
           },
           doctor: {
             select: {
               id: true,
               firstName: true,
               lastName: true,
-              doctorProfile: true
-            }
+              doctorProfile: true,
+            },
           },
-          specialty: true
+          specialty: true,
         },
-        orderBy: { scheduledAt: 'asc' }
+        orderBy: { scheduledAt: 'asc' },
       });
 
       // Cache result
-      await redis.setex(cacheKey, this.CACHE_TTL.APPOINTMENTS, JSON.stringify(appointments));
+      await redis.setex(
+        cacheKey,
+        this.CACHE_TTL.APPOINTMENTS,
+        JSON.stringify(appointments),
+      );
 
       return appointments;
-
     } catch (error) {
-      logger.error('Error getting doctor appointments', { error, doctorId, date });
+      logger.error('Error getting doctor appointments', {
+        error,
+        doctorId,
+        date,
+      });
       throw error;
     }
   }
@@ -396,7 +436,7 @@ export class SchedulingRepository {
   async getPatientAppointments(
     patientId: string,
     limit?: number,
-    statuses?: AppointmentStatus[]
+    statuses?: AppointmentStatus[],
   ): Promise<AppointmentWithRelations[]> {
     const { prisma, redis, logger } = this.deps;
     const cacheKey = this.CACHE_KEYS.PATIENT_APPOINTMENTS(patientId);
@@ -407,7 +447,9 @@ export class SchedulingRepository {
       if (cached) {
         let appointments = JSON.parse(cached);
         if (statuses) {
-          appointments = appointments.filter((apt: any) => statuses.includes(apt.status));
+          appointments = appointments.filter((apt: any) =>
+            statuses.includes(apt.status),
+          );
         }
         return limit ? appointments.slice(0, limit) : appointments;
       }
@@ -429,28 +471,31 @@ export class SchedulingRepository {
               lastName: true,
               email: true,
               phone: true,
-              patientProfile: true
-            }
+              patientProfile: true,
+            },
           },
           doctor: {
             select: {
               id: true,
               firstName: true,
               lastName: true,
-              doctorProfile: true
-            }
+              doctorProfile: true,
+            },
           },
-          specialty: true
+          specialty: true,
         },
         orderBy: { scheduledAt: 'desc' },
-        take: limit
+        take: limit,
       });
 
       // Cache result
-      await redis.setex(cacheKey, this.CACHE_TTL.APPOINTMENTS, JSON.stringify(appointments));
+      await redis.setex(
+        cacheKey,
+        this.CACHE_TTL.APPOINTMENTS,
+        JSON.stringify(appointments),
+      );
 
       return appointments;
-
     } catch (error) {
       logger.error('Error getting patient appointments', { error, patientId });
       throw error;
@@ -500,28 +545,27 @@ export class SchedulingRepository {
                 lastName: true,
                 email: true,
                 phone: true,
-                patientProfile: true
-              }
+                patientProfile: true,
+              },
             },
             doctor: {
               select: {
                 id: true,
                 firstName: true,
                 lastName: true,
-                doctorProfile: true
-              }
+                doctorProfile: true,
+              },
             },
-            specialty: true
+            specialty: true,
           },
           orderBy: { scheduledAt: 'desc' },
           skip: filters.skip || 0,
-          take: filters.take || 50
+          take: filters.take || 50,
         }),
-        prisma.appointment.count({ where })
+        prisma.appointment.count({ where }),
       ]);
 
       return { appointments, total };
-
     } catch (error) {
       logger.error('Error searching appointments', { error, filters });
       throw error;
@@ -530,12 +574,14 @@ export class SchedulingRepository {
 
   // Availability operations
 
-  async getAvailableSlots(criteria: SchedulingCriteria): Promise<AvailableSlot[]> {
+  async getAvailableSlots(
+    criteria: SchedulingCriteria,
+  ): Promise<AvailableSlot[]> {
     const { logger } = this.deps;
 
     try {
       // Get doctors based on criteria
-      const doctors = criteria.doctorId 
+      const doctors = criteria.doctorId
         ? [await this.getDoctorById(criteria.doctorId)]
         : await this.getDoctorsBySpecialty(criteria.specialtyId);
 
@@ -550,7 +596,6 @@ export class SchedulingRepository {
       }
 
       return slots;
-
     } catch (error) {
       logger.error('Error getting available slots', { error, criteria });
       throw error;
@@ -559,23 +604,28 @@ export class SchedulingRepository {
 
   // Queue operations
 
-  async createQueueEntry(entry: Omit<QueueEntry, 'id' | 'createdAt'>): Promise<QueueEntry> {
+  async createQueueEntry(
+    entry: Omit<QueueEntry, 'id' | 'createdAt'>,
+  ): Promise<QueueEntry> {
     const { redis, logger } = this.deps;
 
     try {
       const queueEntry: QueueEntry = {
         ...entry,
         id: `queue-${Date.now()}-${entry.patientId}`,
-        createdAt: new Date()
+        createdAt: new Date(),
       };
 
       // Store in Redis
       const cacheKey = this.CACHE_KEYS.QUEUE_ENTRY(queueEntry.id);
-      await redis.setex(cacheKey, this.CACHE_TTL.QUEUE * 60, JSON.stringify(queueEntry));
+      await redis.setex(
+        cacheKey,
+        this.CACHE_TTL.QUEUE * 60,
+        JSON.stringify(queueEntry),
+      );
 
       logger.info('Queue entry created', { entryId: queueEntry.id });
       return queueEntry;
-
     } catch (error) {
       logger.error('Error creating queue entry', { error, entry });
       throw error;
@@ -590,14 +640,16 @@ export class SchedulingRepository {
       const cached = await redis.get(cacheKey);
 
       return cached ? JSON.parse(cached) : null;
-
     } catch (error) {
       logger.error('Error getting queue entry', { error, id });
       throw error;
     }
   }
 
-  async updateQueueEntry(id: string, updates: Partial<QueueEntry>): Promise<QueueEntry | null> {
+  async updateQueueEntry(
+    id: string,
+    updates: Partial<QueueEntry>,
+  ): Promise<QueueEntry | null> {
     const { redis, logger } = this.deps;
 
     try {
@@ -606,12 +658,15 @@ export class SchedulingRepository {
 
       const updated: QueueEntry = { ...existing, ...updates };
       const cacheKey = this.CACHE_KEYS.QUEUE_ENTRY(id);
-      
-      await redis.setex(cacheKey, this.CACHE_TTL.QUEUE * 60, JSON.stringify(updated));
+
+      await redis.setex(
+        cacheKey,
+        this.CACHE_TTL.QUEUE * 60,
+        JSON.stringify(updated),
+      );
 
       logger.info('Queue entry updated', { entryId: id });
       return updated;
-
     } catch (error) {
       logger.error('Error updating queue entry', { error, id });
       throw error;
@@ -627,7 +682,6 @@ export class SchedulingRepository {
 
       logger.info('Queue entry deleted', { entryId: id });
       return result > 0;
-
     } catch (error) {
       logger.error('Error deleting queue entry', { error, id });
       throw error;
@@ -650,14 +704,17 @@ export class SchedulingRepository {
       // Fetch from database
       const specialties = await prisma.specialty.findMany({
         where: { isActive: true },
-        orderBy: { name: 'asc' }
+        orderBy: { name: 'asc' },
       });
 
       // Cache result
-      await redis.setex(cacheKey, this.CACHE_TTL.SPECIALTIES, JSON.stringify(specialties));
+      await redis.setex(
+        cacheKey,
+        this.CACHE_TTL.SPECIALTIES,
+        JSON.stringify(specialties),
+      );
 
       return specialties;
-
     } catch (error) {
       logger.error('Error getting active specialties', { error });
       throw error;
@@ -666,18 +723,26 @@ export class SchedulingRepository {
 
   // Cache management methods
 
-  private async invalidateAppointmentCaches(appointment: AppointmentWithRelations): Promise<void> {
+  private async invalidateAppointmentCaches(
+    appointment: AppointmentWithRelations,
+  ): Promise<void> {
     const { redis } = this.deps;
 
     const keysToInvalidate = [
       this.CACHE_KEYS.APPOINTMENT(appointment.id),
-      this.CACHE_KEYS.DOCTOR_APPOINTMENTS(appointment.doctorId, format(appointment.scheduledAt, 'yyyy-MM-dd')),
+      this.CACHE_KEYS.DOCTOR_APPOINTMENTS(
+        appointment.doctorId,
+        format(appointment.scheduledAt, 'yyyy-MM-dd'),
+      ),
       this.CACHE_KEYS.PATIENT_APPOINTMENTS(appointment.patientId),
-      this.CACHE_KEYS.AVAILABILITY_SLOTS(appointment.doctorId, format(appointment.scheduledAt, 'yyyy-MM-dd'))
+      this.CACHE_KEYS.AVAILABILITY_SLOTS(
+        appointment.doctorId,
+        format(appointment.scheduledAt, 'yyyy-MM-dd'),
+      ),
     ];
 
     await Promise.all(
-      keysToInvalidate.map(key => redis.del(key).catch(() => {}))
+      keysToInvalidate.map(key => redis.del(key).catch(() => {})),
     );
   }
 
@@ -695,7 +760,6 @@ export class SchedulingRepository {
         await redis.flushdb();
         return 1; // Return positive number to indicate success
       }
-
     } catch (error) {
       this.deps.logger.error('Error clearing cache', { error, pattern });
       throw error;
@@ -705,8 +769,8 @@ export class SchedulingRepository {
   // Private helper methods
 
   private async generateDoctorSlots(
-    doctor: DoctorWithAvailability, 
-    criteria: SchedulingCriteria
+    doctor: DoctorWithAvailability,
+    criteria: SchedulingCriteria,
   ): Promise<AvailableSlot[]> {
     const slots: AvailableSlot[] = [];
     let currentDate = new Date(criteria.startDate);
@@ -714,21 +778,26 @@ export class SchedulingRepository {
 
     while (currentDate <= endDate) {
       const dayOfWeek = currentDate.getDay();
-      const availability = doctor.availability.find(a => a.dayOfWeek === dayOfWeek);
+      const availability = doctor.availability.find(
+        a => a.dayOfWeek === dayOfWeek,
+      );
 
       if (availability) {
         // Get existing appointments for the day
-        const existingAppointments = await this.getDoctorAppointments(doctor.id, currentDate);
-        
+        const existingAppointments = await this.getDoctorAppointments(
+          doctor.id,
+          currentDate,
+        );
+
         // Generate time slots for the day
         const daySlots = this.generateDaySlots(
-          doctor, 
-          currentDate, 
-          availability, 
+          doctor,
+          currentDate,
+          availability,
           existingAppointments,
-          criteria
+          criteria,
         );
-        
+
         slots.push(...daySlots);
       }
 
@@ -743,10 +812,12 @@ export class SchedulingRepository {
     date: Date,
     availability: any,
     existingAppointments: AppointmentWithRelations[],
-    criteria: SchedulingCriteria
+    criteria: SchedulingCriteria,
   ): AvailableSlot[] {
     const slots: AvailableSlot[] = [];
-    const [startHour, startMinute] = availability.startTime.split(':').map(Number);
+    const [startHour, startMinute] = availability.startTime
+      .split(':')
+      .map(Number);
     const [endHour, endMinute] = availability.endTime.split(':').map(Number);
 
     let currentTime = new Date(date);
@@ -757,8 +828,8 @@ export class SchedulingRepository {
 
     const duration = criteria.duration || 30;
 
-    while (currentTime.getTime() + (duration * 60000) <= dayEndTime.getTime()) {
-      const slotEndTime = new Date(currentTime.getTime() + (duration * 60000));
+    while (currentTime.getTime() + duration * 60000 <= dayEndTime.getTime()) {
+      const slotEndTime = new Date(currentTime.getTime() + duration * 60000);
 
       // Check for conflicts with existing appointments
       const hasConflict = existingAppointments.some(apt => {
@@ -767,7 +838,7 @@ export class SchedulingRepository {
         const slotStart = currentTime.getTime();
         const slotEnd = slotEndTime.getTime();
 
-        return (slotStart < aptEnd && slotEnd > aptStart);
+        return slotStart < aptEnd && slotEnd > aptStart;
       });
 
       if (!hasConflict) {
@@ -782,13 +853,15 @@ export class SchedulingRepository {
           metadata: {
             slotType: 'REGULAR',
             utilizationScore: 0.5,
-            patientPreferenceMatch: 0.5
-          }
+            patientPreferenceMatch: 0.5,
+          },
         });
       }
 
       // Move to next slot
-      currentTime = new Date(currentTime.getTime() + (availability.slotDuration * 60000));
+      currentTime = new Date(
+        currentTime.getTime() + availability.slotDuration * 60000,
+      );
     }
 
     return slots;

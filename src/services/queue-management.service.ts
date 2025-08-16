@@ -2,14 +2,14 @@ import {
   QueueEntry,
   SchedulingCriteria,
   AvailableSlot,
-  AppointmentBooking
+  AppointmentBooking,
 } from '@/types/scheduling';
 import { AppointmentType, AppointmentStatus } from '@/types/appointment';
-import { 
-  BusinessRules, 
-  QUEUE_CONFIG, 
+import {
+  BusinessRules,
+  QUEUE_CONFIG,
   PATIENT_CLASSIFICATION,
-  PatientClassification 
+  PatientClassification,
 } from '@/config/business-rules';
 import { PrismaClient } from '../../database/generated/client';
 import {
@@ -19,7 +19,7 @@ import {
   differenceInDays,
   isAfter,
   isBefore,
-  format
+  format,
 } from 'date-fns';
 import { Logger } from 'winston';
 import Redis from 'ioredis';
@@ -48,7 +48,11 @@ export interface WaitlistEntry extends QueueEntry {
 export interface QueueNotification {
   entryId: string;
   patientId: string;
-  type: 'SLOT_AVAILABLE' | 'POSITION_UPDATE' | 'AUTO_BOOKED' | 'TIMEOUT_WARNING';
+  type:
+    | 'SLOT_AVAILABLE'
+    | 'POSITION_UPDATE'
+    | 'AUTO_BOOKED'
+    | 'TIMEOUT_WARNING';
   message: string;
   availableSlot?: AvailableSlot;
   expiresAt?: Date;
@@ -66,7 +70,7 @@ export interface QueueMetrics {
 export class QueueManagementService {
   private readonly QUEUE_KEY_PREFIX = 'appointment-queue';
   private readonly NOTIFICATION_INTERVAL = 60000; // 1 minute
-  
+
   constructor(private deps: QueueManagementDeps) {
     this.startQueueProcessing();
   }
@@ -74,24 +78,28 @@ export class QueueManagementService {
   /**
    * Add patient to appointment queue
    */
-  async addToQueue(criteria: SchedulingCriteria & {
-    maxWaitDays: number;
-    preferredDates: Date[];
-    preferredTimes: string[];
-    autoBookingEnabled?: boolean;
-  }): Promise<WaitlistEntry> {
+  async addToQueue(
+    criteria: SchedulingCriteria & {
+      maxWaitDays: number;
+      preferredDates: Date[];
+      preferredTimes: string[];
+      autoBookingEnabled?: boolean;
+    },
+  ): Promise<WaitlistEntry> {
     const { prisma, redis, logger } = this.deps;
 
     try {
       logger.info('Adding patient to appointment queue', { criteria });
 
       // Calculate priority score
-      const patientClassification = await this.getPatientClassification(criteria.patientId);
+      const patientClassification = await this.getPatientClassification(
+        criteria.patientId,
+      );
       const priorityScore = BusinessRules.calculatePriorityScore(
         criteria.appointmentType,
         patientClassification,
         criteria.urgencyLevel || 5,
-        0 // initial wait time
+        0, // initial wait time
       );
 
       // Create queue entry
@@ -110,14 +118,17 @@ export class QueueManagementService {
         estimatedWaitTime: 0,
         autoBookingEnabled: criteria.autoBookingEnabled ?? true,
         autoBookingAttempts: 0,
-        maxAutoBookingAttempts: 5
+        maxAutoBookingAttempts: 5,
       };
 
       // Store in database
       await this.storeQueueEntry(queueEntry);
 
       // Add to Redis for real-time processing
-      const queueKey = this.getQueueKey(criteria.specialtyId, criteria.doctorId);
+      const queueKey = this.getQueueKey(
+        criteria.specialtyId,
+        criteria.doctorId,
+      );
       await redis.zadd(queueKey, priorityScore, JSON.stringify(queueEntry));
 
       // Calculate position and estimated wait time
@@ -130,17 +141,16 @@ export class QueueManagementService {
         entryId: queueEntry.id,
         patientId: queueEntry.patientId,
         type: 'POSITION_UPDATE',
-        message: `You are #${position.position} in the queue. Estimated wait time: ${Math.round(position.estimatedWaitTime)} hours.`
+        message: `You are #${position.position} in the queue. Estimated wait time: ${Math.round(position.estimatedWaitTime)} hours.`,
       });
 
-      logger.info('Patient added to queue successfully', { 
+      logger.info('Patient added to queue successfully', {
         entryId: queueEntry.id,
         position: position.position,
-        priorityScore
+        priorityScore,
       });
 
       return queueEntry;
-
     } catch (error) {
       logger.error('Error adding patient to queue', { error, criteria });
       throw error;
@@ -150,7 +160,10 @@ export class QueueManagementService {
   /**
    * Remove patient from queue
    */
-  async removeFromQueue(entryId: string, reason: string = 'USER_REQUEST'): Promise<boolean> {
+  async removeFromQueue(
+    entryId: string,
+    reason: string = 'USER_REQUEST',
+  ): Promise<boolean> {
     const { redis, logger } = this.deps;
 
     try {
@@ -178,7 +191,6 @@ export class QueueManagementService {
       }
 
       return false;
-
     } catch (error) {
       logger.error('Error removing patient from queue', { error, entryId });
       throw error;
@@ -194,9 +206,11 @@ export class QueueManagementService {
       if (!entry) return null;
 
       return await this.calculateQueuePosition(entry);
-
     } catch (error) {
-      this.deps.logger.error('Error getting queue position', { error, entryId });
+      this.deps.logger.error('Error getting queue position', {
+        error,
+        entryId,
+      });
       throw error;
     }
   }
@@ -217,7 +231,7 @@ export class QueueManagementService {
 
       // Find matching queue entries
       const candidates = await this.findMatchingQueueEntries(slot);
-      
+
       if (candidates.length === 0) {
         return { processed: false };
       }
@@ -226,21 +240,22 @@ export class QueueManagementService {
       const topCandidate = candidates[0];
 
       // Check if auto-booking is enabled
-      if (topCandidate.autoBookingEnabled && 
-          topCandidate.autoBookingAttempts < topCandidate.maxAutoBookingAttempts) {
-        
+      if (
+        topCandidate.autoBookingEnabled &&
+        topCandidate.autoBookingAttempts < topCandidate.maxAutoBookingAttempts
+      ) {
         // Attempt automatic booking
         const bookingResult = await this.attemptAutoBooking(topCandidate, slot);
-        
+
         if (bookingResult.success) {
           // Remove from queue
           await this.removeFromQueue(topCandidate.id, 'AUTO_BOOKED');
-          
+
           const notification: QueueNotification = {
             entryId: topCandidate.id,
             patientId: topCandidate.patientId,
             type: 'AUTO_BOOKED',
-            message: `Great news! Your appointment has been automatically booked for ${format(slot.startTime, 'PPP p')}.`
+            message: `Great news! Your appointment has been automatically booked for ${format(slot.startTime, 'PPP p')}.`,
           };
 
           await this.sendQueueNotification(notification);
@@ -249,7 +264,7 @@ export class QueueManagementService {
             processed: true,
             appointmentBooked: true,
             queueEntry: topCandidate,
-            notification
+            notification,
           };
         } else {
           // Increment auto-booking attempts
@@ -264,7 +279,7 @@ export class QueueManagementService {
         type: 'SLOT_AVAILABLE',
         message: `An appointment slot is available! Book now for ${format(slot.startTime, 'PPP p')}.`,
         availableSlot: slot,
-        expiresAt: addHours(new Date(), 2) // 2 hour booking window
+        expiresAt: addHours(new Date(), 2), // 2 hour booking window
       };
 
       await this.sendQueueNotification(notification);
@@ -273,9 +288,8 @@ export class QueueManagementService {
         processed: true,
         appointmentBooked: false,
         queueEntry: topCandidate,
-        notification
+        notification,
       };
-
     } catch (error) {
       logger.error('Error processing available slot', { error, slot });
       throw error;
@@ -300,11 +314,11 @@ export class QueueManagementService {
       for (const queueKey of queueKeys) {
         // Get all entries in this queue
         const entries = await redis.zrange(queueKey, 0, -1);
-        
+
         for (const entryStr of entries) {
           try {
             const entry: WaitlistEntry = JSON.parse(entryStr);
-            
+
             // Check if entry has expired
             if (this.hasQueueEntryExpired(entry)) {
               await this.expireQueueEntry(entry);
@@ -314,46 +328,53 @@ export class QueueManagementService {
 
             // Calculate updated priority score
             const waitingHours = differenceInHours(new Date(), entry.createdAt);
-            const patientClassification = await this.getPatientClassification(entry.patientId);
-            
+            const patientClassification = await this.getPatientClassification(
+              entry.patientId,
+            );
+
             const newPriorityScore = BusinessRules.calculatePriorityScore(
               entry.appointmentType,
               patientClassification,
               entry.urgencyLevel,
-              waitingHours
+              waitingHours,
             );
 
             // Update if priority has changed significantly
             if (Math.abs(newPriorityScore - entry.priorityScore) > 0.5) {
               entry.priorityScore = newPriorityScore;
-              
+
               // Update in Redis
               await redis.zrem(queueKey, entryStr);
-              await redis.zadd(queueKey, newPriorityScore, JSON.stringify(entry));
-              
+              await redis.zadd(
+                queueKey,
+                newPriorityScore,
+                JSON.stringify(entry),
+              );
+
               totalUpdated++;
             }
-
           } catch (parseError) {
-            logger.warn('Failed to parse queue entry', { parseError, entryStr });
+            logger.warn('Failed to parse queue entry', {
+              parseError,
+              entryStr,
+            });
           }
         }
 
         // Update positions after priority changes
         await this.updateQueuePositions(
           this.extractSpecialtyFromQueueKey(queueKey),
-          this.extractDoctorFromQueueKey(queueKey)
+          this.extractDoctorFromQueueKey(queueKey),
         );
       }
 
-      logger.info('Queue priorities updated', { 
-        totalUpdated, 
-        totalExpired, 
-        queuesProcessed: queueKeys.length 
+      logger.info('Queue priorities updated', {
+        totalUpdated,
+        totalExpired,
+        queuesProcessed: queueKeys.length,
       });
 
       return { updated: totalUpdated, expired: totalExpired };
-
     } catch (error) {
       logger.error('Error updating queue priorities', { error });
       throw error;
@@ -363,11 +384,14 @@ export class QueueManagementService {
   /**
    * Get queue metrics and statistics
    */
-  async getQueueMetrics(specialtyId?: string, doctorId?: string): Promise<QueueMetrics> {
+  async getQueueMetrics(
+    specialtyId?: string,
+    doctorId?: string,
+  ): Promise<QueueMetrics> {
     const { redis, prisma, logger } = this.deps;
 
     try {
-      const queuePattern = specialtyId 
+      const queuePattern = specialtyId
         ? `${this.QUEUE_KEY_PREFIX}:${specialtyId}${doctorId ? `:${doctorId}` : ':*'}`
         : `${this.QUEUE_KEY_PREFIX}:*`;
 
@@ -382,14 +406,16 @@ export class QueueManagementService {
         totalEntries += entries.length;
 
         const specialty = this.extractSpecialtyFromQueueKey(queueKey);
-        specialtyQueues[specialty] = (specialtyQueues[specialty] || 0) + entries.length;
+        specialtyQueues[specialty] =
+          (specialtyQueues[specialty] || 0) + entries.length;
 
         // Analyze priority distribution
         for (const entryStr of entries) {
           try {
             const entry: WaitlistEntry = JSON.parse(entryStr);
             const priorityBucket = this.getPriorityBucket(entry.priorityScore);
-            priorityDistribution[priorityBucket] = (priorityDistribution[priorityBucket] || 0) + 1;
+            priorityDistribution[priorityBucket] =
+              (priorityDistribution[priorityBucket] || 0) + 1;
           } catch {
             // Skip invalid entries
           }
@@ -397,7 +423,10 @@ export class QueueManagementService {
       }
 
       // Calculate historical metrics from database
-      const historicalData = await this.getHistoricalQueueMetrics(specialtyId, doctorId);
+      const historicalData = await this.getHistoricalQueueMetrics(
+        specialtyId,
+        doctorId,
+      );
 
       return {
         totalEntries,
@@ -405,11 +434,14 @@ export class QueueManagementService {
         successfulBookingRate: historicalData.successfulBookingRate,
         timeoutRate: historicalData.timeoutRate,
         priorityDistribution,
-        specialtyQueues
+        specialtyQueues,
       };
-
     } catch (error) {
-      logger.error('Error getting queue metrics', { error, specialtyId, doctorId });
+      logger.error('Error getting queue metrics', {
+        error,
+        specialtyId,
+        doctorId,
+      });
       throw error;
     }
   }
@@ -440,7 +472,9 @@ export class QueueManagementService {
       }
 
       // Find overloaded queues
-      const averageSize = Array.from(queueSizes.values()).reduce((a, b) => a + b, 0) / queueSizes.size;
+      const averageSize =
+        Array.from(queueSizes.values()).reduce((a, b) => a + b, 0) /
+        queueSizes.size;
       const overloadedQueues = Array.from(queueSizes.entries())
         .filter(([_, size]) => size > averageSize * 1.5)
         .sort(([_, a], [__, b]) => b - a);
@@ -452,16 +486,17 @@ export class QueueManagementService {
 
         if (size > QUEUE_CONFIG.MAX_QUEUE_SIZE_PER_DOCTOR) {
           suggestions.push(
-            `Queue for ${specialty}${doctor ? ` (Dr. ${doctor})` : ''} is overloaded (${size} entries). Consider adding more availability or alternative doctors.`
+            `Queue for ${specialty}${doctor ? ` (Dr. ${doctor})` : ''} is overloaded (${size} entries). Consider adding more availability or alternative doctors.`,
           );
         }
 
         // Suggest redistribution to other doctors in same specialty
         if (doctor) {
-          const alternativeDoctors = await this.findAlternativeDoctors(specialty);
+          const alternativeDoctors =
+            await this.findAlternativeDoctors(specialty);
           if (alternativeDoctors.length > 0) {
             suggestions.push(
-              `Consider redistributing some patients from ${doctor} to other ${specialty} doctors: ${alternativeDoctors.join(', ')}`
+              `Consider redistributing some patients from ${doctor} to other ${specialty} doctors: ${alternativeDoctors.join(', ')}`,
             );
           }
         }
@@ -469,9 +504,8 @@ export class QueueManagementService {
 
       return {
         redistributed,
-        suggestions
+        suggestions,
       };
-
     } catch (error) {
       logger.error('Error optimizing queue distribution', { error });
       throw error;
@@ -484,23 +518,24 @@ export class QueueManagementService {
     return `${this.QUEUE_KEY_PREFIX}:${specialtyId}${doctorId ? `:${doctorId}` : ''}`;
   }
 
-  private async getPatientClassification(patientId: string): Promise<PatientClassification> {
+  private async getPatientClassification(
+    patientId: string,
+  ): Promise<PatientClassification> {
     const { prisma } = this.deps;
 
     try {
       // Get patient's appointment history to determine classification
       const appointmentCount = await prisma.appointment.count({
-        where: { 
-          patientId, 
-          status: AppointmentStatus.COMPLETED 
-        }
+        where: {
+          patientId,
+          status: AppointmentStatus.COMPLETED,
+        },
       });
 
       // Simple classification logic - could be more sophisticated
       if (appointmentCount >= 10) return 'VIP';
       if (appointmentCount === 0) return 'NEW_PATIENT';
       return 'REGULAR';
-
     } catch {
       return 'NEW_PATIENT';
     }
@@ -509,12 +544,16 @@ export class QueueManagementService {
   private async storeQueueEntry(entry: WaitlistEntry): Promise<void> {
     // Store queue entry in database for persistence
     // This would use a custom queue table or extend existing models
-    this.deps.logger.info('Queue entry stored in database', { entryId: entry.id });
+    this.deps.logger.info('Queue entry stored in database', {
+      entryId: entry.id,
+    });
   }
 
-  private async calculateQueuePosition(entry: WaitlistEntry): Promise<QueuePosition> {
+  private async calculateQueuePosition(
+    entry: WaitlistEntry,
+  ): Promise<QueuePosition> {
     const { redis } = this.deps;
-    
+
     const queueKey = this.getQueueKey(entry.specialtyId, entry.doctorId);
     const position = await redis.zrevrank(queueKey, JSON.stringify(entry));
     const totalInQueue = await redis.zcard(queueKey);
@@ -526,25 +565,30 @@ export class QueueManagementService {
       position: (position || 0) + 1,
       estimatedWaitTime,
       ahead: position || 0,
-      totalInQueue
+      totalInQueue,
     };
   }
 
-  private async estimateWaitTime(entry: WaitlistEntry, position: number): Promise<number> {
+  private async estimateWaitTime(
+    entry: WaitlistEntry,
+    position: number,
+  ): Promise<number> {
     // Simple estimation - could be more sophisticated with ML
     const baseWaitTime = 24; // 24 hours base
     const positionMultiplier = 12; // 12 hours per position
-    
-    return Math.max(baseWaitTime + (position * positionMultiplier), 1);
+
+    return Math.max(baseWaitTime + position * positionMultiplier, 1);
   }
 
-  private async findMatchingQueueEntries(slot: AvailableSlot): Promise<WaitlistEntry[]> {
+  private async findMatchingQueueEntries(
+    slot: AvailableSlot,
+  ): Promise<WaitlistEntry[]> {
     const { redis } = this.deps;
 
     // Get entries from relevant queues
     const queueKeys = [
       this.getQueueKey(slot.doctorId), // Doctor-specific queue
-      this.getQueueKey('ANY', slot.doctorId) // Any specialty with this doctor
+      this.getQueueKey('ANY', slot.doctorId), // Any specialty with this doctor
     ];
 
     const candidates: WaitlistEntry[] = [];
@@ -553,10 +597,10 @@ export class QueueManagementService {
       try {
         // Get top entries by priority (highest scores first)
         const entries = await redis.zrevrange(queueKey, 0, 10);
-        
+
         for (const entryStr of entries) {
           const entry: WaitlistEntry = JSON.parse(entryStr);
-          
+
           // Check if slot matches entry criteria
           if (this.slotMatchesEntry(slot, entry)) {
             candidates.push(entry);
@@ -581,7 +625,7 @@ export class QueueManagementService {
     if (entry.preferredDates.length > 0) {
       const slotDate = slot.startTime.toISOString().split('T')[0];
       const hasPreferredDate = entry.preferredDates.some(
-        date => date.toISOString().split('T')[0] === slotDate
+        date => date.toISOString().split('T')[0] === slotDate,
       );
       if (!hasPreferredDate) return false;
     }
@@ -590,7 +634,9 @@ export class QueueManagementService {
     if (entry.preferredTimes.length > 0) {
       const slotTime = format(slot.startTime, 'HH:mm');
       const hasPreferredTime = entry.preferredTimes.some(
-        time => Math.abs(this.timeToMinutes(time) - this.timeToMinutes(slotTime)) <= 60
+        time =>
+          Math.abs(this.timeToMinutes(time) - this.timeToMinutes(slotTime)) <=
+          60,
       );
       if (!hasPreferredTime) return false;
     }
@@ -598,7 +644,10 @@ export class QueueManagementService {
     return true;
   }
 
-  private async attemptAutoBooking(entry: WaitlistEntry, slot: AvailableSlot): Promise<{ success: boolean; error?: string }> {
+  private async attemptAutoBooking(
+    entry: WaitlistEntry,
+    slot: AvailableSlot,
+  ): Promise<{ success: boolean; error?: string }> {
     try {
       // This would integrate with the appointment booking service
       const bookingData: AppointmentBooking = {
@@ -608,31 +657,35 @@ export class QueueManagementService {
         slotId: slot.id,
         appointmentType: entry.appointmentType,
         duration: slot.duration,
-        urgencyLevel: entry.urgencyLevel
+        urgencyLevel: entry.urgencyLevel,
       };
 
       // Call appointment service to book
       // const result = await appointmentService.bookAppointment(bookingData);
-      
-      this.deps.logger.info('Auto-booking attempted', { entryId: entry.id, slotId: slot.id });
-      
+
+      this.deps.logger.info('Auto-booking attempted', {
+        entryId: entry.id,
+        slotId: slot.id,
+      });
+
       // Return success for now - would depend on actual booking service
       return { success: true };
-
     } catch (error) {
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Unknown error' 
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
       };
     }
   }
 
-  private async sendQueueNotification(notification: QueueNotification): Promise<void> {
+  private async sendQueueNotification(
+    notification: QueueNotification,
+  ): Promise<void> {
     // Send notification to patient
     // This would integrate with the notification service
-    this.deps.logger.info('Queue notification sent', { 
+    this.deps.logger.info('Queue notification sent', {
       type: notification.type,
-      patientId: notification.patientId 
+      patientId: notification.patientId,
     });
   }
 
@@ -643,12 +696,13 @@ export class QueueManagementService {
 
   private async expireQueueEntry(entry: WaitlistEntry): Promise<void> {
     await this.removeFromQueue(entry.id, 'EXPIRED');
-    
+
     await this.sendQueueNotification({
       entryId: entry.id,
       patientId: entry.patientId,
       type: 'TIMEOUT_WARNING',
-      message: 'Your appointment request has expired. Please submit a new request if still needed.'
+      message:
+        'Your appointment request has expired. Please submit a new request if still needed.',
     });
   }
 
@@ -674,12 +728,17 @@ export class QueueManagementService {
     return parts[2];
   }
 
-  private async findAlternativeDoctors(specialtyName: string): Promise<string[]> {
+  private async findAlternativeDoctors(
+    specialtyName: string,
+  ): Promise<string[]> {
     // Find other doctors in the same specialty
     return ['Dr. Smith', 'Dr. Johnson']; // Placeholder
   }
 
-  private async getHistoricalQueueMetrics(specialtyId?: string, doctorId?: string): Promise<{
+  private async getHistoricalQueueMetrics(
+    specialtyId?: string,
+    doctorId?: string,
+  ): Promise<{
     averageWaitTime: number;
     successfulBookingRate: number;
     timeoutRate: number;
@@ -688,7 +747,7 @@ export class QueueManagementService {
     return {
       averageWaitTime: 48, // hours
       successfulBookingRate: 0.85,
-      timeoutRate: 0.10
+      timeoutRate: 0.1,
     };
   }
 
@@ -697,12 +756,18 @@ export class QueueManagementService {
     return null; // Placeholder
   }
 
-  private async markQueueEntryRemoved(entryId: string, reason: string): Promise<void> {
+  private async markQueueEntryRemoved(
+    entryId: string,
+    reason: string,
+  ): Promise<void> {
     // Mark queue entry as removed in database
     this.deps.logger.info('Queue entry marked as removed', { entryId, reason });
   }
 
-  private async updateQueuePositions(specialtyId: string, doctorId?: string): Promise<void> {
+  private async updateQueuePositions(
+    specialtyId: string,
+    doctorId?: string,
+  ): Promise<void> {
     // Update queue positions for all entries in the queue
     this.deps.logger.info('Queue positions updated', { specialtyId, doctorId });
   }

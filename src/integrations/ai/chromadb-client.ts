@@ -62,14 +62,14 @@ export class ChromaDBClient {
       const conversationCollection = await this.client.getOrCreateCollection({
         name: env.CHROMA_COLLECTION_NAME,
         embeddingFunction: this.embeddingFunction,
-        metadata: { description: 'Medical clinic conversations and context' }
+        metadata: { description: 'Medical clinic conversations and context' },
       });
 
       // Create knowledge base collection
       const knowledgeCollection = await this.client.getOrCreateCollection({
         name: 'clinic_knowledge',
         embeddingFunction: this.embeddingFunction,
-        metadata: { description: 'Medical knowledge base and FAQs' }
+        metadata: { description: 'Medical knowledge base and FAQs' },
       });
 
       this.collections.set('conversations', conversationCollection);
@@ -81,7 +81,7 @@ export class ChromaDBClient {
       logger.info('ChromaDB client initialized successfully');
     } catch (error) {
       logger.error('Failed to initialize ChromaDB client', {
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
       throw error;
     }
@@ -108,78 +108,85 @@ export class ChromaDBClient {
     const knowledgeDocuments = [
       {
         id: 'specialty_cardiology',
-        content: 'Cardiologia é a especialidade médica que cuida do coração e sistema circulatório. Trata problemas como arritmias, hipertensão, infarto, insuficiência cardíaca. Consultas geralmente duram 30-45 minutos.',
+        content:
+          'Cardiologia é a especialidade médica que cuida do coração e sistema circulatório. Trata problemas como arritmias, hipertensão, infarto, insuficiência cardíaca. Consultas geralmente duram 30-45 minutos.',
         metadata: {
           type: 'knowledge' as const,
           specialty: 'cardiologia',
-          source: 'medical_guide'
-        }
+          source: 'medical_guide',
+        },
       },
       {
         id: 'specialty_orthopedics',
-        content: 'Ortopedia trata problemas do sistema musculoesquelético: ossos, articulações, músculos, ligamentos. Comum para fraturas, lesões esportivas, dores nas costas, artrose.',
+        content:
+          'Ortopedia trata problemas do sistema musculoesquelético: ossos, articulações, músculos, ligamentos. Comum para fraturas, lesões esportivas, dores nas costas, artrose.',
         metadata: {
           type: 'knowledge' as const,
           specialty: 'ortopedia',
-          source: 'medical_guide'
-        }
+          source: 'medical_guide',
+        },
       },
       {
         id: 'specialty_pediatrics',
-        content: 'Pediatria cuida da saúde de bebês, crianças e adolescentes até 18 anos. Acompanha crescimento, desenvolvimento, vacinação, doenças infantis.',
+        content:
+          'Pediatria cuida da saúde de bebês, crianças e adolescentes até 18 anos. Acompanha crescimento, desenvolvimento, vacinação, doenças infantis.',
         metadata: {
           type: 'knowledge' as const,
           specialty: 'pediatria',
-          source: 'medical_guide'
-        }
+          source: 'medical_guide',
+        },
       },
       {
         id: 'emergency_protocols',
-        content: 'Em caso de emergência médica: dor no peito, dificuldade respiratória, sangramento intenso, perda de consciência - procure atendimento de urgência imediatamente. Nossa clínica possui protocolo de emergência.',
+        content:
+          'Em caso de emergência médica: dor no peito, dificuldade respiratória, sangramento intenso, perda de consciência - procure atendimento de urgência imediatamente. Nossa clínica possui protocolo de emergência.',
         metadata: {
           type: 'knowledge' as const,
-          source: 'emergency_protocol'
-        }
+          source: 'emergency_protocol',
+        },
       },
       {
         id: 'appointment_cancellation',
-        content: 'Cancelamentos devem ser feitos com pelo menos 24 horas de antecedência. Cancelamentos tardios podem gerar cobrança. É possível reagendar através do chat ou telefone.',
+        content:
+          'Cancelamentos devem ser feitos com pelo menos 24 horas de antecedência. Cancelamentos tardios podem gerar cobrança. É possível reagendar através do chat ou telefone.',
         metadata: {
           type: 'faq' as const,
-          source: 'clinic_policy'
-        }
+          source: 'clinic_policy',
+        },
       },
       {
         id: 'insurance_coverage',
-        content: 'Trabalhamos com os principais convênios: Unimed, Bradesco Saúde, SulAmérica, Amil. Verifique cobertura antes da consulta. Atendimento particular também disponível.',
+        content:
+          'Trabalhamos com os principais convênios: Unimed, Bradesco Saúde, SulAmérica, Amil. Verifique cobertura antes da consulta. Atendimento particular também disponível.',
         metadata: {
           type: 'faq' as const,
-          source: 'clinic_policy'
-        }
+          source: 'clinic_policy',
+        },
       },
       {
         id: 'clinic_hours',
-        content: 'Horários de funcionamento: Segunda a Sexta 7h às 19h, Sábados 7h às 12h. Emergências: 24 horas através do telefone de plantão.',
+        content:
+          'Horários de funcionamento: Segunda a Sexta 7h às 19h, Sábados 7h às 12h. Emergências: 24 horas através do telefone de plantão.',
         metadata: {
           type: 'faq' as const,
-          source: 'clinic_info'
-        }
-      }
+          source: 'clinic_info',
+        },
+      },
     ];
 
     try {
       await knowledgeCollection.add({
         ids: knowledgeDocuments.map(doc => doc.id),
         documents: knowledgeDocuments.map(doc => doc.content),
-        metadatas: knowledgeDocuments.map(doc => doc.metadata)
+        metadatas: knowledgeDocuments.map(doc => doc.metadata),
       });
 
-      logger.info('Knowledge base populated successfully', { 
-        documentCount: knowledgeDocuments.length 
+      logger.info('Knowledge base populated successfully', {
+        documentCount: knowledgeDocuments.length,
       });
     } catch (error) {
       logger.error('Failed to populate knowledge base', {
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   }
@@ -190,7 +197,7 @@ export class ChromaDBClient {
   async addConversationMessage(
     messageId: string,
     content: string,
-    metadata: DocumentMetadata
+    metadata: DocumentMetadata,
   ): Promise<void> {
     await this.ensureInitialized();
 
@@ -203,18 +210,23 @@ export class ChromaDBClient {
       await collection.add({
         ids: [messageId],
         documents: [content],
-        metadatas: [{
-          ...metadata,
-          timestamp: metadata.timestamp || new Date().toISOString(),
-          type: 'conversation'
-        }]
+        metadatas: [
+          {
+            ...metadata,
+            timestamp: metadata.timestamp || new Date().toISOString(),
+            type: 'conversation',
+          },
+        ],
       });
 
-      logger.debug('Conversation message added to vector DB', { messageId, userId: metadata.userId });
+      logger.debug('Conversation message added to vector DB', {
+        messageId,
+        userId: metadata.userId,
+      });
     } catch (error) {
       logger.error('Failed to add conversation message', {
         messageId,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
       throw error;
     }
@@ -230,7 +242,7 @@ export class ChromaDBClient {
       limit?: number;
       threshold?: number;
       filter?: Partial<DocumentMetadata>;
-    } = {}
+    } = {},
   ): Promise<SearchResult[]> {
     await this.ensureInitialized();
 
@@ -238,7 +250,7 @@ export class ChromaDBClient {
       collection: collectionName = 'knowledge',
       limit = 5,
       threshold = 0.7,
-      filter = {}
+      filter = {},
     } = options;
 
     const collection = this.collections.get(collectionName);
@@ -253,12 +265,17 @@ export class ChromaDBClient {
       const results = await collection.query({
         queryTexts: [query],
         nResults: limit,
-        where
+        where,
       });
 
       const searchResults: SearchResult[] = [];
 
-      if (results.ids && results.distances && results.documents && results.metadatas) {
+      if (
+        results.ids &&
+        results.distances &&
+        results.documents &&
+        results.metadatas
+      ) {
         for (let i = 0; i < results.ids[0].length; i++) {
           const distance = results.distances[0][i];
           const score = 1 - distance;
@@ -268,9 +285,9 @@ export class ChromaDBClient {
             searchResults.push({
               id: results.ids[0][i],
               content: results.documents[0][i] || '',
-              metadata: results.metadatas[0][i] as DocumentMetadata || {},
+              metadata: (results.metadatas[0][i] as DocumentMetadata) || {},
               distance,
-              score
+              score,
             });
           }
         }
@@ -280,7 +297,7 @@ export class ChromaDBClient {
         query: query.substring(0, 100),
         collection: collectionName,
         resultsFound: searchResults.length,
-        resultsFiltered: searchResults.filter(r => r.score >= threshold).length
+        resultsFiltered: searchResults.filter(r => r.score >= threshold).length,
       });
 
       return searchResults.sort((a, b) => b.score - a.score);
@@ -288,7 +305,7 @@ export class ChromaDBClient {
       logger.error('Similarity search failed', {
         query: query.substring(0, 100),
         collection: collectionName,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
       return [];
     }
@@ -300,7 +317,7 @@ export class ChromaDBClient {
   async getConversationHistory(
     userId: string,
     conversationId?: string,
-    limit: number = 20
+    limit: number = 20,
   ): Promise<SearchResult[]> {
     await this.ensureInitialized();
 
@@ -319,7 +336,7 @@ export class ChromaDBClient {
       // So we'll get all documents for the user and sort by timestamp
       const results = await collection.get({
         where: filter,
-        limit
+        limit,
       });
 
       const history: SearchResult[] = [];
@@ -329,17 +346,21 @@ export class ChromaDBClient {
           history.push({
             id: results.ids[i],
             content: results.documents[i] || '',
-            metadata: results.metadatas[i] as DocumentMetadata || {},
+            metadata: (results.metadatas[i] as DocumentMetadata) || {},
             distance: 0,
-            score: 1
+            score: 1,
           });
         }
       }
 
       // Sort by timestamp (newest first)
       history.sort((a, b) => {
-        const timestampA = a.metadata.timestamp ? new Date(a.metadata.timestamp).getTime() : 0;
-        const timestampB = b.metadata.timestamp ? new Date(b.metadata.timestamp).getTime() : 0;
+        const timestampA = a.metadata.timestamp
+          ? new Date(a.metadata.timestamp).getTime()
+          : 0;
+        const timestampB = b.metadata.timestamp
+          ? new Date(b.metadata.timestamp).getTime()
+          : 0;
         return timestampB - timestampA;
       });
 
@@ -348,7 +369,7 @@ export class ChromaDBClient {
       logger.error('Failed to get conversation history', {
         userId,
         conversationId,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
       return [];
     }
@@ -360,7 +381,7 @@ export class ChromaDBClient {
   async getContext(
     query: string,
     userId: string,
-    conversationId?: string
+    conversationId?: string,
   ): Promise<{
     similarConversations: SearchResult[];
     relevantKnowledge: SearchResult[];
@@ -368,28 +389,29 @@ export class ChromaDBClient {
   }> {
     await this.ensureInitialized();
 
-    const [similarConversations, relevantKnowledge, recentHistory] = await Promise.all([
-      // Find similar past conversations
-      this.searchSimilar(query, {
-        collection: 'conversations',
-        limit: 3,
-        threshold: 0.6,
-        filter: { userId }
-      }),
-      // Find relevant knowledge base entries
-      this.searchSimilar(query, {
-        collection: 'knowledge',
-        limit: 5,
-        threshold: 0.5
-      }),
-      // Get recent conversation history
-      this.getConversationHistory(userId, conversationId, 5)
-    ]);
+    const [similarConversations, relevantKnowledge, recentHistory] =
+      await Promise.all([
+        // Find similar past conversations
+        this.searchSimilar(query, {
+          collection: 'conversations',
+          limit: 3,
+          threshold: 0.6,
+          filter: { userId },
+        }),
+        // Find relevant knowledge base entries
+        this.searchSimilar(query, {
+          collection: 'knowledge',
+          limit: 5,
+          threshold: 0.5,
+        }),
+        // Get recent conversation history
+        this.getConversationHistory(userId, conversationId, 5),
+      ]);
 
     return {
       similarConversations,
       relevantKnowledge,
-      recentHistory
+      recentHistory,
     };
   }
 
@@ -404,7 +426,7 @@ export class ChromaDBClient {
 
     const [conversationCount, knowledgeCount] = await Promise.all([
       conversationCollection?.count() || 0,
-      knowledgeCollection?.count() || 0
+      knowledgeCollection?.count() || 0,
     ]);
 
     // Get detailed stats from conversation collection
@@ -414,7 +436,7 @@ export class ChromaDBClient {
     if (knowledgeCollection) {
       try {
         const faqResults = await knowledgeCollection.get({
-          where: { type: 'faq' }
+          where: { type: 'faq' },
         });
         faqDocuments = faqResults.ids?.length || 0;
       } catch (error) {
@@ -426,7 +448,7 @@ export class ChromaDBClient {
       totalDocuments: conversationCount + knowledgeCount,
       conversationDocuments: conversationCount,
       knowledgeDocuments: knowledgeCount - faqDocuments,
-      faqDocuments
+      faqDocuments,
     };
   }
 
@@ -439,7 +461,7 @@ export class ChromaDBClient {
       return true;
     } catch (error) {
       logger.error('ChromaDB health check failed', {
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
       return false;
     }
@@ -463,18 +485,18 @@ export class ChromaDBClient {
       // Get old documents
       const oldDocuments = await collection.get({
         where: {
-          timestamp: { $lt: cutoffDate.toISOString() }
-        }
+          timestamp: { $lt: cutoffDate.toISOString() },
+        },
       });
 
       if (oldDocuments.ids && oldDocuments.ids.length > 0) {
         await collection.delete({
-          ids: oldDocuments.ids
+          ids: oldDocuments.ids,
         });
 
         logger.info('Cleaned up old conversation data', {
           deletedCount: oldDocuments.ids.length,
-          cutoffDate: cutoffDate.toISOString()
+          cutoffDate: cutoffDate.toISOString(),
         });
 
         return oldDocuments.ids.length;
@@ -483,7 +505,7 @@ export class ChromaDBClient {
       return 0;
     } catch (error) {
       logger.error('Failed to cleanup old data', {
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
       return 0;
     }

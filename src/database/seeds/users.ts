@@ -4,12 +4,12 @@ import bcrypt from 'bcryptjs';
 // Simple logger for seed
 const logger = {
   info: (msg: string) => console.log(`[INFO] ${msg}`),
-  error: (msg: string, err?: any) => console.error(`[ERROR] ${msg}`, err)
+  error: (msg: string, err?: any) => console.error(`[ERROR] ${msg}`, err),
 };
 
 // Simple env for seed
 const env = {
-  SALT_ROUNDS: 12
+  SALT_ROUNDS: 12,
 };
 
 export async function seedUsers(prisma: PrismaClient): Promise<void> {

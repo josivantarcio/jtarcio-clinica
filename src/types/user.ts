@@ -2,8 +2,18 @@ import { z } from 'zod';
 import { emailSchema, phoneSchema, cpfSchema, uuidSchema } from './common';
 
 // User role and status enums
-export const UserRoleSchema = z.enum(['PATIENT', 'DOCTOR', 'ADMIN', 'RECEPTIONIST']);
-export const UserStatusSchema = z.enum(['ACTIVE', 'INACTIVE', 'SUSPENDED', 'PENDING_VERIFICATION']);
+export const UserRoleSchema = z.enum([
+  'PATIENT',
+  'DOCTOR',
+  'ADMIN',
+  'RECEPTIONIST',
+]);
+export const UserStatusSchema = z.enum([
+  'ACTIVE',
+  'INACTIVE',
+  'SUSPENDED',
+  'PENDING_VERIFICATION',
+]);
 
 export type UserRole = z.infer<typeof UserRoleSchema>;
 export type UserStatus = z.infer<typeof UserStatusSchema>;
@@ -43,7 +53,10 @@ export const createUserSchema = z.object({
   password: z.string().min(8, 'Password must be at least 8 characters'),
   firstName: z.string().min(2, 'First name must be at least 2 characters'),
   lastName: z.string().min(2, 'Last name must be at least 2 characters'),
-  dateOfBirth: z.string().transform(str => new Date(str)).optional(),
+  dateOfBirth: z
+    .string()
+    .transform(str => new Date(str))
+    .optional(),
   gender: z.enum(['M', 'F', 'OTHER']).optional(),
   role: UserRoleSchema.default('PATIENT'),
   timezone: z.string().default('America/Sao_Paulo'),
@@ -52,28 +65,37 @@ export const createUserSchema = z.object({
 export type CreateUserDto = z.infer<typeof createUserSchema>;
 
 // Update user DTO
-export const updateUserSchema = z.object({
-  phone: phoneSchema.optional(),
-  firstName: z.string().min(2).optional(),
-  lastName: z.string().min(2).optional(),
-  dateOfBirth: z.string().transform(str => new Date(str)).optional(),
-  gender: z.enum(['M', 'F', 'OTHER']).optional(),
-  avatar: z.string().url().optional(),
-  timezone: z.string().optional(),
-  // Nested update for doctor profile
-  doctorProfile: z.object({
-    update: z.object({
-      crm: z.string().optional(),
-      biography: z.string().optional(),
-      consultationFee: z.number().positive().optional(),
-      consultationDuration: z.number().min(15).max(120).optional(),
-      acceptsNewPatients: z.boolean().optional(),
-      graduationDate: z.string().datetime().optional(),
-      crmRegistrationDate: z.string().datetime().optional(),
-      experience: z.number().min(0).optional(),
-    }).partial()
-  }).optional(),
-}).partial();
+export const updateUserSchema = z
+  .object({
+    phone: phoneSchema.optional(),
+    firstName: z.string().min(2).optional(),
+    lastName: z.string().min(2).optional(),
+    dateOfBirth: z
+      .string()
+      .transform(str => new Date(str))
+      .optional(),
+    gender: z.enum(['M', 'F', 'OTHER']).optional(),
+    avatar: z.string().url().optional(),
+    timezone: z.string().optional(),
+    // Nested update for doctor profile
+    doctorProfile: z
+      .object({
+        update: z
+          .object({
+            crm: z.string().optional(),
+            biography: z.string().optional(),
+            consultationFee: z.number().positive().optional(),
+            consultationDuration: z.number().min(15).max(120).optional(),
+            acceptsNewPatients: z.boolean().optional(),
+            graduationDate: z.string().datetime().optional(),
+            crmRegistrationDate: z.string().datetime().optional(),
+            experience: z.number().min(0).optional(),
+          })
+          .partial(),
+      })
+      .optional(),
+  })
+  .partial();
 
 export type UpdateUserDto = z.infer<typeof updateUserSchema>;
 
@@ -86,14 +108,18 @@ export const loginSchema = z.object({
 export type LoginDto = z.infer<typeof loginSchema>;
 
 // Change password DTO
-export const changePasswordSchema = z.object({
-  currentPassword: z.string().min(1, 'Current password is required'),
-  newPassword: z.string().min(8, 'New password must be at least 8 characters'),
-  confirmPassword: z.string(),
-}).refine(data => data.newPassword === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ['confirmPassword'],
-});
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, 'Current password is required'),
+    newPassword: z
+      .string()
+      .min(8, 'New password must be at least 8 characters'),
+    confirmPassword: z.string(),
+  })
+  .refine(data => data.newPassword === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ['confirmPassword'],
+  });
 
 export type ChangePasswordDto = z.infer<typeof changePasswordSchema>;
 
@@ -112,11 +138,13 @@ export const verifyEmailSchema = z.object({
 export type VerifyEmailDto = z.infer<typeof verifyEmailSchema>;
 
 // User response DTO (without sensitive data)
-export const userResponseSchema = userSchema.omit({
-  encryptedData: true,
-}).transform(data => ({
-  ...data,
-  // Remove password hash from response
-}));
+export const userResponseSchema = userSchema
+  .omit({
+    encryptedData: true,
+  })
+  .transform(data => ({
+    ...data,
+    // Remove password hash from response
+  }));
 
 export type UserResponse = z.infer<typeof userResponseSchema>;

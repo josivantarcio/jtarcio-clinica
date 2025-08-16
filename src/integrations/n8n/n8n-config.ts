@@ -33,7 +33,7 @@ export const n8nConfig: N8NConfig = {
   webhookUrl: process.env.N8N_WEBHOOK_URL || 'http://localhost:5678',
   basicAuth: {
     username: process.env.N8N_BASIC_AUTH_USER || 'admin',
-    password: process.env.N8N_BASIC_AUTH_PASSWORD || 'admin123'
+    password: process.env.N8N_BASIC_AUTH_PASSWORD || 'admin123',
   },
   database: {
     type: 'postgres',
@@ -41,14 +41,14 @@ export const n8nConfig: N8NConfig = {
     port: parseInt(process.env.N8N_DB_PORT || '5432'),
     database: process.env.N8N_DB_DATABASE || 'eo_clinica_db',
     username: process.env.N8N_DB_USERNAME || 'clinic_user',
-    password: process.env.N8N_DB_PASSWORD || 'clinic_password'
+    password: process.env.N8N_DB_PASSWORD || 'clinic_password',
   },
   encryption: {
-    key: process.env.N8N_ENCRYPTION_KEY || 'eo-clinica-n8n-encryption-key-2024'
+    key: process.env.N8N_ENCRYPTION_KEY || 'eo-clinica-n8n-encryption-key-2024',
   },
   timezone: 'America/Sao_Paulo',
   maxExecutions: 10000,
-  retentionDays: 90
+  retentionDays: 90,
 };
 
 /**
@@ -59,15 +59,15 @@ export const n8nEnvironmentVariables = {
   N8N_BASIC_AUTH_ACTIVE: 'true',
   N8N_BASIC_AUTH_USER: n8nConfig.basicAuth.username,
   N8N_BASIC_AUTH_PASSWORD: n8nConfig.basicAuth.password,
-  
+
   // Host Configuration
   N8N_HOST: '0.0.0.0',
   N8N_PORT: '5678',
   N8N_PROTOCOL: 'http',
-  
+
   // Webhook Configuration
   WEBHOOK_URL: n8nConfig.webhookUrl,
-  
+
   // Database Configuration
   DB_TYPE: n8nConfig.database.type,
   DB_POSTGRESDB_HOST: n8nConfig.database.host,
@@ -75,11 +75,12 @@ export const n8nEnvironmentVariables = {
   DB_POSTGRESDB_DATABASE: n8nConfig.database.database,
   DB_POSTGRESDB_USER: n8nConfig.database.username,
   DB_POSTGRESDB_PASSWORD: n8nConfig.database.password,
-  
+
   // Security
   N8N_ENCRYPTION_KEY: n8nConfig.encryption.key,
-  N8N_USER_MANAGEMENT_JWT_SECRET: process.env.JWT_SECRET || 'eo-clinica-jwt-secret',
-  
+  N8N_USER_MANAGEMENT_JWT_SECRET:
+    process.env.JWT_SECRET || 'eo-clinica-jwt-secret',
+
   // Execution Configuration
   EXECUTIONS_MODE: 'queue',
   EXECUTIONS_DATA_SAVE_ON_ERROR: 'all',
@@ -87,38 +88,38 @@ export const n8nEnvironmentVariables = {
   EXECUTIONS_DATA_SAVE_MANUAL_EXECUTIONS: 'true',
   EXECUTIONS_DATA_PRUNE: 'true',
   EXECUTIONS_DATA_MAX_AGE: n8nConfig.retentionDays.toString(),
-  
+
   // Queue Configuration
   QUEUE_BULL_REDIS_HOST: 'redis',
   QUEUE_BULL_REDIS_PORT: '6379',
   QUEUE_HEALTH_CHECK_ACTIVE: 'true',
-  
+
   // Timezone
   GENERIC_TIMEZONE: n8nConfig.timezone,
   TZ: n8nConfig.timezone,
-  
+
   // Custom Nodes
   N8N_CUSTOM_EXTENSIONS: '/home/node/.n8n/custom',
-  
+
   // Logging
   N8N_LOG_LEVEL: 'info',
   N8N_LOG_OUTPUT: 'console',
-  
+
   // Security Headers
   N8N_SECURE_COOKIE: 'false', // Set to true in production with HTTPS
   N8N_METRICS: 'true',
-  
+
   // Clinic-specific configuration
   CLINIC_API_BASE_URL: process.env.API_BASE_URL || 'http://app:3000',
   CLINIC_AI_API_URL: process.env.CLAUDE_API_URL || 'https://api.anthropic.com',
-  CLINIC_FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:3001'
+  CLINIC_FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:3001',
 };
 
 /**
  * N8N Custom Node Credentials for EO Clínica integrations
  */
 export const customCredentials = {
-  'eoClinicaApi': {
+  eoClinicaApi: {
     name: 'EO Clínica API',
     displayName: 'EO Clínica API',
     documentationUrl: 'https://docs.eo-clinica.com/api',
@@ -127,20 +128,20 @@ export const customCredentials = {
         displayName: 'Base URL',
         name: 'baseUrl',
         type: 'string',
-        default: process.env.API_BASE_URL || 'http://app:3000'
+        default: process.env.API_BASE_URL || 'http://app:3000',
       },
       {
         displayName: 'API Key',
         name: 'apiKey',
         type: 'string',
         typeOptions: {
-          password: true
+          password: true,
         },
-        default: ''
-      }
-    ]
+        default: '',
+      },
+    ],
   },
-  'whatsappBusiness': {
+  whatsappBusiness: {
     name: 'WhatsApp Business API',
     displayName: 'WhatsApp Business',
     documentationUrl: 'https://developers.facebook.com/docs/whatsapp',
@@ -149,29 +150,29 @@ export const customCredentials = {
         displayName: 'Phone Number ID',
         name: 'phoneNumberId',
         type: 'string',
-        default: ''
+        default: '',
       },
       {
         displayName: 'Access Token',
         name: 'accessToken',
         type: 'string',
         typeOptions: {
-          password: true
+          password: true,
         },
-        default: ''
+        default: '',
       },
       {
         displayName: 'Webhook Verify Token',
         name: 'webhookVerifyToken',
         type: 'string',
         typeOptions: {
-          password: true
+          password: true,
         },
-        default: ''
-      }
-    ]
+        default: '',
+      },
+    ],
   },
-  'twilioSms': {
+  twilioSms: {
     name: 'Twilio SMS',
     displayName: 'Twilio SMS Gateway',
     documentationUrl: 'https://www.twilio.com/docs/sms',
@@ -180,26 +181,26 @@ export const customCredentials = {
         displayName: 'Account SID',
         name: 'accountSid',
         type: 'string',
-        default: ''
+        default: '',
       },
       {
         displayName: 'Auth Token',
         name: 'authToken',
         type: 'string',
         typeOptions: {
-          password: true
+          password: true,
         },
-        default: ''
+        default: '',
       },
       {
         displayName: 'From Phone Number',
         name: 'fromPhoneNumber',
         type: 'string',
-        default: ''
-      }
-    ]
+        default: '',
+      },
+    ],
   },
-  'googleCalendar': {
+  googleCalendar: {
     name: 'Google Calendar',
     displayName: 'Google Calendar Integration',
     documentationUrl: 'https://developers.google.com/calendar',
@@ -208,28 +209,28 @@ export const customCredentials = {
         displayName: 'Client ID',
         name: 'clientId',
         type: 'string',
-        default: ''
+        default: '',
       },
       {
         displayName: 'Client Secret',
         name: 'clientSecret',
         type: 'string',
         typeOptions: {
-          password: true
+          password: true,
         },
-        default: ''
+        default: '',
       },
       {
         displayName: 'Refresh Token',
         name: 'refreshToken',
         type: 'string',
         typeOptions: {
-          password: true
+          password: true,
         },
-        default: ''
-      }
-    ]
-  }
+        default: '',
+      },
+    ],
+  },
 };
 
 /**
@@ -244,7 +245,7 @@ export const workflowSettings = {
   saveManualExecutions: true,
   callerPolicy: 'workflowsFromSameOwner',
   errorWorkflow: 'error-handler-workflow',
-  timezone: n8nConfig.timezone
+  timezone: n8nConfig.timezone,
 };
 
 /**
@@ -255,22 +256,22 @@ export const securityConfig = {
   cors: {
     origin: [
       process.env.FRONTEND_URL || 'http://localhost:3001',
-      process.env.ADMIN_URL || 'http://localhost:3002'
+      process.env.ADMIN_URL || 'http://localhost:3002',
     ],
-    credentials: true
+    credentials: true,
   },
-  
+
   // Rate limiting
   rateLimiting: {
     enabled: true,
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100 // limit each IP to 100 requests per windowMs
+    max: 100, // limit each IP to 100 requests per windowMs
   },
-  
+
   // Webhook security
   webhook: {
     maxPayloadSize: '10mb',
     timeout: 30000, // 30 seconds
-    verifySignature: true
-  }
+    verifySignature: true,
+  },
 };

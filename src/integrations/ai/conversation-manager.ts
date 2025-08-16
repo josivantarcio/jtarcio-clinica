@@ -3,7 +3,9 @@ import { logger } from '../../config/logger.js';
 import { AnthropicClient, ConversationMessage } from './anthropic-client.js';
 import { NLPPipeline, Intent, NLPResult } from './nlp-pipeline.js';
 import ChromaDBClient, { SearchResult } from './chromadb-client.js';
-import ConversationContextManager, { ConversationContext } from './conversation-context.js';
+import ConversationContextManager, {
+  ConversationContext,
+} from './conversation-context.js';
 import Redis from 'ioredis';
 
 export interface ConversationResponse {
@@ -31,10 +33,7 @@ export class ConversationManager {
   private chromaClient: ChromaDBClient;
   private contextManager: ConversationContextManager;
 
-  constructor(
-    prisma: PrismaClient,
-    redis: Redis
-  ) {
+  constructor(prisma: PrismaClient, redis: Redis) {
     this.prisma = prisma;
     this.anthropicClient = new AnthropicClient(redis);
     this.nlpPipeline = new NLPPipeline(this.anthropicClient);
@@ -57,41 +56,47 @@ export class ConversationManager {
     userId: string,
     message: string,
     sessionId?: string,
-    conversationId?: string
+    conversationId?: string,
   ): Promise<ConversationResponse> {
     const actualSessionId = sessionId || `session_${Date.now()}`;
-    
+
     try {
       logger.info('Processing message', {
         userId,
         sessionId: actualSessionId,
-        messageLength: message.length
+        messageLength: message.length,
       });
 
       // Get or create conversation context
-      let context = await this.contextManager.getContext(userId, actualSessionId);
+      let context = await this.contextManager.getContext(
+        userId,
+        actualSessionId,
+      );
       if (!context) {
-        context = await this.contextManager.createContext(userId, actualSessionId);
+        context = await this.contextManager.createContext(
+          userId,
+          actualSessionId,
+        );
       }
 
       // Add user message to context
       context = await this.contextManager.addMessage(context, {
         role: 'user',
         content: message,
-        timestamp: new Date()
+        timestamp: new Date(),
       });
 
       // Process message through NLP pipeline
       const nlpResult = await this.nlpPipeline.processMessage(
         message,
         userId,
-        context.conversationHistory.slice(-5) // Last 5 messages for context
+        context.conversationHistory.slice(-5), // Last 5 messages for context
       );
 
       // Update context with NLP results
       if (nlpResult.intent !== Intent.UNKNOWN) {
         context = await this.contextManager.updateContext(context, {
-          currentIntent: nlpResult.intent
+          currentIntent: nlpResult.intent,
         });
       }
 
@@ -100,7 +105,7 @@ export class ConversationManager {
         context = await this.contextManager.updateSlots(
           context,
           nlpResult.entities,
-          nlpResult.confidence
+          nlpResult.confidence,
         );
       }
 
@@ -108,21 +113,21 @@ export class ConversationManager {
       const contextInfo = await this.chromaClient.getContext(
         message,
         userId,
-        conversationId
+        conversationId,
       );
 
       // Generate AI response
       const response = await this.generateContextualResponse(
         context,
         nlpResult,
-        contextInfo
+        contextInfo,
       );
 
       // Add AI response to context
       await this.contextManager.addMessage(context, {
         role: 'assistant',
         content: response.message,
-        timestamp: new Date()
+        timestamp: new Date(),
       });
 
       // Store conversation in ChromaDB for future context
@@ -132,20 +137,24 @@ export class ConversationManager {
         conversationId,
         timestamp: new Date().toISOString(),
         type: 'conversation',
-        intent: nlpResult.intent
+        intent: nlpResult.intent,
       });
 
       // Store in Prisma if we have a conversation record
       if (conversationId) {
         await this.saveMessageToDatabase(conversationId, message, 'user');
-        await this.saveMessageToDatabase(conversationId, response.message, 'assistant');
+        await this.saveMessageToDatabase(
+          conversationId,
+          response.message,
+          'assistant',
+        );
       }
 
       logger.info('Message processed successfully', {
         userId,
         sessionId: actualSessionId,
         intent: nlpResult.intent,
-        confidence: response.confidence
+        confidence: response.confidence,
       });
 
       return response;
@@ -153,15 +162,16 @@ export class ConversationManager {
       logger.error('Failed to process message', {
         userId,
         sessionId: actualSessionId,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
 
       return {
-        message: 'Desculpe, ocorreu um erro ao processar sua mensagem. Pode tentar novamente?',
+        message:
+          'Desculpe, ocorreu um erro ao processar sua mensagem. Pode tentar novamente?',
         intent: Intent.UNKNOWN,
         isCompleted: false,
         requiresInput: true,
-        confidence: 0.1
+        confidence: 0.1,
       };
     }
   }
@@ -173,32 +183,38 @@ export class ConversationManager {
     userId: string,
     message: string,
     sessionId?: string,
-    conversationId?: string
+    conversationId?: string,
   ): AsyncGenerator<StreamingConversationResponse, void, unknown> {
     const actualSessionId = sessionId || `session_${Date.now()}`;
 
     try {
       // Get context and process NLP (non-streaming parts)
-      let context = await this.contextManager.getContext(userId, actualSessionId);
+      let context = await this.contextManager.getContext(
+        userId,
+        actualSessionId,
+      );
       if (!context) {
-        context = await this.contextManager.createContext(userId, actualSessionId);
+        context = await this.contextManager.createContext(
+          userId,
+          actualSessionId,
+        );
       }
 
       context = await this.contextManager.addMessage(context, {
         role: 'user',
         content: message,
-        timestamp: new Date()
+        timestamp: new Date(),
       });
 
       const nlpResult = await this.nlpPipeline.processMessage(
         message,
         userId,
-        context.conversationHistory.slice(-5)
+        context.conversationHistory.slice(-5),
       );
 
       if (nlpResult.intent !== Intent.UNKNOWN) {
         context = await this.contextManager.updateContext(context, {
-          currentIntent: nlpResult.intent
+          currentIntent: nlpResult.intent,
         });
       }
 
@@ -206,14 +222,14 @@ export class ConversationManager {
         context = await this.contextManager.updateSlots(
           context,
           nlpResult.entities,
-          nlpResult.confidence
+          nlpResult.confidence,
         );
       }
 
       const contextInfo = await this.chromaClient.getContext(
         message,
         userId,
-        conversationId
+        conversationId,
       );
 
       // Stream the response
@@ -221,17 +237,17 @@ export class ConversationManager {
       for await (const chunk of this.generateContextualResponseStream(
         context,
         nlpResult,
-        contextInfo
+        contextInfo,
       )) {
         fullResponse += chunk.content;
-        
+
         yield {
           content: chunk.content,
           isComplete: chunk.isComplete,
           intent: nlpResult.intent,
           ...(chunk.isComplete && {
-            nextSteps: this.getNextSteps(context)
-          })
+            nextSteps: this.getNextSteps(context),
+          }),
         };
       }
 
@@ -239,7 +255,7 @@ export class ConversationManager {
       await this.contextManager.addMessage(context, {
         role: 'assistant',
         content: fullResponse,
-        timestamp: new Date()
+        timestamp: new Date(),
       });
 
       // Store in databases
@@ -249,24 +265,28 @@ export class ConversationManager {
         conversationId,
         timestamp: new Date().toISOString(),
         type: 'conversation',
-        intent: nlpResult.intent
+        intent: nlpResult.intent,
       });
 
       if (conversationId) {
         await this.saveMessageToDatabase(conversationId, message, 'user');
-        await this.saveMessageToDatabase(conversationId, fullResponse, 'assistant');
+        await this.saveMessageToDatabase(
+          conversationId,
+          fullResponse,
+          'assistant',
+        );
       }
-
     } catch (error) {
       logger.error('Failed to process streaming message', {
         userId,
         sessionId: actualSessionId,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
 
       yield {
-        content: 'Desculpe, ocorreu um erro ao processar sua mensagem. Pode tentar novamente?',
-        isComplete: true
+        content:
+          'Desculpe, ocorreu um erro ao processar sua mensagem. Pode tentar novamente?',
+        isComplete: true,
       };
     }
   }
@@ -281,18 +301,18 @@ export class ConversationManager {
       similarConversations: SearchResult[];
       relevantKnowledge: SearchResult[];
       recentHistory: SearchResult[];
-    }
+    },
   ): Promise<ConversationResponse> {
     const prompt = this.buildPrompt(context, nlpResult, contextInfo);
-    
+
     const response = await this.anthropicClient.generateResponse(
       [{ role: 'user', content: prompt }],
       context.userId,
       {
         maxTokens: 1000,
         temperature: 0.7,
-        system: this.getSystemPrompt(context.currentIntent)
-      }
+        system: this.getSystemPrompt(context.currentIntent),
+      },
     );
 
     const isCompleted = this.isConversationComplete(context);
@@ -305,7 +325,7 @@ export class ConversationManager {
       isCompleted,
       requiresInput,
       confidence: nlpResult.confidence,
-      data: this.extractResponseData(context)
+      data: this.extractResponseData(context),
     };
   }
 
@@ -319,18 +339,18 @@ export class ConversationManager {
       similarConversations: SearchResult[];
       relevantKnowledge: SearchResult[];
       recentHistory: SearchResult[];
-    }
+    },
   ): AsyncGenerator<{ content: string; isComplete: boolean }, void, unknown> {
     const prompt = this.buildPrompt(context, nlpResult, contextInfo);
-    
+
     for await (const chunk of this.anthropicClient.generateStreamingResponse(
       [{ role: 'user', content: prompt }],
       context.userId,
       {
         maxTokens: 1000,
         temperature: 0.7,
-        system: this.getSystemPrompt(context.currentIntent)
-      }
+        system: this.getSystemPrompt(context.currentIntent),
+      },
     )) {
       yield chunk;
     }
@@ -346,7 +366,7 @@ export class ConversationManager {
       similarConversations: SearchResult[];
       relevantKnowledge: SearchResult[];
       recentHistory: SearchResult[];
-    }
+    },
   ): string {
     const sections = [];
 
@@ -370,7 +390,7 @@ export class ConversationManager {
     sections.push('\nPROCESSAMENTO NLP:');
     sections.push(`Intent detectado: ${nlpResult.intent}`);
     sections.push(`Confiança: ${nlpResult.confidence}`);
-    
+
     if (Object.keys(nlpResult.entities).length > 0) {
       sections.push('Entidades extraídas:');
       Object.entries(nlpResult.entities).forEach(([key, value]) => {
@@ -382,7 +402,9 @@ export class ConversationManager {
 
     const missingSlots = this.contextManager.getMissingSlots(context);
     if (missingSlots.length > 0) {
-      sections.push(`\nINFORMAÇÕES AINDA NECESSÁRIAS: ${missingSlots.join(', ')}`);
+      sections.push(
+        `\nINFORMAÇÕES AINDA NECESSÁRIAS: ${missingSlots.join(', ')}`,
+      );
     }
 
     sections.push('\nMENSAGEM ATUAL DO USUÁRIO:');
@@ -439,7 +461,7 @@ PROCESSO: Avalie urgência, colete sintomas, direcione para atendimento adequado
 ${basePrompt}
 
 FOCO: Fornecer informações sobre a clínica
-AREAS: especialidades, horários, convênios, localização, procedimentos`
+AREAS: especialidades, horários, convênios, localização, procedimentos`,
     };
 
     return intentPrompts[intent] || basePrompt;
@@ -453,8 +475,10 @@ AREAS: especialidades, horários, convênios, localização, procedimentos`
       return true; // Information requests are typically one-off
     }
 
-    return this.contextManager.areAllSlotsFilled(context) && 
-           context.flowState === 'completed';
+    return (
+      this.contextManager.areAllSlotsFilled(context) &&
+      context.flowState === 'completed'
+    );
   }
 
   /**
@@ -521,7 +545,7 @@ AREAS: especialidades, horários, convênios, localização, procedimentos`
   private async saveMessageToDatabase(
     conversationId: string,
     content: string,
-    role: 'user' | 'assistant'
+    role: 'user' | 'assistant',
   ): Promise<void> {
     try {
       await this.prisma.message.create({
@@ -529,14 +553,14 @@ AREAS: especialidades, horários, convênios, localização, procedimentos`
           conversationId,
           content,
           role,
-          processed: role === 'user' // Mark user messages as needing processing
-        }
+          processed: role === 'user', // Mark user messages as needing processing
+        },
       });
     } catch (error) {
       logger.error('Failed to save message to database', {
         conversationId,
         role,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   }
@@ -551,13 +575,13 @@ AREAS: especialidades, horários, convênios, localização, procedimentos`
   }> {
     const [anthropicHealth, chromaHealth] = await Promise.all([
       this.anthropicClient.healthCheck(),
-      this.chromaClient.healthCheck()
+      this.chromaClient.healthCheck(),
     ]);
 
     return {
       anthropic: anthropicHealth,
       chroma: chromaHealth,
-      overall: anthropicHealth && chromaHealth
+      overall: anthropicHealth && chromaHealth,
     };
   }
 
@@ -568,13 +592,11 @@ AREAS: especialidades, horários, convênios, localização, procedimentos`
     anthropic: any;
     chroma: any;
   }> {
-    const [chromaStats] = await Promise.all([
-      this.chromaClient.getStats()
-    ]);
+    const [chromaStats] = await Promise.all([this.chromaClient.getStats()]);
 
     return {
       anthropic: {}, // Would need to implement in AnthropicClient
-      chroma: chromaStats
+      chroma: chromaStats,
     };
   }
 }

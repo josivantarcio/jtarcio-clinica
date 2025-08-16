@@ -4,7 +4,7 @@ import {
   QueueEntry,
   OptimizationResult,
   ConflictResolution,
-  Conflict
+  Conflict,
 } from '@/types/scheduling';
 import { AppointmentType, AppointmentStatus } from '@/types/appointment';
 import { BusinessRules, SCHEDULING_PREFERENCES } from '@/config/business-rules';
@@ -19,7 +19,7 @@ import {
   eachDayOfInterval,
   getHours,
   getDay,
-  isWeekend
+  isWeekend,
 } from 'date-fns';
 import { Logger } from 'winston';
 import Redis from 'ioredis';
@@ -54,7 +54,12 @@ export interface DoctorWorkPattern {
 }
 
 export interface SchedulingRecommendation {
-  type: 'SLOT_OPTIMIZATION' | 'CAPACITY_ADJUSTMENT' | 'QUEUE_REBALANCING' | 'BREAK_INSERTION' | 'OVERBOOKING_SUGGESTION';
+  type:
+    | 'SLOT_OPTIMIZATION'
+    | 'CAPACITY_ADJUSTMENT'
+    | 'QUEUE_REBALANCING'
+    | 'BREAK_INSERTION'
+    | 'OVERBOOKING_SUGGESTION';
   priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
   confidence: number;
   title: string;
@@ -72,7 +77,11 @@ export interface SchedulingRecommendation {
 }
 
 export interface PredictiveInsight {
-  type: 'DEMAND_FORECAST' | 'NO_SHOW_PREDICTION' | 'RESOURCE_BOTTLENECK' | 'EFFICIENCY_OPPORTUNITY';
+  type:
+    | 'DEMAND_FORECAST'
+    | 'NO_SHOW_PREDICTION'
+    | 'RESOURCE_BOTTLENECK'
+    | 'EFFICIENCY_OPPORTUNITY';
   timeframe: 'TODAY' | 'THIS_WEEK' | 'THIS_MONTH' | 'NEXT_MONTH';
   confidence: number;
   prediction: string;
@@ -118,29 +127,36 @@ export class SchedulingIntelligenceService {
         utilization: 0.3,
         patientSatisfaction: 0.3,
         doctorSatisfaction: 0.2,
-        revenue: 0.2
-      }
-    }
+        revenue: 0.2,
+      },
+    },
   ): Promise<SchedulingRecommendation[]> {
     const { prisma, logger } = this.deps;
 
     try {
-      logger.info('Generating AI scheduling recommendations', { doctorId, dateRange });
+      logger.info('Generating AI scheduling recommendations', {
+        doctorId,
+        dateRange,
+      });
 
       const recommendations: SchedulingRecommendation[] = [];
 
       // Analyze current schedule patterns
-      const currentSchedule = await this.analyzeCurrentSchedule(doctorId, dateRange);
+      const currentSchedule = await this.analyzeCurrentSchedule(
+        doctorId,
+        dateRange,
+      );
       const doctorPattern = await this.getDoctorWorkPattern(doctorId);
       const patientBehaviors = await this.getPatientBehaviorProfiles(doctorId);
 
       // Generate capacity optimization recommendations
       if (goals.maximizeUtilization) {
-        const capacityRecs = await this.generateCapacityOptimizationRecommendations(
-          currentSchedule,
-          doctorPattern,
-          goals
-        );
+        const capacityRecs =
+          await this.generateCapacityOptimizationRecommendations(
+            currentSchedule,
+            doctorPattern,
+            goals,
+          );
         recommendations.push(...capacityRecs);
       }
 
@@ -149,19 +165,20 @@ export class SchedulingIntelligenceService {
         const flowRecs = await this.generatePatientFlowRecommendations(
           currentSchedule,
           patientBehaviors,
-          goals
+          goals,
         );
         recommendations.push(...flowRecs);
       }
 
       // Generate workload balancing recommendations
       if (goals.balanceWorkload) {
-        const workloadRecs = await this.generateWorkloadBalancingRecommendations(
-          doctorId,
-          currentSchedule,
-          dateRange,
-          goals
-        );
+        const workloadRecs =
+          await this.generateWorkloadBalancingRecommendations(
+            doctorId,
+            currentSchedule,
+            dateRange,
+            goals,
+          );
         recommendations.push(...workloadRecs);
       }
 
@@ -170,19 +187,26 @@ export class SchedulingIntelligenceService {
         const noShowRecs = await this.generateNoShowReductionRecommendations(
           patientBehaviors,
           currentSchedule,
-          goals
+          goals,
         );
         recommendations.push(...noShowRecs);
       }
 
       // Sort recommendations by priority and confidence
-      const sortedRecommendations = this.sortRecommendationsByPriority(recommendations, goals);
+      const sortedRecommendations = this.sortRecommendationsByPriority(
+        recommendations,
+        goals,
+      );
 
-      logger.info(`Generated ${sortedRecommendations.length} scheduling recommendations`);
+      logger.info(
+        `Generated ${sortedRecommendations.length} scheduling recommendations`,
+      );
       return sortedRecommendations;
-
     } catch (error) {
-      logger.error('Error generating scheduling recommendations', { error, doctorId });
+      logger.error('Error generating scheduling recommendations', {
+        error,
+        doctorId,
+      });
       throw error;
     }
   }
@@ -193,7 +217,7 @@ export class SchedulingIntelligenceService {
   async suggestOptimalSlots(
     criteria: SchedulingCriteria,
     availableSlots: AvailableSlot[],
-    patientId: string
+    patientId: string,
   ): Promise<{
     recommendedSlots: Array<{
       slot: AvailableSlot;
@@ -210,25 +234,39 @@ export class SchedulingIntelligenceService {
     const { logger } = this.deps;
 
     try {
-      logger.info('Generating optimal slot suggestions', { patientId, availableSlotsCount: availableSlots.length });
+      logger.info('Generating optimal slot suggestions', {
+        patientId,
+        availableSlotsCount: availableSlots.length,
+      });
 
       // Get patient behavior profile
       const patientProfile = await this.getPatientBehaviorProfile(patientId);
-      
+
       // Score each slot based on multiple factors
       const scoredSlots = await Promise.all(
-        availableSlots.map(async (slot) => {
-          const score = await this.calculateSlotScore(slot, criteria, patientProfile);
-          const reasoning = this.generateSlotReasonings(slot, score, patientProfile);
-          const alternatives = this.findSimilarSlots(slot, availableSlots.filter(s => s.id !== slot.id));
-          
+        availableSlots.map(async slot => {
+          const score = await this.calculateSlotScore(
+            slot,
+            criteria,
+            patientProfile,
+          );
+          const reasoning = this.generateSlotReasonings(
+            slot,
+            score,
+            patientProfile,
+          );
+          const alternatives = this.findSimilarSlots(
+            slot,
+            availableSlots.filter(s => s.id !== slot.id),
+          );
+
           return {
             slot,
             score,
             reasoning,
-            alternatives
+            alternatives,
           };
-        })
+        }),
       );
 
       // Sort by score and take top recommendations
@@ -239,14 +277,13 @@ export class SchedulingIntelligenceService {
       const patientInsights = {
         preferredTimes: patientProfile.preferredTimeSlots,
         showUpProbability: patientProfile.showUpProbability,
-        schedulingBehavior: this.classifySchedulingBehavior(patientProfile)
+        schedulingBehavior: this.classifySchedulingBehavior(patientProfile),
       };
 
       return {
         recommendedSlots,
-        patientInsights
+        patientInsights,
       };
-
     } catch (error) {
       logger.error('Error suggesting optimal slots', { error, patientId });
       throw error;
@@ -258,7 +295,7 @@ export class SchedulingIntelligenceService {
    */
   async generatePredictiveInsights(
     doctorId: string,
-    timeframe: 'TODAY' | 'THIS_WEEK' | 'THIS_MONTH' | 'NEXT_MONTH'
+    timeframe: 'TODAY' | 'THIS_WEEK' | 'THIS_MONTH' | 'NEXT_MONTH',
   ): Promise<PredictiveInsight[]> {
     const { prisma, logger } = this.deps;
 
@@ -268,27 +305,40 @@ export class SchedulingIntelligenceService {
       const insights: PredictiveInsight[] = [];
 
       // Demand forecasting
-      const demandForecast = await this.generateDemandForecast(doctorId, timeframe);
+      const demandForecast = await this.generateDemandForecast(
+        doctorId,
+        timeframe,
+      );
       insights.push(...demandForecast);
 
       // No-show predictions
-      const noShowPredictions = await this.generateNoShowPredictions(doctorId, timeframe);
+      const noShowPredictions = await this.generateNoShowPredictions(
+        doctorId,
+        timeframe,
+      );
       insights.push(...noShowPredictions);
 
       // Resource bottleneck detection
-      const bottleneckPredictions = await this.predictResourceBottlenecks(doctorId, timeframe);
+      const bottleneckPredictions = await this.predictResourceBottlenecks(
+        doctorId,
+        timeframe,
+      );
       insights.push(...bottleneckPredictions);
 
       // Efficiency opportunities
-      const efficiencyInsights = await this.identifyEfficiencyOpportunities(doctorId, timeframe);
+      const efficiencyInsights = await this.identifyEfficiencyOpportunities(
+        doctorId,
+        timeframe,
+      );
       insights.push(...efficiencyInsights);
 
       // Sort by confidence and priority
-      const sortedInsights = insights.sort((a, b) => b.confidence - a.confidence);
+      const sortedInsights = insights.sort(
+        (a, b) => b.confidence - a.confidence,
+      );
 
       logger.info(`Generated ${sortedInsights.length} predictive insights`);
       return sortedInsights;
-
     } catch (error) {
       logger.error('Error generating predictive insights', { error, doctorId });
       throw error;
@@ -300,16 +350,20 @@ export class SchedulingIntelligenceService {
    */
   async intelligentQueuePrioritization(
     queueEntries: QueueEntry[],
-    optimizationGoals: SchedulingOptimizationGoals
+    optimizationGoals: SchedulingOptimizationGoals,
   ): Promise<QueueEntry[]> {
     const { logger } = this.deps;
 
     try {
-      logger.info('Applying intelligent queue prioritization', { entriesCount: queueEntries.length });
+      logger.info('Applying intelligent queue prioritization', {
+        entriesCount: queueEntries.length,
+      });
 
       // Get patient behavior profiles for all queue entries
       const patientProfiles = await Promise.all(
-        queueEntries.map(entry => this.getPatientBehaviorProfile(entry.patientId))
+        queueEntries.map(entry =>
+          this.getPatientBehaviorProfile(entry.patientId),
+        ),
       );
 
       // Calculate enhanced priority scores
@@ -319,9 +373,9 @@ export class SchedulingIntelligenceService {
           const enhancedScore = await this.calculateEnhancedPriorityScore(
             entry,
             profile,
-            optimizationGoals
+            optimizationGoals,
           );
-          
+
           return {
             ...entry,
             priorityScore: enhancedScore,
@@ -329,23 +383,24 @@ export class SchedulingIntelligenceService {
               showUpProbability: profile.showUpProbability,
               urgencyFactor: this.calculateUrgencyFactor(entry),
               loyaltyScore: profile.loyaltyScore,
-              schedulingFlexibility: this.calculateSchedulingFlexibility(profile)
-            }
+              schedulingFlexibility:
+                this.calculateSchedulingFlexibility(profile),
+            },
           };
-        })
+        }),
       );
 
       // Apply fairness algorithms to prevent starvation
-      const fairPrioritizedEntries = this.applyFairnessAlgorithms(enhancedEntries);
+      const fairPrioritizedEntries =
+        this.applyFairnessAlgorithms(enhancedEntries);
 
       // Sort by enhanced priority score
       const prioritizedQueue = fairPrioritizedEntries.sort(
-        (a, b) => b.priorityScore - a.priorityScore
+        (a, b) => b.priorityScore - a.priorityScore,
       );
 
       logger.info('Queue prioritization completed with AI insights');
       return prioritizedQueue;
-
     } catch (error) {
       logger.error('Error in intelligent queue prioritization', { error });
       throw error;
@@ -357,28 +412,35 @@ export class SchedulingIntelligenceService {
    */
   async intelligentConflictResolution(
     conflicts: Conflict[],
-    availableAlternatives: AvailableSlot[]
+    availableAlternatives: AvailableSlot[],
   ): Promise<ConflictResolution[]> {
     const { logger } = this.deps;
 
     try {
-      logger.info('Applying intelligent conflict resolution', { conflictsCount: conflicts.length });
+      logger.info('Applying intelligent conflict resolution', {
+        conflictsCount: conflicts.length,
+      });
 
       const resolutions: ConflictResolution[] = [];
 
       for (const conflict of conflicts) {
-        const resolution = await this.generateIntelligentResolution(conflict, availableAlternatives);
+        const resolution = await this.generateIntelligentResolution(
+          conflict,
+          availableAlternatives,
+        );
         if (resolution) {
           resolutions.push(resolution);
         }
       }
 
       // Optimize resolution combinations to minimize overall disruption
-      const optimizedResolutions = await this.optimizeResolutionCombinations(resolutions);
+      const optimizedResolutions =
+        await this.optimizeResolutionCombinations(resolutions);
 
-      logger.info(`Generated ${optimizedResolutions.length} intelligent conflict resolutions`);
+      logger.info(
+        `Generated ${optimizedResolutions.length} intelligent conflict resolutions`,
+      );
       return optimizedResolutions;
-
     } catch (error) {
       logger.error('Error in intelligent conflict resolution', { error });
       throw error;
@@ -387,7 +449,10 @@ export class SchedulingIntelligenceService {
 
   // Private helper methods
 
-  private async analyzeCurrentSchedule(doctorId: string, dateRange: { start: Date; end: Date }): Promise<any> {
+  private async analyzeCurrentSchedule(
+    doctorId: string,
+    dateRange: { start: Date; end: Date },
+  ): Promise<any> {
     const { prisma } = this.deps;
 
     const appointments = await prisma.appointment.findMany({
@@ -395,27 +460,37 @@ export class SchedulingIntelligenceService {
         doctorId,
         scheduledAt: {
           gte: dateRange.start,
-          lte: dateRange.end
+          lte: dateRange.end,
         },
-        status: { in: [AppointmentStatus.SCHEDULED, AppointmentStatus.CONFIRMED, AppointmentStatus.COMPLETED] }
+        status: {
+          in: [
+            AppointmentStatus.SCHEDULED,
+            AppointmentStatus.CONFIRMED,
+            AppointmentStatus.COMPLETED,
+          ],
+        },
       },
       include: {
         patient: { include: { user: true } },
-        specialty: true
-      }
+        specialty: true,
+      },
     });
 
     return {
       totalAppointments: appointments.length,
-      averageDuration: appointments.reduce((sum, apt) => sum + apt.duration, 0) / appointments.length,
+      averageDuration:
+        appointments.reduce((sum, apt) => sum + apt.duration, 0) /
+        appointments.length,
       utilizationByHour: this.calculateHourlyUtilization(appointments),
       gapAnalysis: this.analyzeScheduleGaps(appointments),
       patientTypes: this.analyzePatientTypes(appointments),
-      noShowRate: this.calculateNoShowRate(appointments)
+      noShowRate: this.calculateNoShowRate(appointments),
     };
   }
 
-  private async getDoctorWorkPattern(doctorId: string): Promise<DoctorWorkPattern> {
+  private async getDoctorWorkPattern(
+    doctorId: string,
+  ): Promise<DoctorWorkPattern> {
     const { prisma } = this.deps;
 
     // Get doctor's historical data to build work pattern
@@ -423,58 +498,64 @@ export class SchedulingIntelligenceService {
       where: {
         doctorId,
         scheduledAt: {
-          gte: addDays(new Date(), -90) // Last 90 days
+          gte: addDays(new Date(), -90), // Last 90 days
         },
-        status: AppointmentStatus.COMPLETED
-      }
+        status: AppointmentStatus.COMPLETED,
+      },
     });
 
     const doctor = await prisma.doctor.findUnique({
       where: { id: doctorId },
-      include: { availability: true }
+      include: { availability: true },
     });
 
     return {
       doctorId,
       optimalWorkingHours: { start: '09:00', end: '17:00' }, // Default, would be calculated
-      productivityPeaks: this.calculateProductivityPeaks(historicalAppointments),
+      productivityPeaks: this.calculateProductivityPeaks(
+        historicalAppointments,
+      ),
       averageAppointmentDuration: doctor?.consultationDuration || 30,
       bufferTimePreference: 10, // minutes
       breakPatterns: [
         { time: '12:00', duration: 60, frequency: 1 },
-        { time: '15:00', duration: 15, frequency: 1 }
+        { time: '15:00', duration: 15, frequency: 1 },
       ],
       overbookingTolerance: 0.1, // 10%
-      patientVolumePreference: 'MEDIUM'
+      patientVolumePreference: 'MEDIUM',
     };
   }
 
-  private async getPatientBehaviorProfiles(doctorId: string): Promise<PatientBehaviorProfile[]> {
+  private async getPatientBehaviorProfiles(
+    doctorId: string,
+  ): Promise<PatientBehaviorProfile[]> {
     const { prisma } = this.deps;
 
     // Get patients who have appointments with this doctor
     const patients = await prisma.patient.findMany({
       where: {
         appointments: {
-          some: { doctorId }
-        }
+          some: { doctorId },
+        },
       },
       include: {
         appointments: {
           where: { doctorId },
           orderBy: { scheduledAt: 'desc' },
-          take: 10
+          take: 10,
         },
-        user: true
-      }
+        user: true,
+      },
     });
 
     return Promise.all(
-      patients.map(patient => this.buildPatientBehaviorProfile(patient))
+      patients.map(patient => this.buildPatientBehaviorProfile(patient)),
     );
   }
 
-  private async getPatientBehaviorProfile(patientId: string): Promise<PatientBehaviorProfile> {
+  private async getPatientBehaviorProfile(
+    patientId: string,
+  ): Promise<PatientBehaviorProfile> {
     const { prisma } = this.deps;
 
     const patient = await prisma.patient.findUnique({
@@ -482,10 +563,10 @@ export class SchedulingIntelligenceService {
       include: {
         appointments: {
           orderBy: { scheduledAt: 'desc' },
-          take: 20
+          take: 20,
         },
-        user: true
-      }
+        user: true,
+      },
     });
 
     if (!patient) {
@@ -499,7 +580,7 @@ export class SchedulingIntelligenceService {
         leadTimePreference: 7,
         seasonalPatterns: [],
         communicationPreference: 'EMAIL',
-        loyaltyScore: 0.5
+        loyaltyScore: 0.5,
       };
     }
 
@@ -508,16 +589,16 @@ export class SchedulingIntelligenceService {
 
   private buildPatientBehaviorProfile(patient: any): PatientBehaviorProfile {
     const appointments = patient.appointments || [];
-    
+
     // Calculate preferred time slots
     const timeSlotCounts = new Map<string, number>();
     appointments.forEach((apt: any) => {
       const timeSlot = format(apt.scheduledAt, 'HH:mm');
       timeSlotCounts.set(timeSlot, (timeSlotCounts.get(timeSlot) || 0) + 1);
     });
-    
+
     const preferredTimeSlots = Array.from(timeSlotCounts.entries())
-      .sort(([,a], [,b]) => b - a)
+      .sort(([, a], [, b]) => b - a)
       .slice(0, 3)
       .map(([time]) => time);
 
@@ -529,29 +610,31 @@ export class SchedulingIntelligenceService {
     });
 
     const preferredDaysOfWeek = Array.from(dayOfWeekCounts.entries())
-      .sort(([,a], [,b]) => b - a)
+      .sort(([, a], [, b]) => b - a)
       .slice(0, 5)
       .map(([day]) => day);
 
     // Calculate show up probability
-    const completedAppointments = appointments.filter((apt: any) => 
-      apt.status === AppointmentStatus.COMPLETED
+    const completedAppointments = appointments.filter(
+      (apt: any) => apt.status === AppointmentStatus.COMPLETED,
     ).length;
-    const noShowAppointments = appointments.filter((apt: any) => 
-      apt.status === AppointmentStatus.NO_SHOW
+    const noShowAppointments = appointments.filter(
+      (apt: any) => apt.status === AppointmentStatus.NO_SHOW,
     ).length;
-    
-    const showUpProbability = appointments.length > 0 
-      ? completedAppointments / (completedAppointments + noShowAppointments)
-      : 0.85;
+
+    const showUpProbability =
+      appointments.length > 0
+        ? completedAppointments / (completedAppointments + noShowAppointments)
+        : 0.85;
 
     // Calculate reschedule frequency
-    const rescheduledAppointments = appointments.filter((apt: any) => 
-      apt.rescheduleCount > 0
+    const rescheduledAppointments = appointments.filter(
+      (apt: any) => apt.rescheduleCount > 0,
     ).length;
-    const rescheduleFrequency = appointments.length > 0 
-      ? rescheduledAppointments / appointments.length 
-      : 0.2;
+    const rescheduleFrequency =
+      appointments.length > 0
+        ? rescheduledAppointments / appointments.length
+        : 0.2;
 
     // Calculate loyalty score
     const loyaltyScore = Math.min(appointments.length / 10, 1.0);
@@ -565,14 +648,14 @@ export class SchedulingIntelligenceService {
       leadTimePreference: 7, // Default
       seasonalPatterns: [],
       communicationPreference: 'EMAIL',
-      loyaltyScore
+      loyaltyScore,
     };
   }
 
   private async calculateSlotScore(
     slot: AvailableSlot,
     criteria: SchedulingCriteria,
-    patientProfile: PatientBehaviorProfile
+    patientProfile: PatientBehaviorProfile,
   ): Promise<number> {
     let score = 0.5; // Base score
 
@@ -590,7 +673,10 @@ export class SchedulingIntelligenceService {
 
     // Lead time preference (15% weight)
     const leadTimeDays = differenceInDays(slot.startTime, new Date());
-    const leadTimeScore = Math.abs(leadTimeDays - patientProfile.leadTimePreference) <= 2 ? 0.15 : 0;
+    const leadTimeScore =
+      Math.abs(leadTimeDays - patientProfile.leadTimePreference) <= 2
+        ? 0.15
+        : 0;
     score += leadTimeScore;
 
     // Optimal time slot bonus (15% weight)
@@ -615,11 +701,15 @@ export class SchedulingIntelligenceService {
   private generateSlotReasonings(
     slot: AvailableSlot,
     score: { total: number; breakdown: any },
-    patientProfile: PatientBehaviorProfile
+    patientProfile: PatientBehaviorProfile,
   ): string[] {
     const reasons: string[] = [];
 
-    if (patientProfile.preferredTimeSlots.includes(format(slot.startTime, 'HH:mm'))) {
+    if (
+      patientProfile.preferredTimeSlots.includes(
+        format(slot.startTime, 'HH:mm'),
+      )
+    ) {
       reasons.push('Matches your preferred time');
     }
 
@@ -643,11 +733,16 @@ export class SchedulingIntelligenceService {
     return reasons;
   }
 
-  private findSimilarSlots(targetSlot: AvailableSlot, otherSlots: AvailableSlot[]): AvailableSlot[] {
+  private findSimilarSlots(
+    targetSlot: AvailableSlot,
+    otherSlots: AvailableSlot[],
+  ): AvailableSlot[] {
     // Find slots within 2 hours of the target slot
     return otherSlots
       .filter(slot => {
-        const timeDiff = Math.abs(differenceInHours(slot.startTime, targetSlot.startTime));
+        const timeDiff = Math.abs(
+          differenceInHours(slot.startTime, targetSlot.startTime),
+        );
         return timeDiff <= 2 && slot.doctorId === targetSlot.doctorId;
       })
       .slice(0, 3); // Top 3 alternatives
@@ -657,31 +752,33 @@ export class SchedulingIntelligenceService {
     if (profile.rescheduleFrequency > 0.3) {
       return 'Frequent Rescheduler';
     }
-    
+
     if (profile.showUpProbability < 0.7) {
       return 'High No-Show Risk';
     }
-    
+
     if (profile.loyaltyScore > 0.8) {
       return 'Loyal Patient';
     }
-    
+
     if (profile.leadTimePreference < 3) {
       return 'Last-Minute Scheduler';
     }
-    
+
     return 'Regular Patient';
   }
 
   private async generateCapacityOptimizationRecommendations(
     currentSchedule: any,
     doctorPattern: DoctorWorkPattern,
-    goals: SchedulingOptimizationGoals
+    goals: SchedulingOptimizationGoals,
   ): Promise<SchedulingRecommendation[]> {
     const recommendations: SchedulingRecommendation[] = [];
 
     // Check for underutilized time slots
-    if (currentSchedule.utilizationByHour.some((h: any) => h.utilization < 0.6)) {
+    if (
+      currentSchedule.utilizationByHour.some((h: any) => h.utilization < 0.6)
+    ) {
       recommendations.push({
         type: 'CAPACITY_ADJUSTMENT',
         priority: 'MEDIUM',
@@ -689,20 +786,21 @@ export class SchedulingIntelligenceService {
         title: 'Optimize Low-Utilization Hours',
         description: 'Several time slots show consistently low utilization',
         impact: 'Could increase overall utilization by 15-20%',
-        implementation: 'Consider shortening availability windows or adding promotional booking incentives',
+        implementation:
+          'Consider shortening availability windows or adding promotional booking incentives',
         estimatedImprovement: {
           utilizationIncrease: 0.18,
-          revenueImpact: 0.15
+          revenueImpact: 0.15,
         },
         requiredActions: [
           'Analyze patient demand patterns',
           'Adjust availability schedule',
-          'Implement targeted marketing'
+          'Implement targeted marketing',
         ],
         risksAndConsiderations: [
           'May affect patient accessibility',
-          'Requires coordination with staff schedules'
-        ]
+          'Requires coordination with staff schedules',
+        ],
       });
     }
 
@@ -714,22 +812,24 @@ export class SchedulingIntelligenceService {
         priority: 'LOW',
         confidence: 0.7,
         title: 'Optimize Break Scheduling',
-        description: 'Schedule breaks during natural gaps to improve doctor efficiency',
+        description:
+          'Schedule breaks during natural gaps to improve doctor efficiency',
         impact: 'Improved doctor satisfaction and reduced fatigue',
-        implementation: 'Insert strategic breaks during identified low-demand periods',
+        implementation:
+          'Insert strategic breaks during identified low-demand periods',
         estimatedImprovement: {
           doctorEfficiency: 0.12,
-          patientSatisfaction: 0.08
+          patientSatisfaction: 0.08,
         },
         requiredActions: [
           'Identify optimal break times',
           'Update scheduling templates',
-          'Communicate changes to staff'
+          'Communicate changes to staff',
         ],
         risksAndConsiderations: [
           'May reduce total available appointment time',
-          'Requires staff coordination'
-        ]
+          'Requires staff coordination',
+        ],
       });
     }
 
@@ -739,7 +839,7 @@ export class SchedulingIntelligenceService {
   private async generatePatientFlowRecommendations(
     currentSchedule: any,
     patientBehaviors: PatientBehaviorProfile[],
-    goals: SchedulingOptimizationGoals
+    goals: SchedulingOptimizationGoals,
   ): Promise<SchedulingRecommendation[]> {
     const recommendations: SchedulingRecommendation[] = [];
 
@@ -752,20 +852,21 @@ export class SchedulingIntelligenceService {
         title: 'Reduce Patient Wait Times',
         description: 'Current average wait time exceeds optimal threshold',
         impact: 'Could reduce wait times by 30-40%',
-        implementation: 'Implement dynamic buffer time adjustment and staggered scheduling',
+        implementation:
+          'Implement dynamic buffer time adjustment and staggered scheduling',
         estimatedImprovement: {
           patientSatisfaction: 0.35,
-          doctorEfficiency: 0.15
+          doctorEfficiency: 0.15,
         },
         requiredActions: [
           'Implement smart buffer time calculation',
           'Add real-time schedule monitoring',
-          'Train staff on flow management'
+          'Train staff on flow management',
         ],
         risksAndConsiderations: [
           'May require system updates',
-          'Staff training required'
-        ]
+          'Staff training required',
+        ],
       });
     }
 
@@ -776,7 +877,7 @@ export class SchedulingIntelligenceService {
     doctorId: string,
     currentSchedule: any,
     dateRange: { start: Date; end: Date },
-    goals: SchedulingOptimizationGoals
+    goals: SchedulingOptimizationGoals,
   ): Promise<SchedulingRecommendation[]> {
     // Analyze workload distribution and suggest improvements
     return [];
@@ -785,12 +886,14 @@ export class SchedulingIntelligenceService {
   private async generateNoShowReductionRecommendations(
     patientBehaviors: PatientBehaviorProfile[],
     currentSchedule: any,
-    goals: SchedulingOptimizationGoals
+    goals: SchedulingOptimizationGoals,
   ): Promise<SchedulingRecommendation[]> {
     const recommendations: SchedulingRecommendation[] = [];
 
-    const highRiskPatients = patientBehaviors.filter(p => p.showUpProbability < 0.7);
-    
+    const highRiskPatients = patientBehaviors.filter(
+      p => p.showUpProbability < 0.7,
+    );
+
     if (highRiskPatients.length > 0) {
       recommendations.push({
         type: 'QUEUE_REBALANCING',
@@ -799,20 +902,21 @@ export class SchedulingIntelligenceService {
         title: 'Implement No-Show Prevention Strategy',
         description: `${highRiskPatients.length} patients identified as high no-show risk`,
         impact: 'Could reduce no-show rate by 25-30%',
-        implementation: 'Implement targeted confirmation protocols and overbooking for high-risk slots',
+        implementation:
+          'Implement targeted confirmation protocols and overbooking for high-risk slots',
         estimatedImprovement: {
           utilizationIncrease: 0.25,
-          revenueImpact: 0.20
+          revenueImpact: 0.2,
         },
         requiredActions: [
           'Implement risk-based confirmation system',
           'Add automated reminder sequences',
-          'Consider strategic overbooking'
+          'Consider strategic overbooking',
         ],
         risksAndConsiderations: [
           'Overbooking may create occasional wait times',
-          'Requires careful monitoring'
-        ]
+          'Requires careful monitoring',
+        ],
       });
     }
 
@@ -821,13 +925,13 @@ export class SchedulingIntelligenceService {
 
   private sortRecommendationsByPriority(
     recommendations: SchedulingRecommendation[],
-    goals: SchedulingOptimizationGoals
+    goals: SchedulingOptimizationGoals,
   ): SchedulingRecommendation[] {
     const priorityWeights = {
       CRITICAL: 4,
       HIGH: 3,
       MEDIUM: 2,
-      LOW: 1
+      LOW: 1,
     };
 
     return recommendations.sort((a, b) => {
@@ -841,7 +945,7 @@ export class SchedulingIntelligenceService {
     const hourlyUtilization = Array.from({ length: 24 }, (_, hour) => ({
       hour,
       utilization: 0,
-      appointmentCount: 0
+      appointmentCount: 0,
     }));
 
     appointments.forEach(appointment => {
@@ -858,22 +962,23 @@ export class SchedulingIntelligenceService {
   }
 
   private analyzeScheduleGaps(appointments: any[]): any {
-    const sortedAppointments = appointments.sort((a, b) => 
-      a.scheduledAt.getTime() - b.scheduledAt.getTime()
+    const sortedAppointments = appointments.sort(
+      (a, b) => a.scheduledAt.getTime() - b.scheduledAt.getTime(),
     );
 
     const gaps = [];
     for (let i = 1; i < sortedAppointments.length; i++) {
-      const gapMinutes = differenceInHours(
-        sortedAppointments[i].scheduledAt,
-        sortedAppointments[i - 1].endTime
-      ) * 60;
-      
+      const gapMinutes =
+        differenceInHours(
+          sortedAppointments[i].scheduledAt,
+          sortedAppointments[i - 1].endTime,
+        ) * 60;
+
       if (gapMinutes > 30) {
         gaps.push({
           start: sortedAppointments[i - 1].endTime,
           end: sortedAppointments[i].scheduledAt,
-          duration: gapMinutes
+          duration: gapMinutes,
         });
       }
     }
@@ -881,13 +986,16 @@ export class SchedulingIntelligenceService {
     return {
       totalGaps: gaps.length,
       longGaps: gaps.filter(g => g.duration > 60),
-      averageGap: gaps.length > 0 ? gaps.reduce((sum, g) => sum + g.duration, 0) / gaps.length : 0
+      averageGap:
+        gaps.length > 0
+          ? gaps.reduce((sum, g) => sum + g.duration, 0) / gaps.length
+          : 0,
     };
   }
 
   private analyzePatientTypes(appointments: any[]): any {
     const typeDistribution = new Map<string, number>();
-    
+
     appointments.forEach(appointment => {
       const type = appointment.type || 'CONSULTATION';
       typeDistribution.set(type, (typeDistribution.get(type) || 0) + 1);
@@ -896,22 +1004,30 @@ export class SchedulingIntelligenceService {
     return Array.from(typeDistribution.entries()).map(([type, count]) => ({
       type,
       count,
-      percentage: count / appointments.length
+      percentage: count / appointments.length,
     }));
   }
 
   private calculateNoShowRate(appointments: any[]): number {
-    const noShows = appointments.filter(apt => apt.status === AppointmentStatus.NO_SHOW).length;
+    const noShows = appointments.filter(
+      apt => apt.status === AppointmentStatus.NO_SHOW,
+    ).length;
     return appointments.length > 0 ? noShows / appointments.length : 0;
   }
 
-  private calculateProductivityPeaks(appointments: any[]): { hour: number; efficiency: number }[] {
+  private calculateProductivityPeaks(
+    appointments: any[],
+  ): { hour: number; efficiency: number }[] {
     const hourlyProductivity = new Map<number, number>();
-    
+
     appointments.forEach(appointment => {
       const hour = getHours(appointment.scheduledAt);
-      const efficiency = appointment.status === AppointmentStatus.COMPLETED ? 1 : 0.5;
-      hourlyProductivity.set(hour, (hourlyProductivity.get(hour) || 0) + efficiency);
+      const efficiency =
+        appointment.status === AppointmentStatus.COMPLETED ? 1 : 0.5;
+      hourlyProductivity.set(
+        hour,
+        (hourlyProductivity.get(hour) || 0) + efficiency,
+      );
     });
 
     return Array.from(hourlyProductivity.entries())
@@ -921,7 +1037,7 @@ export class SchedulingIntelligenceService {
 
   private async generateDemandForecast(
     doctorId: string,
-    timeframe: 'TODAY' | 'THIS_WEEK' | 'THIS_MONTH' | 'NEXT_MONTH'
+    timeframe: 'TODAY' | 'THIS_WEEK' | 'THIS_MONTH' | 'NEXT_MONTH',
   ): Promise<PredictiveInsight[]> {
     // Implement demand forecasting logic
     return [];
@@ -929,7 +1045,7 @@ export class SchedulingIntelligenceService {
 
   private async generateNoShowPredictions(
     doctorId: string,
-    timeframe: 'TODAY' | 'THIS_WEEK' | 'THIS_MONTH' | 'NEXT_MONTH'
+    timeframe: 'TODAY' | 'THIS_WEEK' | 'THIS_MONTH' | 'NEXT_MONTH',
   ): Promise<PredictiveInsight[]> {
     // Implement no-show prediction logic
     return [];
@@ -937,7 +1053,7 @@ export class SchedulingIntelligenceService {
 
   private async predictResourceBottlenecks(
     doctorId: string,
-    timeframe: 'TODAY' | 'THIS_WEEK' | 'THIS_MONTH' | 'NEXT_MONTH'
+    timeframe: 'TODAY' | 'THIS_WEEK' | 'THIS_MONTH' | 'NEXT_MONTH',
   ): Promise<PredictiveInsight[]> {
     // Implement resource bottleneck prediction logic
     return [];
@@ -945,7 +1061,7 @@ export class SchedulingIntelligenceService {
 
   private async identifyEfficiencyOpportunities(
     doctorId: string,
-    timeframe: 'TODAY' | 'THIS_WEEK' | 'THIS_MONTH' | 'NEXT_MONTH'
+    timeframe: 'TODAY' | 'THIS_WEEK' | 'THIS_MONTH' | 'NEXT_MONTH',
   ): Promise<PredictiveInsight[]> {
     // Implement efficiency opportunity identification logic
     return [];
@@ -954,7 +1070,7 @@ export class SchedulingIntelligenceService {
   private async calculateEnhancedPriorityScore(
     entry: QueueEntry,
     profile: PatientBehaviorProfile,
-    goals: SchedulingOptimizationGoals
+    goals: SchedulingOptimizationGoals,
   ): Promise<number> {
     let score = entry.priorityScore;
 
@@ -978,7 +1094,9 @@ export class SchedulingIntelligenceService {
     return entry.urgencyLevel / 10;
   }
 
-  private calculateSchedulingFlexibility(profile: PatientBehaviorProfile): number {
+  private calculateSchedulingFlexibility(
+    profile: PatientBehaviorProfile,
+  ): number {
     // Higher reschedule frequency indicates more flexibility
     return Math.min(profile.rescheduleFrequency * 2, 1);
   }
@@ -987,31 +1105,33 @@ export class SchedulingIntelligenceService {
     // Implement fairness algorithms to prevent patient starvation
     // For now, just ensure no patient waits more than a certain threshold
     const now = new Date();
-    
+
     return entries.map(entry => {
       const waitHours = differenceInHours(now, entry.createdAt);
-      
+
       // Boost priority for patients waiting too long
-      if (waitHours > 72) { // 3 days
+      if (waitHours > 72) {
+        // 3 days
         entry.priorityScore += 5;
-      } else if (waitHours > 48) { // 2 days
+      } else if (waitHours > 48) {
+        // 2 days
         entry.priorityScore += 2;
       }
-      
+
       return entry;
     });
   }
 
   private async generateIntelligentResolution(
     conflict: Conflict,
-    availableAlternatives: AvailableSlot[]
+    availableAlternatives: AvailableSlot[],
   ): Promise<ConflictResolution | null> {
     // Generate intelligent conflict resolution using AI
     return null; // Placeholder
   }
 
   private async optimizeResolutionCombinations(
-    resolutions: ConflictResolution[]
+    resolutions: ConflictResolution[],
   ): Promise<ConflictResolution[]> {
     // Optimize resolution combinations to minimize disruption
     return resolutions;

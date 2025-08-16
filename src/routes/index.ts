@@ -18,9 +18,15 @@ export async function registerRoutes(fastify: FastifyInstance): Promise<void> {
   await fastify.register(authRoutes, { prefix: `${apiPrefix}/auth` });
   await fastify.register(userRoutes, { prefix: `${apiPrefix}/users` });
   await fastify.register(userRoutes, { prefix: `${apiPrefix}` }); // For /doctors endpoint
-  await fastify.register(appointmentRoutes, { prefix: `${apiPrefix}/appointments` });
-  await fastify.register(specialtyRoutes, { prefix: `${apiPrefix}/specialties` });
-  await fastify.register(availabilityRoutes, { prefix: `${apiPrefix}/availability` });
+  await fastify.register(appointmentRoutes, {
+    prefix: `${apiPrefix}/appointments`,
+  });
+  await fastify.register(specialtyRoutes, {
+    prefix: `${apiPrefix}/specialties`,
+  });
+  await fastify.register(availabilityRoutes, {
+    prefix: `${apiPrefix}/availability`,
+  });
   await fastify.register(aiChatRoutes, { prefix: apiPrefix });
   await fastify.register(auditRoutes, { prefix: apiPrefix });
   await fastify.register(analyticsRoutes, { prefix: apiPrefix });

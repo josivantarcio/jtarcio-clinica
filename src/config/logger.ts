@@ -122,11 +122,11 @@ export const securityLogger = winston.createLogger({
 // HTTP request logger middleware
 export const httpLogger = (req: any, res: any, next: any): void => {
   const start = Date.now();
-  
+
   res.on('finish', () => {
     const duration = Date.now() - start;
     const message = `${req.method} ${req.originalUrl} ${res.statusCode} - ${duration}ms`;
-    
+
     logger.http(message, {
       method: req.method,
       url: req.originalUrl,
@@ -137,7 +137,7 @@ export const httpLogger = (req: any, res: any, next: any): void => {
       userId: req.user?.id,
     });
   });
-  
+
   next();
 };
 
@@ -153,7 +153,12 @@ export const logError = (error: Error, context?: Record<string, any>): void => {
   });
 };
 
-export const logAudit = (action: string, resource: string, userId?: string, details?: Record<string, any>): void => {
+export const logAudit = (
+  action: string,
+  resource: string,
+  userId?: string,
+  details?: Record<string, any>,
+): void => {
   auditLogger.info('Audit event', {
     action,
     resource,
@@ -163,7 +168,10 @@ export const logAudit = (action: string, resource: string, userId?: string, deta
   });
 };
 
-export const logSecurity = (event: string, details: Record<string, any>): void => {
+export const logSecurity = (
+  event: string,
+  details: Record<string, any>,
+): void => {
   securityLogger.warn(event, {
     timestamp: new Date().toISOString(),
     ...details,

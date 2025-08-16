@@ -174,7 +174,12 @@ export enum CancellationCode {
 export const schedulingCriteriaSchema = z.object({
   doctorId: z.string().uuid().optional(),
   specialtyId: z.string().uuid(),
-  appointmentType: z.enum(['CONSULTATION', 'FOLLOW_UP', 'EMERGENCY', 'ROUTINE_CHECKUP']),
+  appointmentType: z.enum([
+    'CONSULTATION',
+    'FOLLOW_UP',
+    'EMERGENCY',
+    'ROUTINE_CHECKUP',
+  ]),
   duration: z.number().int().positive(),
   startDate: z.date(),
   endDate: z.date(),
@@ -196,11 +201,13 @@ export const availableSlotSchema = z.object({
   equipmentIds: z.array(z.string().uuid()).optional(),
   bufferBefore: z.number().int().nonnegative().optional(),
   bufferAfter: z.number().int().nonnegative().optional(),
-  metadata: z.object({
-    slotType: z.enum(['REGULAR', 'EMERGENCY', 'OVERFLOW']),
-    utilizationScore: z.number().min(0).max(1),
-    patientPreferenceMatch: z.number().min(0).max(1),
-  }).optional(),
+  metadata: z
+    .object({
+      slotType: z.enum(['REGULAR', 'EMERGENCY', 'OVERFLOW']),
+      utilizationScore: z.number().min(0).max(1),
+      patientPreferenceMatch: z.number().min(0).max(1),
+    })
+    .optional(),
 });
 
 export const queueEntrySchema = z.object({
@@ -208,7 +215,12 @@ export const queueEntrySchema = z.object({
   patientId: z.string().uuid(),
   doctorId: z.string().uuid().optional(),
   specialtyId: z.string().uuid(),
-  appointmentType: z.enum(['CONSULTATION', 'FOLLOW_UP', 'EMERGENCY', 'ROUTINE_CHECKUP']),
+  appointmentType: z.enum([
+    'CONSULTATION',
+    'FOLLOW_UP',
+    'EMERGENCY',
+    'ROUTINE_CHECKUP',
+  ]),
   priorityScore: z.number().int().min(1).max(20),
   preferredDates: z.array(z.date()),
   preferredTimes: z.array(z.string()),
@@ -225,7 +237,12 @@ export const appointmentBookingSchema = z.object({
   doctorId: z.string().uuid(),
   specialtyId: z.string().uuid(),
   slotId: z.string().uuid(),
-  appointmentType: z.enum(['CONSULTATION', 'FOLLOW_UP', 'EMERGENCY', 'ROUTINE_CHECKUP']),
+  appointmentType: z.enum([
+    'CONSULTATION',
+    'FOLLOW_UP',
+    'EMERGENCY',
+    'ROUTINE_CHECKUP',
+  ]),
   duration: z.number().int().positive(),
   reason: z.string().min(10).optional(),
   symptoms: z.string().optional(),
@@ -257,7 +274,9 @@ export const availabilitySearchSchema = z.object({
   startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   duration: z.number().int().positive().default(30),
-  appointmentType: z.enum(['CONSULTATION', 'FOLLOW_UP', 'EMERGENCY', 'ROUTINE_CHECKUP']).default('CONSULTATION'),
+  appointmentType: z
+    .enum(['CONSULTATION', 'FOLLOW_UP', 'EMERGENCY', 'ROUTINE_CHECKUP'])
+    .default('CONSULTATION'),
   preferredTimes: z.array(z.string()).optional(),
   maxSlots: z.number().int().positive().max(100).default(20),
 });

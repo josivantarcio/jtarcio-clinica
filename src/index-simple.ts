@@ -5,15 +5,15 @@ import { prisma } from './config/database';
 // Criar instância do Fastify
 const fastify = Fastify({
   logger: {
-    level: 'info'
-  }
+    level: 'info',
+  },
 });
 
 // Registrar CORS
 fastify.register(cors, {
   origin: ['http://localhost:3001', 'http://localhost:3000'],
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
 });
 
 // Health check
@@ -21,7 +21,7 @@ fastify.get('/health', async (request, reply) => {
   return {
     status: 'ok',
     timestamp: new Date().toISOString(),
-    version: '1.0.0'
+    version: '1.0.0',
   };
 });
 
@@ -40,9 +40,9 @@ fastify.get('/manifest.json', async (request, reply) => {
       {
         src: '/favicon.ico',
         sizes: '32x32',
-        type: 'image/x-icon'
-      }
-    ]
+        type: 'image/x-icon',
+      },
+    ],
   };
 });
 
@@ -52,7 +52,7 @@ fastify.get('/', async (request, reply) => {
     message: 'EO Clínica API',
     version: '1.0.0',
     status: 'running',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   };
 });
 
@@ -61,48 +61,51 @@ fastify.post('/api/v1/auth/login', async (request, reply) => {
   try {
     console.log('Raw body:', request.body);
     const { email, password } = request.body as any;
-    
+
     if (!email || !password) {
       reply.status(400);
       return {
         success: false,
         error: {
           code: 'MISSING_FIELDS',
-          message: 'Email e senha são obrigatórios'
-        }
+          message: 'Email e senha são obrigatórios',
+        },
       };
     }
-    
+
     console.log('Login attempt:', { email, password });
-  
-  // Login básico para teste - usando as credenciais criadas no seed
-  if (email === 'admin@eoclinica.com.br' && (password === 'Admin123!' || password === 'Admin123')) {
-    return {
-      success: true,
-      data: {
-        user: {
-          id: 'cme4damyf001614bkc7980k98',
-          email: 'admin@eoclinica.com.br',
-          role: 'ADMIN',
-          name: 'Administrador Sistema',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
+
+    // Login básico para teste - usando as credenciais criadas no seed
+    if (
+      email === 'admin@eoclinica.com.br' &&
+      (password === 'Admin123!' || password === 'Admin123')
+    ) {
+      return {
+        success: true,
+        data: {
+          user: {
+            id: 'cme4damyf001614bkc7980k98',
+            email: 'admin@eoclinica.com.br',
+            role: 'ADMIN',
+            name: 'Administrador Sistema',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+          accessToken: 'fake-jwt-token-for-testing',
+          refreshToken: 'fake-refresh-token-for-testing',
         },
-        accessToken: 'fake-jwt-token-for-testing',
-        refreshToken: 'fake-refresh-token-for-testing'
-      }
-    };
-  }
-  
-  // Only admin login is available now
-  
+      };
+    }
+
+    // Only admin login is available now
+
     reply.status(401);
     return {
       success: false,
       error: {
         code: 'INVALID_CREDENTIALS',
-        message: 'Email ou senha inválidos'
-      }
+        message: 'Email ou senha inválidos',
+      },
     };
   } catch (error) {
     console.error('Login error:', error);
@@ -111,8 +114,8 @@ fastify.post('/api/v1/auth/login', async (request, reply) => {
       success: false,
       error: {
         code: 'BAD_REQUEST',
-        message: 'Dados inválidos'
-      }
+        message: 'Dados inválidos',
+      },
     };
   }
 });
@@ -121,12 +124,12 @@ fastify.post('/api/v1/auth/login', async (request, reply) => {
 fastify.get('/api/v1/users/:id', async (request, reply) => {
   try {
     const { id } = request.params as any;
-    
+
     // Buscar usuário específico no banco
     const user = await prisma.user.findUnique({
-      where: { 
+      where: {
         id: id,
-        deletedAt: null // Não buscar usuários deletados
+        deletedAt: null, // Não buscar usuários deletados
       },
       select: {
         id: true,
@@ -151,26 +154,26 @@ fastify.get('/api/v1/users/:id', async (request, reply) => {
             emergencyContactPhone: true,
             allergies: true,
             medications: true,
-            address: true
-          }
-        }
-      }
+            address: true,
+          },
+        },
+      },
     });
-    
+
     if (!user) {
       reply.status(404);
       return {
         success: false,
         error: {
           code: 'USER_NOT_FOUND',
-          message: 'Usuário não encontrado'
-        }
+          message: 'Usuário não encontrado',
+        },
       };
     }
-    
+
     return {
       success: true,
-      data: user
+      data: user,
     };
   } catch (error) {
     console.error('Error fetching user:', error);
@@ -179,8 +182,8 @@ fastify.get('/api/v1/users/:id', async (request, reply) => {
       success: false,
       error: {
         code: 'FETCH_FAILED',
-        message: 'Erro ao buscar usuário'
-      }
+        message: 'Erro ao buscar usuário',
+      },
     };
   }
 });
@@ -190,12 +193,12 @@ fastify.patch('/api/v1/users/:id', async (request, reply) => {
   try {
     const { id } = request.params as any;
     const updateData = request.body as any;
-    
+
     // Atualizar usuário no banco
     const user = await prisma.user.update({
-      where: { 
+      where: {
         id: id,
-        deletedAt: null 
+        deletedAt: null,
       },
       data: {
         firstName: updateData.firstName,
@@ -204,10 +207,12 @@ fastify.patch('/api/v1/users/:id', async (request, reply) => {
         email: updateData.email,
         phone: updateData.phone,
         cpf: updateData.cpf,
-        dateOfBirth: updateData.dateOfBirth ? new Date(updateData.dateOfBirth) : null,
+        dateOfBirth: updateData.dateOfBirth
+          ? new Date(updateData.dateOfBirth)
+          : null,
         gender: updateData.gender,
-        status: updateData.status
-      }
+        status: updateData.status,
+      },
     });
 
     // Se existirem dados de paciente, atualizar tabela patients
@@ -216,20 +221,21 @@ fastify.patch('/api/v1/users/:id', async (request, reply) => {
       emergencyContactPhone: updateData.emergencyContactPhone,
       allergies: updateData.allergies,
       medications: updateData.medications,
-      address: updateData.address
+      address: updateData.address,
     });
 
-    if (updateData.emergencyContactName !== undefined || 
-        updateData.emergencyContactPhone !== undefined ||
-        updateData.allergies !== undefined ||
-        updateData.medications !== undefined ||
-        updateData.address !== undefined) {
-      
+    if (
+      updateData.emergencyContactName !== undefined ||
+      updateData.emergencyContactPhone !== undefined ||
+      updateData.allergies !== undefined ||
+      updateData.medications !== undefined ||
+      updateData.address !== undefined
+    ) {
       console.log('Updating patient profile data...');
-      
+
       // Verificar se já existe registro de paciente
       const existingPatient = await prisma.patient.findUnique({
-        where: { userId: id }
+        where: { userId: id },
       });
 
       if (existingPatient) {
@@ -239,18 +245,30 @@ fastify.patch('/api/v1/users/:id', async (request, reply) => {
           data: {
             emergencyContactName: updateData.emergencyContactName,
             emergencyContactPhone: updateData.emergencyContactPhone,
-            allergies: updateData.allergies ? updateData.allergies.split(',').map((s: string) => s.trim()).filter(Boolean) : undefined,
-            medications: updateData.medications ? updateData.medications.split(',').map((s: string) => s.trim()).filter(Boolean) : undefined,
-            address: updateData.address ? {
-              street: updateData.address.street || '',
-              number: updateData.address.number || '',
-              complement: updateData.address.complement || '',
-              neighborhood: updateData.address.neighborhood || '',
-              city: updateData.address.city || '',
-              state: updateData.address.state || '',
-              zipCode: updateData.address.zipCode || ''
-            } : undefined
-          }
+            allergies: updateData.allergies
+              ? updateData.allergies
+                  .split(',')
+                  .map((s: string) => s.trim())
+                  .filter(Boolean)
+              : undefined,
+            medications: updateData.medications
+              ? updateData.medications
+                  .split(',')
+                  .map((s: string) => s.trim())
+                  .filter(Boolean)
+              : undefined,
+            address: updateData.address
+              ? {
+                  street: updateData.address.street || '',
+                  number: updateData.address.number || '',
+                  complement: updateData.address.complement || '',
+                  neighborhood: updateData.address.neighborhood || '',
+                  city: updateData.address.city || '',
+                  state: updateData.address.state || '',
+                  zipCode: updateData.address.zipCode || '',
+                }
+              : undefined,
+          },
         });
       } else if (user.role === 'PATIENT') {
         // Criar registro de paciente se não existir e user for PATIENT
@@ -259,18 +277,30 @@ fastify.patch('/api/v1/users/:id', async (request, reply) => {
             userId: id,
             emergencyContactName: updateData.emergencyContactName || null,
             emergencyContactPhone: updateData.emergencyContactPhone || null,
-            allergies: updateData.allergies ? updateData.allergies.split(',').map((s: string) => s.trim()).filter(Boolean) : [],
-            medications: updateData.medications ? updateData.medications.split(',').map((s: string) => s.trim()).filter(Boolean) : [],
-            address: updateData.address ? {
-              street: updateData.address.street || '',
-              number: updateData.address.number || '',
-              complement: updateData.address.complement || '',
-              neighborhood: updateData.address.neighborhood || '',
-              city: updateData.address.city || '',
-              state: updateData.address.state || '',
-              zipCode: updateData.address.zipCode || ''
-            } : null
-          }
+            allergies: updateData.allergies
+              ? updateData.allergies
+                  .split(',')
+                  .map((s: string) => s.trim())
+                  .filter(Boolean)
+              : [],
+            medications: updateData.medications
+              ? updateData.medications
+                  .split(',')
+                  .map((s: string) => s.trim())
+                  .filter(Boolean)
+              : [],
+            address: updateData.address
+              ? {
+                  street: updateData.address.street || '',
+                  number: updateData.address.number || '',
+                  complement: updateData.address.complement || '',
+                  neighborhood: updateData.address.neighborhood || '',
+                  city: updateData.address.city || '',
+                  state: updateData.address.state || '',
+                  zipCode: updateData.address.zipCode || '',
+                }
+              : null,
+          },
         });
       }
     }
@@ -278,12 +308,12 @@ fastify.patch('/api/v1/users/:id', async (request, reply) => {
     // Se existirem dados de médico, atualizar tabela doctors
     if (updateData.doctorProfile && user.role === 'DOCTOR') {
       console.log('Updating doctor profile data...');
-      
+
       const doctorData = updateData.doctorProfile.update;
-      
+
       // Verificar se já existe registro de médico
       const existingDoctor = await prisma.doctor.findUnique({
-        where: { userId: id }
+        where: { userId: id },
       });
 
       if (existingDoctor) {
@@ -296,41 +326,45 @@ fastify.patch('/api/v1/users/:id', async (request, reply) => {
             consultationFee: doctorData.consultationFee,
             consultationDuration: doctorData.consultationDuration,
             acceptsNewPatients: doctorData.acceptsNewPatients,
-            graduationDate: doctorData.graduationDate ? new Date(doctorData.graduationDate) : null,
-            crmRegistrationDate: doctorData.crmRegistrationDate ? new Date(doctorData.crmRegistrationDate) : null,
-            experience: doctorData.experience
-          }
+            graduationDate: doctorData.graduationDate
+              ? new Date(doctorData.graduationDate)
+              : null,
+            crmRegistrationDate: doctorData.crmRegistrationDate
+              ? new Date(doctorData.crmRegistrationDate)
+              : null,
+            experience: doctorData.experience,
+          },
         });
         console.log('Doctor profile updated successfully');
       }
     }
-    
+
     return {
       success: true,
       data: user,
-      message: 'Usuário atualizado com sucesso'
+      message: 'Usuário atualizado com sucesso',
     };
   } catch (error: any) {
     console.error('Error updating user:', error);
-    
+
     if (error.code === 'P2025') {
       reply.status(404);
       return {
         success: false,
         error: {
           code: 'USER_NOT_FOUND',
-          message: 'Usuário não encontrado'
-        }
+          message: 'Usuário não encontrado',
+        },
       };
     }
-    
+
     reply.status(500);
     return {
       success: false,
       error: {
         code: 'UPDATE_FAILED',
-        message: 'Erro ao atualizar usuário'
-      }
+        message: 'Erro ao atualizar usuário',
+      },
     };
   }
 });
@@ -339,48 +373,47 @@ fastify.patch('/api/v1/users/:id', async (request, reply) => {
 fastify.get('/api/v1/users/check-cpf/:cpf', async (request, reply) => {
   try {
     const { cpf } = request.params as any;
-    
+
     if (!cpf) {
       reply.status(400);
       return {
         success: false,
         error: {
           code: 'MISSING_CPF',
-          message: 'CPF é obrigatório'
-        }
+          message: 'CPF é obrigatório',
+        },
       };
     }
 
     // Clean CPF (remove formatting)
     const cleanCpf = cpf.replace(/\D/g, '');
-    
+
     // Format CPF for database comparison
-    const formattedCpf = cleanCpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+    const formattedCpf = cleanCpf.replace(
+      /(\d{3})(\d{3})(\d{3})(\d{2})/,
+      '$1.$2.$3-$4',
+    );
 
     // Buscar usuário com o CPF (both formats)
     const existingUser = await prisma.user.findFirst({
-      where: { 
-        OR: [
-          { cpf: cpf },
-          { cpf: cleanCpf },
-          { cpf: formattedCpf }
-        ],
-        deletedAt: null 
+      where: {
+        OR: [{ cpf: cpf }, { cpf: cleanCpf }, { cpf: formattedCpf }],
+        deletedAt: null,
       },
       select: {
         id: true,
         fullName: true,
         email: true,
-        cpf: true
-      }
+        cpf: true,
+      },
     });
 
     return {
       success: true,
       data: {
         exists: !!existingUser,
-        user: existingUser || null
-      }
+        user: existingUser || null,
+      },
     };
   } catch (error) {
     console.error('Error checking CPF:', error);
@@ -389,8 +422,8 @@ fastify.get('/api/v1/users/check-cpf/:cpf', async (request, reply) => {
       success: false,
       error: {
         code: 'CHECK_FAILED',
-        message: 'Erro ao verificar CPF'
-      }
+        message: 'Erro ao verificar CPF',
+      },
     };
   }
 });
@@ -405,8 +438,8 @@ fastify.get('/api/v1/auth/me', async (request, reply) => {
       role: 'ADMIN',
       name: 'Administrador Sistema',
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }
+      updatedAt: new Date().toISOString(),
+    },
   };
 });
 
@@ -417,16 +450,16 @@ fastify.get('/api/v1/users', async (request, reply) => {
     const role = query?.role;
     const page = parseInt(query?.page) || 1;
     const pageSize = parseInt(query?.pageSize) || 10;
-    
+
     // Configurar filtros
     const where: any = {
-      deletedAt: null // Não buscar usuários deletados
+      deletedAt: null, // Não buscar usuários deletados
     };
-    
+
     if (role) {
       where.role = role;
     }
-    
+
     // Buscar usuários no banco com paginação
     const [users, total] = await Promise.all([
       prisma.user.findMany({
@@ -447,49 +480,55 @@ fastify.get('/api/v1/users', async (request, reply) => {
           createdAt: true,
           updatedAt: true,
           // Se for paciente, incluir dados do paciente
-          patientProfile: role === 'PATIENT' ? {
-            select: {
-              id: true,
-              emergencyContactName: true,
-              emergencyContactPhone: true,
-              allergies: true,
-              medications: true,
-              address: true
-            }
-          } : false,
-          // Se for médico, incluir dados do médico
-          doctorProfile: role === 'DOCTOR' ? {
-            select: {
-              id: true,
-              crm: true,
-              subSpecialties: true,
-              biography: true,
-              graduationDate: true,
-              crmRegistrationDate: true,
-              experience: true,
-              consultationFee: true,
-              consultationDuration: true,
-              isActive: true,
-              acceptsNewPatients: true,
-              specialty: {
-                select: {
-                  id: true,
-                  name: true,
-                  description: true,
-                  duration: true,
-                  price: true
+          patientProfile:
+            role === 'PATIENT'
+              ? {
+                  select: {
+                    id: true,
+                    emergencyContactName: true,
+                    emergencyContactPhone: true,
+                    allergies: true,
+                    medications: true,
+                    address: true,
+                  },
                 }
-              }
-            }
-          } : false
+              : false,
+          // Se for médico, incluir dados do médico
+          doctorProfile:
+            role === 'DOCTOR'
+              ? {
+                  select: {
+                    id: true,
+                    crm: true,
+                    subSpecialties: true,
+                    biography: true,
+                    graduationDate: true,
+                    crmRegistrationDate: true,
+                    experience: true,
+                    consultationFee: true,
+                    consultationDuration: true,
+                    isActive: true,
+                    acceptsNewPatients: true,
+                    specialty: {
+                      select: {
+                        id: true,
+                        name: true,
+                        description: true,
+                        duration: true,
+                        price: true,
+                      },
+                    },
+                  },
+                }
+              : false,
         },
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * pageSize,
-        take: pageSize
+        take: pageSize,
       }),
-      prisma.user.count({ where })
+      prisma.user.count({ where }),
     ]);
-    
+
     return {
       success: true,
       data: users,
@@ -497,8 +536,8 @@ fastify.get('/api/v1/users', async (request, reply) => {
         page,
         pageSize,
         total,
-        totalPages: Math.ceil(total / pageSize)
-      }
+        totalPages: Math.ceil(total / pageSize),
+      },
     };
   } catch (error) {
     console.error('Error fetching users:', error);
@@ -506,8 +545,8 @@ fastify.get('/api/v1/users', async (request, reply) => {
       success: false,
       error: {
         code: 'FETCH_FAILED',
-        message: 'Erro ao buscar usuários'
-      }
+        message: 'Erro ao buscar usuários',
+      },
     };
   }
 });
@@ -517,7 +556,7 @@ fastify.post('/api/v1/users', async (request, reply) => {
   try {
     const userData = request.body as any;
     console.log('Creating user with data:', userData);
-    
+
     // Validações básicas
     if (!userData.firstName || !userData.lastName || !userData.email) {
       reply.status(400);
@@ -525,11 +564,11 @@ fastify.post('/api/v1/users', async (request, reply) => {
         success: false,
         error: {
           code: 'MISSING_FIELDS',
-          message: 'Nome, sobrenome e email são obrigatórios'
-        }
+          message: 'Nome, sobrenome e email são obrigatórios',
+        },
       };
     }
-    
+
     // Criar o usuário no banco
     const user = await prisma.user.create({
       data: {
@@ -541,11 +580,13 @@ fastify.post('/api/v1/users', async (request, reply) => {
         role: userData.role || 'PATIENT',
         phone: userData.phone || null,
         cpf: userData.cpf || null,
-        dateOfBirth: userData.dateOfBirth ? new Date(userData.dateOfBirth) : null,
-        gender: userData.gender || null
-      }
+        dateOfBirth: userData.dateOfBirth
+          ? new Date(userData.dateOfBirth)
+          : null,
+        gender: userData.gender || null,
+      },
     });
-    
+
     // Se for um paciente, criar o registro de paciente
     if (userData.role === 'PATIENT' || !userData.role) {
       await prisma.patient.create({
@@ -558,30 +599,32 @@ fastify.post('/api/v1/users', async (request, reply) => {
           medicalHistory: {
             allergies: userData.allergies || [],
             medications: userData.medications || [],
-            conditions: []
+            conditions: [],
           },
-          address: userData.address ? {
-            street: userData.address.street || '',
-            neighborhood: userData.address.neighborhood || '',
-            city: userData.address.city || '',
-            state: userData.address.state || '',
-            zipCode: userData.address.zipCode || ''
-          } : null
-        }
+          address: userData.address
+            ? {
+                street: userData.address.street || '',
+                neighborhood: userData.address.neighborhood || '',
+                city: userData.address.city || '',
+                state: userData.address.state || '',
+                zipCode: userData.address.zipCode || '',
+              }
+            : null,
+        },
       });
     }
-    
+
     // Retornar usuário criado (sem senha)
     const { password, ...userResponse } = user;
-    
+
     return {
       success: true,
       data: userResponse,
-      message: 'Usuário criado com sucesso'
+      message: 'Usuário criado com sucesso',
     };
   } catch (error: any) {
     console.error('Error creating user:', error);
-    
+
     // Verificar se é erro de email duplicado
     if (error.code === 'P2002' && error.meta?.target?.includes('email')) {
       reply.status(409);
@@ -589,18 +632,18 @@ fastify.post('/api/v1/users', async (request, reply) => {
         success: false,
         error: {
           code: 'EMAIL_EXISTS',
-          message: 'Este email já está em uso'
-        }
+          message: 'Este email já está em uso',
+        },
       };
     }
-    
+
     reply.status(500);
     return {
       success: false,
       error: {
         code: 'CREATE_FAILED',
-        message: 'Erro ao criar usuário'
-      }
+        message: 'Erro ao criar usuário',
+      },
     };
   }
 });
@@ -609,20 +652,28 @@ fastify.post('/api/v1/users', async (request, reply) => {
 fastify.post('/api/v1/doctors', async (request, reply) => {
   try {
     const doctorData = request.body as any;
-    console.log('Creating doctor with data:', JSON.stringify(doctorData, null, 2));
-    
+    console.log(
+      'Creating doctor with data:',
+      JSON.stringify(doctorData, null, 2),
+    );
+
     // Validações básicas
-    if (!doctorData.user?.firstName || !doctorData.user?.lastName || !doctorData.user?.email || !doctorData.crm) {
+    if (
+      !doctorData.user?.firstName ||
+      !doctorData.user?.lastName ||
+      !doctorData.user?.email ||
+      !doctorData.crm
+    ) {
       reply.status(400);
       return {
         success: false,
         error: {
           code: 'MISSING_FIELDS',
-          message: 'Nome, sobrenome, email e CRM são obrigatórios'
-        }
+          message: 'Nome, sobrenome, email e CRM são obrigatórios',
+        },
       };
     }
-    
+
     // Criar o usuário primeiro
     const user = await prisma.user.create({
       data: {
@@ -634,26 +685,41 @@ fastify.post('/api/v1/doctors', async (request, reply) => {
         role: 'DOCTOR',
         phone: doctorData.phone || null,
         cpf: doctorData.cpf || null,
-        dateOfBirth: doctorData.dateOfBirth ? new Date(doctorData.dateOfBirth) : null,
-        gender: doctorData.gender || null
-      }
+        dateOfBirth: doctorData.dateOfBirth
+          ? new Date(doctorData.dateOfBirth)
+          : null,
+        gender: doctorData.gender || null,
+      },
     });
-    
+
     // Criar o perfil de médico
     const doctor = await prisma.doctor.create({
       data: {
         userId: user.id,
         crm: doctorData.crm,
-        specialtyId: doctorData.specialtyId || doctorData.specialties?.[0] || 'cmebnka9q000uaj4w96eajstj', // Default to Clínica Geral
+        specialtyId:
+          doctorData.specialtyId ||
+          doctorData.specialties?.[0] ||
+          'cmebnka9q000uaj4w96eajstj', // Default to Clínica Geral
         subSpecialties: doctorData.specialties || [],
         biography: doctorData.bio || null,
-        graduationDate: doctorData.graduationDate ? new Date(doctorData.graduationDate) : null,
-        experience: doctorData.graduationDate ? Math.floor((new Date().getTime() - new Date(doctorData.graduationDate).getTime()) / (1000 * 60 * 60 * 24 * 365.25)) : null,
-        consultationFee: doctorData.consultationFee ? parseFloat(doctorData.consultationFee) : null,
-        consultationDuration: doctorData.consultationDuration || 30
-      }
+        graduationDate: doctorData.graduationDate
+          ? new Date(doctorData.graduationDate)
+          : null,
+        experience: doctorData.graduationDate
+          ? Math.floor(
+              (new Date().getTime() -
+                new Date(doctorData.graduationDate).getTime()) /
+                (1000 * 60 * 60 * 24 * 365.25),
+            )
+          : null,
+        consultationFee: doctorData.consultationFee
+          ? parseFloat(doctorData.consultationFee)
+          : null,
+        consultationDuration: doctorData.consultationDuration || 30,
+      },
     });
-    
+
     // Retornar médico criado com dados do usuário
     const newDoctor = await prisma.doctor.findUnique({
       where: { id: doctor.id },
@@ -671,8 +737,8 @@ fastify.post('/api/v1/doctors', async (request, reply) => {
             gender: true,
             role: true,
             status: true,
-            avatar: true
-          }
+            avatar: true,
+          },
         },
         specialty: {
           select: {
@@ -680,20 +746,20 @@ fastify.post('/api/v1/doctors', async (request, reply) => {
             name: true,
             description: true,
             duration: true,
-            price: true
-          }
-        }
-      }
+            price: true,
+          },
+        },
+      },
     });
-    
+
     return {
       success: true,
       data: newDoctor,
-      message: 'Médico criado com sucesso'
+      message: 'Médico criado com sucesso',
     };
   } catch (error: any) {
     console.error('Error creating doctor:', error);
-    
+
     // Verificar se é erro de email duplicado
     if (error.code === 'P2002' && error.meta?.target?.includes('email')) {
       reply.status(409);
@@ -701,11 +767,11 @@ fastify.post('/api/v1/doctors', async (request, reply) => {
         success: false,
         error: {
           code: 'EMAIL_EXISTS',
-          message: 'Este email já está em uso'
-        }
+          message: 'Este email já está em uso',
+        },
       };
     }
-    
+
     // Verificar se é erro de CRM duplicado
     if (error.code === 'P2002' && error.meta?.target?.includes('crm')) {
       reply.status(409);
@@ -713,18 +779,18 @@ fastify.post('/api/v1/doctors', async (request, reply) => {
         success: false,
         error: {
           code: 'CRM_EXISTS',
-          message: 'Este CRM já está em uso'
-        }
+          message: 'Este CRM já está em uso',
+        },
       };
     }
-    
+
     reply.status(500);
     return {
       success: false,
       error: {
         code: 'CREATE_FAILED',
-        message: 'Erro ao criar médico'
-      }
+        message: 'Erro ao criar médico',
+      },
     };
   }
 });
@@ -744,20 +810,20 @@ fastify.get('/api/v1/specialties', async (request, reply) => {
           isActive: true,
           user: {
             status: { in: ['ACTIVE', 'PENDING_VERIFICATION'] }, // Accept both active and pending verification doctors
-            deletedAt: null
-          }
-        }
+            deletedAt: null,
+          },
+        },
       };
     }
 
     const specialties = await prisma.specialty.findMany({
       where,
-      orderBy: { name: 'asc' }
+      orderBy: { name: 'asc' },
     });
-    
+
     return {
       success: true,
-      data: specialties
+      data: specialties,
     };
   } catch (error) {
     console.error('Error fetching specialties:', error);
@@ -765,8 +831,8 @@ fastify.get('/api/v1/specialties', async (request, reply) => {
       success: false,
       error: {
         code: 'FETCH_FAILED',
-        message: 'Failed to fetch specialties'
-      }
+        message: 'Failed to fetch specialties',
+      },
     };
   }
 });
@@ -775,19 +841,19 @@ fastify.get('/api/v1/specialties', async (request, reply) => {
 fastify.post('/api/v1/specialties', async (request, reply) => {
   try {
     const { name, description, duration, price } = request.body as any;
-    
+
     const specialty = await prisma.specialty.create({
       data: {
         name,
         description,
         duration: duration || 30,
-        price: price || null
-      }
+        price: price || null,
+      },
     });
-    
+
     return {
       success: true,
-      data: specialty
+      data: specialty,
     };
   } catch (error) {
     console.error('Error creating specialty:', error);
@@ -795,8 +861,8 @@ fastify.post('/api/v1/specialties', async (request, reply) => {
       success: false,
       error: {
         code: 'CREATE_FAILED',
-        message: 'Failed to create specialty'
-      }
+        message: 'Failed to create specialty',
+      },
     };
   }
 });
@@ -806,15 +872,15 @@ fastify.patch('/api/v1/specialties/:id', async (request, reply) => {
   try {
     const { id } = request.params as any;
     const updateData = request.body as any;
-    
+
     const specialty = await prisma.specialty.update({
       where: { id },
-      data: updateData
+      data: updateData,
     });
-    
+
     return {
       success: true,
-      data: specialty
+      data: specialty,
     };
   } catch (error) {
     console.error('Error updating specialty:', error);
@@ -822,8 +888,8 @@ fastify.patch('/api/v1/specialties/:id', async (request, reply) => {
       success: false,
       error: {
         code: 'UPDATE_FAILED',
-        message: 'Failed to update specialty'
-      }
+        message: 'Failed to update specialty',
+      },
     };
   }
 });
@@ -838,12 +904,12 @@ fastify.get('/api/v1/appointments', async (request, reply) => {
     const date = query?.date;
     const page = parseInt(query?.page) || 1;
     const pageSize = parseInt(query?.pageSize) || 10;
-    
+
     // Construir filtros
     const where: any = {
-      deletedAt: null
+      deletedAt: null,
     };
-    
+
     if (doctorId) where.doctorId = doctorId;
     if (patientId) where.patientId = patientId;
     if (status) {
@@ -862,13 +928,13 @@ fastify.get('/api/v1/appointments', async (request, reply) => {
       startOfDay.setHours(0, 0, 0, 0);
       const endOfDay = new Date(date);
       endOfDay.setHours(23, 59, 59, 999);
-      
+
       where.scheduledAt = {
         gte: startOfDay,
-        lte: endOfDay
+        lte: endOfDay,
       };
     }
-    
+
     // Buscar consultas
     const [appointments, total] = await Promise.all([
       prisma.appointment.findMany({
@@ -880,8 +946,8 @@ fastify.get('/api/v1/appointments', async (request, reply) => {
               fullName: true,
               email: true,
               phone: true,
-              cpf: true
-            }
+              cpf: true,
+            },
           },
           doctor: {
             select: {
@@ -894,27 +960,27 @@ fastify.get('/api/v1/appointments', async (request, reply) => {
                   crm: true,
                   specialty: {
                     select: {
-                      name: true
-                    }
-                  }
-                }
-              }
-            }
+                      name: true,
+                    },
+                  },
+                },
+              },
+            },
           },
           specialty: {
             select: {
               name: true,
-              price: true
-            }
-          }
+              price: true,
+            },
+          },
         },
         orderBy: { scheduledAt: 'asc' },
         skip: (page - 1) * pageSize,
-        take: pageSize
+        take: pageSize,
       }),
-      prisma.appointment.count({ where })
+      prisma.appointment.count({ where }),
     ]);
-    
+
     return {
       success: true,
       data: appointments,
@@ -922,8 +988,8 @@ fastify.get('/api/v1/appointments', async (request, reply) => {
         page,
         pageSize,
         total,
-        totalPages: Math.ceil(total / pageSize)
-      }
+        totalPages: Math.ceil(total / pageSize),
+      },
     };
   } catch (error) {
     console.error('Error fetching appointments:', error);
@@ -932,8 +998,8 @@ fastify.get('/api/v1/appointments', async (request, reply) => {
       success: false,
       error: {
         code: 'FETCH_FAILED',
-        message: 'Erro ao buscar consultas'
-      }
+        message: 'Erro ao buscar consultas',
+      },
     };
   }
 });
@@ -942,57 +1008,63 @@ fastify.get('/api/v1/appointments', async (request, reply) => {
 fastify.post('/api/v1/appointments', async (request, reply) => {
   try {
     const appointmentData = request.body as any;
-    
+
     // Validações básicas
-    if (!appointmentData.patientId || !appointmentData.doctorId || !appointmentData.specialtyId || !appointmentData.scheduledAt) {
+    if (
+      !appointmentData.patientId ||
+      !appointmentData.doctorId ||
+      !appointmentData.specialtyId ||
+      !appointmentData.scheduledAt
+    ) {
       reply.status(400);
       return {
         success: false,
         error: {
           code: 'MISSING_FIELDS',
-          message: 'Paciente, médico, especialidade e data/hora são obrigatórios'
-        }
+          message:
+            'Paciente, médico, especialidade e data/hora são obrigatórios',
+        },
       };
     }
-    
+
     const scheduledAt = new Date(appointmentData.scheduledAt);
     const duration = appointmentData.duration || 30;
-    const endTime = new Date(scheduledAt.getTime() + (duration * 60000));
-    
+    const endTime = new Date(scheduledAt.getTime() + duration * 60000);
+
     // Verificar conflito de horário com o médico
     const conflictingAppointment = await prisma.appointment.findFirst({
       where: {
         doctorId: appointmentData.doctorId,
         deletedAt: null,
         status: {
-          not: 'CANCELLED'
+          not: 'CANCELLED',
         },
         OR: [
           // Nova consulta começa durante uma existente
           {
             AND: [
               { scheduledAt: { lte: scheduledAt } },
-              { endTime: { gt: scheduledAt } }
-            ]
+              { endTime: { gt: scheduledAt } },
+            ],
           },
           // Nova consulta termina durante uma existente
           {
             AND: [
               { scheduledAt: { lt: endTime } },
-              { endTime: { gte: endTime } }
-            ]
+              { endTime: { gte: endTime } },
+            ],
           },
           // Nova consulta engloba uma existente
           {
             AND: [
               { scheduledAt: { gte: scheduledAt } },
-              { endTime: { lte: endTime } }
-            ]
-          }
-        ]
-      }
+              { endTime: { lte: endTime } },
+            ],
+          },
+        ],
+      },
     });
-    
+
     if (conflictingAppointment) {
       reply.status(409);
       return {
@@ -1003,12 +1075,12 @@ fastify.post('/api/v1/appointments', async (request, reply) => {
           conflictingAppointment: {
             id: conflictingAppointment.id,
             scheduledAt: conflictingAppointment.scheduledAt,
-            endTime: conflictingAppointment.endTime
-          }
-        }
+            endTime: conflictingAppointment.endTime,
+          },
+        },
       };
     }
-    
+
     // Verificar se a data não está no passado
     if (scheduledAt <= new Date()) {
       reply.status(400);
@@ -1016,11 +1088,11 @@ fastify.post('/api/v1/appointments', async (request, reply) => {
         success: false,
         error: {
           code: 'INVALID_DATE',
-          message: 'Não é possível agendar consultas no passado'
-        }
+          message: 'Não é possível agendar consultas no passado',
+        },
       };
     }
-    
+
     // Criar a consulta
     const appointment = await prisma.appointment.create({
       data: {
@@ -1032,61 +1104,61 @@ fastify.post('/api/v1/appointments', async (request, reply) => {
         endTime,
         reason: appointmentData.reason,
         notes: appointmentData.notes,
-        fee: appointmentData.fee
+        fee: appointmentData.fee,
       },
       include: {
         patient: {
           select: {
             fullName: true,
             email: true,
-            phone: true
-          }
+            phone: true,
+          },
         },
         doctor: {
           select: {
             fullName: true,
             doctorProfile: {
               select: {
-                crm: true
-              }
-            }
-          }
+                crm: true,
+              },
+            },
+          },
         },
         specialty: {
           select: {
             name: true,
-            price: true
-          }
-        }
-      }
+            price: true,
+          },
+        },
+      },
     });
-    
+
     return {
       success: true,
       data: appointment,
-      message: 'Consulta agendada com sucesso'
+      message: 'Consulta agendada com sucesso',
     };
   } catch (error: any) {
     console.error('Error creating appointment:', error);
-    
+
     if (error.code === 'P2002') {
       reply.status(409);
       return {
         success: false,
         error: {
           code: 'DUPLICATE_ENTRY',
-          message: 'Conflito de dados na criação da consulta'
-        }
+          message: 'Conflito de dados na criação da consulta',
+        },
       };
     }
-    
+
     reply.status(500);
     return {
       success: false,
       error: {
         code: 'CREATE_FAILED',
-        message: 'Erro ao criar consulta'
-      }
+        message: 'Erro ao criar consulta',
+      },
     };
   }
 });
@@ -1096,29 +1168,32 @@ fastify.patch('/api/v1/appointments/:id', async (request, reply) => {
   try {
     const { id } = request.params as any;
     const updateData = request.body as any;
-    
+
     // Buscar consulta existente
     const existingAppointment = await prisma.appointment.findUnique({
-      where: { id, deletedAt: null }
+      where: { id, deletedAt: null },
     });
-    
+
     if (!existingAppointment) {
       reply.status(404);
       return {
         success: false,
         error: {
           code: 'APPOINTMENT_NOT_FOUND',
-          message: 'Consulta não encontrada'
-        }
+          message: 'Consulta não encontrada',
+        },
       };
     }
-    
+
     // Se está mudando horário, verificar conflitos
-    if (updateData.scheduledAt && updateData.scheduledAt !== existingAppointment.scheduledAt.toISOString()) {
+    if (
+      updateData.scheduledAt &&
+      updateData.scheduledAt !== existingAppointment.scheduledAt.toISOString()
+    ) {
       const newScheduledAt = new Date(updateData.scheduledAt);
       const duration = updateData.duration || existingAppointment.duration;
-      const newEndTime = new Date(newScheduledAt.getTime() + (duration * 60000));
-      
+      const newEndTime = new Date(newScheduledAt.getTime() + duration * 60000);
+
       const conflictingAppointment = await prisma.appointment.findFirst({
         where: {
           doctorId: existingAppointment.doctorId,
@@ -1129,67 +1204,67 @@ fastify.patch('/api/v1/appointments/:id', async (request, reply) => {
             {
               AND: [
                 { scheduledAt: { lte: newScheduledAt } },
-                { endTime: { gt: newScheduledAt } }
-              ]
+                { endTime: { gt: newScheduledAt } },
+              ],
             },
             {
               AND: [
                 { scheduledAt: { lt: newEndTime } },
-                { endTime: { gte: newEndTime } }
-              ]
-            }
-          ]
-        }
+                { endTime: { gte: newEndTime } },
+              ],
+            },
+          ],
+        },
       });
-      
+
       if (conflictingAppointment) {
         reply.status(409);
         return {
           success: false,
           error: {
             code: 'TIME_CONFLICT',
-            message: 'Novo horário conflita com consulta existente'
-          }
+            message: 'Novo horário conflita com consulta existente',
+          },
         };
       }
-      
+
       updateData.endTime = newEndTime;
     }
-    
+
     // Atualizar consulta
     const updatedAppointment = await prisma.appointment.update({
       where: { id },
       data: {
         ...updateData,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       },
       include: {
         patient: {
           select: {
             fullName: true,
             email: true,
-            phone: true
-          }
+            phone: true,
+          },
         },
         doctor: {
           select: {
             user: {
-              select: { fullName: true }
-            }
-          }
+              select: { fullName: true },
+            },
+          },
         },
         specialty: {
           select: {
-            name: true
-          }
-        }
-      }
+            name: true,
+          },
+        },
+      },
     });
-    
+
     return {
       success: true,
       data: updatedAppointment,
-      message: 'Consulta atualizada com sucesso'
+      message: 'Consulta atualizada com sucesso',
     };
   } catch (error) {
     console.error('Error updating appointment:', error);
@@ -1198,8 +1273,8 @@ fastify.patch('/api/v1/appointments/:id', async (request, reply) => {
       success: false,
       error: {
         code: 'UPDATE_FAILED',
-        message: 'Erro ao atualizar consulta'
-      }
+        message: 'Erro ao atualizar consulta',
+      },
     };
   }
 });
@@ -1209,21 +1284,21 @@ fastify.patch('/api/v1/appointments/:id/cancel', async (request, reply) => {
   try {
     const { id } = request.params as any;
     const { reason } = request.body as any;
-    
+
     const cancelledAppointment = await prisma.appointment.update({
       where: { id, deletedAt: null },
       data: {
         status: 'CANCELLED',
         cancelledAt: new Date(),
         cancelReason: reason || 'Cancelamento solicitado',
-        updatedAt: new Date()
-      }
+        updatedAt: new Date(),
+      },
     });
-    
+
     return {
       success: true,
       data: cancelledAppointment,
-      message: 'Consulta cancelada com sucesso'
+      message: 'Consulta cancelada com sucesso',
     };
   } catch (error) {
     console.error('Error cancelling appointment:', error);
@@ -1232,8 +1307,8 @@ fastify.patch('/api/v1/appointments/:id/cancel', async (request, reply) => {
       success: false,
       error: {
         code: 'CANCEL_FAILED',
-        message: 'Erro ao cancelar consulta'
-      }
+        message: 'Erro ao cancelar consulta',
+      },
     };
   }
 });
@@ -1244,115 +1319,122 @@ fastify.get('/api/v1/availability', async (request, reply) => {
     const query = request.query as any;
     const doctorId = query?.doctorId;
     const date = query?.date; // YYYY-MM-DD format
-    
+
     if (!doctorId) {
       reply.status(400);
       return {
         success: false,
         error: {
           code: 'MISSING_DOCTOR_ID',
-          message: 'ID do médico é obrigatório'
-        }
+          message: 'ID do médico é obrigatório',
+        },
       };
     }
-    
+
     // Buscar disponibilidade base do médico
     const availability = await prisma.availability.findMany({
       where: {
         doctorId: doctorId,
-        isActive: true
-      }
+        isActive: true,
+      },
     });
-    
+
     if (!date) {
       // Retornar disponibilidade geral (horários configurados)
       return {
         success: true,
-        data: availability
+        data: availability,
       };
     }
-    
+
     // Para data específica, calcular slots disponíveis
     const targetDate = new Date(date);
     const dayOfWeek = targetDate.getDay();
-    
-    const dayAvailability = availability.filter(avail => avail.dayOfWeek === dayOfWeek);
-    
+
+    const dayAvailability = availability.filter(
+      avail => avail.dayOfWeek === dayOfWeek,
+    );
+
     if (!dayAvailability.length) {
       return {
         success: true,
         data: [],
-        message: 'Médico não tem disponibilidade neste dia da semana'
+        message: 'Médico não tem disponibilidade neste dia da semana',
       };
     }
-    
+
     // Buscar consultas já agendadas na data
     const startOfDay = new Date(targetDate);
     startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date(targetDate);
     endOfDay.setHours(23, 59, 59, 999);
-    
+
     const bookedAppointments = await prisma.appointment.findMany({
       where: {
         doctorId: doctorId,
         scheduledAt: {
           gte: startOfDay,
-          lte: endOfDay
+          lte: endOfDay,
         },
         status: {
-          not: 'CANCELLED'
+          not: 'CANCELLED',
         },
-        deletedAt: null
+        deletedAt: null,
       },
       select: {
         scheduledAt: true,
-        endTime: true
-      }
+        endTime: true,
+      },
     });
-    
+
     // Gerar slots disponíveis
     const availableSlots = [];
-    
+
     for (const avail of dayAvailability) {
       const [startHour, startMinute] = avail.startTime.split(':').map(Number);
       const [endHour, endMinute] = avail.endTime.split(':').map(Number);
-      
+
       let currentTime = new Date(targetDate);
       currentTime.setHours(startHour, startMinute, 0, 0);
-      
+
       const endTime = new Date(targetDate);
       endTime.setHours(endHour, endMinute, 0, 0);
-      
+
       while (currentTime < endTime) {
-        const slotEnd = new Date(currentTime.getTime() + (avail.slotDuration * 60000));
-        
+        const slotEnd = new Date(
+          currentTime.getTime() + avail.slotDuration * 60000,
+        );
+
         // Verificar se slot conflita com consulta existente
         const hasConflict = bookedAppointments.some(appointment => {
           const appointmentStart = new Date(appointment.scheduledAt);
           const appointmentEnd = new Date(appointment.endTime);
-          
+
           return (
             (currentTime >= appointmentStart && currentTime < appointmentEnd) ||
             (slotEnd > appointmentStart && slotEnd <= appointmentEnd) ||
             (currentTime <= appointmentStart && slotEnd >= appointmentEnd)
           );
         });
-        
-        if (!hasConflict && currentTime > new Date()) { // Não incluir horários passados
+
+        if (!hasConflict && currentTime > new Date()) {
+          // Não incluir horários passados
           availableSlots.push({
             startTime: currentTime.toISOString(),
             endTime: slotEnd.toISOString(),
-            duration: avail.slotDuration
+            duration: avail.slotDuration,
           });
         }
-        
-        currentTime = new Date(currentTime.getTime() + (avail.slotDuration * 60000));
+
+        currentTime = new Date(
+          currentTime.getTime() + avail.slotDuration * 60000,
+        );
       }
     }
-    
+
     return {
       success: true,
-      data: availableSlots
+      data: availableSlots,
     };
   } catch (error) {
     console.error('Error fetching availability:', error);
@@ -1361,8 +1443,8 @@ fastify.get('/api/v1/availability', async (request, reply) => {
       success: false,
       error: {
         code: 'FETCH_FAILED',
-        message: 'Erro ao buscar disponibilidade'
-      }
+        message: 'Erro ao buscar disponibilidade',
+      },
     };
   }
 });
@@ -1380,7 +1462,7 @@ fastify.get('/api/v1/analytics', async (request, reply) => {
         revenueGrowth: 0,
         appointmentGrowth: 0,
         patientGrowth: 0,
-        satisfactionGrowth: 0
+        satisfactionGrowth: 0,
       },
       advanced: {
         conversionRate: 0,
@@ -1390,22 +1472,22 @@ fastify.get('/api/v1/analytics', async (request, reply) => {
         bounceRate: 0,
         retentionRate: 0,
         npsScore: 0,
-        operationalEfficiency: 0
+        operationalEfficiency: 0,
       },
       predictions: {
         nextMonthRevenue: 0,
         nextMonthAppointments: 0,
         capacity: 0,
         demandForecast: 'Baixo',
-        seasonalTrends: ['Nenhum dado histórico disponível']
+        seasonalTrends: ['Nenhum dado histórico disponível'],
       },
       realTime: {
         activeUsers: 0,
         todayBookings: 0,
         systemLoad: 0,
-        responseTime: 0
-      }
-    }
+        responseTime: 0,
+      },
+    },
   };
 });
 
@@ -1416,22 +1498,24 @@ fastify.setErrorHandler((error, request, reply) => {
     success: false,
     error: {
       code: 'INTERNAL_SERVER_ERROR',
-      message: 'Erro interno do servidor'
-    }
+      message: 'Erro interno do servidor',
+    },
   });
 });
 
 // Iniciar servidor
 const start = async () => {
   try {
-    await fastify.listen({ 
-      port: Number(process.env.PORT) || 3000, 
-      host: '0.0.0.0' 
+    await fastify.listen({
+      port: Number(process.env.PORT) || 3000,
+      host: '0.0.0.0',
     });
-    
-    console.log('[SUCCESS] EO Clínica Server running on port', process.env.PORT || 3000);
+
+    console.log(
+      '[SUCCESS] EO Clínica Server running on port',
+      process.env.PORT || 3000,
+    );
     console.log('[INFO] API ready for authentication');
-    
   } catch (err) {
     console.error('Failed to start server:', err);
     process.exit(1);

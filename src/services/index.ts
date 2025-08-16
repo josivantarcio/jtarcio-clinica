@@ -33,7 +33,11 @@ export interface ServiceContainer {
 export class ServiceFactory {
   private static instance: ServiceContainer;
 
-  static async create(prisma: PrismaClient, redis: Redis, logger: Logger): Promise<ServiceContainer> {
+  static async create(
+    prisma: PrismaClient,
+    redis: Redis,
+    logger: Logger,
+  ): Promise<ServiceContainer> {
     if (ServiceFactory.instance) {
       return ServiceFactory.instance;
     }
@@ -42,62 +46,62 @@ export class ServiceFactory {
     const schedulingRepository = new SchedulingRepository({
       prisma,
       redis,
-      logger
+      logger,
     });
 
     // Create business rules engine
     const businessRulesEngine = new BusinessRulesEngine({
       prisma,
-      logger
+      logger,
     });
 
     // Create core scheduling service
     const coreSchedulingService = new CoreSchedulingService({
       prisma,
       redis,
-      logger
+      logger,
     });
 
     // Create advanced scheduling algorithms
     const advancedSchedulingAlgorithms = new AdvancedSchedulingAlgorithms({
       prisma,
       redis,
-      logger
+      logger,
     });
 
     // Create availability management service
     const availabilityManagementService = new AvailabilityManagementService({
       prisma,
       redis,
-      logger
+      logger,
     });
 
     // Create queue management service
     const queueManagementService = new QueueManagementService({
       prisma,
       redis,
-      logger
+      logger,
     });
 
     // Create emergency handler service
     const emergencyHandlerService = new EmergencyHandlerService({
       prisma,
       redis,
-      logger
+      logger,
     });
 
     // Create resource management service
     const resourceManagementService = new ResourceManagementService({
       prisma,
       redis,
-      logger
+      logger,
     });
 
     // Create scheduling intelligence service
     const schedulingIntelligenceService = new SchedulingIntelligenceService({
       prisma,
       redis,
-      logger
+      logger,
     });
 
     // Create appointment service with all dependencies
@@ -108,7 +112,7 @@ export class ServiceFactory {
       businessRulesEngine,
       coreSchedulingService,
       advancedAlgorithms: advancedSchedulingAlgorithms,
-      availabilityService: availabilityManagementService
+      availabilityService: availabilityManagementService,
     });
 
     const container: ServiceContainer = {
@@ -124,7 +128,7 @@ export class ServiceFactory {
       queueManagementService,
       emergencyHandlerService,
       resourceManagementService,
-      schedulingIntelligenceService
+      schedulingIntelligenceService,
     };
 
     ServiceFactory.instance = container;
@@ -133,7 +137,9 @@ export class ServiceFactory {
 
   static getInstance(): ServiceContainer {
     if (!ServiceFactory.instance) {
-      throw new Error('ServiceContainer not initialized. Call ServiceFactory.create() first.');
+      throw new Error(
+        'ServiceContainer not initialized. Call ServiceFactory.create() first.',
+      );
     }
     return ServiceFactory.instance;
   }

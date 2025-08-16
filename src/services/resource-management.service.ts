@@ -3,10 +3,14 @@ import {
   AvailableSlot,
   ConflictType,
   ConflictSeverity,
-  Conflict
+  Conflict,
 } from '@/types/scheduling';
 import { AppointmentType, AppointmentStatus } from '@/types/appointment';
-import { BusinessRules, RESOURCE_CONFIG, TIME_CONSTRAINTS } from '@/config/business-rules';
+import {
+  BusinessRules,
+  RESOURCE_CONFIG,
+  TIME_CONSTRAINTS,
+} from '@/config/business-rules';
 import { PrismaClient } from '../../database/generated/client';
 import {
   addMinutes,
@@ -15,7 +19,7 @@ import {
   isWithinInterval,
   format,
   startOfDay,
-  endOfDay
+  endOfDay,
 } from 'date-fns';
 import { Logger } from 'winston';
 import Redis from 'ioredis';
@@ -112,18 +116,21 @@ export class ResourceManagementService {
   async findAvailableRooms(
     criteria: SchedulingCriteria,
     slot: AvailableSlot,
-    requiredEquipment: string[] = []
+    requiredEquipment: string[] = [],
   ): Promise<RoomResource[]> {
     const { prisma, logger } = this.deps;
 
     try {
-      logger.info('Finding available rooms', { 
+      logger.info('Finding available rooms', {
         appointmentType: criteria.appointmentType,
-        requiredEquipment
+        requiredEquipment,
       });
 
       // Determine room type requirements
-      const roomTypeRequired = this.determineRoomTypeRequired(criteria, requiredEquipment);
+      const roomTypeRequired = this.determineRoomTypeRequired(
+        criteria,
+        requiredEquipment,
+      );
 
       // Get rooms of the required type
       const candidateRooms = await this.getRoomsByType(roomTypeRequired);
@@ -133,7 +140,10 @@ export class ResourceManagementService {
 
       for (const room of candidateRooms) {
         const isAvailable = await this.isRoomAvailable(room, slot);
-        const hasRequiredEquipment = await this.roomHasRequiredEquipment(room, requiredEquipment);
+        const hasRequiredEquipment = await this.roomHasRequiredEquipment(
+          room,
+          requiredEquipment,
+        );
 
         if (isAvailable && hasRequiredEquipment) {
           availableRooms.push(room);
@@ -141,11 +151,13 @@ export class ResourceManagementService {
       }
 
       // Sort by preference/proximity if doctor has location
-      const sortedRooms = await this.sortRoomsByPreference(availableRooms, criteria.doctorId);
+      const sortedRooms = await this.sortRoomsByPreference(
+        availableRooms,
+        criteria.doctorId,
+      );
 
       logger.info(`Found ${sortedRooms.length} available rooms`);
       return sortedRooms;
-
     } catch (error) {
       logger.error('Error finding available rooms', { error, criteria });
       throw error;
@@ -158,24 +170,24 @@ export class ResourceManagementService {
   async findAvailableEquipment(
     requiredEquipmentTypes: string[],
     slot: AvailableSlot,
-    roomId?: string
+    roomId?: string,
   ): Promise<EquipmentResource[]> {
     const { prisma, logger } = this.deps;
 
     try {
-      logger.info('Finding available equipment', { 
+      logger.info('Finding available equipment', {
         requiredEquipmentTypes,
-        roomId
+        roomId,
       });
 
       const availableEquipment: EquipmentResource[] = [];
 
       for (const equipmentType of requiredEquipmentTypes) {
         const candidates = await this.getEquipmentByType(equipmentType, roomId);
-        
+
         for (const equipment of candidates) {
           const isAvailable = await this.isEquipmentAvailable(equipment, slot);
-          
+
           if (isAvailable) {
             availableEquipment.push(equipment);
             break; // Found one of this type, move to next
@@ -187,12 +199,11 @@ export class ResourceManagementService {
       if (availableEquipment.length < requiredEquipmentTypes.length) {
         logger.warn('Not all required equipment found', {
           required: requiredEquipmentTypes.length,
-          found: availableEquipment.length
+          found: availableEquipment.length,
         });
       }
 
       return availableEquipment;
-
     } catch (error) {
       logger.error('Error finding available equipment', { error });
       throw error;
@@ -205,7 +216,7 @@ export class ResourceManagementService {
   async allocateResources(
     criteria: SchedulingCriteria,
     slot: AvailableSlot,
-    requiredEquipment: string[] = []
+    requiredEquipment: string[] = [],
   ): Promise<ResourceAllocation> {
     const { logger } = this.deps;
 
@@ -215,7 +226,7 @@ export class ResourceManagementService {
       // Find available rooms and equipment
       const [availableRooms, availableEquipment] = await Promise.all([
         this.findAvailableRooms(criteria, slot, requiredEquipment),
-        this.findAvailableEquipment(requiredEquipment, slot)
+        this.findAvailableEquipment(requiredEquipment, slot),
       ]);
 
       // Calculate optimal allocation
@@ -223,7 +234,7 @@ export class ResourceManagementService {
         availableRooms,
         availableEquipment,
         criteria,
-        slot
+        slot,
       );
 
       // Check for conflicts
@@ -236,7 +247,7 @@ export class ResourceManagementService {
           availableRooms,
           availableEquipment,
           criteria,
-          slot
+          slot,
         );
       }
 
@@ -246,9 +257,8 @@ export class ResourceManagementService {
         allocationScore: allocation.score,
         efficiency: allocation.efficiency,
         conflicts,
-        alternatives: alternatives.slice(0, 3) // Top 3 alternatives
+        alternatives: alternatives.slice(0, 3), // Top 3 alternatives
       };
-
     } catch (error) {
       logger.error('Error allocating resources', { error });
       throw error;
@@ -263,12 +273,16 @@ export class ResourceManagementService {
     roomId: string | undefined,
     equipmentIds: string[],
     startTime: Date,
-    endTime: Date
+    endTime: Date,
   ): Promise<ResourceBooking> {
     const { prisma, logger } = this.deps;
 
     try {
-      logger.info('Reserving resources', { appointmentId, roomId, equipmentIds });
+      logger.info('Reserving resources', {
+        appointmentId,
+        roomId,
+        equipmentIds,
+      });
 
       // Calculate buffer times
       const bufferBefore = RESOURCE_CONFIG.ROOM_CLEANING_TIME;
@@ -287,7 +301,7 @@ export class ResourceManagementService {
         endTime: reservationEnd,
         bufferBefore,
         bufferAfter,
-        status: 'RESERVED'
+        status: 'RESERVED',
       };
 
       // Store booking (would integrate with database)
@@ -301,7 +315,6 @@ export class ResourceManagementService {
 
       logger.info('Resources reserved successfully', { bookingId: booking.id });
       return booking;
-
     } catch (error) {
       logger.error('Error reserving resources', { error, appointmentId });
       throw error;
@@ -333,7 +346,6 @@ export class ResourceManagementService {
       await this.scheduleDeepCleaningIfNeeded(booking);
 
       logger.info('Resources released successfully', { bookingId });
-
     } catch (error) {
       logger.error('Error releasing resources', { error, bookingId });
       throw error;
@@ -347,12 +359,15 @@ export class ResourceManagementService {
     resourceId: string,
     resourceType: 'ROOM' | 'EQUIPMENT',
     startDate: Date,
-    endDate: Date
+    endDate: Date,
   ): Promise<ResourceUtilization[]> {
     const { logger } = this.deps;
 
     try {
-      logger.info('Calculating resource utilization', { resourceId, resourceType });
+      logger.info('Calculating resource utilization', {
+        resourceId,
+        resourceType,
+      });
 
       const utilization: ResourceUtilization[] = [];
       const currentDate = new Date(startDate);
@@ -361,15 +376,14 @@ export class ResourceManagementService {
         const dayUtilization = await this.calculateDayUtilization(
           resourceId,
           resourceType,
-          currentDate
+          currentDate,
         );
-        
+
         utilization.push(dayUtilization);
         currentDate.setDate(currentDate.getDate() + 1);
       }
 
       return utilization;
-
     } catch (error) {
       logger.error('Error calculating resource utilization', { error });
       throw error;
@@ -382,38 +396,48 @@ export class ResourceManagementService {
   async scheduleMaintenanceWindow(
     resourceId: string,
     resourceType: 'ROOM' | 'EQUIPMENT',
-    window: Omit<MaintenanceWindow, 'id'>
+    window: Omit<MaintenanceWindow, 'id'>,
   ): Promise<MaintenanceWindow> {
     const { logger } = this.deps;
 
     try {
-      logger.info('Scheduling maintenance window', { resourceId, resourceType });
+      logger.info('Scheduling maintenance window', {
+        resourceId,
+        resourceType,
+      });
 
       const maintenanceWindow: MaintenanceWindow = {
         id: `maintenance-${Date.now()}`,
-        ...window
+        ...window,
       };
 
       // Check for conflicts with existing bookings
       const conflicts = await this.checkMaintenanceConflicts(
         resourceId,
         resourceType,
-        maintenanceWindow
+        maintenanceWindow,
       );
 
       if (conflicts.length > 0) {
-        throw new Error(`Maintenance window conflicts with existing bookings: ${conflicts.join(', ')}`);
+        throw new Error(
+          `Maintenance window conflicts with existing bookings: ${conflicts.join(', ')}`,
+        );
       }
 
       // Store maintenance window
-      await this.storeMaintenanceWindow(resourceId, resourceType, maintenanceWindow);
+      await this.storeMaintenanceWindow(
+        resourceId,
+        resourceType,
+        maintenanceWindow,
+      );
 
       // Update availability cache
       await this.updateMaintenanceCache(resourceId, maintenanceWindow);
 
-      logger.info('Maintenance window scheduled', { windowId: maintenanceWindow.id });
+      logger.info('Maintenance window scheduled', {
+        windowId: maintenanceWindow.id,
+      });
       return maintenanceWindow;
-
     } catch (error) {
       logger.error('Error scheduling maintenance window', { error });
       throw error;
@@ -424,7 +448,7 @@ export class ResourceManagementService {
 
   private determineRoomTypeRequired(
     criteria: SchedulingCriteria,
-    requiredEquipment: string[]
+    requiredEquipment: string[],
   ): keyof typeof RESOURCE_CONFIG.ROOM_TYPES {
     // Emergency appointments need emergency rooms
     if (criteria.appointmentType === AppointmentType.EMERGENCY) {
@@ -432,11 +456,17 @@ export class ResourceManagementService {
     }
 
     // Check if equipment requires specific room type
-    if (requiredEquipment.includes('xray') || requiredEquipment.includes('ultrasound')) {
+    if (
+      requiredEquipment.includes('xray') ||
+      requiredEquipment.includes('ultrasound')
+    ) {
       return 'RADIOLOGY';
     }
 
-    if (requiredEquipment.includes('ecg') || requiredEquipment.includes('ultrasound')) {
+    if (
+      requiredEquipment.includes('ecg') ||
+      requiredEquipment.includes('ultrasound')
+    ) {
       return 'CARDIOLOGY';
     }
 
@@ -447,7 +477,9 @@ export class ResourceManagementService {
     return 'CONSULTATION';
   }
 
-  private async getRoomsByType(roomType: keyof typeof RESOURCE_CONFIG.ROOM_TYPES): Promise<RoomResource[]> {
+  private async getRoomsByType(
+    roomType: keyof typeof RESOURCE_CONFIG.ROOM_TYPES,
+  ): Promise<RoomResource[]> {
     // This would query the database for rooms of the specified type
     // For now, return mock data
     const mockRooms: RoomResource[] = [
@@ -458,7 +490,7 @@ export class ResourceManagementService {
         capacity: RESOURCE_CONFIG.ROOM_TYPES[roomType].capacity,
         isActive: true,
         equipmentIds: [],
-        location: 'First Floor'
+        location: 'First Floor',
       },
       {
         id: 'room-2',
@@ -467,14 +499,17 @@ export class ResourceManagementService {
         capacity: RESOURCE_CONFIG.ROOM_TYPES[roomType].capacity,
         isActive: true,
         equipmentIds: [],
-        location: 'First Floor'
-      }
+        location: 'First Floor',
+      },
     ];
 
     return mockRooms;
   }
 
-  private async isRoomAvailable(room: RoomResource, slot: AvailableSlot): Promise<boolean> {
+  private async isRoomAvailable(
+    room: RoomResource,
+    slot: AvailableSlot,
+  ): Promise<boolean> {
     const { redis } = this.deps;
 
     try {
@@ -484,40 +519,58 @@ export class ResourceManagementService {
 
       if (cached) {
         const availability = JSON.parse(cached);
-        return !availability.conflicts.some((conflict: any) =>
-          isWithinInterval(slot.startTime, { start: new Date(conflict.start), end: new Date(conflict.end) }) ||
-          isWithinInterval(slot.endTime, { start: new Date(conflict.start), end: new Date(conflict.end) })
+        return !availability.conflicts.some(
+          (conflict: any) =>
+            isWithinInterval(slot.startTime, {
+              start: new Date(conflict.start),
+              end: new Date(conflict.end),
+            }) ||
+            isWithinInterval(slot.endTime, {
+              start: new Date(conflict.start),
+              end: new Date(conflict.end),
+            }),
         );
       }
 
       // Check database for conflicts
       const conflicts = await this.getRoomConflicts(room.id, slot);
       return conflicts.length === 0;
-
     } catch (error) {
-      this.deps.logger.warn('Error checking room availability', { error, roomId: room.id });
+      this.deps.logger.warn('Error checking room availability', {
+        error,
+        roomId: room.id,
+      });
       return false;
     }
   }
 
-  private async roomHasRequiredEquipment(room: RoomResource, requiredEquipment: string[]): Promise<boolean> {
+  private async roomHasRequiredEquipment(
+    room: RoomResource,
+    requiredEquipment: string[],
+  ): Promise<boolean> {
     if (requiredEquipment.length === 0) return true;
 
     // Check if room has all required equipment
     const roomEquipment = await this.getRoomEquipment(room.id);
-    
+
     return requiredEquipment.every(required =>
-      roomEquipment.some(eq => eq.type === required && eq.isActive)
+      roomEquipment.some(eq => eq.type === required && eq.isActive),
     );
   }
 
-  private async sortRoomsByPreference(rooms: RoomResource[], doctorId?: string): Promise<RoomResource[]> {
+  private async sortRoomsByPreference(
+    rooms: RoomResource[],
+    doctorId?: string,
+  ): Promise<RoomResource[]> {
     // Sort rooms by doctor preference, proximity, etc.
     // For now, just sort by name
     return rooms.sort((a, b) => a.name.localeCompare(b.name));
   }
 
-  private async getEquipmentByType(equipmentType: string, roomId?: string): Promise<EquipmentResource[]> {
+  private async getEquipmentByType(
+    equipmentType: string,
+    roomId?: string,
+  ): Promise<EquipmentResource[]> {
     // Query database for equipment of specified type
     // Consider room assignments if roomId provided
     const mockEquipment: EquipmentResource[] = [
@@ -527,14 +580,17 @@ export class ResourceManagementService {
         type: equipmentType,
         isActive: true,
         isPortable: false,
-        roomAssignments: roomId ? [roomId] : []
-      }
+        roomAssignments: roomId ? [roomId] : [],
+      },
     ];
 
     return mockEquipment;
   }
 
-  private async isEquipmentAvailable(equipment: EquipmentResource, slot: AvailableSlot): Promise<boolean> {
+  private async isEquipmentAvailable(
+    equipment: EquipmentResource,
+    slot: AvailableSlot,
+  ): Promise<boolean> {
     // Check equipment availability similar to room availability
     const conflicts = await this.getEquipmentConflicts(equipment.id, slot);
     return conflicts.length === 0;
@@ -544,14 +600,18 @@ export class ResourceManagementService {
     rooms: RoomResource[],
     equipment: EquipmentResource[],
     criteria: SchedulingCriteria,
-    slot: AvailableSlot
-  ): Promise<{ roomId?: string; equipmentIds: string[]; score: number; efficiency: number }> {
-    
+    slot: AvailableSlot,
+  ): Promise<{
+    roomId?: string;
+    equipmentIds: string[];
+    score: number;
+    efficiency: number;
+  }> {
     if (rooms.length === 0) {
       return {
         equipmentIds: equipment.map(eq => eq.id),
         score: 0.5,
-        efficiency: 0.5
+        efficiency: 0.5,
       };
     }
 
@@ -564,38 +624,49 @@ export class ResourceManagementService {
 
     // Preference for room type match
     const roomTypeConfig = RESOURCE_CONFIG.ROOM_TYPES[selectedRoom.type];
-    if (roomTypeConfig.equipmentRequired.every(req => 
-      selectedEquipment.some(eq => eq.type === req)
-    )) {
+    if (
+      roomTypeConfig.equipmentRequired.every(req =>
+        selectedEquipment.some(eq => eq.type === req),
+      )
+    ) {
       score += 0.1;
     }
 
     // Efficiency based on room utilization
-    const efficiency = await this.calculateRoomEfficiency(selectedRoom.id, slot);
+    const efficiency = await this.calculateRoomEfficiency(
+      selectedRoom.id,
+      slot,
+    );
 
     return {
       roomId: selectedRoom.id,
       equipmentIds: selectedEquipment.map(eq => eq.id),
       score,
-      efficiency
+      efficiency,
     };
   }
 
   private async checkResourceConflicts(
     allocation: { roomId?: string; equipmentIds: string[] },
-    slot: AvailableSlot
+    slot: AvailableSlot,
   ): Promise<Conflict[]> {
     const conflicts: Conflict[] = [];
 
     // Check room conflicts
     if (allocation.roomId) {
-      const roomConflicts = await this.getRoomConflicts(allocation.roomId, slot);
+      const roomConflicts = await this.getRoomConflicts(
+        allocation.roomId,
+        slot,
+      );
       conflicts.push(...roomConflicts);
     }
 
     // Check equipment conflicts
     for (const equipmentId of allocation.equipmentIds) {
-      const equipmentConflicts = await this.getEquipmentConflicts(equipmentId, slot);
+      const equipmentConflicts = await this.getEquipmentConflicts(
+        equipmentId,
+        slot,
+      );
       conflicts.push(...equipmentConflicts);
     }
 
@@ -606,7 +677,7 @@ export class ResourceManagementService {
     rooms: RoomResource[],
     equipment: EquipmentResource[],
     criteria: SchedulingCriteria,
-    slot: AvailableSlot
+    slot: AvailableSlot,
   ): Promise<ResourceAllocation[]> {
     const alternatives: ResourceAllocation[] = [];
 
@@ -616,7 +687,7 @@ export class ResourceManagementService {
         rooms.slice(i),
         equipment,
         criteria,
-        slot
+        slot,
       );
 
       const conflicts = await this.checkResourceConflicts(altAllocation, slot);
@@ -626,20 +697,26 @@ export class ResourceManagementService {
         equipmentIds: altAllocation.equipmentIds,
         allocationScore: altAllocation.score,
         efficiency: altAllocation.efficiency,
-        conflicts
+        conflicts,
       });
     }
 
     return alternatives;
   }
 
-  private async getRoomConflicts(roomId: string, slot: AvailableSlot): Promise<Conflict[]> {
+  private async getRoomConflicts(
+    roomId: string,
+    slot: AvailableSlot,
+  ): Promise<Conflict[]> {
     // Check for booking conflicts for the room
     // This would query the database for overlapping bookings
     return [];
   }
 
-  private async getEquipmentConflicts(equipmentId: string, slot: AvailableSlot): Promise<Conflict[]> {
+  private async getEquipmentConflicts(
+    equipmentId: string,
+    slot: AvailableSlot,
+  ): Promise<Conflict[]> {
     // Check for booking conflicts for the equipment
     return [];
   }
@@ -649,7 +726,10 @@ export class ResourceManagementService {
     return [];
   }
 
-  private async calculateRoomEfficiency(roomId: string, slot: AvailableSlot): Promise<number> {
+  private async calculateRoomEfficiency(
+    roomId: string,
+    slot: AvailableSlot,
+  ): Promise<number> {
     // Calculate efficiency based on utilization patterns
     return 0.8; // Placeholder
   }
@@ -657,7 +737,7 @@ export class ResourceManagementService {
   private async calculateDayUtilization(
     resourceId: string,
     resourceType: 'ROOM' | 'EQUIPMENT',
-    date: Date
+    date: Date,
   ): Promise<ResourceUtilization> {
     const totalMinutes = 12 * 60; // 12 hour workday
     const utilizedMinutes = 8 * 60; // Example: 8 hours utilized
@@ -671,40 +751,47 @@ export class ResourceManagementService {
       utilizationRate: utilizedMinutes / totalMinutes,
       peakHours: [
         { hour: 9, utilization: 0.9 },
-        { hour: 14, utilization: 0.8 }
+        { hour: 14, utilization: 0.8 },
       ],
       downtime: [
         { reason: 'Cleaning', minutes: 30 },
-        { reason: 'Maintenance', minutes: 60 }
-      ]
+        { reason: 'Maintenance', minutes: 60 },
+      ],
     };
   }
 
   private async storeResourceBooking(booking: ResourceBooking): Promise<void> {
     // Store booking in database
-    this.deps.logger.info('Storing resource booking', { bookingId: booking.id });
+    this.deps.logger.info('Storing resource booking', {
+      bookingId: booking.id,
+    });
   }
 
-  private async updateResourceAvailabilityCache(booking: ResourceBooking): Promise<void> {
+  private async updateResourceAvailabilityCache(
+    booking: ResourceBooking,
+  ): Promise<void> {
     // Update Redis cache with booking information
     const { redis } = this.deps;
-    
+
     if (booking.roomId) {
       const roomKey = `${this.ROOM_CACHE_KEY}:${booking.roomId}:${format(booking.startTime, 'yyyy-MM-dd')}`;
-      const cached = await redis.get(roomKey) || '{"conflicts":[]}';
+      const cached = (await redis.get(roomKey)) || '{"conflicts":[]}';
       const availability = JSON.parse(cached);
-      
+
       availability.conflicts.push({
         start: booking.startTime,
         end: booking.endTime,
-        appointmentId: booking.appointmentId
+        appointmentId: booking.appointmentId,
       });
-      
+
       await redis.setex(roomKey, 86400, JSON.stringify(availability)); // 24 hours
     }
   }
 
-  private async schedulePostAppointmentCleaning(roomId: string | undefined, endTime: Date): Promise<void> {
+  private async schedulePostAppointmentCleaning(
+    roomId: string | undefined,
+    endTime: Date,
+  ): Promise<void> {
     if (!roomId) return;
 
     const cleaningWindow: MaintenanceWindow = {
@@ -713,26 +800,33 @@ export class ResourceManagementService {
       endTime: addMinutes(endTime, RESOURCE_CONFIG.ROOM_CLEANING_TIME),
       type: 'CLEANING',
       priority: 'MEDIUM',
-      description: 'Post-appointment cleaning'
+      description: 'Post-appointment cleaning',
     };
 
     await this.storeMaintenanceWindow(roomId, 'ROOM', cleaningWindow);
   }
 
-  private async getResourceBooking(bookingId: string): Promise<ResourceBooking | null> {
+  private async getResourceBooking(
+    bookingId: string,
+  ): Promise<ResourceBooking | null> {
     // Get booking from database
     return null; // Placeholder
   }
 
   private async updateResourceBooking(booking: ResourceBooking): Promise<void> {
     // Update booking in database
-    this.deps.logger.info('Updating resource booking', { bookingId: booking.id });
+    this.deps.logger.info('Updating resource booking', {
+      bookingId: booking.id,
+    });
   }
 
-  private async clearResourceCache(roomId: string | undefined, equipmentIds: string[]): Promise<void> {
+  private async clearResourceCache(
+    roomId: string | undefined,
+    equipmentIds: string[],
+  ): Promise<void> {
     // Clear Redis cache entries
     const { redis } = this.deps;
-    
+
     if (roomId) {
       const pattern = `${this.ROOM_CACHE_KEY}:${roomId}:*`;
       const keys = await redis.keys(pattern);
@@ -742,7 +836,9 @@ export class ResourceManagementService {
     }
   }
 
-  private async scheduleDeepCleaningIfNeeded(booking: ResourceBooking): Promise<void> {
+  private async scheduleDeepCleaningIfNeeded(
+    booking: ResourceBooking,
+  ): Promise<void> {
     // Check if deep cleaning is needed based on appointment type
     // Schedule if needed
   }
@@ -750,7 +846,7 @@ export class ResourceManagementService {
   private async checkMaintenanceConflicts(
     resourceId: string,
     resourceType: 'ROOM' | 'EQUIPMENT',
-    window: MaintenanceWindow
+    window: MaintenanceWindow,
   ): Promise<string[]> {
     // Check for conflicts with existing bookings
     return [];
@@ -759,18 +855,18 @@ export class ResourceManagementService {
   private async storeMaintenanceWindow(
     resourceId: string,
     resourceType: 'ROOM' | 'EQUIPMENT',
-    window: MaintenanceWindow
+    window: MaintenanceWindow,
   ): Promise<void> {
-    this.deps.logger.info('Storing maintenance window', { 
-      resourceId, 
-      resourceType, 
-      windowId: window.id 
+    this.deps.logger.info('Storing maintenance window', {
+      resourceId,
+      resourceType,
+      windowId: window.id,
     });
   }
 
   private async updateMaintenanceCache(
     resourceId: string,
-    window: MaintenanceWindow
+    window: MaintenanceWindow,
   ): Promise<void> {
     // Update cache with maintenance window
     const { redis } = this.deps;

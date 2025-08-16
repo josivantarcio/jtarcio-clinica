@@ -3,9 +3,15 @@ import { z } from 'zod';
 // Common validation schemas
 export const uuidSchema = z.string().uuid();
 export const emailSchema = z.string().email();
-export const phoneSchema = z.string().regex(/^\+?[1-9]\d{1,14}$/, 'Invalid phone number');
-export const cpfSchema = z.string().regex(/^\d{3}\.\d{3}\.\d{3}-\d{2}$|^\d{11}$/, 'Invalid CPF format');
-export const crmSchema = z.string().regex(/^\d{4,6}\/[A-Z]{2}$/, 'Invalid CRM format');
+export const phoneSchema = z
+  .string()
+  .regex(/^\+?[1-9]\d{1,14}$/, 'Invalid phone number');
+export const cpfSchema = z
+  .string()
+  .regex(/^\d{3}\.\d{3}\.\d{3}-\d{2}$|^\d{11}$/, 'Invalid CPF format');
+export const crmSchema = z
+  .string()
+  .regex(/^\d{4,6}\/[A-Z]{2}$/, 'Invalid CRM format');
 
 // Pagination schema
 export const paginationSchema = z.object({
@@ -23,12 +29,14 @@ export const responseSchema = <T extends z.ZodTypeAny>(dataSchema: T) =>
     success: z.boolean(),
     data: dataSchema,
     message: z.string().optional(),
-    pagination: z.object({
-      page: z.number(),
-      limit: z.number(),
-      total: z.number(),
-      totalPages: z.number(),
-    }).optional(),
+    pagination: z
+      .object({
+        page: z.number(),
+        limit: z.number(),
+        total: z.number(),
+        totalPages: z.number(),
+      })
+      .optional(),
   });
 
 export type ApiResponse<T> = {

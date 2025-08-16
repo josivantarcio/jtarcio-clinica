@@ -4,14 +4,24 @@ import { PrismaClient } from '../../database/generated/client';
 import { z } from 'zod';
 import { paginationSchema } from '../../types/common';
 
-const auditQuerySchema = z.object({
-  userId: z.string().uuid().optional(),
-  action: z.string().optional(),
-  resource: z.string().optional(),
-  startDate: z.string().datetime().optional().transform(val => val ? new Date(val) : undefined),
-  endDate: z.string().datetime().optional().transform(val => val ? new Date(val) : undefined),
-  ipAddress: z.string().ip().optional(),
-}).merge(paginationSchema);
+const auditQuerySchema = z
+  .object({
+    userId: z.string().uuid().optional(),
+    action: z.string().optional(),
+    resource: z.string().optional(),
+    startDate: z
+      .string()
+      .datetime()
+      .optional()
+      .transform(val => (val ? new Date(val) : undefined)),
+    endDate: z
+      .string()
+      .datetime()
+      .optional()
+      .transform(val => (val ? new Date(val) : undefined)),
+    ipAddress: z.string().ip().optional(),
+  })
+  .merge(paginationSchema);
 
 const userHistoryParamsSchema = z.object({
   userId: z.string().uuid(),
@@ -23,8 +33,16 @@ const resourceHistoryParamsSchema = z.object({
 });
 
 const statisticsQuerySchema = z.object({
-  startDate: z.string().datetime().optional().transform(val => val ? new Date(val) : undefined),
-  endDate: z.string().datetime().optional().transform(val => val ? new Date(val) : undefined),
+  startDate: z
+    .string()
+    .datetime()
+    .optional()
+    .transform(val => (val ? new Date(val) : undefined)),
+  endDate: z
+    .string()
+    .datetime()
+    .optional()
+    .transform(val => (val ? new Date(val) : undefined)),
 });
 
 const exportQuerySchema = auditQuerySchema.omit({ page: true, limit: true });
@@ -38,57 +56,60 @@ export class AuditController {
 
   async register(fastify: FastifyInstance) {
     // Get audit logs with filters
-    fastify.get('/audit/logs', {
-      schema: {
-        description: 'Get audit logs with optional filters',
-        tags: ['Audit'],
-        security: [{ bearerAuth: [] }],
-        querystring: auditQuerySchema,
-        response: {
-          200: {
-            type: 'object',
-            properties: {
-              success: { type: 'boolean' },
-              data: {
-                type: 'object',
-                properties: {
-                  logs: {
-                    type: 'array',
-                    items: {
-                      type: 'object',
-                      properties: {
-                        id: { type: 'string' },
-                        userId: { type: 'string', nullable: true },
-                        userEmail: { type: 'string', nullable: true },
-                        ipAddress: { type: 'string', nullable: true },
-                        userAgent: { type: 'string', nullable: true },
-                        action: { type: 'string' },
-                        resource: { type: 'string' },
-                        resourceId: { type: 'string', nullable: true },
-                        oldValues: { nullable: true },
-                        newValues: { nullable: true },
-                        createdAt: { type: 'string', format: 'date-time' },
-                        user: {
-                          type: 'object',
-                          nullable: true,
-                          properties: {
-                            id: { type: 'string' },
-                            email: { type: 'string' },
-                            firstName: { type: 'string' },
-                            lastName: { type: 'string' },
-                            role: { type: 'string' },
+    fastify.get(
+      '/audit/logs',
+      {
+        schema: {
+          description: 'Get audit logs with optional filters',
+          tags: ['Audit'],
+          security: [{ bearerAuth: [] }],
+          querystring: auditQuerySchema,
+          response: {
+            200: {
+              type: 'object',
+              properties: {
+                success: { type: 'boolean' },
+                data: {
+                  type: 'object',
+                  properties: {
+                    logs: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          id: { type: 'string' },
+                          userId: { type: 'string', nullable: true },
+                          userEmail: { type: 'string', nullable: true },
+                          ipAddress: { type: 'string', nullable: true },
+                          userAgent: { type: 'string', nullable: true },
+                          action: { type: 'string' },
+                          resource: { type: 'string' },
+                          resourceId: { type: 'string', nullable: true },
+                          oldValues: { nullable: true },
+                          newValues: { nullable: true },
+                          createdAt: { type: 'string', format: 'date-time' },
+                          user: {
+                            type: 'object',
+                            nullable: true,
+                            properties: {
+                              id: { type: 'string' },
+                              email: { type: 'string' },
+                              firstName: { type: 'string' },
+                              lastName: { type: 'string' },
+                              role: { type: 'string' },
+                            },
                           },
                         },
                       },
                     },
-                  },
-                  pagination: {
-                    type: 'object',
-                    properties: {
-                      page: { type: 'number' },
-                      limit: { type: 'number' },
-                      total: { type: 'number' },
-                      totalPages: { type: 'number' },
+                    pagination: {
+                      type: 'object',
+                      properties: {
+                        page: { type: 'number' },
+                        limit: { type: 'number' },
+                        total: { type: 'number' },
+                        totalPages: { type: 'number' },
+                      },
                     },
                   },
                 },
@@ -96,90 +117,115 @@ export class AuditController {
             },
           },
         },
+        preHandler: [fastify.authenticate, fastify.requireAdmin],
       },
-      preHandler: [fastify.authenticate, fastify.requireAdmin],
-    }, this.getAuditLogs.bind(this));
+      this.getAuditLogs.bind(this),
+    );
 
     // Get user audit history
-    fastify.get('/audit/users/:userId/history', {
-      schema: {
-        description: 'Get audit history for a specific user',
-        tags: ['Audit'],
-        security: [{ bearerAuth: [] }],
-        params: userHistoryParamsSchema,
-        querystring: paginationSchema,
+    fastify.get(
+      '/audit/users/:userId/history',
+      {
+        schema: {
+          description: 'Get audit history for a specific user',
+          tags: ['Audit'],
+          security: [{ bearerAuth: [] }],
+          params: userHistoryParamsSchema,
+          querystring: paginationSchema,
+        },
+        preHandler: [fastify.authenticate, fastify.requireAdmin],
       },
-      preHandler: [fastify.authenticate, fastify.requireAdmin],
-    }, this.getUserHistory.bind(this));
+      this.getUserHistory.bind(this),
+    );
 
-    // Get resource audit history  
-    fastify.get('/audit/resources/:resource/history', {
-      schema: {
-        description: 'Get audit history for a specific resource',
-        tags: ['Audit'],
-        security: [{ bearerAuth: [] }],
-        params: resourceHistoryParamsSchema,
-        querystring: paginationSchema.extend({
-          resourceId: z.string().optional(),
-        }),
+    // Get resource audit history
+    fastify.get(
+      '/audit/resources/:resource/history',
+      {
+        schema: {
+          description: 'Get audit history for a specific resource',
+          tags: ['Audit'],
+          security: [{ bearerAuth: [] }],
+          params: resourceHistoryParamsSchema,
+          querystring: paginationSchema.extend({
+            resourceId: z.string().optional(),
+          }),
+        },
+        preHandler: [fastify.authenticate, fastify.requireAdmin],
       },
-      preHandler: [fastify.authenticate, fastify.requireAdmin],
-    }, this.getResourceHistory.bind(this));
+      this.getResourceHistory.bind(this),
+    );
 
     // Get recent activity
-    fastify.get('/audit/recent', {
-      schema: {
-        description: 'Get recent audit activity',
-        tags: ['Audit'],
-        security: [{ bearerAuth: [] }],
-        querystring: z.object({
-          hours: z.number().int().min(1).max(168).default(24), // Max 1 week
-          limit: z.number().int().min(1).max(500).default(100),
-        }),
+    fastify.get(
+      '/audit/recent',
+      {
+        schema: {
+          description: 'Get recent audit activity',
+          tags: ['Audit'],
+          security: [{ bearerAuth: [] }],
+          querystring: z.object({
+            hours: z.number().int().min(1).max(168).default(24), // Max 1 week
+            limit: z.number().int().min(1).max(500).default(100),
+          }),
+        },
+        preHandler: [fastify.authenticate, fastify.requireAdmin],
       },
-      preHandler: [fastify.authenticate, fastify.requireAdmin],
-    }, this.getRecentActivity.bind(this));
+      this.getRecentActivity.bind(this),
+    );
 
     // Get audit statistics
-    fastify.get('/audit/statistics', {
-      schema: {
-        description: 'Get audit statistics and analytics',
-        tags: ['Audit'],
-        security: [{ bearerAuth: [] }],
-        querystring: statisticsQuerySchema,
+    fastify.get(
+      '/audit/statistics',
+      {
+        schema: {
+          description: 'Get audit statistics and analytics',
+          tags: ['Audit'],
+          security: [{ bearerAuth: [] }],
+          querystring: statisticsQuerySchema,
+        },
+        preHandler: [fastify.authenticate, fastify.requireAdmin],
       },
-      preHandler: [fastify.authenticate, fastify.requireAdmin],
-    }, this.getStatistics.bind(this));
+      this.getStatistics.bind(this),
+    );
 
     // Export audit logs
-    fastify.get('/audit/export', {
-      schema: {
-        description: 'Export audit logs as CSV',
-        tags: ['Audit'],
-        security: [{ bearerAuth: [] }],
-        querystring: exportQuerySchema.extend({
-          format: z.enum(['csv', 'json']).default('csv'),
-        }),
+    fastify.get(
+      '/audit/export',
+      {
+        schema: {
+          description: 'Export audit logs as CSV',
+          tags: ['Audit'],
+          security: [{ bearerAuth: [] }],
+          querystring: exportQuerySchema.extend({
+            format: z.enum(['csv', 'json']).default('csv'),
+          }),
+        },
+        preHandler: [fastify.authenticate, fastify.requireAdmin],
       },
-      preHandler: [fastify.authenticate, fastify.requireAdmin],
-    }, this.exportLogs.bind(this));
+      this.exportLogs.bind(this),
+    );
 
     // Get my audit history (for current user)
-    fastify.get('/audit/my-history', {
-      schema: {
-        description: 'Get audit history for the current user',
-        tags: ['Audit'],
-        security: [{ bearerAuth: [] }],
-        querystring: paginationSchema,
+    fastify.get(
+      '/audit/my-history',
+      {
+        schema: {
+          description: 'Get audit history for the current user',
+          tags: ['Audit'],
+          security: [{ bearerAuth: [] }],
+          querystring: paginationSchema,
+        },
+        preHandler: [fastify.authenticate],
       },
-      preHandler: [fastify.authenticate],
-    }, this.getMyHistory.bind(this));
+      this.getMyHistory.bind(this),
+    );
   }
 
   async getAuditLogs(request: FastifyRequest, reply: FastifyReply) {
     try {
       const query = auditQuerySchema.parse(request.query);
-      
+
       const filters: AuditQueryFilters = {
         userId: query.userId,
         action: query.action,
@@ -214,7 +260,11 @@ export class AuditController {
       const { userId } = userHistoryParamsSchema.parse(request.params);
       const { page, limit } = paginationSchema.parse(request.query);
 
-      const result = await this.auditService.getUserAuditHistory(userId, page, limit);
+      const result = await this.auditService.getUserAuditHistory(
+        userId,
+        page,
+        limit,
+      );
 
       return reply.status(200).send({
         success: true,
@@ -235,15 +285,17 @@ export class AuditController {
   async getResourceHistory(request: FastifyRequest, reply: FastifyReply) {
     try {
       const params = resourceHistoryParamsSchema.parse(request.params);
-      const query = paginationSchema.extend({
-        resourceId: z.string().optional(),
-      }).parse(request.query);
+      const query = paginationSchema
+        .extend({
+          resourceId: z.string().optional(),
+        })
+        .parse(request.query);
 
       const result = await this.auditService.getResourceAuditHistory(
         params.resource,
         query.resourceId,
         query.page,
-        query.limit
+        query.limit,
       );
 
       return reply.status(200).send({
@@ -264,10 +316,12 @@ export class AuditController {
 
   async getRecentActivity(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const { hours, limit } = z.object({
-        hours: z.number().int().min(1).max(168).default(24),
-        limit: z.number().int().min(1).max(500).default(100),
-      }).parse(request.query);
+      const { hours, limit } = z
+        .object({
+          hours: z.number().int().min(1).max(168).default(24),
+          limit: z.number().int().min(1).max(500).default(100),
+        })
+        .parse(request.query);
 
       const result = await this.auditService.getRecentActivity(hours, limit);
 
@@ -291,7 +345,10 @@ export class AuditController {
     try {
       const { startDate, endDate } = statisticsQuerySchema.parse(request.query);
 
-      const result = await this.auditService.getAuditStatistics(startDate, endDate);
+      const result = await this.auditService.getAuditStatistics(
+        startDate,
+        endDate,
+      );
 
       return reply.status(200).send({
         success: true,
@@ -311,10 +368,12 @@ export class AuditController {
 
   async exportLogs(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const query = exportQuerySchema.extend({
-        format: z.enum(['csv', 'json']).default('csv'),
-      }).parse(request.query);
-      
+      const query = exportQuerySchema
+        .extend({
+          format: z.enum(['csv', 'json']).default('csv'),
+        })
+        .parse(request.query);
+
       const filters: AuditQueryFilters = {
         userId: query.userId,
         action: query.action,
@@ -326,24 +385,32 @@ export class AuditController {
 
       if (query.format === 'csv') {
         const csvData = await this.auditService.exportToCSV(filters);
-        
+
         const csvContent = [
           csvData.headers.join(','),
-          ...csvData.rows.map(row => 
-            row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(',')
+          ...csvData.rows.map(row =>
+            row
+              .map(field => `"${String(field).replace(/"/g, '""')}"`)
+              .join(','),
           ),
         ].join('\n');
 
         return reply
           .header('Content-Type', 'text/csv')
-          .header('Content-Disposition', `attachment; filename="audit_logs_${new Date().toISOString().split('T')[0]}.csv"`)
+          .header(
+            'Content-Disposition',
+            `attachment; filename="audit_logs_${new Date().toISOString().split('T')[0]}.csv"`,
+          )
           .send(csvContent);
       } else {
         const result = await this.auditService.getAuditLogs(filters);
-        
+
         return reply
           .header('Content-Type', 'application/json')
-          .header('Content-Disposition', `attachment; filename="audit_logs_${new Date().toISOString().split('T')[0]}.json"`)
+          .header(
+            'Content-Disposition',
+            `attachment; filename="audit_logs_${new Date().toISOString().split('T')[0]}.json"`,
+          )
           .send({
             success: true,
             data: result,
@@ -367,7 +434,11 @@ export class AuditController {
       const userId = (request.user as any).id;
       const { page, limit } = paginationSchema.parse(request.query);
 
-      const result = await this.auditService.getUserAuditHistory(userId, page, limit);
+      const result = await this.auditService.getUserAuditHistory(
+        userId,
+        page,
+        limit,
+      );
 
       return reply.status(200).send({
         success: true,

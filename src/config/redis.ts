@@ -16,7 +16,7 @@ redis.on('connect', () => {
   console.log('[SUCCESS] Redis connected successfully');
 });
 
-redis.on('error', (error) => {
+redis.on('error', error => {
   console.error('[ERROR] Redis connection error:', error);
 });
 
@@ -58,8 +58,10 @@ export async function checkRedisHealth(): Promise<boolean> {
 export const cacheKeys = {
   userSession: (userId: string) => `user:session:${userId}`,
   appointment: (id: string) => `appointment:${id}`,
-  doctorAvailability: (doctorId: string, date: string) => `doctor:availability:${doctorId}:${date}`,
-  patientAppointments: (patientId: string) => `patient:appointments:${patientId}`,
+  doctorAvailability: (doctorId: string, date: string) =>
+    `doctor:availability:${doctorId}:${date}`,
+  patientAppointments: (patientId: string) =>
+    `patient:appointments:${patientId}`,
   conversations: (conversationId: string) => `conversation:${conversationId}`,
   rateLimit: (key: string) => `rate_limit:${key}`,
 } as const;

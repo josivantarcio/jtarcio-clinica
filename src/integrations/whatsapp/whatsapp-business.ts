@@ -108,14 +108,14 @@ export class WhatsAppBusinessAPI {
   constructor(phoneNumberId: string, accessToken: string) {
     this.phoneNumberId = phoneNumberId;
     this.accessToken = accessToken;
-    
+
     this.client = axios.create({
       baseURL: `https://graph.facebook.com/v17.0`,
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
       },
-      timeout: 30000
+      timeout: 30000,
     });
 
     this.setupInterceptors();
@@ -123,36 +123,36 @@ export class WhatsAppBusinessAPI {
 
   private setupInterceptors(): void {
     this.client.interceptors.request.use(
-      (config) => {
+      config => {
         logger.info('WhatsApp API Request', {
           method: config.method,
           url: config.url,
-          data: config.data
+          data: config.data,
         });
         return config;
       },
-      (error) => {
+      error => {
         logger.error('WhatsApp API Request Error', error);
         return Promise.reject(error);
-      }
+      },
     );
 
     this.client.interceptors.response.use(
-      (response) => {
+      response => {
         logger.info('WhatsApp API Response', {
           status: response.status,
-          url: response.config.url
+          url: response.config.url,
         });
         return response;
       },
-      (error) => {
+      error => {
         logger.error('WhatsApp API Response Error', {
           status: error.response?.status,
           message: error.response?.data?.error?.message || error.message,
-          url: error.config?.url
+          url: error.config?.url,
         });
         return Promise.reject(error);
-      }
+      },
     );
   }
 
@@ -163,7 +163,7 @@ export class WhatsAppBusinessAPI {
     to: string,
     templateName: string,
     languageCode: string = 'pt_BR',
-    components: WhatsAppTemplateComponent[] = []
+    components: WhatsAppTemplateComponent[] = [],
   ): Promise<MessageResult> {
     try {
       const message: WhatsAppMessage = {
@@ -173,28 +173,30 @@ export class WhatsAppBusinessAPI {
         template: {
           name: templateName,
           language: { code: languageCode },
-          components
-        }
+          components,
+        },
       };
 
-      const response = await this.client.post(`/${this.phoneNumberId}/messages`, message);
-      
+      const response = await this.client.post(
+        `/${this.phoneNumberId}/messages`,
+        message,
+      );
+
       return {
         success: true,
         messageId: response.data.messages[0]?.id,
-        contacts: response.data.contacts
+        contacts: response.data.contacts,
       };
-
     } catch (error) {
       logger.error('Failed to send WhatsApp template', {
         to,
         templateName,
-        error: error.response?.data || error.message
+        error: error.response?.data || error.message,
       });
-      
+
       return {
         success: false,
-        error: error.response?.data?.error?.message || error.message
+        error: error.response?.data?.error?.message || error.message,
       };
     }
   }
@@ -208,26 +210,28 @@ export class WhatsAppBusinessAPI {
         messaging_product: 'whatsapp',
         to: this.formatPhoneNumber(to),
         type: 'text',
-        text: { body: text }
+        text: { body: text },
       };
 
-      const response = await this.client.post(`/${this.phoneNumberId}/messages`, message);
-      
+      const response = await this.client.post(
+        `/${this.phoneNumberId}/messages`,
+        message,
+      );
+
       return {
         success: true,
         messageId: response.data.messages[0]?.id,
-        contacts: response.data.contacts
+        contacts: response.data.contacts,
       };
-
     } catch (error) {
       logger.error('Failed to send WhatsApp text message', {
         to,
-        error: error.response?.data || error.message
+        error: error.response?.data || error.message,
       });
-      
+
       return {
         success: false,
-        error: error.response?.data?.error?.message || error.message
+        error: error.response?.data?.error?.message || error.message,
       };
     }
   }
@@ -235,32 +239,37 @@ export class WhatsAppBusinessAPI {
   /**
    * Send an interactive message
    */
-  async sendInteractive(to: string, interactive: WhatsAppInteractive): Promise<MessageResult> {
+  async sendInteractive(
+    to: string,
+    interactive: WhatsAppInteractive,
+  ): Promise<MessageResult> {
     try {
       const message: WhatsAppMessage = {
         messaging_product: 'whatsapp',
         to: this.formatPhoneNumber(to),
         type: 'interactive',
-        interactive
+        interactive,
       };
 
-      const response = await this.client.post(`/${this.phoneNumberId}/messages`, message);
-      
+      const response = await this.client.post(
+        `/${this.phoneNumberId}/messages`,
+        message,
+      );
+
       return {
         success: true,
         messageId: response.data.messages[0]?.id,
-        contacts: response.data.contacts
+        contacts: response.data.contacts,
       };
-
     } catch (error) {
       logger.error('Failed to send WhatsApp interactive message', {
         to,
-        error: error.response?.data || error.message
+        error: error.response?.data || error.message,
       });
-      
+
       return {
         success: false,
-        error: error.response?.data?.error?.message || error.message
+        error: error.response?.data?.error?.message || error.message,
       };
     }
   }
@@ -268,25 +277,26 @@ export class WhatsAppBusinessAPI {
   /**
    * Mark message as read
    */
-  async markAsRead(messageId: string): Promise<{ success: boolean; error?: string }> {
+  async markAsRead(
+    messageId: string,
+  ): Promise<{ success: boolean; error?: string }> {
     try {
       await this.client.post(`/${this.phoneNumberId}/messages`, {
         messaging_product: 'whatsapp',
         status: 'read',
-        message_id: messageId
+        message_id: messageId,
       });
 
       return { success: true };
-
     } catch (error) {
       logger.error('Failed to mark WhatsApp message as read', {
         messageId,
-        error: error.response?.data || error.message
+        error: error.response?.data || error.message,
       });
-      
+
       return {
         success: false,
-        error: error.response?.data?.error?.message || error.message
+        error: error.response?.data?.error?.message || error.message,
       };
     }
   }
@@ -294,24 +304,25 @@ export class WhatsAppBusinessAPI {
   /**
    * Get media URL
    */
-  async getMediaUrl(mediaId: string): Promise<{ success: boolean; url?: string; error?: string }> {
+  async getMediaUrl(
+    mediaId: string,
+  ): Promise<{ success: boolean; url?: string; error?: string }> {
     try {
       const response = await this.client.get(`/${mediaId}`);
-      
+
       return {
         success: true,
-        url: response.data.url
+        url: response.data.url,
       };
-
     } catch (error) {
       logger.error('Failed to get WhatsApp media URL', {
         mediaId,
-        error: error.response?.data || error.message
+        error: error.response?.data || error.message,
       });
-      
+
       return {
         success: false,
-        error: error.response?.data?.error?.message || error.message
+        error: error.response?.data?.error?.message || error.message,
       };
     }
   }
@@ -322,7 +333,7 @@ export class WhatsAppBusinessAPI {
   private formatPhoneNumber(phoneNumber: string): string {
     // Remove all non-digit characters
     let cleaned = phoneNumber.replace(/\D/g, '');
-    
+
     // Add country code if not present (assuming Brazil +55)
     if (cleaned.length === 11 && cleaned.startsWith('1')) {
       // Mobile number with DDD
@@ -359,32 +370,25 @@ export class WhatsAppTemplateManager {
     date: string,
     time: string,
     doctorName: string,
-    confirmationCode: string
+    confirmationCode: string,
   ): Promise<MessageResult> {
-    return this.api.sendTemplate(
-      phoneNumber,
-      'confirmacao_consulta',
-      'pt_BR',
-      [
-        {
-          type: 'body',
-          parameters: [
-            { type: 'text', text: patientName },
-            { type: 'text', text: date },
-            { type: 'text', text: time },
-            { type: 'text', text: doctorName }
-          ]
-        },
-        {
-          type: 'button',
-          sub_type: 'url',
-          index: '0',
-          parameters: [
-            { type: 'text', text: confirmationCode }
-          ]
-        }
-      ]
-    );
+    return this.api.sendTemplate(phoneNumber, 'confirmacao_consulta', 'pt_BR', [
+      {
+        type: 'body',
+        parameters: [
+          { type: 'text', text: patientName },
+          { type: 'text', text: date },
+          { type: 'text', text: time },
+          { type: 'text', text: doctorName },
+        ],
+      },
+      {
+        type: 'button',
+        sub_type: 'url',
+        index: '0',
+        parameters: [{ type: 'text', text: confirmationCode }],
+      },
+    ]);
   }
 
   /**
@@ -396,7 +400,7 @@ export class WhatsAppTemplateManager {
     date: string,
     time: string,
     doctorName: string,
-    reminderType: '24h' | '4h' | '1h'
+    reminderType: '24h' | '4h' | '1h',
   ): Promise<MessageResult> {
     return this.api.sendTemplate(
       phoneNumber,
@@ -409,10 +413,10 @@ export class WhatsAppTemplateManager {
             { type: 'text', text: patientName },
             { type: 'text', text: date },
             { type: 'text', text: time },
-            { type: 'text', text: doctorName }
-          ]
-        }
-      ]
+            { type: 'text', text: doctorName },
+          ],
+        },
+      ],
     );
   }
 
@@ -427,34 +431,27 @@ export class WhatsAppTemplateManager {
     date: string,
     time: string,
     waitingDays: number,
-    notificationId: string
+    notificationId: string,
   ): Promise<MessageResult> {
-    return this.api.sendTemplate(
-      phoneNumber,
-      'vaga_disponivel',
-      'pt_BR',
-      [
-        {
-          type: 'body',
-          parameters: [
-            { type: 'text', text: patientName },
-            { type: 'text', text: specialty },
-            { type: 'text', text: doctorName },
-            { type: 'text', text: date },
-            { type: 'text', text: time },
-            { type: 'text', text: waitingDays.toString() }
-          ]
-        },
-        {
-          type: 'button',
-          sub_type: 'url',
-          index: '0',
-          parameters: [
-            { type: 'text', text: notificationId }
-          ]
-        }
-      ]
-    );
+    return this.api.sendTemplate(phoneNumber, 'vaga_disponivel', 'pt_BR', [
+      {
+        type: 'body',
+        parameters: [
+          { type: 'text', text: patientName },
+          { type: 'text', text: specialty },
+          { type: 'text', text: doctorName },
+          { type: 'text', text: date },
+          { type: 'text', text: time },
+          { type: 'text', text: waitingDays.toString() },
+        ],
+      },
+      {
+        type: 'button',
+        sub_type: 'url',
+        index: '0',
+        parameters: [{ type: 'text', text: notificationId }],
+      },
+    ]);
   }
 
   /**
@@ -467,26 +464,21 @@ export class WhatsAppTemplateManager {
     oldTime: string,
     newDate: string,
     newTime: string,
-    doctorName: string
+    doctorName: string,
   ): Promise<MessageResult> {
-    return this.api.sendTemplate(
-      phoneNumber,
-      'consulta_reagendada',
-      'pt_BR',
-      [
-        {
-          type: 'body',
-          parameters: [
-            { type: 'text', text: patientName },
-            { type: 'text', text: oldDate },
-            { type: 'text', text: oldTime },
-            { type: 'text', text: newDate },
-            { type: 'text', text: newTime },
-            { type: 'text', text: doctorName }
-          ]
-        }
-      ]
-    );
+    return this.api.sendTemplate(phoneNumber, 'consulta_reagendada', 'pt_BR', [
+      {
+        type: 'body',
+        parameters: [
+          { type: 'text', text: patientName },
+          { type: 'text', text: oldDate },
+          { type: 'text', text: oldTime },
+          { type: 'text', text: newDate },
+          { type: 'text', text: newTime },
+          { type: 'text', text: doctorName },
+        ],
+      },
+    ]);
   }
 
   /**
@@ -498,12 +490,12 @@ export class WhatsAppTemplateManager {
     date: string,
     time: string,
     doctorName: string,
-    appointmentId: string
+    appointmentId: string,
   ): Promise<MessageResult> {
     const interactive: WhatsAppInteractive = {
       type: 'button',
       body: {
-        text: `Olá ${patientName}!\n\n*Confirmação de Consulta*\n\nVocê tem uma consulta marcada:\nData: ${date}\nHorário: ${time}\nMédico: Dr(a) ${doctorName}\n\nPor favor, confirme sua presença:`
+        text: `Olá ${patientName}!\n\n*Confirmação de Consulta*\n\nVocê tem uma consulta marcada:\nData: ${date}\nHorário: ${time}\nMédico: Dr(a) ${doctorName}\n\nPor favor, confirme sua presença:`,
       },
       action: {
         buttons: [
@@ -511,25 +503,25 @@ export class WhatsAppTemplateManager {
             type: 'reply',
             reply: {
               id: `confirm_${appointmentId}`,
-              title: 'Confirmar'
-            }
+              title: 'Confirmar',
+            },
           },
           {
             type: 'reply',
             reply: {
               id: `reschedule_${appointmentId}`,
-              title: 'Reagendar'
-            }
+              title: 'Reagendar',
+            },
           },
           {
             type: 'reply',
             reply: {
               id: `cancel_${appointmentId}`,
-              title: 'Cancelar'
-            }
-          }
-        ]
-      }
+              title: 'Cancelar',
+            },
+          },
+        ],
+      },
     };
 
     return this.api.sendInteractive(phoneNumber, interactive);
@@ -543,17 +535,17 @@ export class WhatsAppTemplateManager {
     patientName: string,
     specialty: string,
     currentPosition: number,
-    estimatedWait: string
+    estimatedWait: string,
   ): Promise<MessageResult> {
     return this.api.sendText(
       phoneNumber,
       `*Atualização da Fila - EO Clínica*\n\n` +
-      `Olá ${patientName}!\n\n` +
-      `*${specialty}*\n` +
-      `Posição atual: ${currentPosition}º na fila\n` +
-      `Tempo estimado: ${estimatedWait}\n\n` +
-      `Você receberá uma notificação quando uma vaga estiver disponível.\n\n` +
-      `Obrigado pela paciência!`
+        `Olá ${patientName}!\n\n` +
+        `*${specialty}*\n` +
+        `Posição atual: ${currentPosition}º na fila\n` +
+        `Tempo estimado: ${estimatedWait}\n\n` +
+        `Você receberá uma notificação quando uma vaga estiver disponível.\n\n` +
+        `Obrigado pela paciência!`,
     );
   }
 }
@@ -566,7 +558,10 @@ export class WhatsAppWebhookProcessor {
   private api: WhatsAppBusinessAPI;
   private templateManager: WhatsAppTemplateManager;
 
-  constructor(api: WhatsAppBusinessAPI, templateManager: WhatsAppTemplateManager) {
+  constructor(
+    api: WhatsAppBusinessAPI,
+    templateManager: WhatsAppTemplateManager,
+  ) {
     this.api = api;
     this.templateManager = templateManager;
   }
@@ -624,7 +619,10 @@ export class WhatsAppWebhookProcessor {
   /**
    * Process interactive button/menu responses
    */
-  private async processInteractiveResponse(message: any, contact: any): Promise<void> {
+  private async processInteractiveResponse(
+    message: any,
+    contact: any,
+  ): Promise<void> {
     const response = message.interactive;
     const phoneNumber = contact.wa_id;
 
@@ -640,7 +638,10 @@ export class WhatsAppWebhookProcessor {
   /**
    * Handle button responses
    */
-  private async handleButtonResponse(phoneNumber: string, buttonId: string): Promise<void> {
+  private async handleButtonResponse(
+    phoneNumber: string,
+    buttonId: string,
+  ): Promise<void> {
     const [action, appointmentId] = buttonId.split('_');
 
     switch (action) {
@@ -661,59 +662,77 @@ export class WhatsAppWebhookProcessor {
   /**
    * Handle appointment confirmation
    */
-  private async handleConfirmation(phoneNumber: string, appointmentId: string): Promise<void> {
+  private async handleConfirmation(
+    phoneNumber: string,
+    appointmentId: string,
+  ): Promise<void> {
     // Send confirmation acknowledgment
     await this.api.sendText(
       phoneNumber,
       '*Consulta Confirmada!*\n\n' +
-      'Sua presença foi confirmada com sucesso.\n\n' +
-      '*Lembre-se:*\n' +
-      '• Chegue 15 minutos antes\n' +
-      '• Traga documento com foto\n' +
-      '• Traga cartão do convênio (se aplicável)\n\n' +
-      '*EO Clínica*\n' +
-      'Até breve!'
+        'Sua presença foi confirmada com sucesso.\n\n' +
+        '*Lembre-se:*\n' +
+        '• Chegue 15 minutos antes\n' +
+        '• Traga documento com foto\n' +
+        '• Traga cartão do convênio (se aplicável)\n\n' +
+        '*EO Clínica*\n' +
+        'Até breve!',
     );
 
     // TODO: Call clinic API to confirm appointment
-    logger.info('Appointment confirmed via WhatsApp', { phoneNumber, appointmentId });
+    logger.info('Appointment confirmed via WhatsApp', {
+      phoneNumber,
+      appointmentId,
+    });
   }
 
   /**
    * Handle reschedule request
    */
-  private async handleRescheduleRequest(phoneNumber: string, appointmentId: string): Promise<void> {
+  private async handleRescheduleRequest(
+    phoneNumber: string,
+    appointmentId: string,
+  ): Promise<void> {
     await this.api.sendText(
       phoneNumber,
       '*Reagendamento Solicitado*\n\n' +
-      'Entendemos que você precisa reagendar sua consulta.\n\n' +
-      'Use o link abaixo para escolher uma nova data:\n' +
-      `${process.env.FRONTEND_URL}/reagendar-consulta/${appointmentId}\n\n` +
-      'Ou ligue para nossa central:\n' +
-      `${process.env.CLINIC_PHONE || '(11) 9999-9999'}\n\n` +
-      'Horário de atendimento: 8h às 18h'
+        'Entendemos que você precisa reagendar sua consulta.\n\n' +
+        'Use o link abaixo para escolher uma nova data:\n' +
+        `${process.env.FRONTEND_URL}/reagendar-consulta/${appointmentId}\n\n` +
+        'Ou ligue para nossa central:\n' +
+        `${process.env.CLINIC_PHONE || '(11) 9999-9999'}\n\n` +
+        'Horário de atendimento: 8h às 18h',
     );
 
-    logger.info('Reschedule requested via WhatsApp', { phoneNumber, appointmentId });
+    logger.info('Reschedule requested via WhatsApp', {
+      phoneNumber,
+      appointmentId,
+    });
   }
 
   /**
    * Handle cancellation
    */
-  private async handleCancellation(phoneNumber: string, appointmentId: string): Promise<void> {
+  private async handleCancellation(
+    phoneNumber: string,
+    appointmentId: string,
+  ): Promise<void> {
     await this.api.sendText(
       phoneNumber,
       '*Cancelamento Solicitado*\n\n' +
-      'Lamentamos que você precise cancelar sua consulta.\n\n' +
-      'Confirme o cancelamento no link:\n' +
-      `${process.env.FRONTEND_URL}/cancelar-consulta/${appointmentId}\n\n` +
-      '*Importante:*\n' +
-      '• Cancelamentos com menos de 4h de antecedência podem ter taxa\n' +
-      '• Você será notificado sobre vagas futuras\n\n' +
-      '*EO Clínica* - Cuidando da sua saúde'
+        'Lamentamos que você precise cancelar sua consulta.\n\n' +
+        'Confirme o cancelamento no link:\n' +
+        `${process.env.FRONTEND_URL}/cancelar-consulta/${appointmentId}\n\n` +
+        '*Importante:*\n' +
+        '• Cancelamentos com menos de 4h de antecedência podem ter taxa\n' +
+        '• Você será notificado sobre vagas futuras\n\n' +
+        '*EO Clínica* - Cuidando da sua saúde',
     );
 
-    logger.info('Cancellation requested via WhatsApp', { phoneNumber, appointmentId });
+    logger.info('Cancellation requested via WhatsApp', {
+      phoneNumber,
+      appointmentId,
+    });
   }
 
   /**
@@ -743,15 +762,15 @@ export class WhatsAppWebhookProcessor {
     await this.api.sendText(
       phoneNumber,
       '*Como posso ajudar?*\n\n' +
-      '*Comandos disponíveis:*\n' +
-      '• "horario" - Horário de funcionamento\n' +
-      '• "endereco" - Localização da clínica\n' +
-      '• "ajuda" - Esta mensagem\n\n' +
-      '*Links úteis:*\n' +
-      `• Agendar consulta: ${process.env.FRONTEND_URL}/agendar\n` +
-      `• Minhas consultas: ${process.env.FRONTEND_URL}/consultas\n\n` +
-      '*Precisa falar conosco?*\n' +
-      `Ligue: ${process.env.CLINIC_PHONE || '(11) 9999-9999'}`
+        '*Comandos disponíveis:*\n' +
+        '• "horario" - Horário de funcionamento\n' +
+        '• "endereco" - Localização da clínica\n' +
+        '• "ajuda" - Esta mensagem\n\n' +
+        '*Links úteis:*\n' +
+        `• Agendar consulta: ${process.env.FRONTEND_URL}/agendar\n` +
+        `• Minhas consultas: ${process.env.FRONTEND_URL}/consultas\n\n` +
+        '*Precisa falar conosco?*\n' +
+        `Ligue: ${process.env.CLINIC_PHONE || '(11) 9999-9999'}`,
     );
   }
 
@@ -762,14 +781,14 @@ export class WhatsAppWebhookProcessor {
     await this.api.sendText(
       phoneNumber,
       '*Horário de Funcionamento*\n\n' +
-      '**Segunda a Sexta:**\n' +
-      '8:00 - 18:00\n\n' +
-      '**Sábado:**\n' +
-      '8:00 - 12:00\n\n' +
-      '**Domingo e Feriados:**\n' +
-      'Fechado\n\n' +
-      '*Emergências 24h:*\n' +
-      `${process.env.EMERGENCY_PHONE || '(11) 9999-9999'}`
+        '**Segunda a Sexta:**\n' +
+        '8:00 - 18:00\n\n' +
+        '**Sábado:**\n' +
+        '8:00 - 12:00\n\n' +
+        '**Domingo e Feriados:**\n' +
+        'Fechado\n\n' +
+        '*Emergências 24h:*\n' +
+        `${process.env.EMERGENCY_PHONE || '(11) 9999-9999'}`,
     );
   }
 
@@ -780,14 +799,14 @@ export class WhatsAppWebhookProcessor {
     await this.api.sendText(
       phoneNumber,
       '*Localização - EO Clínica*\n\n' +
-      '**Endereço:**\n' +
-      `${process.env.CLINIC_ADDRESS || 'Rua Example, 123 - Centro, São Paulo - SP'}\n\n` +
-      '**Como chegar:**\n' +
-      '• Metrô: Estação Centro (300m)\n' +
-      '• Ônibus: Linhas 100, 200, 300\n' +
-      '• Estacionamento gratuito disponível\n\n' +
-      '**Ver no mapa:**\n' +
-      `${process.env.CLINIC_MAPS_URL || 'https://maps.google.com'}`
+        '**Endereço:**\n' +
+        `${process.env.CLINIC_ADDRESS || 'Rua Example, 123 - Centro, São Paulo - SP'}\n\n` +
+        '**Como chegar:**\n' +
+        '• Metrô: Estação Centro (300m)\n' +
+        '• Ônibus: Linhas 100, 200, 300\n' +
+        '• Estacionamento gratuito disponível\n\n' +
+        '**Ver no mapa:**\n' +
+        `${process.env.CLINIC_MAPS_URL || 'https://maps.google.com'}`,
     );
   }
 
@@ -798,13 +817,13 @@ export class WhatsAppWebhookProcessor {
     await this.api.sendText(
       phoneNumber,
       '*EO Clínica - Atendimento Automatizado*\n\n' +
-      'Obrigado por entrar em contato!\n\n' +
-      'Para um atendimento mais rápido, digite:\n' +
-      '• "ajuda" - Ver comandos disponíveis\n' +
-      '• "horario" - Horário de funcionamento\n' +
-      '• "endereco" - Localização da clínica\n\n' +
-      '**Precisa de atendimento humano?**\n' +
-      `Ligue: ${process.env.CLINIC_PHONE || '(11) 9999-9999'}`
+        'Obrigado por entrar em contato!\n\n' +
+        'Para um atendimento mais rápido, digite:\n' +
+        '• "ajuda" - Ver comandos disponíveis\n' +
+        '• "horario" - Horário de funcionamento\n' +
+        '• "endereco" - Localização da clínica\n\n' +
+        '**Precisa de atendimento humano?**\n' +
+        `Ligue: ${process.env.CLINIC_PHONE || '(11) 9999-9999'}`,
     );
   }
 
@@ -813,7 +832,7 @@ export class WhatsAppWebhookProcessor {
    */
   private async processTemplateStatusUpdate(statusUpdate: any): Promise<void> {
     logger.info('WhatsApp template status update received', statusUpdate);
-    
+
     // Template status updates can be used for monitoring
     // Log the status for administrative purposes
   }
@@ -822,8 +841,11 @@ export class WhatsAppWebhookProcessor {
 // Export configured instances
 export const whatsappAPI = new WhatsAppBusinessAPI(
   process.env.WHATSAPP_PHONE_NUMBER_ID || '',
-  process.env.WHATSAPP_ACCESS_TOKEN || ''
+  process.env.WHATSAPP_ACCESS_TOKEN || '',
 );
 
 export const whatsappTemplateManager = new WhatsAppTemplateManager(whatsappAPI);
-export const whatsappWebhookProcessor = new WhatsAppWebhookProcessor(whatsappAPI, whatsappTemplateManager);
+export const whatsappWebhookProcessor = new WhatsAppWebhookProcessor(
+  whatsappAPI,
+  whatsappTemplateManager,
+);

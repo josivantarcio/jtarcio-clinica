@@ -28,9 +28,12 @@ export class EncryptionService {
   private masterKey: string;
 
   constructor() {
-    this.masterKey = process.env.MASTER_ENCRYPTION_KEY || this.generateMasterKey();
+    this.masterKey =
+      process.env.MASTER_ENCRYPTION_KEY || this.generateMasterKey();
     if (!process.env.MASTER_ENCRYPTION_KEY) {
-      logger.warn('No MASTER_ENCRYPTION_KEY found in environment, using generated key');
+      logger.warn(
+        'No MASTER_ENCRYPTION_KEY found in environment, using generated key',
+      );
     }
   }
 
@@ -91,7 +94,11 @@ export class EncryptionService {
   /**
    * Encrypt file
    */
-  async encryptFile(fileBuffer: Buffer, originalName: string, mimeType: string): Promise<EncryptedFile> {
+  async encryptFile(
+    fileBuffer: Buffer,
+    originalName: string,
+    mimeType: string,
+  ): Promise<EncryptedFile> {
     try {
       const salt = crypto.randomBytes(this.saltLength);
       const iv = crypto.randomBytes(this.ivLength);
@@ -151,20 +158,35 @@ export class EncryptionService {
    */
   async hashPassword(password: string): Promise<string> {
     const salt = crypto.randomBytes(16);
-    const hash = await this.pbkdf2(password, salt, this.iterations, 64, 'sha512');
+    const hash = await this.pbkdf2(
+      password,
+      salt,
+      this.iterations,
+      64,
+      'sha512',
+    );
     return `${salt.toString('hex')}:${hash.toString('hex')}`;
   }
 
   /**
    * Verify password against hash
    */
-  async verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
+  async verifyPassword(
+    password: string,
+    hashedPassword: string,
+  ): Promise<boolean> {
     try {
       const [saltHex, hashHex] = hashedPassword.split(':');
       const salt = Buffer.from(saltHex, 'hex');
       const hash = Buffer.from(hashHex, 'hex');
 
-      const computedHash = await this.pbkdf2(password, salt, this.iterations, 64, 'sha512');
+      const computedHash = await this.pbkdf2(
+        password,
+        salt,
+        this.iterations,
+        64,
+        'sha512',
+      );
       return crypto.timingSafeEqual(hash, computedHash);
     } catch (error) {
       logger.error('Password verification failed', { error });
@@ -192,8 +214,14 @@ export class EncryptionService {
    */
   verifyHMAC(data: string, hmac: string, secret?: string): boolean {
     const hmacSecret = secret || this.masterKey;
-    const computedHmac = crypto.createHmac('sha256', hmacSecret).update(data).digest('hex');
-    return crypto.timingSafeEqual(Buffer.from(hmac, 'hex'), Buffer.from(computedHmac, 'hex'));
+    const computedHmac = crypto
+      .createHmac('sha256', hmacSecret)
+      .update(data)
+      .digest('hex');
+    return crypto.timingSafeEqual(
+      Buffer.from(hmac, 'hex'),
+      Buffer.from(computedHmac, 'hex'),
+    );
   }
 
   /**
@@ -231,7 +259,10 @@ export class EncryptionService {
     decipher.setAuthTag(authTag);
     decipher.setAAD(Buffer.from(aad));
 
-    return decipher.update(data.encryptedData, 'hex', 'utf8') + decipher.final('utf8');
+    return (
+      decipher.update(data.encryptedData, 'hex', 'utf8') +
+      decipher.final('utf8')
+    );
   }
 
   /**
@@ -239,22 +270,42 @@ export class EncryptionService {
    */
   private async deriveKey(masterKey: string, salt: Buffer): Promise<Buffer> {
     return new Promise((resolve, reject) => {
-      crypto.pbkdf2(masterKey, salt, this.iterations, this.keyLength, 'sha256', (err, derivedKey) => {
-        if (err) reject(err);
-        else resolve(derivedKey);
-      });
+      crypto.pbkdf2(
+        masterKey,
+        salt,
+        this.iterations,
+        this.keyLength,
+        'sha256',
+        (err, derivedKey) => {
+          if (err) reject(err);
+          else resolve(derivedKey);
+        },
+      );
     });
   }
 
   /**
    * PBKDF2 promise wrapper
    */
-  private async pbkdf2(password: string, salt: Buffer, iterations: number, keylen: number, digest: string): Promise<Buffer> {
+  private async pbkdf2(
+    password: string,
+    salt: Buffer,
+    iterations: number,
+    keylen: number,
+    digest: string,
+  ): Promise<Buffer> {
     return new Promise((resolve, reject) => {
-      crypto.pbkdf2(password, salt, iterations, keylen, digest, (err, derivedKey) => {
-        if (err) reject(err);
-        else resolve(derivedKey);
-      });
+      crypto.pbkdf2(
+        password,
+        salt,
+        iterations,
+        keylen,
+        digest,
+        (err, derivedKey) => {
+          if (err) reject(err);
+          else resolve(derivedKey);
+        },
+      );
     });
   }
 

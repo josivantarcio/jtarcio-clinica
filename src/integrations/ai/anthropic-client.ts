@@ -61,16 +61,19 @@ export class AnthropicClient {
   private async checkRateLimit(userId: string): Promise<boolean> {
     const key = `rate_limit:anthropic:${userId}`;
     const current = await this.redis.incr(key);
-    
+
     if (current === 1) {
       await this.redis.expire(key, this.config.rateLimitWindow / 1000);
     }
-    
+
     if (current > this.config.rateLimitMax) {
-      logger.warn(`Rate limit exceeded for user ${userId}`, { current, limit: this.config.rateLimitMax });
+      logger.warn(`Rate limit exceeded for user ${userId}`, {
+        current,
+        limit: this.config.rateLimitMax,
+      });
       return false;
     }
-    
+
     return true;
   }
 
@@ -80,7 +83,7 @@ export class AnthropicClient {
   private async withRetry<T>(
     operation: () => Promise<T>,
     maxRetries: number = this.config.maxRetries,
-    baseDelay: number = 1000
+    baseDelay: number = 1000,
   ): Promise<T> {
     let lastError: Error;
 
@@ -89,7 +92,7 @@ export class AnthropicClient {
         return await operation();
       } catch (error) {
         lastError = error as Error;
-        
+
         if (attempt === maxRetries) {
           break;
         }
@@ -102,9 +105,9 @@ export class AnthropicClient {
         const delay = baseDelay * Math.pow(2, attempt) + Math.random() * 1000;
         logger.warn(`API call failed, retrying in ${delay}ms`, {
           attempt: attempt + 1,
-          error: error instanceof Error ? error.message : 'Unknown error'
+          error: error instanceof Error ? error.message : 'Unknown error',
         });
-        
+
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
@@ -122,7 +125,7 @@ export class AnthropicClient {
       maxTokens?: number;
       temperature?: number;
       system?: string;
-    } = {}
+    } = {},
   ): Promise<string> {
     // Check rate limit
     const canProceed = await this.checkRateLimit(userId);
@@ -133,7 +136,7 @@ export class AnthropicClient {
     const {
       maxTokens = 1000,
       temperature = 0.7,
-      system = 'Você é um assistente médico especializado em agendamento de consultas.'
+      system = 'Você é um assistente médico especializado em agendamento de consultas.',
     } = options;
 
     return await this.withRetry(async () => {
@@ -145,8 +148,8 @@ export class AnthropicClient {
           system,
           messages: messages.map(msg => ({
             role: msg.role === 'system' ? 'user' : msg.role, // Claude doesn't support system in messages array
-            content: msg.content
-          }))
+            content: msg.content,
+          })),
         });
 
         if (response.content[0].type === 'text') {
@@ -155,7 +158,7 @@ export class AnthropicClient {
             userId,
             inputTokens: response.usage.input_tokens,
             outputTokens: response.usage.output_tokens,
-            model: response.model
+            model: response.model,
           });
 
           return response.content[0].text;
@@ -165,7 +168,7 @@ export class AnthropicClient {
       } catch (error) {
         logger.error('Claude API error', {
           userId,
-          error: error instanceof Error ? error.message : 'Unknown error'
+          error: error instanceof Error ? error.message : 'Unknown error',
         });
         throw error;
       }
@@ -182,7 +185,7 @@ export class AnthropicClient {
       maxTokens?: number;
       temperature?: number;
       system?: string;
-    } = {}
+    } = {},
   ): AsyncGenerator<StreamingResponse, void, unknown> {
     // Check rate limit
     const canProceed = await this.checkRateLimit(userId);
@@ -193,7 +196,7 @@ export class AnthropicClient {
     const {
       maxTokens = 1000,
       temperature = 0.7,
-      system = 'Você é um assistente médico especializado em agendamento de consultas.'
+      system = 'Você é um assistente médico especializado em agendamento de consultas.',
     } = options;
 
     let fullContent = '';
@@ -208,9 +211,9 @@ export class AnthropicClient {
         system,
         messages: messages.map(msg => ({
           role: msg.role === 'system' ? 'user' : msg.role,
-          content: msg.content
+          content: msg.content,
         })),
-        stream: true
+        stream: true,
       });
 
       for await (const event of stream) {
@@ -220,10 +223,10 @@ export class AnthropicClient {
           if (event.delta.type === 'text_delta') {
             const deltaText = event.delta.text;
             fullContent += deltaText;
-            
+
             yield {
               content: deltaText,
-              isComplete: false
+              isComplete: false,
             };
           }
         } else if (event.type === 'message_delta') {
@@ -235,8 +238,8 @@ export class AnthropicClient {
             isComplete: true,
             usage: {
               inputTokens,
-              outputTokens
-            }
+              outputTokens,
+            },
           };
 
           // Log usage
@@ -244,14 +247,14 @@ export class AnthropicClient {
             userId,
             inputTokens,
             outputTokens,
-            totalContent: fullContent.length
+            totalContent: fullContent.length,
           });
         }
       }
     } catch (error) {
       logger.error('Claude streaming API error', {
         userId,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
       throw error;
     }
@@ -266,7 +269,9 @@ export class AnthropicClient {
     // This would typically call an embedding service like OpenAI's embeddings
     // or use ChromaDB's built-in embedding models
     // For now, we'll throw an error to indicate this needs to be implemented
-    throw new Error('Embedding generation should be handled by ChromaDB service');
+    throw new Error(
+      'Embedding generation should be handled by ChromaDB service',
+    );
   }
 
   /**
@@ -275,19 +280,20 @@ export class AnthropicClient {
   async healthCheck(): Promise<boolean> {
     try {
       const response = await this.withRetry(
-        async () => await this.client.messages.create({
-          model: 'claude-3-sonnet-20240229',
-          max_tokens: 10,
-          messages: [{ role: 'user', content: 'Hello' }]
-        }),
+        async () =>
+          await this.client.messages.create({
+            model: 'claude-3-sonnet-20240229',
+            max_tokens: 10,
+            messages: [{ role: 'user', content: 'Hello' }],
+          }),
         1, // Only try once for health check
-        500
+        500,
       );
 
       return response.content.length > 0;
     } catch (error) {
       logger.error('Anthropic health check failed', {
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
       return false;
     }
@@ -303,10 +309,13 @@ export class AnthropicClient {
     const key = `rate_limit:anthropic:${userId}`;
     const current = await this.redis.get(key);
     const requestsThisMinute = current ? parseInt(current, 10) : 0;
-    
+
     return {
       requestsThisMinute,
-      requestsRemaining: Math.max(0, this.config.rateLimitMax - requestsThisMinute)
+      requestsRemaining: Math.max(
+        0,
+        this.config.rateLimitMax - requestsThisMinute,
+      ),
     };
   }
 }

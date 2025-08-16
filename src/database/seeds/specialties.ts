@@ -3,68 +3,80 @@ import { PrismaClient } from '../generated/client';
 // Simple logger for seed
 const logger = {
   info: (msg: string) => console.log(`[INFO] ${msg}`),
-  error: (msg: string, err?: any) => console.error(`[ERROR] ${msg}`, err)
+  error: (msg: string, err?: any) => console.error(`[ERROR] ${msg}`, err),
 };
 
 const specialties = [
   {
     name: 'Clínica Geral',
-    description: 'Especialidade médica que aborda de forma integral e contínua os problemas de saúde mais prevalentes.',
+    description:
+      'Especialidade médica que aborda de forma integral e contínua os problemas de saúde mais prevalentes.',
     duration: 30,
   },
   {
     name: 'Cardiologia',
-    description: 'Especialidade médica que se ocupa do diagnóstico e tratamento das doenças que acometem o coração.',
+    description:
+      'Especialidade médica que se ocupa do diagnóstico e tratamento das doenças que acometem o coração.',
     duration: 45,
   },
   {
     name: 'Dermatologia',
-    description: 'Especialidade médica que se ocupa do diagnóstico, prevenção e tratamento de doenças da pele.',
+    description:
+      'Especialidade médica que se ocupa do diagnóstico, prevenção e tratamento de doenças da pele.',
     duration: 30,
   },
   {
     name: 'Ginecologia',
-    description: 'Especialidade médica que trata de doenças do sistema reprodutor feminino.',
+    description:
+      'Especialidade médica que trata de doenças do sistema reprodutor feminino.',
     duration: 45,
   },
   {
     name: 'Pediatria',
-    description: 'Especialidade médica dedicada à assistência à criança e ao adolescente.',
+    description:
+      'Especialidade médica dedicada à assistência à criança e ao adolescente.',
     duration: 30,
   },
   {
     name: 'Ortopedia',
-    description: 'Especialidade médica que se concentra no diagnóstico, tratamento e prevenção de doenças do aparelho locomotor.',
+    description:
+      'Especialidade médica que se concentra no diagnóstico, tratamento e prevenção de doenças do aparelho locomotor.',
     duration: 45,
   },
   {
     name: 'Oftalmologia',
-    description: 'Especialidade médica que estuda e trata as doenças relacionadas aos olhos.',
+    description:
+      'Especialidade médica que estuda e trata as doenças relacionadas aos olhos.',
     duration: 30,
   },
   {
     name: 'Neurologia',
-    description: 'Especialidade médica que trata dos distúrbios estruturais do sistema nervoso.',
+    description:
+      'Especialidade médica que trata dos distúrbios estruturais do sistema nervoso.',
     duration: 60,
   },
   {
     name: 'Psiquiatria',
-    description: 'Especialidade médica que lida com a prevenção, diagnóstico e tratamento de transtornos mentais.',
+    description:
+      'Especialidade médica que lida com a prevenção, diagnóstico e tratamento de transtornos mentais.',
     duration: 50,
   },
   {
     name: 'Endocrinologia',
-    description: 'Especialidade médica que estuda as ordens e desordens relacionadas aos hormônios.',
+    description:
+      'Especialidade médica que estuda as ordens e desordens relacionadas aos hormônios.',
     duration: 45,
   },
   {
     name: 'Urologia',
-    description: 'Especialidade médica que trata do trato urinário de homens e mulheres e do sistema reprodutor masculino.',
+    description:
+      'Especialidade médica que trata do trato urinário de homens e mulheres e do sistema reprodutor masculino.',
     duration: 30,
   },
   {
     name: 'Otorrinolaringologia',
-    description: 'Especialidade médica que cuida dos distúrbios do ouvido, nariz, seios paranasais, faringe e laringe.',
+    description:
+      'Especialidade médica que cuida dos distúrbios do ouvido, nariz, seios paranasais, faringe e laringe.',
     duration: 30,
   },
 ];

@@ -1,6 +1,6 @@
 /**
  * AI Integration Module Index
- * 
+ *
  * This module exports all the AI integration components for the medical clinic system.
  * It provides a comprehensive conversational AI system with Claude Sonnet 4 integration,
  * NLP processing, vector embeddings, and medical knowledge management.
@@ -8,35 +8,42 @@
 
 // Core AI clients and services
 export { AnthropicClient } from './anthropic-client.js';
-export type { ConversationMessage, StreamingResponse } from './anthropic-client.js';
+export type {
+  ConversationMessage,
+  StreamingResponse,
+} from './anthropic-client.js';
 
 export { NLPPipeline, Intent } from './nlp-pipeline.js';
 export type { ExtractedEntities, NLPResult } from './nlp-pipeline.js';
 
 export { default as ChromaDBClient } from './chromadb-client.js';
-export type { DocumentMetadata, SearchResult, EmbeddingStats } from './chromadb-client.js';
+export type {
+  DocumentMetadata,
+  SearchResult,
+  EmbeddingStats,
+} from './chromadb-client.js';
 
 // Conversation management
 export { default as ConversationContextManager } from './conversation-context.js';
-export type { 
-  ConversationContext, 
-  SlotValue, 
-  SlotMap 
+export type {
+  ConversationContext,
+  SlotValue,
+  SlotMap,
 } from './conversation-context.js';
 
 export { ConversationManager } from './conversation-manager.js';
-export type { 
-  ConversationResponse, 
-  StreamingConversationResponse 
+export type {
+  ConversationResponse,
+  StreamingConversationResponse,
 } from './conversation-manager.js';
 
 // Knowledge base and templates
 export { default as MedicalKnowledgeBase } from './knowledge-base.js';
-export type { 
-  MedicalSpecialty, 
-  FAQEntry, 
+export type {
+  MedicalSpecialty,
+  FAQEntry,
   EmergencyProtocol,
-  ClinicPolicy 
+  ClinicPolicy,
 } from './knowledge-base.js';
 
 export { default as PromptTemplateManager } from './prompt-templates.js';
@@ -44,10 +51,10 @@ export type { PromptTemplate, PromptVariables } from './prompt-templates.js';
 
 // Conversation flows
 export { default as ConversationFlowHandler } from './conversation-flows.js';
-export type { 
-  FlowResult, 
-  AppointmentData, 
-  AppointmentSlot 
+export type {
+  FlowResult,
+  AppointmentData,
+  AppointmentSlot,
 } from './conversation-flows.js';
 
 // Main AI service factory
@@ -77,7 +84,10 @@ export class AIServiceFactory {
   /**
    * Initialize all AI services
    */
-  async initialize(prisma: PrismaClient, redis: Redis): Promise<ConversationManager> {
+  async initialize(
+    prisma: PrismaClient,
+    redis: Redis,
+  ): Promise<ConversationManager> {
     if (this.initialized && this.conversationManager) {
       return this.conversationManager;
     }
@@ -89,12 +99,12 @@ export class AIServiceFactory {
       await this.conversationManager.initialize();
 
       this.initialized = true;
-      
+
       logger.info('AI services initialized successfully');
       return this.conversationManager;
     } catch (error) {
       logger.error('Failed to initialize AI services', {
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
       throw error;
     }
@@ -124,14 +134,14 @@ export class AIServiceFactory {
       services: {
         conversationManager: false,
         anthropic: false,
-        chromadb: false
+        chromadb: false,
       },
-      overall: false
+      overall: false,
     };
 
     if (this.conversationManager) {
       result.services.conversationManager = true;
-      
+
       try {
         const health = await this.conversationManager.healthCheck();
         result.services.anthropic = health.anthropic;
@@ -141,10 +151,11 @@ export class AIServiceFactory {
       }
     }
 
-    result.overall = result.initialized && 
-                    result.services.conversationManager && 
-                    result.services.anthropic && 
-                    result.services.chromadb;
+    result.overall =
+      result.initialized &&
+      result.services.conversationManager &&
+      result.services.anthropic &&
+      result.services.chromadb;
 
     return result;
   }
@@ -154,10 +165,10 @@ export class AIServiceFactory {
    */
   async shutdown(): Promise<void> {
     logger.info('Shutting down AI services...');
-    
+
     this.conversationManager = null;
     this.initialized = false;
-    
+
     logger.info('AI services shutdown complete');
   }
 }
@@ -173,23 +184,23 @@ export const AIUtils = {
     if (!message || message.trim().length === 0) {
       return { valid: false, error: 'Message cannot be empty' };
     }
-    
+
     if (message.length > 2000) {
       return { valid: false, error: 'Message too long (max 2000 characters)' };
     }
-    
+
     // Basic profanity/spam detection
     const suspiciousPatterns = [
       /(.)\1{10,}/g, // Repeated characters
       /https?:\/\/[^\s]+/g, // URLs (might be spam)
     ];
-    
+
     for (const pattern of suspiciousPatterns) {
       if (pattern.test(message)) {
         return { valid: false, error: 'Message contains suspicious content' };
       }
     }
-    
+
     return { valid: true };
   },
 
@@ -209,9 +220,9 @@ export const AIUtils = {
         confidence: response.confidence,
         isCompleted: response.isCompleted,
         requiresInput: response.requiresInput,
-        data: response.data
+        data: response.data,
       },
-      suggestions: response.nextSteps
+      suggestions: response.nextSteps,
     };
   },
 
@@ -220,29 +231,41 @@ export const AIUtils = {
    */
   quickIntentDetection(message: string): Intent {
     const lowerMessage = message.toLowerCase();
-    
-    if (lowerMessage.includes('emergência') || lowerMessage.includes('urgente')) {
+
+    if (
+      lowerMessage.includes('emergência') ||
+      lowerMessage.includes('urgente')
+    ) {
       return Intent.EMERGENCIA;
     }
-    
+
     if (lowerMessage.includes('agendar') || lowerMessage.includes('marcar')) {
       return Intent.AGENDAR_CONSULTA;
     }
-    
-    if (lowerMessage.includes('cancelar') || lowerMessage.includes('desmarcar')) {
+
+    if (
+      lowerMessage.includes('cancelar') ||
+      lowerMessage.includes('desmarcar')
+    ) {
       return Intent.CANCELAR_CONSULTA;
     }
-    
-    if (lowerMessage.includes('reagendar') || lowerMessage.includes('remarcar')) {
+
+    if (
+      lowerMessage.includes('reagendar') ||
+      lowerMessage.includes('remarcar')
+    ) {
       return Intent.REAGENDAR_CONSULTA;
     }
-    
-    if (lowerMessage.includes('consultar') || lowerMessage.includes('verificar')) {
+
+    if (
+      lowerMessage.includes('consultar') ||
+      lowerMessage.includes('verificar')
+    ) {
       return Intent.CONSULTAR_AGENDAMENTO;
     }
-    
+
     return Intent.INFORMACOES_GERAIS;
-  }
+  },
 };
 
 /**
@@ -255,7 +278,7 @@ export const AI_CONSTANTS = {
   RATE_LIMITS: {
     MESSAGES_PER_MINUTE: 30,
     STREAMING_PER_MINUTE: 20,
-    BATCH_PER_5_MINUTES: 5
+    BATCH_PER_5_MINUTES: 5,
   },
   INTENTS: {
     [Intent.AGENDAR_CONSULTA]: 'Agendamento de consulta',
@@ -264,8 +287,8 @@ export const AI_CONSTANTS = {
     [Intent.CONSULTAR_AGENDAMENTO]: 'Consulta de agendamentos',
     [Intent.EMERGENCIA]: 'Situação de emergência',
     [Intent.INFORMACOES_GERAIS]: 'Informações gerais',
-    [Intent.UNKNOWN]: 'Intenção não identificada'
-  }
+    [Intent.UNKNOWN]: 'Intenção não identificada',
+  },
 };
 
 // Re-export the Intent enum for convenience

@@ -16,7 +16,7 @@ const fastify = Fastify({
 // Graceful shutdown handler
 const gracefulShutdown = async (signal: string): Promise<void> => {
   logger.info(`Received ${signal}. Starting graceful shutdown...`);
-  
+
   try {
     await fastify.close();
     logger.info('HTTP server closed.');
@@ -32,7 +32,7 @@ process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 // Handle uncaught exceptions
-process.on('uncaughtException', (error) => {
+process.on('uncaughtException', error => {
   logger.error('Uncaught Exception:', error);
   process.exit(1);
 });
@@ -48,16 +48,16 @@ const start = async (): Promise<void> => {
     // Connect to external services
     await connectDatabase();
     await connectRedis();
-    
+
     // Register plugins
     await registerPlugins(fastify);
-    
+
     // Register custom HTTP logger
     fastify.addHook('onRequest', httpLogger);
-    
+
     // Register routes
     await registerRoutes(fastify);
-    
+
     // Health check endpoint
     fastify.get('/health', async (request, reply) => {
       return {
@@ -67,17 +67,18 @@ const start = async (): Promise<void> => {
         environment: env.NODE_ENV,
       };
     });
-    
+
     // Start server
     const address = await fastify.listen({
       port: env.PORT,
       host: '0.0.0.0',
     });
-    
+
     logger.info(`[SUCCESS] Server running at ${address}`);
     logger.info(`[INFO] API Documentation: ${address}/documentation`);
-    logger.info(`[SUCCESS] EO Clinica System - Sector 1 initialized successfully`);
-    
+    logger.info(
+      `[SUCCESS] EO Clinica System - Sector 1 initialized successfully`,
+    );
   } catch (error) {
     logger.error('Failed to start server:', error);
     process.exit(1);
@@ -85,7 +86,7 @@ const start = async (): Promise<void> => {
 };
 
 // Start the application
-start().catch((error) => {
+start().catch(error => {
   logger.error('Failed to start application:', error);
   process.exit(1);
 });

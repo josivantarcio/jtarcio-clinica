@@ -7,15 +7,15 @@ import {
   ResolutionStrategy,
   AppointmentBooking,
   ConflictType,
-  ConflictSeverity
+  ConflictSeverity,
 } from '@/types/scheduling';
 import { AppointmentType, AppointmentStatus } from '@/types/appointment';
-import { 
-  BusinessRules, 
-  EMERGENCY_RULES, 
+import {
+  BusinessRules,
+  EMERGENCY_RULES,
   SPECIALTY_CONFIG,
   TIME_CONSTRAINTS,
-  PatientClassification 
+  PatientClassification,
 } from '@/config/business-rules';
 import { PrismaClient } from '../../database/generated/client';
 import {
@@ -28,7 +28,7 @@ import {
   isAfter,
   startOfDay,
   endOfDay,
-  isWithinInterval
+  isWithinInterval,
 } from 'date-fns';
 import { Logger } from 'winston';
 import Redis from 'ioredis';
@@ -101,40 +101,55 @@ export class EmergencyHandlerService {
       canBumpLowerPriority: true,
       canExtendHours: false,
       canUseAlternateDoctor: true,
-      maxDelayMinutes: 30
-    }
+      maxDelayMinutes: 30,
+    },
   ): Promise<EmergencyBookingResult> {
     const { prisma, redis, logger } = this.deps;
 
     try {
-      logger.info('Processing emergency appointment request', { 
+      logger.info('Processing emergency appointment request', {
         patientId: criteria.patientId,
         urgencyLevel: assessment.urgencyLevel,
-        medicalPriority: assessment.medicalPriority
+        medicalPriority: assessment.medicalPriority,
       });
 
       // Validate emergency assessment
       await this.validateEmergencyAssessment(assessment);
 
       // Check emergency capacity status
-      const capacityStatus = await this.checkEmergencyCapacity(criteria.specialtyId);
+      const capacityStatus = await this.checkEmergencyCapacity(
+        criteria.specialtyId,
+      );
 
       // Find immediate slots
-      let availableSlots = await this.findEmergencySlots(criteria, assessment, options);
+      let availableSlots = await this.findEmergencySlots(
+        criteria,
+        assessment,
+        options,
+      );
 
       // If no immediate slots, try conflict resolution
       if (availableSlots.length === 0 && options.canBumpLowerPriority) {
-        availableSlots = await this.createEmergencySlotsByBumping(criteria, assessment);
+        availableSlots = await this.createEmergencySlotsByBumping(
+          criteria,
+          assessment,
+        );
       }
 
       // If still no slots, try extending hours or using alternate doctors
       if (availableSlots.length === 0) {
         if (options.canExtendHours) {
-          availableSlots = await this.createExtendedHoursSlots(criteria, assessment);
+          availableSlots = await this.createExtendedHoursSlots(
+            criteria,
+            assessment,
+          );
         }
-        
+
         if (availableSlots.length === 0 && options.canUseAlternateDoctor) {
-          availableSlots = await this.findAlternateDoctorSlots(criteria, assessment);
+          availableSlots = await this.findAlternateDoctorSlots(
+            criteria,
+            assessment,
+          );
         }
       }
 
@@ -144,7 +159,10 @@ export class EmergencyHandlerService {
       }
 
       // Select the best emergency slot
-      const bestSlot = this.selectOptimalEmergencySlot(availableSlots, assessment);
+      const bestSlot = this.selectOptimalEmergencySlot(
+        availableSlots,
+        assessment,
+      );
 
       if (!bestSlot) {
         return {
@@ -153,12 +171,18 @@ export class EmergencyHandlerService {
           conflictsResolved: [],
           bumped: [],
           alternativesOffered: availableSlots,
-          estimatedWaitTime: await this.estimateEmergencyWaitTime(criteria.specialtyId)
+          estimatedWaitTime: await this.estimateEmergencyWaitTime(
+            criteria.specialtyId,
+          ),
         };
       }
 
       // Execute emergency booking
-      const bookingResult = await this.executeEmergencyBooking(criteria, bestSlot, assessment);
+      const bookingResult = await this.executeEmergencyBooking(
+        criteria,
+        bestSlot,
+        assessment,
+      );
 
       // Update emergency capacity tracking
       await this.updateEmergencyCapacity(criteria.specialtyId, bestSlot);
@@ -169,11 +193,10 @@ export class EmergencyHandlerService {
       logger.info('Emergency appointment successfully handled', {
         appointmentId: bookingResult.appointmentId,
         slotTime: format(bestSlot.startTime, 'PPP p'),
-        conflictsResolved: bookingResult.conflictsResolved.length
+        conflictsResolved: bookingResult.conflictsResolved.length,
       });
 
       return bookingResult;
-
     } catch (error) {
       logger.error('Error handling emergency request', { error, criteria });
       throw error;
@@ -183,7 +206,9 @@ export class EmergencyHandlerService {
   /**
    * Get current emergency capacity status
    */
-  async getEmergencyCapacityStatus(specialtyId?: string): Promise<EmergencyCapacityStatus> {
+  async getEmergencyCapacityStatus(
+    specialtyId?: string,
+  ): Promise<EmergencyCapacityStatus> {
     const { prisma, redis, logger } = this.deps;
 
     try {
@@ -196,29 +221,37 @@ export class EmergencyHandlerService {
         where: {
           scheduledAt: {
             gte: startOfToday,
-            lte: endOfToday
+            lte: endOfToday,
           },
           type: AppointmentType.EMERGENCY,
           status: {
-            in: [AppointmentStatus.SCHEDULED, AppointmentStatus.CONFIRMED, AppointmentStatus.IN_PROGRESS]
+            in: [
+              AppointmentStatus.SCHEDULED,
+              AppointmentStatus.CONFIRMED,
+              AppointmentStatus.IN_PROGRESS,
+            ],
           },
-          ...(specialtyId && { specialtyId })
-        }
+          ...(specialtyId && { specialtyId }),
+        },
       });
 
       const emergencySlotsUsed = emergencyAppointments.length;
       const maxEmergencySlots = EMERGENCY_RULES.MAX_DAILY_EMERGENCY_SLOTS;
-      const emergencySlotsAvailable = Math.max(0, maxEmergencySlots - emergencySlotsUsed);
+      const emergencySlotsAvailable = Math.max(
+        0,
+        maxEmergencySlots - emergencySlotsUsed,
+      );
       const overCapacity = emergencySlotsUsed > maxEmergencySlots;
 
       // Find next available emergency slot
-      const nextAvailableSlot = await this.findNextAvailableEmergencySlot(specialtyId);
+      const nextAvailableSlot =
+        await this.findNextAvailableEmergencySlot(specialtyId);
 
       // Generate recommendations
       const recommendations = this.generateCapacityRecommendations(
         emergencySlotsUsed,
         maxEmergencySlots,
-        overCapacity
+        overCapacity,
       );
 
       return {
@@ -226,11 +259,13 @@ export class EmergencyHandlerService {
         emergencySlotsUsed,
         nextAvailableEmergencySlot: nextAvailableSlot?.startTime,
         overCapacity,
-        recommendedActions: recommendations
+        recommendedActions: recommendations,
       };
-
     } catch (error) {
-      logger.error('Error getting emergency capacity status', { error, specialtyId });
+      logger.error('Error getting emergency capacity status', {
+        error,
+        specialtyId,
+      });
       throw error;
     }
   }
@@ -242,7 +277,7 @@ export class EmergencyHandlerService {
     symptoms: string,
     painLevel: number,
     vitalSigns?: any,
-    patientHistory?: any
+    patientHistory?: any,
   ): Promise<EmergencyAssessment> {
     const { logger } = this.deps;
 
@@ -251,7 +286,8 @@ export class EmergencyHandlerService {
 
       // Basic triage algorithm (in production, this could use AI/ML)
       let urgencyLevel = 5; // base level
-      let medicalPriority: EmergencyAssessment['medicalPriority'] = 'NON_URGENT';
+      let medicalPriority: EmergencyAssessment['medicalPriority'] =
+        'NON_URGENT';
       let requiredResponseTime = 240; // 4 hours default
       let canWait = true;
       let requiresSpecificDoctor = false;
@@ -271,13 +307,22 @@ export class EmergencyHandlerService {
 
       // Symptom-based assessment
       const criticalSymptoms = [
-        'chest pain', 'difficulty breathing', 'severe bleeding', 'unconscious',
-        'stroke symptoms', 'heart attack', 'severe allergic reaction'
+        'chest pain',
+        'difficulty breathing',
+        'severe bleeding',
+        'unconscious',
+        'stroke symptoms',
+        'heart attack',
+        'severe allergic reaction',
       ];
 
       const urgentSymptoms = [
-        'high fever', 'severe abdominal pain', 'head injury', 'broken bone',
-        'severe nausea', 'difficulty swallowing'
+        'high fever',
+        'severe abdominal pain',
+        'head injury',
+        'broken bone',
+        'severe nausea',
+        'difficulty swallowing',
       ];
 
       const symptomsLower = symptoms.toLowerCase();
@@ -288,7 +333,9 @@ export class EmergencyHandlerService {
         requiredResponseTime = 15; // 15 minutes
         canWait = false;
         requiresSpecificDoctor = true;
-      } else if (urgentSymptoms.some(symptom => symptomsLower.includes(symptom))) {
+      } else if (
+        urgentSymptoms.some(symptom => symptomsLower.includes(symptom))
+      ) {
         urgencyLevel += 2;
         medicalPriority = 'URGENT';
         requiredResponseTime = 60;
@@ -325,13 +372,12 @@ export class EmergencyHandlerService {
         canWait,
         requiresSpecificDoctor,
         requiresSpecialEquipment,
-        triageNotes: `Symptoms: ${symptoms}, Pain Level: ${painLevel}/10, Priority: ${medicalPriority}`
+        triageNotes: `Symptoms: ${symptoms}, Pain Level: ${painLevel}/10, Priority: ${medicalPriority}`,
       };
 
       logger.info('Triage assessment completed', { assessment });
 
       return assessment;
-
     } catch (error) {
       logger.error('Error in triage assessment', { error });
       throw error;
@@ -361,19 +407,22 @@ export class EmergencyHandlerService {
           type: AppointmentType.EMERGENCY,
           status: AppointmentStatus.SCHEDULED,
           scheduledAt: {
-            lte: addMinutes(new Date(), 30) // Due within 30 minutes
-          }
+            lte: addMinutes(new Date(), 30), // Due within 30 minutes
+          },
         },
         include: {
           patient: { include: { user: true } },
           doctor: { include: { user: true } },
-          specialty: true
-        }
+          specialty: true,
+        },
       });
 
       for (const appointment of pendingEmergencies) {
-        const timeTilAppointment = differenceInMinutes(appointment.scheduledAt, new Date());
-        
+        const timeTilAppointment = differenceInMinutes(
+          appointment.scheduledAt,
+          new Date(),
+        );
+
         // Escalate if appointment is overdue or critically late
         if (timeTilAppointment < 0) {
           await this.escalateOverdueEmergency(appointment);
@@ -387,22 +436,23 @@ export class EmergencyHandlerService {
 
       // Check for capacity issues and reassign if needed
       const capacityIssues = await this.checkForCapacityIssues();
-      
+
       for (const issue of capacityIssues) {
-        const reassignResult = await this.attemptEmergencyReassignment(issue.appointmentId);
+        const reassignResult = await this.attemptEmergencyReassignment(
+          issue.appointmentId,
+        );
         if (reassignResult.success) {
           reassigned++;
         }
       }
 
-      logger.info('Emergency queue monitoring completed', { 
-        escalated, 
-        reassigned, 
-        notifications 
+      logger.info('Emergency queue monitoring completed', {
+        escalated,
+        reassigned,
+        notifications,
       });
 
       return { escalated, reassigned, notifications };
-
     } catch (error) {
       logger.error('Error monitoring emergency queue', { error });
       throw error;
@@ -411,7 +461,9 @@ export class EmergencyHandlerService {
 
   // Private helper methods
 
-  private async validateEmergencyAssessment(assessment: EmergencyAssessment): Promise<void> {
+  private async validateEmergencyAssessment(
+    assessment: EmergencyAssessment,
+  ): Promise<void> {
     if (assessment.urgencyLevel < 1 || assessment.urgencyLevel > 10) {
       throw new Error('Invalid urgency level. Must be between 1 and 10.');
     }
@@ -421,42 +473,53 @@ export class EmergencyHandlerService {
     }
 
     // Life threatening cases must have urgency level >= 8
-    if (assessment.medicalPriority === 'LIFE_THREATENING' && assessment.urgencyLevel < 8) {
+    if (
+      assessment.medicalPriority === 'LIFE_THREATENING' &&
+      assessment.urgencyLevel < 8
+    ) {
       throw new Error('Life threatening cases must have urgency level >= 8.');
     }
   }
 
-  private async checkEmergencyCapacity(specialtyId: string): Promise<EmergencyCapacityStatus> {
+  private async checkEmergencyCapacity(
+    specialtyId: string,
+  ): Promise<EmergencyCapacityStatus> {
     return await this.getEmergencyCapacityStatus(specialtyId);
   }
 
   private async findEmergencySlots(
     criteria: SchedulingCriteria,
     assessment: EmergencyAssessment,
-    options: EmergencySlotOptions
+    options: EmergencySlotOptions,
   ): Promise<AvailableSlot[]> {
     const { prisma } = this.deps;
 
     // Look for immediate slots within the required response time
     const maxTime = addMinutes(new Date(), assessment.requiredResponseTime);
 
-    const doctors = criteria.doctorId 
-      ? [await prisma.doctor.findUniqueOrThrow({ 
-          where: { id: criteria.doctorId },
-          include: { availability: true }
-        })]
+    const doctors = criteria.doctorId
+      ? [
+          await prisma.doctor.findUniqueOrThrow({
+            where: { id: criteria.doctorId },
+            include: { availability: true },
+          }),
+        ]
       : await prisma.doctor.findMany({
-          where: { 
+          where: {
             specialtyId: criteria.specialtyId,
-            isActive: true
+            isActive: true,
           },
-          include: { availability: true }
+          include: { availability: true },
         });
 
     const slots: AvailableSlot[] = [];
 
     for (const doctor of doctors) {
-      const doctorSlots = await this.findDoctorEmergencySlots(doctor, maxTime, assessment);
+      const doctorSlots = await this.findDoctorEmergencySlots(
+        doctor,
+        maxTime,
+        assessment,
+      );
       slots.push(...doctorSlots);
     }
 
@@ -466,10 +529,10 @@ export class EmergencyHandlerService {
   private async findDoctorEmergencySlots(
     doctor: any,
     maxTime: Date,
-    assessment: EmergencyAssessment
+    assessment: EmergencyAssessment,
   ): Promise<AvailableSlot[]> {
     const { prisma } = this.deps;
-    
+
     const slots: AvailableSlot[] = [];
     const currentTime = new Date();
 
@@ -479,11 +542,15 @@ export class EmergencyHandlerService {
         doctorId: doctor.id,
         scheduledAt: { gte: currentTime },
         endTime: { lte: maxTime },
-        status: { 
-          in: [AppointmentStatus.SCHEDULED, AppointmentStatus.CONFIRMED, AppointmentStatus.IN_PROGRESS] 
-        }
+        status: {
+          in: [
+            AppointmentStatus.SCHEDULED,
+            AppointmentStatus.CONFIRMED,
+            AppointmentStatus.IN_PROGRESS,
+          ],
+        },
       },
-      orderBy: { scheduledAt: 'asc' }
+      orderBy: { scheduledAt: 'asc' },
     });
 
     // Look for gaps between appointments
@@ -493,7 +560,7 @@ export class EmergencyHandlerService {
       if (differenceInMinutes(appointment.scheduledAt, checkTime) >= 30) {
         // Found a gap
         const slotEnd = addMinutes(checkTime, 30);
-        
+
         slots.push({
           id: `emergency-${doctor.id}-${format(checkTime, 'yyyy-MM-dd-HH-mm')}`,
           doctorId: doctor.id,
@@ -505,8 +572,8 @@ export class EmergencyHandlerService {
           metadata: {
             slotType: 'EMERGENCY',
             utilizationScore: 1.0,
-            patientPreferenceMatch: 1.0
-          }
+            patientPreferenceMatch: 1.0,
+          },
         });
       }
 
@@ -514,9 +581,12 @@ export class EmergencyHandlerService {
     }
 
     // Check for slot at the end if there's time
-    if (isBefore(checkTime, maxTime) && differenceInMinutes(maxTime, checkTime) >= 30) {
+    if (
+      isBefore(checkTime, maxTime) &&
+      differenceInMinutes(maxTime, checkTime) >= 30
+    ) {
       const slotEnd = addMinutes(checkTime, 30);
-      
+
       slots.push({
         id: `emergency-${doctor.id}-${format(checkTime, 'yyyy-MM-dd-HH-mm')}`,
         doctorId: doctor.id,
@@ -528,8 +598,8 @@ export class EmergencyHandlerService {
         metadata: {
           slotType: 'EMERGENCY',
           utilizationScore: 1.0,
-          patientPreferenceMatch: 1.0
-        }
+          patientPreferenceMatch: 1.0,
+        },
       });
     }
 
@@ -538,7 +608,7 @@ export class EmergencyHandlerService {
 
   private async createEmergencySlotsByBumping(
     criteria: SchedulingCriteria,
-    assessment: EmergencyAssessment
+    assessment: EmergencyAssessment,
   ): Promise<AvailableSlot[]> {
     const { prisma, logger } = this.deps;
 
@@ -548,18 +618,20 @@ export class EmergencyHandlerService {
         where: {
           scheduledAt: {
             gte: new Date(),
-            lte: addMinutes(new Date(), assessment.requiredResponseTime)
+            lte: addMinutes(new Date(), assessment.requiredResponseTime),
           },
           type: { not: AppointmentType.EMERGENCY },
-          status: { in: [AppointmentStatus.SCHEDULED, AppointmentStatus.CONFIRMED] },
-          rescheduleCount: { lt: 2 } // Can still be rescheduled
+          status: {
+            in: [AppointmentStatus.SCHEDULED, AppointmentStatus.CONFIRMED],
+          },
+          rescheduleCount: { lt: 2 }, // Can still be rescheduled
         },
         include: {
           patient: { include: { user: true } },
           doctor: true,
-          specialty: true
+          specialty: true,
         },
-        orderBy: { scheduledAt: 'asc' }
+        orderBy: { scheduledAt: 'asc' },
       });
 
       const slots: AvailableSlot[] = [];
@@ -567,7 +639,7 @@ export class EmergencyHandlerService {
       for (const appointment of bumpableCandidates) {
         // Check if we can reschedule this appointment
         const canReschedule = await this.canRescheduleAppointment(appointment);
-        
+
         if (canReschedule) {
           slots.push({
             id: `bump-${appointment.id}`,
@@ -581,15 +653,16 @@ export class EmergencyHandlerService {
               slotType: 'EMERGENCY',
               utilizationScore: 1.0,
               patientPreferenceMatch: 1.0,
-              originalAppointmentId: appointment.id
-            }
+              originalAppointmentId: appointment.id,
+            },
           });
         }
       }
 
-      logger.info(`Found ${slots.length} slots by bumping lower priority appointments`);
+      logger.info(
+        `Found ${slots.length} slots by bumping lower priority appointments`,
+      );
       return slots;
-
     } catch (error) {
       logger.error('Error creating emergency slots by bumping', { error });
       return [];
@@ -598,20 +671,20 @@ export class EmergencyHandlerService {
 
   private async createExtendedHoursSlots(
     criteria: SchedulingCriteria,
-    assessment: EmergencyAssessment
+    assessment: EmergencyAssessment,
   ): Promise<AvailableSlot[]> {
     // Create slots outside normal business hours for emergencies
     const slots: AvailableSlot[] = [];
-    
+
     // This would implement logic to extend hours for critical emergencies
     // For now, return empty array
-    
+
     return slots;
   }
 
   private async findAlternateDoctorSlots(
     criteria: SchedulingCriteria,
-    assessment: EmergencyAssessment
+    assessment: EmergencyAssessment,
   ): Promise<AvailableSlot[]> {
     const { prisma } = this.deps;
 
@@ -620,16 +693,20 @@ export class EmergencyHandlerService {
       where: {
         specialtyId: criteria.specialtyId,
         id: { not: criteria.doctorId },
-        isActive: true
+        isActive: true,
       },
-      include: { availability: true }
+      include: { availability: true },
     });
 
     const slots: AvailableSlot[] = [];
     const maxTime = addMinutes(new Date(), assessment.requiredResponseTime);
 
     for (const doctor of alternateDoctors) {
-      const doctorSlots = await this.findDoctorEmergencySlots(doctor, maxTime, assessment);
+      const doctorSlots = await this.findDoctorEmergencySlots(
+        doctor,
+        maxTime,
+        assessment,
+      );
       slots.push(...doctorSlots);
     }
 
@@ -638,18 +715,18 @@ export class EmergencyHandlerService {
 
   private async createOverbookedSlots(
     criteria: SchedulingCriteria,
-    assessment: EmergencyAssessment
+    assessment: EmergencyAssessment,
   ): Promise<AvailableSlot[]> {
     // Create overbooking slots for critical emergencies
     // This would implement intelligent overbooking logic
     const slots: AvailableSlot[] = [];
-    
+
     return slots;
   }
 
   private selectOptimalEmergencySlot(
     slots: AvailableSlot[],
-    assessment: EmergencyAssessment
+    assessment: EmergencyAssessment,
   ): AvailableSlot | null {
     if (slots.length === 0) return null;
 
@@ -661,8 +738,9 @@ export class EmergencyHandlerService {
     // For other cases, consider confidence score and optimality
     return slots.reduce((best, current) => {
       const bestScore = best.confidenceScore + (best.isOptimal ? 0.1 : 0);
-      const currentScore = current.confidenceScore + (current.isOptimal ? 0.1 : 0);
-      
+      const currentScore =
+        current.confidenceScore + (current.isOptimal ? 0.1 : 0);
+
       return currentScore > bestScore ? current : best;
     });
   }
@@ -670,7 +748,7 @@ export class EmergencyHandlerService {
   private async executeEmergencyBooking(
     criteria: SchedulingCriteria,
     slot: AvailableSlot,
-    assessment: EmergencyAssessment
+    assessment: EmergencyAssessment,
   ): Promise<EmergencyBookingResult> {
     const { prisma, logger } = this.deps;
 
@@ -681,13 +759,13 @@ export class EmergencyHandlerService {
       // Handle slot that requires bumping another appointment
       if (slot.metadata?.originalAppointmentId) {
         const originalAppointment = await prisma.appointment.findUnique({
-          where: { id: slot.metadata.originalAppointmentId }
+          where: { id: slot.metadata.originalAppointmentId },
         });
 
         if (originalAppointment) {
           // Find new slot for bumped appointment
           const newSlot = await this.findRescheduleSlot(originalAppointment);
-          
+
           if (newSlot) {
             // Reschedule the original appointment
             await prisma.appointment.update({
@@ -695,20 +773,20 @@ export class EmergencyHandlerService {
               data: {
                 scheduledAt: newSlot.startTime,
                 endTime: newSlot.endTime,
-                rescheduleCount: { increment: 1 }
-              }
+                rescheduleCount: { increment: 1 },
+              },
             });
 
             bumped.push({
               appointmentId: originalAppointment.id,
               newSlot,
-              notified: true
+              notified: true,
             });
           } else {
             // Add to high priority queue
             bumped.push({
               appointmentId: originalAppointment.id,
-              notified: true
+              notified: true,
             });
           }
         }
@@ -726,11 +804,13 @@ export class EmergencyHandlerService {
           type: AppointmentType.EMERGENCY,
           status: AppointmentStatus.CONFIRMED, // Emergency appointments are auto-confirmed
           reason: 'Emergency appointment',
-          notes: assessment.triageNotes
-        }
+          notes: assessment.triageNotes,
+        },
       });
 
-      logger.info('Emergency appointment created', { appointmentId: appointment.id });
+      logger.info('Emergency appointment created', {
+        appointmentId: appointment.id,
+      });
 
       return {
         success: true,
@@ -738,16 +818,17 @@ export class EmergencyHandlerService {
         slot,
         conflictsResolved,
         bumped,
-        estimatedWaitTime: differenceInMinutes(slot.startTime, new Date())
+        estimatedWaitTime: differenceInMinutes(slot.startTime, new Date()),
       };
-
     } catch (error) {
       logger.error('Error executing emergency booking', { error });
       throw error;
     }
   }
 
-  private async findNextAvailableEmergencySlot(specialtyId?: string): Promise<AvailableSlot | null> {
+  private async findNextAvailableEmergencySlot(
+    specialtyId?: string,
+  ): Promise<AvailableSlot | null> {
     // Implementation to find the next available emergency slot
     return null; // Placeholder
   }
@@ -755,16 +836,20 @@ export class EmergencyHandlerService {
   private generateCapacityRecommendations(
     used: number,
     max: number,
-    overCapacity: boolean
+    overCapacity: boolean,
   ): string[] {
     const recommendations: string[] = [];
 
     if (overCapacity) {
-      recommendations.push('Emergency capacity exceeded - consider extending hours');
+      recommendations.push(
+        'Emergency capacity exceeded - consider extending hours',
+      );
       recommendations.push('Alert additional doctors for emergency coverage');
       recommendations.push('Activate overflow protocols');
     } else if (used / max > 0.8) {
-      recommendations.push('Emergency capacity approaching limit - prepare overflow plans');
+      recommendations.push(
+        'Emergency capacity approaching limit - prepare overflow plans',
+      );
       recommendations.push('Consider alerting backup medical staff');
     }
 
@@ -775,84 +860,120 @@ export class EmergencyHandlerService {
     // Basic vital signs assessment
     if (vitalSigns.systolic > 180 || vitalSigns.systolic < 90) return true;
     if (vitalSigns.heartRate > 120 || vitalSigns.heartRate < 50) return true;
-    if (vitalSigns.temperature > 39.5 || vitalSigns.temperature < 35) return true;
+    if (vitalSigns.temperature > 39.5 || vitalSigns.temperature < 35)
+      return true;
     if (vitalSigns.oxygenSat < 90) return true;
-    
+
     return false;
   }
 
   private hasHighRiskConditions(patientHistory: any): boolean {
     const highRiskConditions = [
-      'heart disease', 'diabetes', 'cancer', 'kidney disease',
-      'respiratory disease', 'immunocompromised'
+      'heart disease',
+      'diabetes',
+      'cancer',
+      'kidney disease',
+      'respiratory disease',
+      'immunocompromised',
     ];
 
     return highRiskConditions.some(condition =>
-      patientHistory.conditions?.some((c: string) => 
-        c.toLowerCase().includes(condition)
-      )
+      patientHistory.conditions?.some((c: string) =>
+        c.toLowerCase().includes(condition),
+      ),
     );
   }
 
-  private requiresSpecialEquipment(symptoms: string, vitalSigns?: any): boolean {
+  private requiresSpecialEquipment(
+    symptoms: string,
+    vitalSigns?: any,
+  ): boolean {
     const equipmentRequiredSymptoms = [
-      'chest pain', 'heart attack', 'stroke', 'respiratory distress'
+      'chest pain',
+      'heart attack',
+      'stroke',
+      'respiratory distress',
     ];
 
     return equipmentRequiredSymptoms.some(symptom =>
-      symptoms.toLowerCase().includes(symptom)
+      symptoms.toLowerCase().includes(symptom),
     );
   }
 
-  private async updateEmergencyCapacity(specialtyId: string, slot: AvailableSlot): Promise<void> {
+  private async updateEmergencyCapacity(
+    specialtyId: string,
+    slot: AvailableSlot,
+  ): Promise<void> {
     const { redis } = this.deps;
-    
+
     // Update emergency capacity tracking in Redis
     const key = `emergency-capacity:${specialtyId}:${format(new Date(), 'yyyy-MM-dd')}`;
     await redis.incr(key);
     await redis.expire(key, 86400); // 24 hours
   }
 
-  private async sendEmergencyNotifications(result: EmergencyBookingResult): Promise<void> {
+  private async sendEmergencyNotifications(
+    result: EmergencyBookingResult,
+  ): Promise<void> {
     const { logger } = this.deps;
-    
+
     // Send notifications to all relevant parties
-    logger.info('Sending emergency notifications', { appointmentId: result.appointmentId });
-    
+    logger.info('Sending emergency notifications', {
+      appointmentId: result.appointmentId,
+    });
+
     // Implementation would integrate with notification service
   }
 
   private async escalateOverdueEmergency(appointment: any): Promise<void> {
     const { logger } = this.deps;
-    
-    logger.warn('Escalating overdue emergency appointment', { appointmentId: appointment.id });
-    
+
+    logger.warn('Escalating overdue emergency appointment', {
+      appointmentId: appointment.id,
+    });
+
     // Implementation would escalate to management/medical director
   }
 
-  private async sendUrgentEmergencyNotifications(appointment: any): Promise<void> {
+  private async sendUrgentEmergencyNotifications(
+    appointment: any,
+  ): Promise<void> {
     const { logger } = this.deps;
-    
-    logger.info('Sending urgent emergency notifications', { appointmentId: appointment.id });
+
+    logger.info('Sending urgent emergency notifications', {
+      appointmentId: appointment.id,
+    });
   }
 
-  private async checkForCapacityIssues(): Promise<Array<{ appointmentId: string }>> {
+  private async checkForCapacityIssues(): Promise<
+    Array<{ appointmentId: string }>
+  > {
     // Check for appointments that need reassignment due to capacity issues
     return []; // Placeholder
   }
 
-  private async attemptEmergencyReassignment(appointmentId: string): Promise<{ success: boolean }> {
+  private async attemptEmergencyReassignment(
+    appointmentId: string,
+  ): Promise<{ success: boolean }> {
     // Attempt to reassign emergency appointment to different doctor/time
     return { success: false }; // Placeholder
   }
 
   private async canRescheduleAppointment(appointment: any): Promise<boolean> {
     // Check business rules for rescheduling
-    const hoursBeforeAppointment = differenceInHours(appointment.scheduledAt, new Date());
-    return BusinessRules.canReschedule(appointment.rescheduleCount, hoursBeforeAppointment);
+    const hoursBeforeAppointment = differenceInHours(
+      appointment.scheduledAt,
+      new Date(),
+    );
+    return BusinessRules.canReschedule(
+      appointment.rescheduleCount,
+      hoursBeforeAppointment,
+    );
   }
 
-  private async findRescheduleSlot(appointment: any): Promise<AvailableSlot | null> {
+  private async findRescheduleSlot(
+    appointment: any,
+  ): Promise<AvailableSlot | null> {
     // Find alternative slot for rescheduled appointment
     return null; // Placeholder
   }

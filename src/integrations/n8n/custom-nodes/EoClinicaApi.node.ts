@@ -460,7 +460,7 @@ export class EoClinicaApi implements INodeType {
     const client = axios.create({
       baseURL: baseUrl,
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
+        Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
     });
@@ -469,26 +469,41 @@ export class EoClinicaApi implements INodeType {
       try {
         const resource = this.getNodeParameter('resource', i) as string;
         const operation = this.getNodeParameter('operation', i) as string;
-        
+
         let responseData;
 
         if (resource === 'appointment') {
-          responseData = await this.executeAppointmentOperation(client, operation, i);
+          responseData = await this.executeAppointmentOperation(
+            client,
+            operation,
+            i,
+          );
         } else if (resource === 'patient') {
-          responseData = await this.executePatientOperation(client, operation, i);
+          responseData = await this.executePatientOperation(
+            client,
+            operation,
+            i,
+          );
         } else if (resource === 'availability') {
-          responseData = await this.executeAvailabilityOperation(client, operation, i);
+          responseData = await this.executeAvailabilityOperation(
+            client,
+            operation,
+            i,
+          );
         } else if (resource === 'queue') {
           responseData = await this.executeQueueOperation(client, operation, i);
         } else if (resource === 'aiChat') {
-          responseData = await this.executeAiChatOperation(client, operation, i);
+          responseData = await this.executeAiChatOperation(
+            client,
+            operation,
+            i,
+          );
         }
 
         returnData.push({
           json: responseData,
           pairedItem: { item: i },
         });
-
       } catch (error) {
         if (this.continueOnFail()) {
           returnData.push({
@@ -507,7 +522,7 @@ export class EoClinicaApi implements INodeType {
   private async executeAppointmentOperation(
     client: any,
     operation: string,
-    itemIndex: number
+    itemIndex: number,
   ): Promise<any> {
     switch (operation) {
       case 'create':
@@ -520,12 +535,17 @@ export class EoClinicaApi implements INodeType {
           priority: this.getNodeParameter('priority', itemIndex, 'MEDIUM'),
           notes: this.getNodeParameter('notes', itemIndex, ''),
         };
-        const createResponse = await client.post('/api/appointments', createData);
+        const createResponse = await client.post(
+          '/api/appointments',
+          createData,
+        );
         return createResponse.data;
 
       case 'get':
         const appointmentId = this.getNodeParameter('appointmentId', itemIndex);
-        const getResponse = await client.get(`/api/appointments/${appointmentId}`);
+        const getResponse = await client.get(
+          `/api/appointments/${appointmentId}`,
+        );
         return getResponse.data;
 
       case 'update':
@@ -536,7 +556,10 @@ export class EoClinicaApi implements INodeType {
           notes: this.getNodeParameter('notes', itemIndex),
           priority: this.getNodeParameter('priority', itemIndex),
         };
-        const updateResponse = await client.put(`/api/appointments/${updateId}`, updateData);
+        const updateResponse = await client.put(
+          `/api/appointments/${updateId}`,
+          updateData,
+        );
         return updateResponse.data;
 
       case 'delete':
@@ -547,17 +570,24 @@ export class EoClinicaApi implements INodeType {
       case 'list':
         const listParams = new URLSearchParams();
         if (this.getNodeParameter('specialtyId', itemIndex, '')) {
-          listParams.append('specialtyId', this.getNodeParameter('specialtyId', itemIndex));
+          listParams.append(
+            'specialtyId',
+            this.getNodeParameter('specialtyId', itemIndex),
+          );
         }
         if (this.getNodeParameter('date', itemIndex, '')) {
           listParams.append('date', this.getNodeParameter('date', itemIndex));
         }
-        const listResponse = await client.get(`/api/appointments?${listParams.toString()}`);
+        const listResponse = await client.get(
+          `/api/appointments?${listParams.toString()}`,
+        );
         return listResponse.data;
 
       case 'confirm':
         const confirmId = this.getNodeParameter('appointmentId', itemIndex);
-        const confirmResponse = await client.patch(`/api/appointments/${confirmId}/confirm`);
+        const confirmResponse = await client.patch(
+          `/api/appointments/${confirmId}/confirm`,
+        );
         return confirmResponse.data;
 
       case 'reschedule':
@@ -567,21 +597,35 @@ export class EoClinicaApi implements INodeType {
         };
         const rescheduleResponse = await client.patch(
           `/api/appointments/${rescheduleId}/reschedule`,
-          rescheduleData
+          rescheduleData,
         );
         return rescheduleResponse.data;
 
       default:
-        throw new NodeOperationError(this.getNode(), `Unknown appointment operation: ${operation}`);
+        throw new NodeOperationError(
+          this.getNode(),
+          `Unknown appointment operation: ${operation}`,
+        );
     }
   }
 
-  private async executePatientOperation(client: any, operation: string, itemIndex: number): Promise<any> {
+  private async executePatientOperation(
+    client: any,
+    operation: string,
+    itemIndex: number,
+  ): Promise<any> {
     // Implementation for patient operations
-    throw new NodeOperationError(this.getNode(), 'Patient operations not yet implemented');
+    throw new NodeOperationError(
+      this.getNode(),
+      'Patient operations not yet implemented',
+    );
   }
 
-  private async executeAvailabilityOperation(client: any, operation: string, itemIndex: number): Promise<any> {
+  private async executeAvailabilityOperation(
+    client: any,
+    operation: string,
+    itemIndex: number,
+  ): Promise<any> {
     switch (operation) {
       case 'check':
         const checkParams = {
@@ -589,23 +633,38 @@ export class EoClinicaApi implements INodeType {
           date: this.getNodeParameter('date', itemIndex),
           duration: this.getNodeParameter('duration', itemIndex, 30),
         };
-        const checkResponse = await client.post('/api/availability/check', checkParams);
+        const checkResponse = await client.post(
+          '/api/availability/check',
+          checkParams,
+        );
         return checkResponse.data;
 
       case 'list':
         const listParams = new URLSearchParams();
-        listParams.append('specialtyId', this.getNodeParameter('specialtyId', itemIndex));
+        listParams.append(
+          'specialtyId',
+          this.getNodeParameter('specialtyId', itemIndex),
+        );
         listParams.append('date', this.getNodeParameter('date', itemIndex));
-        
-        const listResponse = await client.get(`/api/availability?${listParams.toString()}`);
+
+        const listResponse = await client.get(
+          `/api/availability?${listParams.toString()}`,
+        );
         return listResponse.data;
 
       default:
-        throw new NodeOperationError(this.getNode(), `Unknown availability operation: ${operation}`);
+        throw new NodeOperationError(
+          this.getNode(),
+          `Unknown availability operation: ${operation}`,
+        );
     }
   }
 
-  private async executeQueueOperation(client: any, operation: string, itemIndex: number): Promise<any> {
+  private async executeQueueOperation(
+    client: any,
+    operation: string,
+    itemIndex: number,
+  ): Promise<any> {
     switch (operation) {
       case 'add':
         const addData = {
@@ -622,11 +681,18 @@ export class EoClinicaApi implements INodeType {
         return listResponse.data;
 
       default:
-        throw new NodeOperationError(this.getNode(), `Unknown queue operation: ${operation}`);
+        throw new NodeOperationError(
+          this.getNode(),
+          `Unknown queue operation: ${operation}`,
+        );
     }
   }
 
-  private async executeAiChatOperation(client: any, operation: string, itemIndex: number): Promise<any> {
+  private async executeAiChatOperation(
+    client: any,
+    operation: string,
+    itemIndex: number,
+  ): Promise<any> {
     switch (operation) {
       case 'sendMessage':
         const message = this.getNodeParameter('message', itemIndex);
@@ -634,7 +700,10 @@ export class EoClinicaApi implements INodeType {
         return chatResponse.data;
 
       default:
-        throw new NodeOperationError(this.getNode(), `Unknown AI chat operation: ${operation}`);
+        throw new NodeOperationError(
+          this.getNode(),
+          `Unknown AI chat operation: ${operation}`,
+        );
     }
   }
 }

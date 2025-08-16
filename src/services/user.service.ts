@@ -10,15 +10,17 @@ export class UserService {
     this.prisma = prisma;
   }
 
-  async findAll(params: {
-    page?: number;
-    limit?: number;
-    role?: UserRole;
-    status?: UserStatus;
-    search?: string;
-  } = {}) {
+  async findAll(
+    params: {
+      page?: number;
+      limit?: number;
+      role?: UserRole;
+      status?: UserStatus;
+      search?: string;
+    } = {},
+  ) {
     const { page = 1, limit = 20, role, status, search } = params;
-    
+
     // Build where clause
     const where: Prisma.UserWhereInput = {
       deletedAt: null, // Only active users (not soft deleted)
@@ -86,10 +88,10 @@ export class UserService {
                   name: true,
                   description: true,
                   duration: true,
-                  price: true
-                }
-              }
-            }
+                  price: true,
+                },
+              },
+            },
           },
           appointments: {
             where: { deletedAt: null },
@@ -227,10 +229,12 @@ export class UserService {
   async updateStatus(id: string, status: UserStatus, reason?: string) {
     try {
       const updatedUser = await this.update(id, { status });
-      
+
       // Log the status change for audit purposes
-      logger.info(`Updated user ${id} status to ${status}${reason ? `, reason: ${reason}` : ''}`);
-      
+      logger.info(
+        `Updated user ${id} status to ${status}${reason ? `, reason: ${reason}` : ''}`,
+      );
+
       return updatedUser;
     } catch (error) {
       logger.error(`Error updating user status ${id}:`, error);
@@ -238,20 +242,20 @@ export class UserService {
     }
   }
 
-  async getUserAppointments(userId: string, params: {
-    page?: number;
-    limit?: number;
-    status?: string;
-    dateFrom?: Date;
-    dateTo?: Date;
-  } = {}) {
+  async getUserAppointments(
+    userId: string,
+    params: {
+      page?: number;
+      limit?: number;
+      status?: string;
+      dateFrom?: Date;
+      dateTo?: Date;
+    } = {},
+  ) {
     const { page = 1, limit = 20, status, dateFrom, dateTo } = params;
 
     const where: any = {
-      OR: [
-        { patientId: userId },
-        { doctorId: userId },
-      ],
+      OR: [{ patientId: userId }, { doctorId: userId }],
       deletedAt: null,
     };
 
@@ -269,7 +273,7 @@ export class UserService {
 
     try {
       const total = await this.prisma.appointment.count({ where });
-      
+
       const appointments = await this.prisma.appointment.findMany({
         where,
         skip,
@@ -320,15 +324,21 @@ export class UserService {
       logger.info(`Creating doctor: ${doctorData.user.email}`);
 
       // Hash the password
-      const hashedPassword = await bcrypt.hash(doctorData.user.password, env.SALT_ROUNDS);
+      const hashedPassword = await bcrypt.hash(
+        doctorData.user.password,
+        env.SALT_ROUNDS,
+      );
 
       // Calculate experience based on graduation date
       const graduationDate = new Date(doctorData.graduationDate);
       const currentDate = new Date();
-      const experience = Math.floor((currentDate.getTime() - graduationDate.getTime()) / (1000 * 60 * 60 * 24 * 365));
+      const experience = Math.floor(
+        (currentDate.getTime() - graduationDate.getTime()) /
+          (1000 * 60 * 60 * 24 * 365),
+      );
 
       // Create user and doctor profile in a transaction
-      const result = await this.prisma.$transaction(async (prisma) => {
+      const result = await this.prisma.$transaction(async prisma => {
         // Create user
         const user = await prisma.user.create({
           data: {
@@ -353,7 +363,9 @@ export class UserService {
             subSpecialties: doctorData.subSpecialties || [],
             biography: doctorData.bio || '',
             graduationDate: graduationDate,
-            crmRegistrationDate: doctorData.crmRegistrationDate ? new Date(doctorData.crmRegistrationDate) : null,
+            crmRegistrationDate: doctorData.crmRegistrationDate
+              ? new Date(doctorData.crmRegistrationDate)
+              : null,
             experience: experience,
             consultationFee: doctorData.consultationFee || '0',
             consultationDuration: 30, // Default 30 minutes
@@ -365,7 +377,9 @@ export class UserService {
         return { user, doctorProfile };
       });
 
-      logger.info(`Doctor created successfully: ${result.user.email} (${result.doctorProfile.crm})`);
+      logger.info(
+        `Doctor created successfully: ${result.user.email} (${result.doctorProfile.crm})`,
+      );
 
       // Return user with doctor profile
       return await this.findById(result.user.id);

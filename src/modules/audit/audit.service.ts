@@ -152,7 +152,12 @@ export class AuditService {
   /**
    * Get audit logs for a specific resource
    */
-  async getResourceAuditHistory(resource: string, resourceId?: string, page = 1, limit = 50) {
+  async getResourceAuditHistory(
+    resource: string,
+    resourceId?: string,
+    page = 1,
+    limit = 50,
+  ) {
     return this.getAuditLogs({ resource, resourceId, page, limit });
   }
 
@@ -174,53 +179,51 @@ export class AuditService {
    */
   async getAuditStatistics(startDate?: Date, endDate?: Date) {
     const where: any = {};
-    
+
     if (startDate || endDate) {
       where.createdAt = {};
       if (startDate) where.createdAt.gte = startDate;
       if (endDate) where.createdAt.lte = endDate;
     }
 
-    const [
-      totalLogs,
-      actionStats,
-      resourceStats,
-      userStats,
-    ] = await Promise.all([
-      // Total logs
-      this.prisma.auditLog.count({ where }),
-      
-      // Actions breakdown
-      this.prisma.auditLog.groupBy({
-        by: ['action'],
-        where,
-        _count: { action: true },
-        orderBy: { _count: { action: 'desc' } },
-      }),
-      
-      // Resources breakdown
-      this.prisma.auditLog.groupBy({
-        by: ['resource'],
-        where,
-        _count: { resource: true },
-        orderBy: { _count: { resource: 'desc' } },
-      }),
-      
-      // Top users by activity
-      this.prisma.auditLog.groupBy({
-        by: ['userId'],
-        where: { 
-          ...where,
-          userId: { not: null }
-        },
-        _count: { userId: true },
-        orderBy: { _count: { userId: 'desc' } },
-        take: 10,
-      }),
-    ]);
+    const [totalLogs, actionStats, resourceStats, userStats] =
+      await Promise.all([
+        // Total logs
+        this.prisma.auditLog.count({ where }),
+
+        // Actions breakdown
+        this.prisma.auditLog.groupBy({
+          by: ['action'],
+          where,
+          _count: { action: true },
+          orderBy: { _count: { action: 'desc' } },
+        }),
+
+        // Resources breakdown
+        this.prisma.auditLog.groupBy({
+          by: ['resource'],
+          where,
+          _count: { resource: true },
+          orderBy: { _count: { resource: 'desc' } },
+        }),
+
+        // Top users by activity
+        this.prisma.auditLog.groupBy({
+          by: ['userId'],
+          where: {
+            ...where,
+            userId: { not: null },
+          },
+          _count: { userId: true },
+          orderBy: { _count: { userId: 'desc' } },
+          take: 10,
+        }),
+      ]);
 
     // Get user details for top users
-    const userIds = userStats.map(stat => stat.userId).filter(Boolean) as string[];
+    const userIds = userStats
+      .map(stat => stat.userId)
+      .filter(Boolean) as string[];
     const users = await this.prisma.user.findMany({
       where: { id: { in: userIds } },
       select: {
@@ -284,7 +287,7 @@ export class AuditService {
    */
   async exportToCSV(filters: AuditQueryFilters = {}) {
     const { logs } = await this.getAuditLogs({ ...filters, limit: 10000 });
-    
+
     const csvHeaders = [
       'Timestamp',
       'User Email',
@@ -327,7 +330,13 @@ export class AuditMiddleware {
   /**
    * Log user authentication events
    */
-  async logAuth(action: 'LOGIN' | 'LOGOUT' | 'LOGIN_FAILED', userEmail: string, ipAddress?: string, userAgent?: string, userId?: string) {
+  async logAuth(
+    action: 'LOGIN' | 'LOGOUT' | 'LOGIN_FAILED',
+    userEmail: string,
+    ipAddress?: string,
+    userAgent?: string,
+    userId?: string,
+  ) {
     await this.auditService.createAuditLog({
       userId,
       userEmail,
@@ -341,7 +350,14 @@ export class AuditMiddleware {
   /**
    * Log data access events
    */
-  async logDataAccess(action: 'READ' | 'EXPORT', resource: string, resourceId: string, userId: string, userEmail: string, ipAddress?: string) {
+  async logDataAccess(
+    action: 'READ' | 'EXPORT',
+    resource: string,
+    resourceId: string,
+    userId: string,
+    userEmail: string,
+    ipAddress?: string,
+  ) {
     await this.auditService.createAuditLog({
       userId,
       userEmail,
@@ -364,7 +380,7 @@ export class AuditMiddleware {
     oldValues?: any,
     newValues?: any,
     ipAddress?: string,
-    userAgent?: string
+    userAgent?: string,
   ) {
     await this.auditService.createAuditLog({
       userId,
@@ -389,7 +405,7 @@ export class AuditMiddleware {
     userEmail: string,
     details?: any,
     ipAddress?: string,
-    userAgent?: string
+    userAgent?: string,
   ) {
     await this.auditService.createAuditLog({
       userId,
@@ -406,11 +422,16 @@ export class AuditMiddleware {
    * Log LGPD compliance events
    */
   async logLGPDEvent(
-    action: 'DATA_REQUEST' | 'DATA_EXPORT' | 'DATA_DELETION' | 'CONSENT_GIVEN' | 'CONSENT_WITHDRAWN',
+    action:
+      | 'DATA_REQUEST'
+      | 'DATA_EXPORT'
+      | 'DATA_DELETION'
+      | 'CONSENT_GIVEN'
+      | 'CONSENT_WITHDRAWN',
     userId: string,
     userEmail: string,
     details?: any,
-    ipAddress?: string
+    ipAddress?: string,
   ) {
     await this.auditService.createAuditLog({
       userId,

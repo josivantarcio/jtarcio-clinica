@@ -5,10 +5,14 @@ import {
   Conflict,
   ConflictResolution,
   ConflictAction,
-  ResolutionStrategy
+  ResolutionStrategy,
 } from '@/types/scheduling';
 import { AppointmentType, AppointmentStatus } from '@/types/appointment';
-import { BusinessRules, QUEUE_CONFIG, EMERGENCY_RULES } from '@/config/business-rules';
+import {
+  BusinessRules,
+  QUEUE_CONFIG,
+  EMERGENCY_RULES,
+} from '@/config/business-rules';
 import { PrismaClient } from '../../database/generated/client';
 import {
   addMinutes,
@@ -20,7 +24,7 @@ import {
   isSameDay,
   startOfDay,
   endOfDay,
-  isWithinInterval
+  isWithinInterval,
 } from 'date-fns';
 import { Logger } from 'winston';
 import Redis from 'ioredis';
@@ -70,31 +74,39 @@ export class AdvancedSchedulingAlgorithms {
       maxSlots: 10,
       prioritizeOptimalTimes: true,
       allowOverbooking: false,
-      emergencyOverride: false
-    }
+      emergencyOverride: false,
+    },
   ): Promise<AvailableSlot[]> {
     const { prisma, redis, logger } = this.deps;
 
     try {
-      logger.info('Finding optimal slots with advanced algorithms', { criteria, options });
+      logger.info('Finding optimal slots with advanced algorithms', {
+        criteria,
+        options,
+      });
 
       // Get base available slots
       const baseSlots = await this.getBaseAvailableSlots(criteria);
 
       // Apply machine learning-based scoring
-      const scoredSlots = await this.applyMLScoring(baseSlots, criteria, options);
+      const scoredSlots = await this.applyMLScoring(
+        baseSlots,
+        criteria,
+        options,
+      );
 
       // Apply patient preference matching
       const preferenceMatchedSlots = this.applyPatientPreferences(
         scoredSlots,
-        options.patientPreferences
+        options.patientPreferences,
       );
 
       // Apply doctor efficiency optimization
-      const efficiencyOptimizedSlots = await this.applyDoctorEfficiencyOptimization(
-        preferenceMatchedSlots,
-        criteria
-      );
+      const efficiencyOptimizedSlots =
+        await this.applyDoctorEfficiencyOptimization(
+          preferenceMatchedSlots,
+          criteria,
+        );
 
       // Apply time clustering for better utilization
       const clusteredSlots = this.applyTimeClustering(efficiencyOptimizedSlots);
@@ -102,18 +114,24 @@ export class AdvancedSchedulingAlgorithms {
       // Apply emergency override if needed
       let finalSlots = clusteredSlots;
       if (options.emergencyOverride || criteria.isEmergency) {
-        finalSlots = await this.applyEmergencySlotGeneration(clusteredSlots, criteria);
+        finalSlots = await this.applyEmergencySlotGeneration(
+          clusteredSlots,
+          criteria,
+        );
       }
 
       // Sort by composite score and limit results
-      const rankedSlots = this.rankSlotsByCompositeScore(finalSlots, criteria, options);
+      const rankedSlots = this.rankSlotsByCompositeScore(
+        finalSlots,
+        criteria,
+        options,
+      );
 
       // Cache results for performance
       await this.cacheOptimalSlots(criteria, rankedSlots);
 
       logger.info(`Generated ${rankedSlots.length} optimal slots`);
       return rankedSlots.slice(0, options.maxSlots);
-
     } catch (error) {
       logger.error('Error finding optimal slots', { error, criteria });
       throw error;
@@ -129,8 +147,8 @@ export class AdvancedSchedulingAlgorithms {
       autoResolve: true,
       notifyStakeholders: true,
       preserveHighPriority: true,
-      maximizeUtilization: true
-    }
+      maximizeUtilization: true,
+    },
   ): Promise<ConflictResolution[]> {
     const { prisma, logger } = this.deps;
     const resolutions: ConflictResolution[] = [];
@@ -140,8 +158,11 @@ export class AdvancedSchedulingAlgorithms {
       const prioritizedConflicts = this.prioritizeConflicts(conflicts);
 
       for (const conflict of prioritizedConflicts) {
-        const resolution = await this.generateIntelligentResolution(conflict, options);
-        
+        const resolution = await this.generateIntelligentResolution(
+          conflict,
+          options,
+        );
+
         if (resolution) {
           resolutions.push(resolution);
 
@@ -153,11 +174,13 @@ export class AdvancedSchedulingAlgorithms {
       }
 
       // Optimize resolution combinations for minimal disruption
-      const optimizedResolutions = this.optimizeResolutionCombinations(resolutions);
+      const optimizedResolutions =
+        this.optimizeResolutionCombinations(resolutions);
 
-      logger.info(`Generated ${optimizedResolutions.length} conflict resolutions`);
+      logger.info(
+        `Generated ${optimizedResolutions.length} conflict resolutions`,
+      );
       return optimizedResolutions;
-
     } catch (error) {
       logger.error('Error resolving conflicts intelligently', { error });
       throw error;
@@ -173,8 +196,8 @@ export class AdvancedSchedulingAlgorithms {
       emergencyWeight: 0.4,
       waitTimeWeight: 0.3,
       patientLoyaltyWeight: 0.2,
-      doctorPreferenceWeight: 0.1
-    }
+      doctorPreferenceWeight: 0.1,
+    },
   ): Promise<QueueEntry[]> {
     const { prisma, logger } = this.deps;
 
@@ -183,11 +206,14 @@ export class AdvancedSchedulingAlgorithms {
 
       // Calculate dynamic priority scores
       const scoredEntries = await Promise.all(
-        queueEntries.map(entry => this.calculateDynamicPriority(entry, options))
+        queueEntries.map(entry =>
+          this.calculateDynamicPriority(entry, options),
+        ),
       );
 
       // Apply machine learning predictions for wait time
-      const predictiveEntries = await this.applyWaitTimePredictions(scoredEntries);
+      const predictiveEntries =
+        await this.applyWaitTimePredictions(scoredEntries);
 
       // Group by specialty and doctor for balanced distribution
       const balancedEntries = this.applyBalancedDistribution(predictiveEntries);
@@ -196,14 +222,15 @@ export class AdvancedSchedulingAlgorithms {
       const fairEntries = this.applyFairnessAlgorithms(balancedEntries);
 
       // Sort by final priority score
-      const prioritizedEntries = fairEntries.sort((a, b) => b.priorityScore - a.priorityScore);
+      const prioritizedEntries = fairEntries.sort(
+        (a, b) => b.priorityScore - a.priorityScore,
+      );
 
       // Update queue positions in database
       await this.updateQueuePositions(prioritizedEntries);
 
       logger.info('Queue prioritization completed');
       return prioritizedEntries;
-
     } catch (error) {
       logger.error('Error prioritizing queue', { error });
       throw error;
@@ -216,23 +243,38 @@ export class AdvancedSchedulingAlgorithms {
   async generatePredictiveSchedule(
     doctorId: string,
     dateRange: { start: Date; end: Date },
-    historicalDays: number = 90
+    historicalDays: number = 90,
   ): Promise<{
-    predictedDemand: { date: Date; expectedAppointments: number; confidence: number }[];
-    suggestedCapacityAdjustments: { date: Date; recommendedSlots: number; reason: string }[];
+    predictedDemand: {
+      date: Date;
+      expectedAppointments: number;
+      confidence: number;
+    }[];
+    suggestedCapacityAdjustments: {
+      date: Date;
+      recommendedSlots: number;
+      reason: string;
+    }[];
     optimalBreakTimes: { time: string; duration: number; reason: string }[];
   }> {
     const { prisma, logger } = this.deps;
 
     try {
       // Analyze historical patterns
-      const historicalData = await this.analyzeHistoricalPatterns(doctorId, historicalDays);
+      const historicalData = await this.analyzeHistoricalPatterns(
+        doctorId,
+        historicalDays,
+      );
 
       // Predict demand using time series analysis
-      const predictedDemand = this.predictDemandPatterns(historicalData, dateRange);
+      const predictedDemand = this.predictDemandPatterns(
+        historicalData,
+        dateRange,
+      );
 
       // Generate capacity recommendations
-      const capacityAdjustments = this.generateCapacityRecommendations(predictedDemand);
+      const capacityAdjustments =
+        this.generateCapacityRecommendations(predictedDemand);
 
       // Optimize break times based on patterns
       const optimalBreaks = this.optimizeBreakTimes(historicalData);
@@ -240,9 +282,8 @@ export class AdvancedSchedulingAlgorithms {
       return {
         predictedDemand,
         suggestedCapacityAdjustments: capacityAdjustments,
-        optimalBreakTimes: optimalBreaks
+        optimalBreakTimes: optimalBreaks,
       };
-
     } catch (error) {
       logger.error('Error generating predictive schedule', { error, doctorId });
       throw error;
@@ -254,10 +295,18 @@ export class AdvancedSchedulingAlgorithms {
    */
   async autoRescheduleWithMinimalDisruption(
     affectedAppointments: string[],
-    reason: string
+    reason: string,
   ): Promise<{
-    rescheduledAppointments: { appointmentId: string; newSlot: AvailableSlot; notificationSent: boolean }[];
-    unreschedulableAppointments: { appointmentId: string; reason: string; suggestedActions: string[] }[];
+    rescheduledAppointments: {
+      appointmentId: string;
+      newSlot: AvailableSlot;
+      notificationSent: boolean;
+    }[];
+    unreschedulableAppointments: {
+      appointmentId: string;
+      reason: string;
+      suggestedActions: string[];
+    }[];
     estimatedPatientSatisfactionImpact: number;
   }> {
     const { prisma, logger } = this.deps;
@@ -266,7 +315,9 @@ export class AdvancedSchedulingAlgorithms {
     const unrescheduleableA: any[] = [];
 
     try {
-      logger.info(`Auto-rescheduling ${affectedAppointments.length} appointments`);
+      logger.info(
+        `Auto-rescheduling ${affectedAppointments.length} appointments`,
+      );
 
       for (const appointmentId of affectedAppointments) {
         const appointment = await prisma.appointment.findUniqueOrThrow({
@@ -274,16 +325,17 @@ export class AdvancedSchedulingAlgorithms {
           include: {
             patient: { include: { user: true } },
             doctor: true,
-            specialty: true
-          }
+            specialty: true,
+          },
         });
 
         // Find alternative slots with minimal disruption
-        const alternativeSlots = await this.findMinimalDisruptionSlots(appointment);
+        const alternativeSlots =
+          await this.findMinimalDisruptionSlots(appointment);
 
         if (alternativeSlots.length > 0) {
           const bestSlot = alternativeSlots[0];
-          
+
           // Execute rescheduling
           await prisma.appointment.update({
             where: { id: appointmentId },
@@ -291,16 +343,15 @@ export class AdvancedSchedulingAlgorithms {
               scheduledAt: bestSlot.startTime,
               endTime: bestSlot.endTime,
               rescheduleCount: { increment: 1 },
-              rescheduledFrom: appointmentId
-            }
+              rescheduledFrom: appointmentId,
+            },
           });
 
           rescheduled.push({
             appointmentId,
             newSlot: bestSlot,
-            notificationSent: true // Would integrate with notification service
+            notificationSent: true, // Would integrate with notification service
           });
-
         } else {
           unrescheduleableA.push({
             appointmentId,
@@ -308,23 +359,27 @@ export class AdvancedSchedulingAlgorithms {
             suggestedActions: [
               'Add to priority queue',
               'Contact patient for manual rescheduling',
-              'Consider telehealth option'
-            ]
+              'Consider telehealth option',
+            ],
           });
         }
       }
 
       // Calculate patient satisfaction impact
-      const satisfactionImpact = this.calculateSatisfactionImpact(rescheduled, unrescheduleableA);
+      const satisfactionImpact = this.calculateSatisfactionImpact(
+        rescheduled,
+        unrescheduleableA,
+      );
 
-      logger.info(`Auto-rescheduling completed: ${rescheduled.length} rescheduled, ${unrescheduleableA.length} pending manual intervention`);
+      logger.info(
+        `Auto-rescheduling completed: ${rescheduled.length} rescheduled, ${unrescheduleableA.length} pending manual intervention`,
+      );
 
       return {
         rescheduledAppointments: rescheduled,
         unreschedulableAppointments: unrescheduleableA,
-        estimatedPatientSatisfactionImpact: satisfactionImpact
+        estimatedPatientSatisfactionImpact: satisfactionImpact,
       };
-
     } catch (error) {
       logger.error('Error in auto-rescheduling', { error });
       throw error;
@@ -333,18 +388,25 @@ export class AdvancedSchedulingAlgorithms {
 
   // Private helper methods for advanced algorithms
 
-  private async getBaseAvailableSlots(criteria: SchedulingCriteria): Promise<AvailableSlot[]> {
+  private async getBaseAvailableSlots(
+    criteria: SchedulingCriteria,
+  ): Promise<AvailableSlot[]> {
     const { prisma } = this.deps;
 
     // Get doctors and their availability
-    const doctors = criteria.doctorId 
-      ? [await prisma.doctor.findUniqueOrThrow({ where: { id: criteria.doctorId }, include: { availability: true } })]
+    const doctors = criteria.doctorId
+      ? [
+          await prisma.doctor.findUniqueOrThrow({
+            where: { id: criteria.doctorId },
+            include: { availability: true },
+          }),
+        ]
       : await prisma.doctor.findMany({
-          where: { 
+          where: {
             specialtyId: criteria.specialtyId,
-            isActive: true
+            isActive: true,
           },
-          include: { availability: true }
+          include: { availability: true },
         });
 
     const slots: AvailableSlot[] = [];
@@ -357,13 +419,20 @@ export class AdvancedSchedulingAlgorithms {
     return slots;
   }
 
-  private async generateTimeSlots(doctor: any, criteria: SchedulingCriteria): Promise<AvailableSlot[]> {
+  private async generateTimeSlots(
+    doctor: any,
+    criteria: SchedulingCriteria,
+  ): Promise<AvailableSlot[]> {
     const slots: AvailableSlot[] = [];
     let currentDate = new Date(criteria.startDate);
     const endDate = new Date(criteria.endDate);
 
     while (currentDate <= endDate) {
-      const daySlots = await this.generateDaySlots(doctor, currentDate, criteria);
+      const daySlots = await this.generateDaySlots(
+        doctor,
+        currentDate,
+        criteria,
+      );
       slots.push(...daySlots);
       currentDate = addDays(currentDate, 1);
     }
@@ -371,15 +440,23 @@ export class AdvancedSchedulingAlgorithms {
     return slots;
   }
 
-  private async generateDaySlots(doctor: any, date: Date, criteria: SchedulingCriteria): Promise<AvailableSlot[]> {
+  private async generateDaySlots(
+    doctor: any,
+    date: Date,
+    criteria: SchedulingCriteria,
+  ): Promise<AvailableSlot[]> {
     const { prisma } = this.deps;
     const dayOfWeek = date.getDay();
-    const availability = doctor.availability.find((a: any) => a.dayOfWeek === dayOfWeek);
+    const availability = doctor.availability.find(
+      (a: any) => a.dayOfWeek === dayOfWeek,
+    );
 
     if (!availability) return [];
 
     const slots: AvailableSlot[] = [];
-    const [startHour, startMinute] = availability.startTime.split(':').map(Number);
+    const [startHour, startMinute] = availability.startTime
+      .split(':')
+      .map(Number);
     const [endHour, endMinute] = availability.endTime.split(':').map(Number);
 
     let currentTime = new Date(date);
@@ -394,19 +471,32 @@ export class AdvancedSchedulingAlgorithms {
         doctorId: doctor.id,
         scheduledAt: {
           gte: startOfDay(date),
-          lte: endOfDay(date)
+          lte: endOfDay(date),
         },
-        status: { in: [AppointmentStatus.SCHEDULED, AppointmentStatus.CONFIRMED, AppointmentStatus.IN_PROGRESS] }
-      }
+        status: {
+          in: [
+            AppointmentStatus.SCHEDULED,
+            AppointmentStatus.CONFIRMED,
+            AppointmentStatus.IN_PROGRESS,
+          ],
+        },
+      },
     });
 
     while (addMinutes(currentTime, criteria.duration || 30) <= dayEndTime) {
       const slotEndTime = addMinutes(currentTime, criteria.duration || 30);
 
       // Check for conflicts with existing appointments
-      const hasConflict = existingAppointments.some(apt => 
-        isWithinInterval(currentTime, { start: apt.scheduledAt, end: apt.endTime }) ||
-        isWithinInterval(slotEndTime, { start: apt.scheduledAt, end: apt.endTime })
+      const hasConflict = existingAppointments.some(
+        apt =>
+          isWithinInterval(currentTime, {
+            start: apt.scheduledAt,
+            end: apt.endTime,
+          }) ||
+          isWithinInterval(slotEndTime, {
+            start: apt.scheduledAt,
+            end: apt.endTime,
+          }),
       );
 
       if (!hasConflict) {
@@ -421,8 +511,8 @@ export class AdvancedSchedulingAlgorithms {
           metadata: {
             slotType: 'REGULAR',
             utilizationScore: 0.5,
-            patientPreferenceMatch: 0.5
-          }
+            patientPreferenceMatch: 0.5,
+          },
         });
       }
 
@@ -435,18 +525,21 @@ export class AdvancedSchedulingAlgorithms {
   private async applyMLScoring(
     slots: AvailableSlot[],
     criteria: SchedulingCriteria,
-    options: SmartSlotFinderOptions
+    options: SmartSlotFinderOptions,
   ): Promise<AvailableSlot[]> {
     // Apply machine learning-based scoring
     // This would integrate with ML models for prediction
-    
+
     return slots.map(slot => ({
       ...slot,
-      confidenceScore: this.calculateMLScore(slot, criteria)
+      confidenceScore: this.calculateMLScore(slot, criteria),
     }));
   }
 
-  private calculateMLScore(slot: AvailableSlot, criteria: SchedulingCriteria): number {
+  private calculateMLScore(
+    slot: AvailableSlot,
+    criteria: SchedulingCriteria,
+  ): number {
     let score = 0.5;
 
     // Time-based scoring
@@ -474,7 +567,7 @@ export class AdvancedSchedulingAlgorithms {
 
   private applyPatientPreferences(
     slots: AvailableSlot[],
-    preferences?: SmartSlotFinderOptions['patientPreferences']
+    preferences?: SmartSlotFinderOptions['patientPreferences'],
   ): AvailableSlot[] {
     if (!preferences) return slots;
 
@@ -484,8 +577,11 @@ export class AdvancedSchedulingAlgorithms {
       // Time preference matching
       if (preferences.preferredTimes?.length) {
         const slotTime = format(slot.startTime, 'HH:mm');
-        const matchesPreference = preferences.preferredTimes.some(prefTime =>
-          Math.abs(this.timeToMinutes(slotTime) - this.timeToMinutes(prefTime)) <= 60
+        const matchesPreference = preferences.preferredTimes.some(
+          prefTime =>
+            Math.abs(
+              this.timeToMinutes(slotTime) - this.timeToMinutes(prefTime),
+            ) <= 60,
         );
         if (matchesPreference) preferenceScore += 0.3;
       }
@@ -499,15 +595,15 @@ export class AdvancedSchedulingAlgorithms {
         ...slot,
         metadata: {
           ...slot.metadata,
-          patientPreferenceMatch: Math.min(preferenceScore, 1.0)
-        }
+          patientPreferenceMatch: Math.min(preferenceScore, 1.0),
+        },
       };
     });
   }
 
   private async applyDoctorEfficiencyOptimization(
     slots: AvailableSlot[],
-    criteria: SchedulingCriteria
+    criteria: SchedulingCriteria,
   ): Promise<AvailableSlot[]> {
     // Group slots by doctor and optimize for efficiency
     const doctorGroups = this.groupSlotsByDoctor(slots);
@@ -529,8 +625,8 @@ export class AdvancedSchedulingAlgorithms {
         ...slot,
         metadata: {
           ...slot.metadata,
-          utilizationScore: clusterScore
-        }
+          utilizationScore: clusterScore,
+        },
       };
     });
 
@@ -539,34 +635,40 @@ export class AdvancedSchedulingAlgorithms {
 
   private async applyEmergencySlotGeneration(
     slots: AvailableSlot[],
-    criteria: SchedulingCriteria
+    criteria: SchedulingCriteria,
   ): Promise<AvailableSlot[]> {
     if (!criteria.isEmergency) return slots;
 
     // Generate emergency slots by overriding some constraints
     const emergencySlots = await this.generateEmergencySlots(criteria);
-    
+
     return [...slots, ...emergencySlots];
   }
 
   private rankSlotsByCompositeScore(
     slots: AvailableSlot[],
     criteria: SchedulingCriteria,
-    options: SmartSlotFinderOptions
+    options: SmartSlotFinderOptions,
   ): AvailableSlot[] {
-    return slots.map(slot => {
-      const compositeScore = this.calculateCompositeScore(slot, criteria, options);
-      return {
-        ...slot,
-        confidenceScore: compositeScore
-      };
-    }).sort((a, b) => b.confidenceScore - a.confidenceScore);
+    return slots
+      .map(slot => {
+        const compositeScore = this.calculateCompositeScore(
+          slot,
+          criteria,
+          options,
+        );
+        return {
+          ...slot,
+          confidenceScore: compositeScore,
+        };
+      })
+      .sort((a, b) => b.confidenceScore - a.confidenceScore);
   }
 
   private calculateCompositeScore(
     slot: AvailableSlot,
     criteria: SchedulingCriteria,
-    options: SmartSlotFinderOptions
+    options: SmartSlotFinderOptions,
   ): number {
     const baseScore = slot.confidenceScore;
     const utilizationScore = slot.metadata?.utilizationScore || 0.5;
@@ -576,7 +678,7 @@ export class AdvancedSchedulingAlgorithms {
     const weights = {
       base: 0.4,
       utilization: options.prioritizeOptimalTimes ? 0.3 : 0.2,
-      preference: 0.3
+      preference: 0.3,
     };
 
     return (
@@ -590,8 +692,9 @@ export class AdvancedSchedulingAlgorithms {
     return conflicts.sort((a, b) => {
       // Sort by severity first
       const severityOrder = { CRITICAL: 4, HIGH: 3, MEDIUM: 2, LOW: 1 };
-      const severityDiff = severityOrder[b.severity] - severityOrder[a.severity];
-      
+      const severityDiff =
+        severityOrder[b.severity] - severityOrder[a.severity];
+
       if (severityDiff !== 0) return severityDiff;
 
       // Then by number of involved appointments
@@ -601,19 +704,23 @@ export class AdvancedSchedulingAlgorithms {
 
   private async generateIntelligentResolution(
     conflict: Conflict,
-    options: ConflictResolutionOptions
+    options: ConflictResolutionOptions,
   ): Promise<ConflictResolution | null> {
     const actions: ConflictAction[] = [];
 
     switch (conflict.type) {
       case 'DOUBLE_BOOKING':
-        actions.push(...await this.resolveDoubleBooking(conflict, options));
+        actions.push(...(await this.resolveDoubleBooking(conflict, options)));
         break;
       case 'RESOURCE_CONFLICT':
-        actions.push(...await this.resolveResourceConflict(conflict, options));
+        actions.push(
+          ...(await this.resolveResourceConflict(conflict, options)),
+        );
         break;
       case 'DOCTOR_UNAVAILABLE':
-        actions.push(...await this.resolveDoctorUnavailability(conflict, options));
+        actions.push(
+          ...(await this.resolveDoctorUnavailability(conflict, options)),
+        );
         break;
       default:
         return null;
@@ -623,13 +730,14 @@ export class AdvancedSchedulingAlgorithms {
       strategy: ResolutionStrategy.AUTO_RESCHEDULE,
       suggestedActions: actions,
       estimatedImpact: this.calculateResolutionImpact(actions),
-      requiresApproval: !options.autoResolve || conflict.severity === 'CRITICAL'
+      requiresApproval:
+        !options.autoResolve || conflict.severity === 'CRITICAL',
     };
   }
 
   private async calculateDynamicPriority(
     entry: QueueEntry,
-    options: QueuePrioritizationOptions
+    options: QueuePrioritizationOptions,
   ): Promise<QueueEntry> {
     let score = entry.priorityScore;
 
@@ -655,7 +763,7 @@ export class AdvancedSchedulingAlgorithms {
 
     return {
       ...entry,
-      priorityScore: Math.round(score * 100) / 100
+      priorityScore: Math.round(score * 100) / 100,
     };
   }
 
@@ -671,9 +779,11 @@ export class AdvancedSchedulingAlgorithms {
     return hours * 60 + minutes;
   }
 
-  private groupSlotsByDoctor(slots: AvailableSlot[]): Map<string, AvailableSlot[]> {
+  private groupSlotsByDoctor(
+    slots: AvailableSlot[],
+  ): Map<string, AvailableSlot[]> {
     const groups = new Map<string, AvailableSlot[]>();
-    
+
     for (const slot of slots) {
       const existing = groups.get(slot.doctorId) || [];
       existing.push(slot);
@@ -683,11 +793,15 @@ export class AdvancedSchedulingAlgorithms {
     return groups;
   }
 
-  private calculateClusterScore(slot: AvailableSlot, allSlots: AvailableSlot[]): number {
+  private calculateClusterScore(
+    slot: AvailableSlot,
+    allSlots: AvailableSlot[],
+  ): number {
     // Calculate how well this slot fits with nearby slots for utilization
-    const nearbySlots = allSlots.filter(s => 
-      s.doctorId === slot.doctorId &&
-      Math.abs(differenceInMinutes(s.startTime, slot.startTime)) <= 120
+    const nearbySlots = allSlots.filter(
+      s =>
+        s.doctorId === slot.doctorId &&
+        Math.abs(differenceInMinutes(s.startTime, slot.startTime)) <= 120,
     );
 
     return Math.min(nearbySlots.length / 4, 1.0); // Normalize to 0-1
@@ -695,20 +809,25 @@ export class AdvancedSchedulingAlgorithms {
 
   private async calculatePatientLoyalty(patientId: string): Promise<number> {
     const { prisma } = this.deps;
-    
+
     const appointmentCount = await prisma.appointment.count({
-      where: { patientId, status: AppointmentStatus.COMPLETED }
+      where: { patientId, status: AppointmentStatus.COMPLETED },
     });
 
     return Math.min(appointmentCount / 10, 1.0); // Max score at 10+ appointments
   }
 
-  private async calculateDoctorPreferenceMatch(entry: QueueEntry): Promise<number> {
+  private async calculateDoctorPreferenceMatch(
+    entry: QueueEntry,
+  ): Promise<number> {
     // This would calculate how well the queue entry matches doctor preferences
     return 0.5; // Placeholder
   }
 
-  private async cacheOptimalSlots(criteria: SchedulingCriteria, slots: AvailableSlot[]): Promise<void> {
+  private async cacheOptimalSlots(
+    criteria: SchedulingCriteria,
+    slots: AvailableSlot[],
+  ): Promise<void> {
     const { redis } = this.deps;
     const cacheKey = `optimal-slots:${JSON.stringify(criteria)}`;
     await redis.setex(cacheKey, 300, JSON.stringify(slots)); // 5 minute cache
@@ -719,7 +838,9 @@ export class AdvancedSchedulingAlgorithms {
     // Implementation would depend on queue storage strategy
   }
 
-  private async executeResolution(resolution: ConflictResolution): Promise<void> {
+  private async executeResolution(
+    resolution: ConflictResolution,
+  ): Promise<void> {
     // Execute the conflict resolution actions
     // Implementation would handle actual appointment modifications
   }
@@ -730,31 +851,49 @@ export class AdvancedSchedulingAlgorithms {
   }
 
   // More helper method implementations would continue here...
-  private async resolveDoubleBooking(conflict: Conflict, options: ConflictResolutionOptions): Promise<ConflictAction[]> {
+  private async resolveDoubleBooking(
+    conflict: Conflict,
+    options: ConflictResolutionOptions,
+  ): Promise<ConflictAction[]> {
     return [];
   }
 
-  private async resolveResourceConflict(conflict: Conflict, options: ConflictResolutionOptions): Promise<ConflictAction[]> {
+  private async resolveResourceConflict(
+    conflict: Conflict,
+    options: ConflictResolutionOptions,
+  ): Promise<ConflictAction[]> {
     return [];
   }
 
-  private async resolveDoctorUnavailability(conflict: Conflict, options: ConflictResolutionOptions): Promise<ConflictAction[]> {
+  private async resolveDoctorUnavailability(
+    conflict: Conflict,
+    options: ConflictResolutionOptions,
+  ): Promise<ConflictAction[]> {
     return [];
   }
 
-  private async optimizeDoctorSlots(slots: AvailableSlot[], criteria: SchedulingCriteria): Promise<AvailableSlot[]> {
+  private async optimizeDoctorSlots(
+    slots: AvailableSlot[],
+    criteria: SchedulingCriteria,
+  ): Promise<AvailableSlot[]> {
     return slots;
   }
 
-  private async generateEmergencySlots(criteria: SchedulingCriteria): Promise<AvailableSlot[]> {
+  private async generateEmergencySlots(
+    criteria: SchedulingCriteria,
+  ): Promise<AvailableSlot[]> {
     return [];
   }
 
-  private optimizeResolutionCombinations(resolutions: ConflictResolution[]): ConflictResolution[] {
+  private optimizeResolutionCombinations(
+    resolutions: ConflictResolution[],
+  ): ConflictResolution[] {
     return resolutions;
   }
 
-  private async applyWaitTimePredictions(entries: QueueEntry[]): Promise<QueueEntry[]> {
+  private async applyWaitTimePredictions(
+    entries: QueueEntry[],
+  ): Promise<QueueEntry[]> {
     return entries;
   }
 
@@ -766,7 +905,10 @@ export class AdvancedSchedulingAlgorithms {
     return entries;
   }
 
-  private async analyzeHistoricalPatterns(doctorId: string, days: number): Promise<any> {
+  private async analyzeHistoricalPatterns(
+    doctorId: string,
+    days: number,
+  ): Promise<any> {
     return {};
   }
 
@@ -782,11 +924,16 @@ export class AdvancedSchedulingAlgorithms {
     return [];
   }
 
-  private async findMinimalDisruptionSlots(appointment: any): Promise<AvailableSlot[]> {
+  private async findMinimalDisruptionSlots(
+    appointment: any,
+  ): Promise<AvailableSlot[]> {
     return [];
   }
 
-  private calculateSatisfactionImpact(rescheduled: any[], unrescheduled: any[]): number {
+  private calculateSatisfactionImpact(
+    rescheduled: any[],
+    unrescheduled: any[],
+  ): number {
     return 0.8; // Placeholder
   }
 }

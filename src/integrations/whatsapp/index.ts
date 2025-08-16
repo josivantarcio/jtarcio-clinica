@@ -13,5 +13,5 @@ export type {
   WhatsAppParameter,
   WhatsAppInteractive,
   WhatsAppWebhook,
-  MessageResult
+  MessageResult,
 } from './whatsapp-business';

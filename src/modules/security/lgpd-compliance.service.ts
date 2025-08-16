@@ -37,7 +37,7 @@ export interface DataDeletionRequest {
   retentionEndDate?: Date;
 }
 
-export type ConsentType = 
+export type ConsentType =
   | 'MEDICAL_DATA_PROCESSING'
   | 'APPOINTMENT_REMINDERS'
   | 'MARKETING_COMMUNICATIONS'
@@ -63,7 +63,7 @@ export class LGPDComplianceService {
     granted: boolean,
     version: string,
     ipAddress?: string,
-    userAgent?: string
+    userAgent?: string,
   ): Promise<ConsentRecord> {
     try {
       // Create consent record
@@ -123,8 +123,12 @@ export class LGPDComplianceService {
         consentType,
         granted,
         version,
-        grantedAt: consentData.grantedAt ? new Date(consentData.grantedAt) : undefined,
-        revokedAt: consentData.revokedAt ? new Date(consentData.revokedAt) : undefined,
+        grantedAt: consentData.grantedAt
+          ? new Date(consentData.grantedAt)
+          : undefined,
+        revokedAt: consentData.revokedAt
+          ? new Date(consentData.revokedAt)
+          : undefined,
         ipAddress,
         userAgent,
       };
@@ -148,7 +152,10 @@ export class LGPDComplianceService {
 
       return consents.map(consent => {
         const consentData = JSON.parse(consent.value);
-        const consentType = consent.key.split('_').slice(2).join('_') as ConsentType;
+        const consentType = consent.key
+          .split('_')
+          .slice(2)
+          .join('_') as ConsentType;
 
         return {
           id: consent.id,
@@ -156,8 +163,12 @@ export class LGPDComplianceService {
           consentType,
           granted: consentData.granted,
           version: consentData.version,
-          grantedAt: consentData.grantedAt ? new Date(consentData.grantedAt) : undefined,
-          revokedAt: consentData.revokedAt ? new Date(consentData.revokedAt) : undefined,
+          grantedAt: consentData.grantedAt
+            ? new Date(consentData.grantedAt)
+            : undefined,
+          revokedAt: consentData.revokedAt
+            ? new Date(consentData.revokedAt)
+            : undefined,
           ipAddress: consentData.ipAddress,
           userAgent: consentData.userAgent,
         };
@@ -175,7 +186,7 @@ export class LGPDComplianceService {
     userId: string,
     requestType: 'PORTABILITY' | 'ACCESS' | 'CORRECTION',
     requestedData: string[],
-    ipAddress?: string
+    ipAddress?: string,
   ): Promise<DataExportRequest> {
     try {
       const request: DataExportRequest = {
@@ -211,13 +222,25 @@ export class LGPDComplianceService {
 
       // Process request asynchronously
       this.processDataExportRequest(storedRequest.id, request).catch(error => {
-        logger.error('Failed to process data export request', { error, userId, requestId: storedRequest.id });
+        logger.error('Failed to process data export request', {
+          error,
+          userId,
+          requestId: storedRequest.id,
+        });
       });
 
-      logger.info('Data export requested', { userId, requestType, requestId: storedRequest.id });
+      logger.info('Data export requested', {
+        userId,
+        requestType,
+        requestId: storedRequest.id,
+      });
       return { ...request };
     } catch (error) {
-      logger.error('Failed to request data export', { error, userId, requestType });
+      logger.error('Failed to request data export', {
+        error,
+        userId,
+        requestType,
+      });
       throw new Error('Failed to request data export');
     }
   }
@@ -230,7 +253,7 @@ export class LGPDComplianceService {
     requestType: 'ANONYMIZATION' | 'DELETION' | 'RETENTION_END',
     reason: string,
     retentionEndDate?: Date,
-    ipAddress?: string
+    ipAddress?: string,
   ): Promise<DataDeletionRequest> {
     try {
       const request: DataDeletionRequest = {
@@ -267,14 +290,28 @@ export class LGPDComplianceService {
       });
 
       // Process request asynchronously
-      this.processDataDeletionRequest(storedRequest.id, request).catch(error => {
-        logger.error('Failed to process data deletion request', { error, userId, requestId: storedRequest.id });
-      });
+      this.processDataDeletionRequest(storedRequest.id, request).catch(
+        error => {
+          logger.error('Failed to process data deletion request', {
+            error,
+            userId,
+            requestId: storedRequest.id,
+          });
+        },
+      );
 
-      logger.info('Data deletion requested', { userId, requestType, requestId: storedRequest.id });
+      logger.info('Data deletion requested', {
+        userId,
+        requestType,
+        requestId: storedRequest.id,
+      });
       return { ...request };
     } catch (error) {
-      logger.error('Failed to request data deletion', { error, userId, requestType });
+      logger.error('Failed to request data deletion', {
+        error,
+        userId,
+        requestType,
+      });
       throw new Error('Failed to request data deletion');
     }
   }
@@ -293,7 +330,11 @@ export class LGPDComplianceService {
           },
           appointments: {
             include: {
-              doctor: { select: { user: { select: { firstName: true, lastName: true } } } },
+              doctor: {
+                select: {
+                  user: { select: { firstName: true, lastName: true } },
+                },
+              },
               specialty: { select: { name: true } },
             },
           },
@@ -323,23 +364,27 @@ export class LGPDComplianceService {
           dateOfBirth: user.dateOfBirth,
           gender: user.gender,
         },
-        professionalData: user.doctorProfile ? {
-          crm: user.doctorProfile.crm,
-          specialty: user.doctorProfile.specialty.name,
-          subSpecialties: user.doctorProfile.subSpecialties,
-          biography: user.doctorProfile.biography,
-          experience: user.doctorProfile.experience,
-        } : null,
-        medicalData: user.patientProfile ? {
-          emergencyContact: {
-            name: user.patientProfile.emergencyContactName,
-            phone: user.patientProfile.emergencyContactPhone,
-          },
-          allergies: user.patientProfile.allergies,
-          medications: user.patientProfile.medications,
-          medicalHistory: user.patientProfile.medicalHistory,
-          insurance: user.patientProfile.insurance,
-        } : null,
+        professionalData: user.doctorProfile
+          ? {
+              crm: user.doctorProfile.crm,
+              specialty: user.doctorProfile.specialty.name,
+              subSpecialties: user.doctorProfile.subSpecialties,
+              biography: user.doctorProfile.biography,
+              experience: user.doctorProfile.experience,
+            }
+          : null,
+        medicalData: user.patientProfile
+          ? {
+              emergencyContact: {
+                name: user.patientProfile.emergencyContactName,
+                phone: user.patientProfile.emergencyContactPhone,
+              },
+              allergies: user.patientProfile.allergies,
+              medications: user.patientProfile.medications,
+              medicalHistory: user.patientProfile.medicalHistory,
+              insurance: user.patientProfile.insurance,
+            }
+          : null,
         appointmentData: user.appointments.map(apt => ({
           id: apt.id,
           scheduledAt: apt.scheduledAt,
@@ -499,7 +544,10 @@ export class LGPDComplianceService {
       const expiredAppointments = await this.prisma.appointment.count({
         where: {
           createdAt: {
-            lt: new Date(now.getTime() - retentionPolicies.medicalData * 24 * 60 * 60 * 1000),
+            lt: new Date(
+              now.getTime() -
+                retentionPolicies.medicalData * 24 * 60 * 60 * 1000,
+            ),
           },
           deletedAt: null,
         },
@@ -510,7 +558,9 @@ export class LGPDComplianceService {
       const expiredAuditLogs = await this.prisma.auditLog.count({
         where: {
           createdAt: {
-            lt: new Date(now.getTime() - retentionPolicies.auditLogs * 24 * 60 * 60 * 1000),
+            lt: new Date(
+              now.getTime() - retentionPolicies.auditLogs * 24 * 60 * 60 * 1000,
+            ),
           },
         },
       });
@@ -520,7 +570,10 @@ export class LGPDComplianceService {
       const expiredConversations = await this.prisma.conversation.count({
         where: {
           createdAt: {
-            lt: new Date(now.getTime() - retentionPolicies.conversations * 24 * 60 * 60 * 1000),
+            lt: new Date(
+              now.getTime() -
+                retentionPolicies.conversations * 24 * 60 * 60 * 1000,
+            ),
           },
           deletedAt: null,
         },
@@ -531,7 +584,10 @@ export class LGPDComplianceService {
       const expiredNotifications = await this.prisma.notification.count({
         where: {
           createdAt: {
-            lt: new Date(now.getTime() - retentionPolicies.notifications * 24 * 60 * 60 * 1000),
+            lt: new Date(
+              now.getTime() -
+                retentionPolicies.notifications * 24 * 60 * 60 * 1000,
+            ),
           },
         },
       });
@@ -540,7 +596,9 @@ export class LGPDComplianceService {
       return {
         retentionPolicies,
         expiredData: results,
-        complianceStatus: Object.values(results).every(count => count === 0) ? 'COMPLIANT' : 'NON_COMPLIANT',
+        complianceStatus: Object.values(results).every(count => count === 0)
+          ? 'COMPLIANT'
+          : 'NON_COMPLIANT',
         checkedAt: now,
       };
     } catch (error) {
@@ -552,7 +610,10 @@ export class LGPDComplianceService {
   /**
    * Process data export request (async)
    */
-  private async processDataExportRequest(requestId: string, request: DataExportRequest): Promise<void> {
+  private async processDataExportRequest(
+    requestId: string,
+    request: DataExportRequest,
+  ): Promise<void> {
     try {
       // Update status to processing
       await this.prisma.systemConfiguration.update({
@@ -564,7 +625,7 @@ export class LGPDComplianceService {
 
       // Get user data
       const userData = await this.getUserDataMapping(request.userId);
-      
+
       // Filter requested data
       const filteredData: any = {};
       for (const dataType of request.requestedData) {
@@ -587,7 +648,11 @@ export class LGPDComplianceService {
       };
 
       // Save to file (or cloud storage)
-      const exportPath = path.join(process.cwd(), 'exports', `${request.userId}_${Date.now()}.json`);
+      const exportPath = path.join(
+        process.cwd(),
+        'exports',
+        `${request.userId}_${Date.now()}.json`,
+      );
       await fs.mkdir(path.dirname(exportPath), { recursive: true });
       await fs.writeFile(exportPath, JSON.stringify(exportData, null, 2));
 
@@ -606,7 +671,11 @@ export class LGPDComplianceService {
         },
       });
 
-      logger.info('Data export completed', { requestId, userId: request.userId, exportPath });
+      logger.info('Data export completed', {
+        requestId,
+        userId: request.userId,
+        exportPath,
+      });
     } catch (error) {
       // Update status to failed
       await this.prisma.systemConfiguration.update({
@@ -616,14 +685,21 @@ export class LGPDComplianceService {
         },
       });
 
-      logger.error('Data export failed', { error, requestId, userId: request.userId });
+      logger.error('Data export failed', {
+        error,
+        requestId,
+        userId: request.userId,
+      });
     }
   }
 
   /**
    * Process data deletion request (async)
    */
-  private async processDataDeletionRequest(requestId: string, request: DataDeletionRequest): Promise<void> {
+  private async processDataDeletionRequest(
+    requestId: string,
+    request: DataDeletionRequest,
+  ): Promise<void> {
     try {
       // Update status to processing
       await this.prisma.systemConfiguration.update({
@@ -639,12 +715,12 @@ export class LGPDComplianceService {
         case 'ANONYMIZATION':
           success = await this.anonymizeUserData(request.userId);
           break;
-        
+
         case 'DELETION':
           // Full deletion (use with caution - medical data has legal retention requirements)
           success = await this.deleteUserData(request.userId);
           break;
-          
+
         case 'RETENTION_END':
           // Delete data that has exceeded retention period
           success = await this.deleteExpiredData(request.userId);
@@ -665,7 +741,11 @@ export class LGPDComplianceService {
         },
       });
 
-      logger.info('Data deletion completed', { requestId, userId: request.userId, success });
+      logger.info('Data deletion completed', {
+        requestId,
+        userId: request.userId,
+        success,
+      });
     } catch (error) {
       // Update status to failed
       await this.prisma.systemConfiguration.update({
@@ -675,7 +755,11 @@ export class LGPDComplianceService {
         },
       });
 
-      logger.error('Data deletion failed', { error, requestId, userId: request.userId });
+      logger.error('Data deletion failed', {
+        error,
+        requestId,
+        userId: request.userId,
+      });
     }
   }
 
@@ -687,7 +771,7 @@ export class LGPDComplianceService {
       // This is a simplified implementation
       // In production, implement proper cascading deletion
       // with medical data retention compliance
-      
+
       await this.prisma.user.update({
         where: { id: userId },
         data: { deletedAt: new Date() },

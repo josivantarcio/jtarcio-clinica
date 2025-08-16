@@ -24,23 +24,23 @@ export async function registerPlugins(fastify: FastifyInstance): Promise<void> {
     origin: (origin, callback) => {
       // Allow requests with no origin (e.g., mobile apps, curl)
       if (!origin) return callback(null, true);
-      
+
       // In development, allow all origins
       if (env.NODE_ENV === 'development') {
         return callback(null, true);
       }
-      
+
       // In production, validate against allowed origins
       const allowedOrigins = [
         'http://localhost:3000',
         'http://localhost:3001',
         'https://your-production-domain.com',
       ];
-      
+
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
-      
+
       return callback(new Error('Not allowed by CORS'), false);
     },
     credentials: true,
@@ -77,7 +77,10 @@ export async function registerPlugins(fastify: FastifyInstance): Promise<void> {
         { name: 'Health', description: 'Health check endpoints' },
         { name: 'Auth', description: 'Authentication endpoints' },
         { name: 'Users', description: 'User management endpoints' },
-        { name: 'Appointments', description: 'Appointment management endpoints' },
+        {
+          name: 'Appointments',
+          description: 'Appointment management endpoints',
+        },
         { name: 'Specialties', description: 'Medical specialties endpoints' },
         { name: 'Availability', description: 'Doctor availability endpoints' },
       ],
@@ -107,13 +110,16 @@ export async function registerPlugins(fastify: FastifyInstance): Promise<void> {
       },
     },
     staticCSP: true,
-    transformStaticCSP: (header) => header,
+    transformStaticCSP: header => header,
   });
 
   // Content type parser for file uploads
-  fastify.addContentTypeParser('multipart/form-data', function (request, payload, done) {
-    done(null);
-  });
+  fastify.addContentTypeParser(
+    'multipart/form-data',
+    function (request, payload, done) {
+      done(null);
+    },
+  );
 
   // Global error handler
   fastify.setErrorHandler((error, request, reply) => {
@@ -121,7 +127,9 @@ export async function registerPlugins(fastify: FastifyInstance): Promise<void> {
 
     // Handle validation errors
     if (validation) {
-      const errorMessage = validation.map(err => `${err.instancePath} ${err.message}`).join(', ');
+      const errorMessage = validation
+        .map(err => `${err.instancePath} ${err.message}`)
+        .join(', ');
       return reply.status(400).send({
         success: false,
         error: {
@@ -178,7 +186,7 @@ export async function registerPlugins(fastify: FastifyInstance): Promise<void> {
 
     // Handle internal server errors
     request.log.error(error);
-    
+
     if (env.NODE_ENV === 'production') {
       return reply.status(500).send({
         success: false,

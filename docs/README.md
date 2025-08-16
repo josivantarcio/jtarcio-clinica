@@ -408,14 +408,18 @@ MIT License - see LICENSE file for details.
 
 ---
 
-**EO Clínica System v1.2.5 - Complete Medical Management with Intelligent Experience Calculation** ✅
+**EO Clínica System v1.2.9 - Complete Medical Management with Premium UI/UX** ✅
 
-### 📊 Resumo das Atualizações v1.2.5
-- ✅ **24 Arquivos de Documentação** técnica completa
-- ✅ **Sistema Inteligente** de cálculo de experiência médica
-- ✅ **Correções de Timezone** em datas de nascimento
-- ✅ **Biblioteca de Utilitários** para manipulação de datas
-- ✅ **Interface Moderna** com Next.js 15 + React 19
+### 📊 Resumo das Atualizações v1.2.9
+- ✅ **26 Arquivos de Documentação** técnica completa
+- ✅ **Interface Premium** com dark theme calendar e glassmorphism
+- ✅ **Localização Brasileira** completa (PT-BR)
+- ✅ **Sistema de Agendamento** com 4 passos premium
+- ✅ **Micro-interações** e animações suaves
 - ✅ **API RESTful Completa** com validações e logs de auditoria
 - ✅ **Schema PostgreSQL** com 12+ entidades relacionadas
 - ✅ **Conformidade LGPD** e segurança de nível bancário
+
+### 📚 Documentação Nova v1.2.9
+- [BOOKING_SYSTEM_PREMIUM.md](./BOOKING_SYSTEM_PREMIUM.md) - Sistema de agendamento premium com dark theme
+- [UI_UX_IMPROVEMENTS_v1.2.9.md](./UI_UX_IMPROVEMENTS_v1.2.9.md) - Melhorias visuais, glassmorphism e localização PT-BR

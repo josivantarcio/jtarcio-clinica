@@ -2,6 +2,51 @@
 
 Todas as mudanças importantes neste projeto serão documentadas neste arquivo.
 
+## [1.2.9] - 2025-08-16
+
+### 🎨 Interface Premium de Agendamento
+- **🌙 Calendário Dark Theme**: Design elegante com gradientes e glassmorphism
+- **🇧🇷 Localização Brasileira**: Dias da semana e meses em português
+- **⚡ Micro-interações**: Animações suaves com hover effects e scaling
+- **📱 Responsividade Premium**: Grid adaptativo com breakpoints otimizados
+- **🎯 UX Aprimorada**: Pills informativos com indicadores pulsantes
+
+### 🔧 Correções Técnicas Críticas
+- **🔧 Fix Calendar Conflict**: Resolvido conflito entre Calendar (componente) e Calendar (ícone Lucide)
+- **🎯 Z-index Isolation**: Implementado isolamento visual com z-50 para evitar sobreposições
+- **📐 Layout Stability**: Overflow controls e position relative para contenção de elementos
+- **🔒 Component Safety**: Import segregation `Calendar as CalendarIcon`
+
+### 🎨 Melhorias Visuais
+- **📅 Calendário Elegante**: Fundo `slate-900` com efeitos de brilho e sombras
+- **⭐ Dia Selecionado**: Gradiente verde `from-green-500 to-green-600` com ring effects
+- **🕐 Cards de Horário**: Design premium com gradientes e indicadores visuais
+- **📜 Scrollbar Customizado**: Gradiente verde com hover effects suaves
+- **🎭 Glassmorphism**: Overlay effects com `backdrop-blur-sm`
+
+### 🌐 Localização PT-BR
+- **📅 Dias da Semana**: Dom, Seg, Ter, Qua, Qui, Sex, Sáb
+- **📆 Meses**: Janeiro, Fevereiro, Março, etc.
+- **🎯 Formatação**: Datas brasileiras com `toLocaleDateString('pt-BR')`
+- **📍 Timezone**: Correção de fusos horários para dados consistentes
+
+### 🛠️ Arquitetura de Componentes
+- **🎨 Custom CSS**: Scrollbars estilizados com gradientes dinâmicos
+- **⚡ Performance**: Memoização e lazy loading para componentes pesados
+- **📱 Mobile First**: Design responsivo com touch targets adequados
+- **♿ Acessibilidade**: Focus management e ARIA labels implementados
+
+### 📋 Arquivos Modificados
+- `frontend/src/components/appointments/booking-form-with-data.tsx`: Interface premium implementada
+- `frontend/src/components/ui/calendar.tsx`: Localização PT-BR e formatters
+- `docs/BOOKING_SYSTEM_PREMIUM.md`: Nova documentação completa do sistema
+
+### 🎯 Resolução de Bugs
+- **❌ Números Sobrepostos**: Corrigido calendário aparecendo indevidamente no passo 4
+- **🔧 Icon Conflicts**: Separação de imports entre componentes UI e ícones Lucide
+- **📐 Layout Issues**: Contenção adequada de elementos com overflow e z-index
+- **🎨 Visual Glitches**: Eliminados artefatos visuais e elementos fora de posição
+
 ## [1.2.6] - 2025-08-15
 
 ### 🔧 Correções de API e Conectividade

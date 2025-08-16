@@ -7,7 +7,9 @@ dotenv.config();
 // Define environment schema
 const envSchema = z.object({
   // Application
-  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  NODE_ENV: z
+    .enum(['development', 'production', 'test'])
+    .default('development'),
   PORT: z.string().transform(Number).default(3000),
   API_VERSION: z.string().default('v1'),
 
@@ -21,11 +23,15 @@ const envSchema = z.object({
   // JWT
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
   JWT_EXPIRES_IN: z.string().default('7d'),
-  REFRESH_TOKEN_SECRET: z.string().min(32, 'REFRESH_TOKEN_SECRET must be at least 32 characters'),
+  REFRESH_TOKEN_SECRET: z
+    .string()
+    .min(32, 'REFRESH_TOKEN_SECRET must be at least 32 characters'),
   REFRESH_TOKEN_EXPIRES_IN: z.string().default('30d'),
 
   // Encryption
-  ENCRYPTION_KEY: z.string().min(32, 'ENCRYPTION_KEY must be at least 32 characters'),
+  ENCRYPTION_KEY: z
+    .string()
+    .min(32, 'ENCRYPTION_KEY must be at least 32 characters'),
   SALT_ROUNDS: z.string().transform(Number).default(12),
 
   // AI Integration
@@ -40,7 +46,10 @@ const envSchema = z.object({
   // Email
   SMTP_HOST: z.string().optional(),
   SMTP_PORT: z.string().transform(Number).optional(),
-  SMTP_SECURE: z.string().transform(val => val === 'true').default(false),
+  SMTP_SECURE: z
+    .string()
+    .transform(val => val === 'true')
+    .default(false),
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
 
@@ -81,10 +90,22 @@ const envSchema = z.object({
   HEALTH_CHECK_TIMEOUT: z.string().transform(Number).default(5000),
 
   // Feature Flags
-  ENABLE_AI_INTEGRATION: z.string().transform(val => val === 'true').default(true),
-  ENABLE_WHATSAPP_INTEGRATION: z.string().transform(val => val === 'true').default(false),
-  ENABLE_GOOGLE_CALENDAR: z.string().transform(val => val === 'true').default(false),
-  ENABLE_AUDIT_LOGS: z.string().transform(val => val === 'true').default(true),
+  ENABLE_AI_INTEGRATION: z
+    .string()
+    .transform(val => val === 'true')
+    .default(true),
+  ENABLE_WHATSAPP_INTEGRATION: z
+    .string()
+    .transform(val => val === 'true')
+    .default(false),
+  ENABLE_GOOGLE_CALENDAR: z
+    .string()
+    .transform(val => val === 'true')
+    .default(false),
+  ENABLE_AUDIT_LOGS: z
+    .string()
+    .transform(val => val === 'true')
+    .default(true),
 });
 
 // Validate and export environment variables

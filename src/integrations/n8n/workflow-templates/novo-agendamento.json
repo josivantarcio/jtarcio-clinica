@@ -358,14 +358,10 @@
       ]
     },
     "send-whatsapp-confirmation": {
-      "main": [
-        []
-      ]
+      "main": [[]]
     },
     "schedule-reminder": {
-      "main": [
-        []
-      ]
+      "main": [[]]
     }
   },
   "settings": {
@@ -391,7 +387,7 @@
       "name": "agendamento"
     },
     {
-      "createdAt": "2024-01-01T00:00:00.000Z", 
+      "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
       "id": "2",
       "name": "core"

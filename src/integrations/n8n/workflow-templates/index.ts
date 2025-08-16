@@ -14,7 +14,12 @@ export interface WorkflowTemplate {
   id: string;
   name: string;
   description: string;
-  category: 'scheduling' | 'notifications' | 'queue' | 'monitoring' | 'integration';
+  category:
+    | 'scheduling'
+    | 'notifications'
+    | 'queue'
+    | 'monitoring'
+    | 'integration';
   priority: 'high' | 'medium' | 'low';
   dependencies: string[];
   workflow: WorkflowDefinition;
@@ -27,21 +32,23 @@ export const schedulingWorkflows: WorkflowTemplate[] = [
   {
     id: 'novo-agendamento',
     name: 'Novo Agendamento',
-    description: 'Fluxo completo para criação de novos agendamentos com validações, integrações e notificações',
+    description:
+      'Fluxo completo para criação de novos agendamentos com validações, integrações e notificações',
     category: 'scheduling',
     priority: 'high',
     dependencies: [],
-    workflow: novoAgendamentoWorkflow as WorkflowDefinition
+    workflow: novoAgendamentoWorkflow as WorkflowDefinition,
   },
   {
     id: 'reagendamento',
     name: 'Reagendamento',
-    description: 'Processo automatizado para reagendamento de consultas com validações de política e notificações',
+    description:
+      'Processo automatizado para reagendamento de consultas com validações de política e notificações',
     category: 'scheduling',
     priority: 'high',
     dependencies: ['novo-agendamento', 'gestao-fila-espera'],
-    workflow: reagendamentoWorkflow as WorkflowDefinition
-  }
+    workflow: reagendamentoWorkflow as WorkflowDefinition,
+  },
 ];
 
 /**
@@ -51,12 +58,13 @@ export const notificationWorkflows: WorkflowTemplate[] = [
   {
     id: 'sistema-lembretes',
     name: 'Sistema de Lembretes',
-    description: 'Sistema automatizado de lembretes multi-canal (24h, 4h, 1h antes da consulta)',
+    description:
+      'Sistema automatizado de lembretes multi-canal (24h, 4h, 1h antes da consulta)',
     category: 'notifications',
     priority: 'high',
     dependencies: [],
-    workflow: sistemaLembretesWorkflow as WorkflowDefinition
-  }
+    workflow: sistemaLembretesWorkflow as WorkflowDefinition,
+  },
 ];
 
 /**
@@ -66,12 +74,13 @@ export const queueWorkflows: WorkflowTemplate[] = [
   {
     id: 'gestao-fila-espera',
     name: 'Gestão de Fila de Espera',
-    description: 'Automação da fila de espera com notificações por prioridade e gestão de vagas liberadas',
+    description:
+      'Automação da fila de espera com notificações por prioridade e gestão de vagas liberadas',
     category: 'queue',
     priority: 'high',
     dependencies: [],
-    workflow: gestaoFilaEsperaWorkflow as WorkflowDefinition
-  }
+    workflow: gestaoFilaEsperaWorkflow as WorkflowDefinition,
+  },
 ];
 
 /**
@@ -80,7 +89,7 @@ export const queueWorkflows: WorkflowTemplate[] = [
 export const allWorkflowTemplates: WorkflowTemplate[] = [
   ...schedulingWorkflows,
   ...notificationWorkflows,
-  ...queueWorkflows
+  ...queueWorkflows,
 ];
 
 /**
@@ -119,13 +128,17 @@ export class WorkflowTemplateManager {
   /**
    * Deploy a single workflow template
    */
-  async deployWorkflow(template: WorkflowTemplate): Promise<WorkflowDefinition> {
+  async deployWorkflow(
+    template: WorkflowTemplate,
+  ): Promise<WorkflowDefinition> {
     try {
       logger.info('Deploying workflow', { workflowId: template.id });
 
       // Check if workflow already exists
       const existingWorkflows = await this.workflowManager.listWorkflows();
-      const existingWorkflow = existingWorkflows.find(w => w.name === template.workflow.name);
+      const existingWorkflow = existingWorkflows.find(
+        w => w.name === template.workflow.name,
+      );
 
       let deployedWorkflow: WorkflowDefinition;
 
@@ -134,29 +147,34 @@ export class WorkflowTemplateManager {
         logger.info('Updating existing workflow', { workflowId: template.id });
         deployedWorkflow = await this.workflowManager.updateWorkflow(
           existingWorkflow.id!,
-          template.workflow
+          template.workflow,
         );
       } else {
         // Create new workflow
         logger.info('Creating new workflow', { workflowId: template.id });
-        deployedWorkflow = await this.workflowManager.createWorkflow(template.workflow);
+        deployedWorkflow = await this.workflowManager.createWorkflow(
+          template.workflow,
+        );
       }
 
       // Activate workflow if it should be active
       if (template.workflow.active) {
-        await this.workflowManager.setWorkflowActive(deployedWorkflow.id!, true);
+        await this.workflowManager.setWorkflowActive(
+          deployedWorkflow.id!,
+          true,
+        );
       }
 
       logger.info('Workflow deployed successfully', {
         workflowId: template.id,
-        n8nWorkflowId: deployedWorkflow.id
+        n8nWorkflowId: deployedWorkflow.id,
       });
 
       return deployedWorkflow;
     } catch (error) {
       logger.error('Failed to deploy workflow', {
         workflowId: template.id,
-        error
+        error,
       });
       throw error;
     }
@@ -212,15 +230,21 @@ export class WorkflowTemplateManager {
   /**
    * Get workflows by category
    */
-  getWorkflowsByCategory(category: WorkflowTemplate['category']): WorkflowTemplate[] {
-    return allWorkflowTemplates.filter(template => template.category === category);
+  getWorkflowsByCategory(
+    category: WorkflowTemplate['category'],
+  ): WorkflowTemplate[] {
+    return allWorkflowTemplates.filter(
+      template => template.category === category,
+    );
   }
 
   /**
    * Get high priority workflows
    */
   getHighPriorityWorkflows(): WorkflowTemplate[] {
-    return allWorkflowTemplates.filter(template => template.priority === 'high');
+    return allWorkflowTemplates.filter(
+      template => template.priority === 'high',
+    );
   }
 
   /**
@@ -232,7 +256,9 @@ export class WorkflowTemplateManager {
     for (const template of allWorkflowTemplates) {
       // Check required fields
       if (!template.id || !template.name || !template.workflow) {
-        errors.push(`Template ${template.id || 'unknown'} is missing required fields`);
+        errors.push(
+          `Template ${template.id || 'unknown'} is missing required fields`,
+        );
       }
 
       // Check workflow structure
@@ -243,14 +269,16 @@ export class WorkflowTemplateManager {
       // Check dependencies exist
       for (const depId of template.dependencies) {
         if (!allWorkflowTemplates.find(t => t.id === depId)) {
-          errors.push(`Template ${template.id} has unknown dependency: ${depId}`);
+          errors.push(
+            `Template ${template.id} has unknown dependency: ${depId}`,
+          );
         }
       }
     }
 
     return {
       valid: errors.length === 0,
-      errors
+      errors,
     };
   }
 
@@ -259,7 +287,7 @@ export class WorkflowTemplateManager {
    */
   exportAllWorkflows(): Record<string, WorkflowDefinition> {
     const exported: Record<string, WorkflowDefinition> = {};
-    
+
     for (const template of allWorkflowTemplates) {
       exported[template.id] = template.workflow;
     }
@@ -270,8 +298,12 @@ export class WorkflowTemplateManager {
   /**
    * Import workflows from JSON
    */
-  async importWorkflows(workflows: Record<string, WorkflowDefinition>): Promise<void> {
-    logger.info('Importing workflows from JSON', { count: Object.keys(workflows).length });
+  async importWorkflows(
+    workflows: Record<string, WorkflowDefinition>,
+  ): Promise<void> {
+    logger.info('Importing workflows from JSON', {
+      count: Object.keys(workflows).length,
+    });
 
     try {
       for (const [id, workflow] of Object.entries(workflows)) {
@@ -314,7 +346,10 @@ export class WorkflowTemplateManager {
 
         // Check recent executions
         try {
-          const executions = await this.workflowManager.listExecutions(workflow.id, 5);
+          const executions = await this.workflowManager.listExecutions(
+            workflow.id,
+            5,
+          );
           const lastExecution = executions[0];
 
           if (lastExecution && !lastExecution.finished) {
@@ -327,14 +362,14 @@ export class WorkflowTemplateManager {
             name: workflow.name,
             active: workflow.active,
             lastExecution: lastExecution?.startedAt.toISOString(),
-            status
+            status,
           });
         } catch (error) {
           results.push({
             id: workflow.id!,
             name: workflow.name,
             active: workflow.active,
-            status: 'error'
+            status: 'error',
           });
           allHealthy = false;
         }
@@ -342,16 +377,18 @@ export class WorkflowTemplateManager {
 
       return {
         healthy: allHealthy,
-        workflows: results
+        workflows: results,
       };
     } catch (error) {
       logger.error('Health check failed', error);
       return {
         healthy: false,
-        workflows: []
+        workflows: [],
       };
     }
   }
 }
 
-export const workflowTemplateManager = new WorkflowTemplateManager(new N8NWorkflowManager());
+export const workflowTemplateManager = new WorkflowTemplateManager(
+  new N8NWorkflowManager(),
+);

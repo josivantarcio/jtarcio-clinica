@@ -9,5 +9,5 @@ export * from './google-calendar';
 export type {
   CalendarEvent,
   CalendarSyncResult,
-  ConflictResolution
+  ConflictResolution,
 } from './google-calendar';

@@ -39,7 +39,11 @@ export class SecurityMiddleware {
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
-          styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+          styleSrc: [
+            "'self'",
+            "'unsafe-inline'",
+            'https://fonts.googleapis.com',
+          ],
           fontSrc: ["'self'", 'https://fonts.gstatic.com'],
           scriptSrc: ["'self'", "'unsafe-inline'"],
           imgSrc: ["'self'", 'data:', 'https:'],
@@ -104,7 +108,8 @@ export class SecurityMiddleware {
       max: this.config.rateLimit.max,
       timeWindow: this.config.rateLimit.timeWindow,
       skipOnError: this.config.rateLimit.skipOnError,
-      keyGenerator: this.config.rateLimit.keyGenerator || this.defaultKeyGenerator,
+      keyGenerator:
+        this.config.rateLimit.keyGenerator || this.defaultKeyGenerator,
       errorResponseBuilder: (request, context) => ({
         error: {
           code: 'RATE_LIMIT_EXCEEDED',
@@ -116,7 +121,7 @@ export class SecurityMiddleware {
           },
         },
       }),
-      onExceeding: (request) => {
+      onExceeding: request => {
         logger.warn('Rate limit exceeded', {
           ip: this.extractClientIP(request),
           userAgent: request.headers['user-agent'],
@@ -124,7 +129,7 @@ export class SecurityMiddleware {
           method: request.method,
         });
       },
-      onExceeded: (request) => {
+      onExceeded: request => {
         logger.error('Rate limit blocked request', {
           ip: this.extractClientIP(request),
           userAgent: request.headers['user-agent'],
@@ -162,7 +167,7 @@ export class SecurityMiddleware {
       const startTime = Date.now();
       const clientIP = this.extractClientIP(request);
       const userAgent = request.headers['user-agent'] || 'unknown';
-      
+
       // Log suspicious patterns
       if (this.detectSuspiciousPatterns(request)) {
         logger.warn('Suspicious request detected', {
@@ -211,7 +216,7 @@ export class SecurityMiddleware {
   createAPIKeyValidationMiddleware() {
     return async (request: FastifyRequest, reply: FastifyReply) => {
       const apiKey = request.headers['x-api-key'] as string;
-      
+
       if (!apiKey) {
         return reply.status(401).send({
           error: {
@@ -283,7 +288,10 @@ export class SecurityMiddleware {
           'multipart/form-data',
         ];
 
-        if (!contentType || !allowedTypes.some(type => contentType.includes(type))) {
+        if (
+          !contentType ||
+          !allowedTypes.some(type => contentType.includes(type))
+        ) {
           return reply.status(415).send({
             error: {
               code: 'UNSUPPORTED_MEDIA_TYPE',
@@ -298,7 +306,7 @@ export class SecurityMiddleware {
       if (signature && request.body) {
         const bodyString = JSON.stringify(request.body);
         const expectedSignature = encryptionService.generateHMAC(bodyString);
-        
+
         if (!encryptionService.verifyHMAC(bodyString, signature)) {
           logger.warn('Invalid request signature', {
             ip: this.extractClientIP(request),
@@ -320,7 +328,10 @@ export class SecurityMiddleware {
    * Brute force protection middleware
    */
   createBruteForceProtectionMiddleware() {
-    const attempts = new Map<string, { count: number; lastAttempt: number; blocked: boolean }>();
+    const attempts = new Map<
+      string,
+      { count: number; lastAttempt: number; blocked: boolean }
+    >();
     const maxAttempts = 5;
     const blockDuration = 15 * 60 * 1000; // 15 minutes
     const attemptWindow = 60 * 1000; // 1 minute
@@ -328,19 +339,24 @@ export class SecurityMiddleware {
     return async (request: FastifyRequest, reply: FastifyReply) => {
       const clientIP = this.extractClientIP(request);
       const now = Date.now();
-      
+
       // Only apply to authentication endpoints
       if (!request.url.includes('/auth/')) {
         return;
       }
 
       const attemptData = attempts.get(clientIP);
-      
+
       if (attemptData) {
         // Check if still blocked
-        if (attemptData.blocked && (now - attemptData.lastAttempt) < blockDuration) {
-          const remainingTime = Math.ceil((blockDuration - (now - attemptData.lastAttempt)) / 1000 / 60);
-          
+        if (
+          attemptData.blocked &&
+          now - attemptData.lastAttempt < blockDuration
+        ) {
+          const remainingTime = Math.ceil(
+            (blockDuration - (now - attemptData.lastAttempt)) / 1000 / 60,
+          );
+
           logger.warn('Brute force attempt blocked', {
             ip: clientIP,
             remainingTime,
@@ -356,7 +372,7 @@ export class SecurityMiddleware {
         }
 
         // Reset if attempt window has passed
-        if ((now - attemptData.lastAttempt) > attemptWindow) {
+        if (now - attemptData.lastAttempt > attemptWindow) {
           attempts.delete(clientIP);
         }
       }
@@ -364,10 +380,14 @@ export class SecurityMiddleware {
       // Hook into response to track failed attempts
       reply.raw.on('finish', () => {
         if (reply.statusCode === 401 || reply.statusCode === 403) {
-          const current = attempts.get(clientIP) || { count: 0, lastAttempt: 0, blocked: false };
+          const current = attempts.get(clientIP) || {
+            count: 0,
+            lastAttempt: 0,
+            blocked: false,
+          };
           current.count++;
           current.lastAttempt = now;
-          
+
           if (current.count >= maxAttempts) {
             current.blocked = true;
             logger.error('IP blocked due to brute force attempts', {
@@ -375,7 +395,7 @@ export class SecurityMiddleware {
               attempts: current.count,
             });
           }
-          
+
           attempts.set(clientIP, current);
         } else if (reply.statusCode === 200) {
           // Success - clear attempts
@@ -419,7 +439,7 @@ export class SecurityMiddleware {
 
   private sanitizeString(str: string): string {
     if (typeof str !== 'string') return str;
-    
+
     // Remove potentially dangerous characters
     return str
       .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // Remove script tags
@@ -433,7 +453,7 @@ export class SecurityMiddleware {
     const url = request.url.toLowerCase();
     const userAgent = (request.headers['user-agent'] || '').toLowerCase();
     const body = JSON.stringify(request.body || '').toLowerCase();
-    
+
     const suspiciousPatterns = [
       // SQL injection patterns
       /(\bor\b|\band\b)\s+\d+\s*=\s*\d+/,
@@ -441,17 +461,17 @@ export class SecurityMiddleware {
       /insert\s+into/,
       /delete\s+from/,
       /drop\s+table/,
-      
+
       // XSS patterns
       /<script/,
       /javascript:/,
       /onerror\s*=/,
       /onload\s*=/,
-      
+
       // Path traversal
       /\.\.\//,
       /\.\.\\/,
-      
+
       // Common attack patterns
       /eval\(/,
       /exec\(/,
@@ -464,13 +484,13 @@ export class SecurityMiddleware {
 
   private sanitizeHeaders(headers: any): any {
     const sanitized = { ...headers };
-    
+
     // Remove sensitive headers from logs
     delete sanitized.authorization;
     delete sanitized.cookie;
     delete sanitized['x-api-key'];
     delete sanitized['x-signature'];
-    
+
     return sanitized;
   }
 
@@ -503,9 +523,10 @@ export const defaultSecurityConfig: SecurityConfig = {
     skipOnError: false,
   },
   cors: {
-    origin: process.env.NODE_ENV === 'production' 
-      ? ['https://eo-clinica.com', 'https://app.eo-clinica.com']
-      : true,
+    origin:
+      process.env.NODE_ENV === 'production'
+        ? ['https://eo-clinica.com', 'https://app.eo-clinica.com']
+        : true,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   },

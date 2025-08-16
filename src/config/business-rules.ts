@@ -207,13 +207,16 @@ export const LEAVE_MANAGEMENT = {
 } as const;
 
 export type SpecialtyName = keyof typeof SPECIALTY_CONFIG;
-export type AppointmentTypeConfig = typeof APPOINTMENT_TYPE_CONFIG[AppointmentType];
+export type AppointmentTypeConfig =
+  (typeof APPOINTMENT_TYPE_CONFIG)[AppointmentType];
 export type PatientClassification = keyof typeof PATIENT_CLASSIFICATION;
 
 // Utility functions for business rules
 export class BusinessRules {
   static getSpecialtyConfig(specialtyName: string) {
-    const normalizedName = specialtyName.toUpperCase().replace(/\s+/g, '_') as SpecialtyName;
+    const normalizedName = specialtyName
+      .toUpperCase()
+      .replace(/\s+/g, '_') as SpecialtyName;
     return SPECIALTY_CONFIG[normalizedName] || SPECIALTY_CONFIG.CLINICA_GERAL;
   }
 
@@ -221,31 +224,37 @@ export class BusinessRules {
     return APPOINTMENT_TYPE_CONFIG[type];
   }
 
-  static calculateCancellationFee(hoursBeforeAppointment: number, appointmentFee: number): number {
+  static calculateCancellationFee(
+    hoursBeforeAppointment: number,
+    appointmentFee: number,
+  ): number {
     if (hoursBeforeAppointment >= CANCELLATION_POLICY.FREE_CANCELLATION_HOURS) {
       return appointmentFee * CANCELLATION_POLICY.FEES.FREE;
     }
-    
+
     if (hoursBeforeAppointment >= CANCELLATION_POLICY.PARTIAL_FEE_HOURS) {
       return appointmentFee * CANCELLATION_POLICY.FEES.PARTIAL;
     }
-    
+
     if (hoursBeforeAppointment >= CANCELLATION_POLICY.FULL_FEE_HOURS) {
       return appointmentFee * CANCELLATION_POLICY.FEES.MODERATE;
     }
-    
+
     return appointmentFee * CANCELLATION_POLICY.FEES.FULL;
   }
 
-  static canReschedule(rescheduleCount: number, hoursBeforeAppointment: number): boolean {
+  static canReschedule(
+    rescheduleCount: number,
+    hoursBeforeAppointment: number,
+  ): boolean {
     if (rescheduleCount >= RESCHEDULING_RULES.MAX_RESCHEDULES_PER_APPOINTMENT) {
       return false;
     }
-    
+
     if (hoursBeforeAppointment < RESCHEDULING_RULES.MIN_NOTICE_HOURS) {
       return false;
     }
-    
+
     return true;
   }
 
@@ -253,31 +262,35 @@ export class BusinessRules {
     appointmentType: AppointmentType,
     patientClassification: PatientClassification,
     urgencyLevel: number = 5,
-    waitingTime: number = 0
+    waitingTime: number = 0,
   ): number {
-    const baseScore = PATIENT_CLASSIFICATION[patientClassification].priorityScore;
+    const baseScore =
+      PATIENT_CLASSIFICATION[patientClassification].priorityScore;
     const typeBonus = appointmentType === 'EMERGENCY' ? 5 : 0;
     const urgencyBonus = urgencyLevel > 7 ? 3 : urgencyLevel > 5 ? 1 : 0;
     const waitingBonus = Math.min(Math.floor(waitingTime / 24), 3); // Max 3 points for waiting
-    
+
     return baseScore + typeBonus + urgencyBonus + waitingBonus;
   }
 
   static isBusinessHour(time: string): boolean {
     const [hours, minutes] = time.split(':').map(Number);
     const timeValue = hours * 60 + minutes;
-    const startTime = TIME_CONSTRAINTS.BUSINESS_START_TIME.split(':').map(Number);
+    const startTime =
+      TIME_CONSTRAINTS.BUSINESS_START_TIME.split(':').map(Number);
     const endTime = TIME_CONSTRAINTS.BUSINESS_END_TIME.split(':').map(Number);
     const lunchStart = TIME_CONSTRAINTS.LUNCH_START_TIME.split(':').map(Number);
     const lunchEnd = TIME_CONSTRAINTS.LUNCH_END_TIME.split(':').map(Number);
-    
+
     const startValue = startTime[0] * 60 + startTime[1];
     const endValue = endTime[0] * 60 + endTime[1];
     const lunchStartValue = lunchStart[0] * 60 + lunchStart[1];
     const lunchEndValue = lunchEnd[0] * 60 + lunchEnd[1];
-    
-    return timeValue >= startValue && 
-           timeValue <= endValue && 
-           (timeValue < lunchStartValue || timeValue >= lunchEndValue);
+
+    return (
+      timeValue >= startValue &&
+      timeValue <= endValue &&
+      (timeValue < lunchStartValue || timeValue >= lunchEndValue)
+    );
   }
 }

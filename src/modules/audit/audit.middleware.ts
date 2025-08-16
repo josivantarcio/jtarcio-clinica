@@ -43,13 +43,16 @@ export class AuditRequestMiddleware {
       // Extract request metadata
       const ipAddress = this.extractClientIP(request);
       const userAgent = request.headers['user-agent'];
-      
+
       // Determine action from HTTP method
       const action = this.mapHttpMethodToAction(request.method);
-      
+
       // Extract resource from route
-      const resource = request.audit?.resource || this.extractResourceFromRoute(request.routerPath || request.url);
-      const resourceId = request.audit?.resourceId || this.extractResourceId(request);
+      const resource =
+        request.audit?.resource ||
+        this.extractResourceFromRoute(request.routerPath || request.url);
+      const resourceId =
+        request.audit?.resourceId || this.extractResourceId(request);
 
       // Log the request if it's a significant action
       if (this.isSignificantAction(action, resource)) {
@@ -78,7 +81,11 @@ export class AuditRequestMiddleware {
    * Middleware to log data modifications
    */
   createDataModificationMiddleware() {
-    return async (request: AuditableRequest, reply: FastifyReply, done: Function) => {
+    return async (
+      request: AuditableRequest,
+      reply: FastifyReply,
+      done: Function,
+    ) => {
       // Only log for modification methods
       if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method)) {
         return done();
@@ -89,12 +96,15 @@ export class AuditRequestMiddleware {
 
       // Store original body for comparison
       const originalBody = request.body;
-      
+
       // Hook into the reply to capture the response
       reply.raw.on('finish', async () => {
         if (reply.statusCode >= 200 && reply.statusCode < 300) {
-          const resource = request.audit?.resource || this.extractResourceFromRoute(request.routerPath || request.url);
-          const resourceId = request.audit?.resourceId || this.extractResourceId(request);
+          const resource =
+            request.audit?.resource ||
+            this.extractResourceFromRoute(request.routerPath || request.url);
+          const resourceId =
+            request.audit?.resourceId || this.extractResourceId(request);
           const action = this.mapHttpMethodToAction(request.method);
 
           await this.auditService.createAuditLog({
@@ -119,7 +129,11 @@ export class AuditRequestMiddleware {
    * Create middleware for specific resource auditing
    */
   createResourceAuditMiddleware(resource: string, action?: string) {
-    return async (request: AuditableRequest, reply: FastifyReply, done: Function) => {
+    return async (
+      request: AuditableRequest,
+      reply: FastifyReply,
+      done: Function,
+    ) => {
       request.audit = {
         ...request.audit,
         resource,
@@ -133,7 +147,11 @@ export class AuditRequestMiddleware {
    * Middleware to log authentication events
    */
   createAuthAuditMiddleware() {
-    return async (request: FastifyRequest, reply: FastifyReply, done: Function) => {
+    return async (
+      request: FastifyRequest,
+      reply: FastifyReply,
+      done: Function,
+    ) => {
       const ipAddress = this.extractClientIP(request);
       const userAgent = request.headers['user-agent'];
 
@@ -189,12 +207,17 @@ export class AuditRequestMiddleware {
    */
   private mapHttpMethodToAction(method: string): string {
     switch (method.toUpperCase()) {
-      case 'POST': return 'CREATE';
-      case 'GET': return 'READ';
-      case 'PUT': 
-      case 'PATCH': return 'UPDATE';
-      case 'DELETE': return 'DELETE';
-      default: return method.toUpperCase();
+      case 'POST':
+        return 'CREATE';
+      case 'GET':
+        return 'READ';
+      case 'PUT':
+      case 'PATCH':
+        return 'UPDATE';
+      case 'DELETE':
+        return 'DELETE';
+      default:
+        return method.toUpperCase();
     }
   }
 
@@ -204,16 +227,16 @@ export class AuditRequestMiddleware {
   private extractResourceFromRoute(path: string): string {
     // Remove query parameters
     const cleanPath = path.split('?')[0];
-    
+
     // Extract from API path like /api/v1/appointments -> appointments
     const pathParts = cleanPath.split('/').filter(Boolean);
-    
+
     // Look for the resource part (usually after /api/v1/)
     const apiIndex = pathParts.findIndex(part => part === 'api');
     if (apiIndex >= 0 && pathParts.length > apiIndex + 2) {
       return pathParts[apiIndex + 2];
     }
-    
+
     // Fallback to first meaningful path segment
     return pathParts[pathParts.length - 1] || 'unknown';
   }
@@ -223,16 +246,16 @@ export class AuditRequestMiddleware {
    */
   private extractResourceId(request: FastifyRequest): string | undefined {
     const params = request.params as any;
-    
+
     // Common ID parameter names
     const idFields = ['id', 'userId', 'appointmentId', 'doctorId', 'patientId'];
-    
+
     for (const field of idFields) {
       if (params[field]) {
         return params[field];
       }
     }
-    
+
     return undefined;
   }
 
@@ -260,16 +283,16 @@ export class AuditRequestMiddleware {
     if (['CREATE', 'UPDATE', 'DELETE'].includes(action)) {
       return true;
     }
-    
+
     // Log reads for sensitive resources
     const sensitiveResources = [
       'users',
-      'patients', 
+      'patients',
       'appointments',
       'medical-records',
       'audit',
     ];
-    
+
     if (action === 'READ' && sensitiveResources.includes(resource)) {
       return true;
     }
@@ -280,36 +303,51 @@ export class AuditRequestMiddleware {
 
 // Predefined audit decorators for common resources
 export const auditDecorators = {
-  appointments: (action?: string) => (target: any, propertyName: string, descriptor: PropertyDescriptor) => {
-    const method = descriptor.value;
-    descriptor.value = async function(request: AuditableRequest, reply: FastifyReply) {
-      request.audit = {
-        resource: 'appointments',
-        action: action || 'UNKNOWN',
+  appointments:
+    (action?: string) =>
+    (target: any, propertyName: string, descriptor: PropertyDescriptor) => {
+      const method = descriptor.value;
+      descriptor.value = async function (
+        request: AuditableRequest,
+        reply: FastifyReply,
+      ) {
+        request.audit = {
+          resource: 'appointments',
+          action: action || 'UNKNOWN',
+        };
+        return method.call(this, request, reply);
       };
-      return method.call(this, request, reply);
-    };
-  },
+    },
 
-  users: (action?: string) => (target: any, propertyName: string, descriptor: PropertyDescriptor) => {
-    const method = descriptor.value;
-    descriptor.value = async function(request: AuditableRequest, reply: FastifyReply) {
-      request.audit = {
-        resource: 'users',
-        action: action || 'UNKNOWN',
+  users:
+    (action?: string) =>
+    (target: any, propertyName: string, descriptor: PropertyDescriptor) => {
+      const method = descriptor.value;
+      descriptor.value = async function (
+        request: AuditableRequest,
+        reply: FastifyReply,
+      ) {
+        request.audit = {
+          resource: 'users',
+          action: action || 'UNKNOWN',
+        };
+        return method.call(this, request, reply);
       };
-      return method.call(this, request, reply);
-    };
-  },
+    },
 
-  patients: (action?: string) => (target: any, propertyName: string, descriptor: PropertyDescriptor) => {
-    const method = descriptor.value;
-    descriptor.value = async function(request: AuditableRequest, reply: FastifyReply) {
-      request.audit = {
-        resource: 'patients',
-        action: action || 'UNKNOWN',
+  patients:
+    (action?: string) =>
+    (target: any, propertyName: string, descriptor: PropertyDescriptor) => {
+      const method = descriptor.value;
+      descriptor.value = async function (
+        request: AuditableRequest,
+        reply: FastifyReply,
+      ) {
+        request.audit = {
+          resource: 'patients',
+          action: action || 'UNKNOWN',
+        };
+        return method.call(this, request, reply);
       };
-      return method.call(this, request, reply);
-    };
-  },
+    },
 };

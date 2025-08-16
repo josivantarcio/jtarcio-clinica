@@ -3,7 +3,7 @@ import { PrismaClient } from '../generated/client';
 // Simple logger for seed
 const logger = {
   info: (msg: string) => console.log(`[INFO] ${msg}`),
-  error: (msg: string, err?: any) => console.error(`[ERROR] ${msg}`, err)
+  error: (msg: string, err?: any) => console.error(`[ERROR] ${msg}`, err),
 };
 
 const systemConfigurations = [
@@ -145,7 +145,8 @@ const systemConfigurations = [
   {
     key: 'AUTOMATIC_DATA_ANONYMIZATION',
     value: 'true',
-    description: 'Whether to automatically anonymize data after retention period',
+    description:
+      'Whether to automatically anonymize data after retention period',
     category: 'lgpd',
   },
 
@@ -203,7 +204,9 @@ const systemConfigurations = [
   },
 ];
 
-export async function seedSystemConfigurations(prisma: PrismaClient): Promise<void> {
+export async function seedSystemConfigurations(
+  prisma: PrismaClient,
+): Promise<void> {
   try {
     logger.info('Seeding system configurations...');
 

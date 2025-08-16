@@ -56,11 +56,7 @@ export class GoogleCalendarIntegration {
   private oauth2Client: OAuth2Client;
   private calendar: any;
 
-  constructor(
-    clientId: string,
-    clientSecret: string,
-    redirectUri: string
-  ) {
+  constructor(clientId: string, clientSecret: string, redirectUri: string) {
     this.oauth2Client = new OAuth2Client(clientId, clientSecret, redirectUri);
     this.calendar = google.calendar({ version: 'v3', auth: this.oauth2Client });
   }
@@ -68,47 +64,53 @@ export class GoogleCalendarIntegration {
   /**
    * Set access credentials
    */
-  setCredentials(tokens: { access_token: string; refresh_token?: string; expiry_date?: number }): void {
+  setCredentials(tokens: {
+    access_token: string;
+    refresh_token?: string;
+    expiry_date?: number;
+  }): void {
     this.oauth2Client.setCredentials(tokens);
   }
 
   /**
    * Create a new calendar event
    */
-  async createEvent(calendarId: string, event: CalendarEvent): Promise<CalendarSyncResult> {
+  async createEvent(
+    calendarId: string,
+    event: CalendarEvent,
+  ): Promise<CalendarSyncResult> {
     try {
-      logger.info('Creating Google Calendar event', { 
-        calendarId, 
+      logger.info('Creating Google Calendar event', {
+        calendarId,
         summary: event.summary,
-        start: event.start.dateTime 
+        start: event.start.dateTime,
       });
 
       const response = await this.calendar.events.insert({
         calendarId,
         resource: event,
         sendNotifications: true,
-        supportsAttachments: true
+        supportsAttachments: true,
       });
 
       logger.info('Google Calendar event created successfully', {
         calendarEventId: response.data.id,
-        summary: response.data.summary
+        summary: response.data.summary,
       });
 
       return {
         success: true,
         calendarEventId: response.data.id,
         appointmentId: event.extendedProperties?.private?.appointmentId || '',
-        action: 'created'
+        action: 'created',
       };
-
     } catch (error) {
       logger.error('Failed to create Google Calendar event', error);
       return {
         success: false,
         appointmentId: event.extendedProperties?.private?.appointmentId || '',
         action: 'created',
-        errors: [error.message]
+        errors: [error.message],
       };
     }
   }
@@ -116,40 +118,43 @@ export class GoogleCalendarIntegration {
   /**
    * Update an existing calendar event
    */
-  async updateEvent(calendarId: string, eventId: string, event: CalendarEvent): Promise<CalendarSyncResult> {
+  async updateEvent(
+    calendarId: string,
+    eventId: string,
+    event: CalendarEvent,
+  ): Promise<CalendarSyncResult> {
     try {
-      logger.info('Updating Google Calendar event', { 
-        calendarId, 
+      logger.info('Updating Google Calendar event', {
+        calendarId,
         eventId,
-        summary: event.summary 
+        summary: event.summary,
       });
 
       const response = await this.calendar.events.update({
         calendarId,
         eventId,
         resource: event,
-        sendNotifications: true
+        sendNotifications: true,
       });
 
       logger.info('Google Calendar event updated successfully', {
         calendarEventId: response.data.id,
-        summary: response.data.summary
+        summary: response.data.summary,
       });
 
       return {
         success: true,
         calendarEventId: response.data.id,
         appointmentId: event.extendedProperties?.private?.appointmentId || '',
-        action: 'updated'
+        action: 'updated',
       };
-
     } catch (error) {
       logger.error('Failed to update Google Calendar event', error);
       return {
         success: false,
         appointmentId: event.extendedProperties?.private?.appointmentId || '',
         action: 'updated',
-        errors: [error.message]
+        errors: [error.message],
       };
     }
   }
@@ -157,14 +162,18 @@ export class GoogleCalendarIntegration {
   /**
    * Delete a calendar event
    */
-  async deleteEvent(calendarId: string, eventId: string, appointmentId: string): Promise<CalendarSyncResult> {
+  async deleteEvent(
+    calendarId: string,
+    eventId: string,
+    appointmentId: string,
+  ): Promise<CalendarSyncResult> {
     try {
       logger.info('Deleting Google Calendar event', { calendarId, eventId });
 
       await this.calendar.events.delete({
         calendarId,
         eventId,
-        sendNotifications: true
+        sendNotifications: true,
       });
 
       logger.info('Google Calendar event deleted successfully', { eventId });
@@ -173,16 +182,15 @@ export class GoogleCalendarIntegration {
         success: true,
         calendarEventId: eventId,
         appointmentId,
-        action: 'deleted'
+        action: 'deleted',
       };
-
     } catch (error) {
       logger.error('Failed to delete Google Calendar event', error);
       return {
         success: false,
         appointmentId,
         action: 'deleted',
-        errors: [error.message]
+        errors: [error.message],
       };
     }
   }
@@ -190,11 +198,14 @@ export class GoogleCalendarIntegration {
   /**
    * Get a calendar event by ID
    */
-  async getEvent(calendarId: string, eventId: string): Promise<CalendarEvent | null> {
+  async getEvent(
+    calendarId: string,
+    eventId: string,
+  ): Promise<CalendarEvent | null> {
     try {
       const response = await this.calendar.events.get({
         calendarId,
-        eventId
+        eventId,
       });
 
       return this.mapGoogleEventToCalendarEvent(response.data);
@@ -215,7 +226,7 @@ export class GoogleCalendarIntegration {
     calendarId: string,
     timeMin: Date,
     timeMax: Date,
-    maxResults: number = 250
+    maxResults: number = 250,
   ): Promise<CalendarEvent[]> {
     try {
       const response = await this.calendar.events.list({
@@ -224,10 +235,14 @@ export class GoogleCalendarIntegration {
         timeMax: timeMax.toISOString(),
         maxResults,
         singleEvents: true,
-        orderBy: 'startTime'
+        orderBy: 'startTime',
       });
 
-      return response.data.items?.map(item => this.mapGoogleEventToCalendarEvent(item)) || [];
+      return (
+        response.data.items?.map(item =>
+          this.mapGoogleEventToCalendarEvent(item),
+        ) || []
+      );
     } catch (error) {
       logger.error('Failed to list Google Calendar events', error);
       throw error;
@@ -241,10 +256,14 @@ export class GoogleCalendarIntegration {
     calendarId: string,
     appointmentStart: Date,
     appointmentEnd: Date,
-    excludeEventId?: string
+    excludeEventId?: string,
   ): Promise<CalendarEvent[]> {
     try {
-      const events = await this.listEvents(calendarId, appointmentStart, appointmentEnd);
+      const events = await this.listEvents(
+        calendarId,
+        appointmentStart,
+        appointmentEnd,
+      );
 
       return events.filter(event => {
         // Exclude the event we're checking against (for updates)
@@ -273,13 +292,13 @@ export class GoogleCalendarIntegration {
   async resolveConflict(
     clinicData: any,
     calendarEvent: CalendarEvent,
-    strategy: ConflictResolution['strategy']
+    strategy: ConflictResolution['strategy'],
   ): Promise<{ resolved: boolean; action: string; result?: any }> {
     try {
       logger.info('Resolving calendar conflict', {
         strategy,
         appointmentId: clinicData.id,
-        calendarEventId: calendarEvent.id
+        calendarEventId: calendarEvent.id,
       });
 
       switch (strategy) {
@@ -288,12 +307,12 @@ export class GoogleCalendarIntegration {
           const clinicWinsResult = await this.updateEventFromAppointment(
             'primary', // or specific calendar ID
             calendarEvent.id!,
-            clinicData
+            clinicData,
           );
           return {
             resolved: clinicWinsResult.success,
             action: 'calendar_updated',
-            result: clinicWinsResult
+            result: clinicWinsResult,
           };
 
         case 'calendar_wins':
@@ -302,17 +321,26 @@ export class GoogleCalendarIntegration {
           return {
             resolved: false,
             action: 'manual_intervention_required',
-            result: { reason: 'Calendar wins strategy requires clinic API update' }
+            result: {
+              reason: 'Calendar wins strategy requires clinic API update',
+            },
           };
 
         case 'merge':
           // Merge non-conflicting fields
-          const mergedEvent = await this.mergeEventData(clinicData, calendarEvent);
-          const mergeResult = await this.updateEvent('primary', calendarEvent.id!, mergedEvent);
+          const mergedEvent = await this.mergeEventData(
+            clinicData,
+            calendarEvent,
+          );
+          const mergeResult = await this.updateEvent(
+            'primary',
+            calendarEvent.id!,
+            mergedEvent,
+          );
           return {
             resolved: mergeResult.success,
             action: 'events_merged',
-            result: mergeResult
+            result: mergeResult,
           };
 
         case 'manual_review':
@@ -320,12 +348,12 @@ export class GoogleCalendarIntegration {
           // Flag for manual review
           logger.warn('Conflict flagged for manual review', {
             appointmentId: clinicData.id,
-            calendarEventId: calendarEvent.id
+            calendarEventId: calendarEvent.id,
           });
           return {
             resolved: false,
             action: 'manual_review_required',
-            result: { clinicData, calendarEvent }
+            result: { clinicData, calendarEvent },
           };
       }
     } catch (error) {
@@ -333,7 +361,7 @@ export class GoogleCalendarIntegration {
       return {
         resolved: false,
         action: 'error',
-        result: { error: error.message }
+        result: { error: error.message },
       };
     }
   }
@@ -344,7 +372,7 @@ export class GoogleCalendarIntegration {
   async bulkSync(
     calendarId: string,
     appointments: any[],
-    conflictResolution: ConflictResolution['strategy'] = 'manual_review'
+    conflictResolution: ConflictResolution['strategy'] = 'manual_review',
   ): Promise<{
     successful: CalendarSyncResult[];
     failed: CalendarSyncResult[];
@@ -362,31 +390,41 @@ export class GoogleCalendarIntegration {
       try {
         // Check for conflicts first
         const appointmentStart = new Date(appointment.date);
-        const appointmentEnd = new Date(appointmentStart.getTime() + (appointment.duration * 60000));
-        
+        const appointmentEnd = new Date(
+          appointmentStart.getTime() + appointment.duration * 60000,
+        );
+
         const conflictingEvents = await this.detectConflicts(
           calendarId,
           appointmentStart,
           appointmentEnd,
-          appointment.externalCalendarId
+          appointment.externalCalendarId,
         );
 
         if (conflictingEvents.length > 0) {
           conflicts.push({
             appointment,
             conflictingEvents,
-            resolution: await this.resolveConflict(appointment, conflictingEvents[0], conflictResolution)
+            resolution: await this.resolveConflict(
+              appointment,
+              conflictingEvents[0],
+              conflictResolution,
+            ),
           });
           continue;
         }
 
         // No conflicts, proceed with sync
         let result: CalendarSyncResult;
-        
+
         if (appointment.externalCalendarId) {
           // Update existing event
           const event = this.mapAppointmentToCalendarEvent(appointment);
-          result = await this.updateEvent(calendarId, appointment.externalCalendarId, event);
+          result = await this.updateEvent(
+            calendarId,
+            appointment.externalCalendarId,
+            event,
+          );
         } else {
           // Create new event
           const event = this.mapAppointmentToCalendarEvent(appointment);
@@ -398,14 +436,16 @@ export class GoogleCalendarIntegration {
         } else {
           failed.push(result);
         }
-
       } catch (error) {
-        logger.error('Bulk sync error for appointment', { appointmentId: appointment.id, error });
+        logger.error('Bulk sync error for appointment', {
+          appointmentId: appointment.id,
+          error,
+        });
         failed.push({
           success: false,
           appointmentId: appointment.id,
           action: 'created',
-          errors: [error.message]
+          errors: [error.message],
         });
       }
     }
@@ -414,7 +454,7 @@ export class GoogleCalendarIntegration {
       total: appointments.length,
       successful: successful.length,
       failed: failed.length,
-      conflicts: conflicts.length
+      conflicts: conflicts.length,
     });
 
     return { successful, failed, conflicts };
@@ -426,7 +466,7 @@ export class GoogleCalendarIntegration {
   async setupWebhookNotifications(
     calendarId: string,
     webhookUrl: string,
-    channelId: string
+    channelId: string,
   ): Promise<{ success: boolean; channel?: any; error?: string }> {
     try {
       const response = await this.calendar.events.watch({
@@ -435,25 +475,28 @@ export class GoogleCalendarIntegration {
           id: channelId,
           type: 'web_hook',
           address: webhookUrl,
-          expiration: Date.now() + (7 * 24 * 60 * 60 * 1000) // 7 days
-        }
+          expiration: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days
+        },
       });
 
       logger.info('Google Calendar webhook notifications setup', {
         calendarId,
         channelId,
-        webhookUrl
+        webhookUrl,
       });
 
       return {
         success: true,
-        channel: response.data
+        channel: response.data,
       };
     } catch (error) {
-      logger.error('Failed to setup Google Calendar webhook notifications', error);
+      logger.error(
+        'Failed to setup Google Calendar webhook notifications',
+        error,
+      );
       return {
         success: false,
-        error: error.message
+        error: error.message,
       };
     }
   }
@@ -463,45 +506,49 @@ export class GoogleCalendarIntegration {
    */
   private mapAppointmentToCalendarEvent(appointment: any): CalendarEvent {
     const startTime = new Date(appointment.date);
-    const endTime = new Date(startTime.getTime() + (appointment.duration * 60000));
+    const endTime = new Date(
+      startTime.getTime() + appointment.duration * 60000,
+    );
 
     return {
       summary: `${appointment.specialty} - ${appointment.patientName}`,
-      description: `Consulta médica agendada via EO Clínica\n\n` +
-                  `Paciente: ${appointment.patientName}\n` +
-                  `Médico: Dr(a) ${appointment.doctorName}\n` +
-                  `Especialidade: ${appointment.specialty}\n` +
-                  `Duração: ${appointment.duration} minutos\n` +
-                  `Status: ${appointment.status}\n` +
-                  (appointment.notes ? `\nObservações: ${appointment.notes}` : ''),
+      description:
+        `Consulta médica agendada via EO Clínica\n\n` +
+        `Paciente: ${appointment.patientName}\n` +
+        `Médico: Dr(a) ${appointment.doctorName}\n` +
+        `Especialidade: ${appointment.specialty}\n` +
+        `Duração: ${appointment.duration} minutos\n` +
+        `Status: ${appointment.status}\n` +
+        (appointment.notes ? `\nObservações: ${appointment.notes}` : ''),
       start: {
         dateTime: startTime.toISOString(),
-        timeZone: 'America/Sao_Paulo'
+        timeZone: 'America/Sao_Paulo',
       },
       end: {
         dateTime: endTime.toISOString(),
-        timeZone: 'America/Sao_Paulo'
+        timeZone: 'America/Sao_Paulo',
       },
       attendees: [
         {
           email: appointment.patientEmail,
           displayName: appointment.patientName,
-          responseStatus: appointment.status === 'CONFIRMED' ? 'accepted' : 'needsAction'
+          responseStatus:
+            appointment.status === 'CONFIRMED' ? 'accepted' : 'needsAction',
         },
         {
           email: appointment.doctorEmail,
           displayName: `Dr(a) ${appointment.doctorName}`,
-          responseStatus: 'accepted'
-        }
+          responseStatus: 'accepted',
+        },
       ],
       location: appointment.clinicAddress || 'EO Clínica',
       reminders: {
         useDefault: false,
         overrides: [
           { method: 'email', minutes: 24 * 60 }, // 24 hours
-          { method: 'email', minutes: 60 },      // 1 hour
-          { method: 'popup', minutes: 15 }       // 15 minutes
-        ]
+          { method: 'email', minutes: 60 }, // 1 hour
+          { method: 'popup', minutes: 15 }, // 15 minutes
+        ],
       },
       extendedProperties: {
         private: {
@@ -509,9 +556,9 @@ export class GoogleCalendarIntegration {
           clinicSystem: 'eo-clinica',
           patientId: appointment.patientId,
           doctorId: appointment.doctorId,
-          specialtyId: appointment.specialtyId
-        }
-      }
+          specialtyId: appointment.specialtyId,
+        },
+      },
     };
   }
 
@@ -525,20 +572,20 @@ export class GoogleCalendarIntegration {
       description: googleEvent.description,
       start: {
         dateTime: googleEvent.start.dateTime || googleEvent.start.date,
-        timeZone: googleEvent.start.timeZone || 'America/Sao_Paulo'
+        timeZone: googleEvent.start.timeZone || 'America/Sao_Paulo',
       },
       end: {
         dateTime: googleEvent.end.dateTime || googleEvent.end.date,
-        timeZone: googleEvent.end.timeZone || 'America/Sao_Paulo'
+        timeZone: googleEvent.end.timeZone || 'America/Sao_Paulo',
       },
       attendees: googleEvent.attendees?.map((attendee: any) => ({
         email: attendee.email,
         displayName: attendee.displayName,
-        responseStatus: attendee.responseStatus
+        responseStatus: attendee.responseStatus,
       })),
       location: googleEvent.location,
       reminders: googleEvent.reminders,
-      extendedProperties: googleEvent.extendedProperties
+      extendedProperties: googleEvent.extendedProperties,
     };
   }
 
@@ -548,7 +595,7 @@ export class GoogleCalendarIntegration {
   private async updateEventFromAppointment(
     calendarId: string,
     eventId: string,
-    appointment: any
+    appointment: any,
   ): Promise<CalendarSyncResult> {
     const event = this.mapAppointmentToCalendarEvent(appointment);
     return await this.updateEvent(calendarId, eventId, event);
@@ -557,27 +604,33 @@ export class GoogleCalendarIntegration {
   /**
    * Merge clinic and calendar event data
    */
-  private async mergeEventData(clinicData: any, calendarEvent: CalendarEvent): Promise<CalendarEvent> {
+  private async mergeEventData(
+    clinicData: any,
+    calendarEvent: CalendarEvent,
+  ): Promise<CalendarEvent> {
     // Clinic data takes precedence for core appointment info
     const merged = this.mapAppointmentToCalendarEvent(clinicData);
-    
+
     // Preserve calendar-specific data
     if (calendarEvent.attendees) {
       merged.attendees = [
         ...merged.attendees!,
-        ...calendarEvent.attendees.filter(a => 
-          !merged.attendees!.some(ma => ma.email === a.email)
-        )
+        ...calendarEvent.attendees.filter(
+          a => !merged.attendees!.some(ma => ma.email === a.email),
+        ),
       ];
     }
 
     // Preserve additional reminders from calendar
     if (calendarEvent.reminders?.overrides) {
       const clinicReminders = merged.reminders?.overrides || [];
-      const calendarReminders = calendarEvent.reminders.overrides.filter(cr =>
-        !clinicReminders.some(mr => mr.method === cr.method && mr.minutes === cr.minutes)
+      const calendarReminders = calendarEvent.reminders.overrides.filter(
+        cr =>
+          !clinicReminders.some(
+            mr => mr.method === cr.method && mr.minutes === cr.minutes,
+          ),
       );
-      
+
       if (merged.reminders) {
         merged.reminders.overrides = [...clinicReminders, ...calendarReminders];
       }
@@ -591,5 +644,6 @@ export class GoogleCalendarIntegration {
 export const googleCalendarIntegration = new GoogleCalendarIntegration(
   process.env.GOOGLE_CLIENT_ID || '',
   process.env.GOOGLE_CLIENT_SECRET || '',
-  process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3000/auth/google/callback'
+  process.env.GOOGLE_REDIRECT_URI ||
+    'http://localhost:3000/auth/google/callback',
 );

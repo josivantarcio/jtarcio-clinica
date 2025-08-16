@@ -66,7 +66,7 @@ REGRAS IMPORTANTES:
 Responda de forma natural e útil, focando em resolver a necessidade do paciente.`,
 
       variables: ['context'],
-      description: 'Template base para assistente médico'
+      description: 'Template base para assistente médico',
     });
 
     // Appointment scheduling template
@@ -113,8 +113,14 @@ MENSAGEM DO PACIENTE:
 
 Continue o processo de agendamento de forma natural e eficiente.`,
 
-      variables: ['specialties', 'conversation_context', 'collected_data', 'missing_info', 'user_message'],
-      description: 'Template para agendamento de consultas'
+      variables: [
+        'specialties',
+        'conversation_context',
+        'collected_data',
+        'missing_info',
+        'user_message',
+      ],
+      description: 'Template para agendamento de consultas',
     });
 
     // Rescheduling template
@@ -150,8 +156,12 @@ MENSAGEM DO PACIENTE:
 
 Ajude com o reagendamento de forma eficiente e clara.`,
 
-      variables: ['appointment_context', 'conversation_history', 'user_message'],
-      description: 'Template para reagendamento de consultas'
+      variables: [
+        'appointment_context',
+        'conversation_history',
+        'user_message',
+      ],
+      description: 'Template para reagendamento de consultas',
     });
 
     // Cancellation template
@@ -186,8 +196,13 @@ MENSAGEM:
 
 Processe o cancelamento seguindo nossas políticas.`,
 
-      variables: ['cancellation_policy', 'appointment_data', 'conversation_history', 'user_message'],
-      description: 'Template para cancelamento de consultas'
+      variables: [
+        'cancellation_policy',
+        'appointment_data',
+        'conversation_history',
+        'user_message',
+      ],
+      description: 'Template para cancelamento de consultas',
     });
 
     // Emergency assessment template
@@ -234,8 +249,13 @@ MENSAGEM:
 
 Avalie a urgência e oriente adequadamente, priorizando SEMPRE a segurança.`,
 
-      variables: ['emergency_phone', 'symptoms', 'patient_context', 'user_message'],
-      description: 'Template para avaliação de emergências'
+      variables: [
+        'emergency_phone',
+        'symptoms',
+        'patient_context',
+        'user_message',
+      ],
+      description: 'Template para avaliação de emergências',
     });
 
     // General information template
@@ -273,8 +293,15 @@ CONTEXTO RELEVANTE:
 
 Forneça informação clara e útil.`,
 
-      variables: ['specialties', 'clinic_address', 'clinic_phones', 'knowledge_context', 'user_question', 'relevant_context'],
-      description: 'Template para informações gerais'
+      variables: [
+        'specialties',
+        'clinic_address',
+        'clinic_phones',
+        'knowledge_context',
+        'user_question',
+        'relevant_context',
+      ],
+      description: 'Template para informações gerais',
     });
 
     // Intent clarification template
@@ -314,7 +341,7 @@ ANÁLISE NLP:
 Ajude a esclarecer o que o paciente realmente precisa.`,
 
       variables: ['user_message', 'nlp_analysis'],
-      description: 'Template para esclarecimento de intenções'
+      description: 'Template para esclarecimento de intenções',
     });
 
     // Entity extraction template
@@ -358,7 +385,7 @@ CONTEXTO ANTERIOR:
 Extraia todas as informações relevantes em formato JSON.`,
 
       variables: ['user_message', 'previous_context'],
-      description: 'Template para extração de entidades'
+      description: 'Template para extração de entidades',
     });
   }
 
@@ -380,7 +407,7 @@ Extraia todas as informações relevantes em formato JSON.`,
       [Intent.EMERGENCIA]: 'emergency_assessment',
       [Intent.INFORMACOES_GERAIS]: 'general_info',
       [Intent.CONSULTAR_AGENDAMENTO]: 'general_info',
-      [Intent.UNKNOWN]: 'clarify_intent'
+      [Intent.UNKNOWN]: 'clarify_intent',
     };
 
     const templateName = intentTemplateMap[intent];
@@ -390,7 +417,10 @@ Extraia todas as informações relevantes em formato JSON.`,
   /**
    * Build prompt from template
    */
-  buildPrompt(templateName: string, variables: PromptVariables): {
+  buildPrompt(
+    templateName: string,
+    variables: PromptVariables,
+  ): {
     system: string;
     user: string;
   } | null {
@@ -405,13 +435,19 @@ Extraia todas as informações relevantes em formato JSON.`,
     // Replace variables in system prompt
     for (const [key, value] of Object.entries(variables)) {
       const placeholder = `{${key}}`;
-      systemPrompt = systemPrompt.replace(new RegExp(placeholder, 'g'), String(value || ''));
-      userPrompt = userPrompt.replace(new RegExp(placeholder, 'g'), String(value || ''));
+      systemPrompt = systemPrompt.replace(
+        new RegExp(placeholder, 'g'),
+        String(value || ''),
+      );
+      userPrompt = userPrompt.replace(
+        new RegExp(placeholder, 'g'),
+        String(value || ''),
+      );
     }
 
     return {
       system: systemPrompt,
-      user: userPrompt
+      user: userPrompt,
     };
   }
 
@@ -421,13 +457,13 @@ Extraia todas as informações relevantes em formato JSON.`,
   buildContextualPrompt(
     context: ConversationContext,
     userMessage: string,
-    additionalVariables: PromptVariables = {}
+    additionalVariables: PromptVariables = {},
   ): { system: string; user: string } | null {
     const template = this.getTemplateByIntent(context.currentIntent);
     if (!template) {
       return this.buildPrompt('base_assistant', {
         context: `Intent: ${context.currentIntent}\nMessage: ${userMessage}`,
-        ...additionalVariables
+        ...additionalVariables,
       });
     }
 
@@ -437,7 +473,7 @@ Extraia todas as informações relevantes em formato JSON.`,
       collected_data: this.formatCollectedData(context),
       missing_info: this.formatMissingInfo(context),
       clinic_name: this.clinicName,
-      ...additionalVariables
+      ...additionalVariables,
     };
 
     return this.buildPrompt(template.name, variables);
@@ -450,7 +486,7 @@ Extraia todas as informações relevantes em formato JSON.`,
     const lines = [
       `Intent: ${context.currentIntent}`,
       `Step: ${context.currentStep}`,
-      `Flow State: ${context.flowState}`
+      `Flow State: ${context.flowState}`,
     ];
 
     if (context.conversationHistory.length > 0) {
@@ -468,7 +504,7 @@ Extraia todas as informações relevantes em formato JSON.`,
    */
   private formatCollectedData(context: ConversationContext): string {
     const data = [];
-    
+
     for (const [key, slot] of Object.entries(context.slotsFilled)) {
       if (slot && slot.confirmed) {
         data.push(`${key}: ${slot.value}`);
@@ -483,14 +519,16 @@ Extraia todas as informações relevantes em formato JSON.`,
    */
   private formatMissingInfo(context: ConversationContext): string {
     const missing = [];
-    
+
     for (const [key, slot] of Object.entries(context.slotsFilled)) {
       if (!slot || !slot.confirmed) {
         missing.push(key);
       }
     }
 
-    return missing.length > 0 ? missing.join(', ') : 'Todas as informações necessárias coletadas';
+    return missing.length > 0
+      ? missing.join(', ')
+      : 'Todas as informações necessárias coletadas';
   }
 
   /**

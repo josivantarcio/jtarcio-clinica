@@ -294,7 +294,8 @@
         "source": "parameter",
         "mode": "ownExecutions",
         "inputs": {
-          "action": "slot_available",\n          "originalDate": "={{ $('Verificar Política Reagendamento').first().json.appointment.date }}",
+          "action": "slot_available",
+          "originalDate": "={{ $('Verificar Política Reagendamento').first().json.appointment.date }}",
           "specialtyId": "={{ $('Verificar Política Reagendamento').first().json.appointment.specialtyId }}",
           "duration": "={{ $('Verificar Política Reagendamento').first().json.appointment.duration }}"
         }
@@ -453,9 +454,7 @@
       ]
     },
     "update-google-calendar": {
-      "main": [
-        []
-      ]
+      "main": [[]]
     },
     "send-reschedule-notification": {
       "main": [
@@ -469,9 +468,7 @@
       ]
     },
     "notify-queue": {
-      "main": [
-        []
-      ]
+      "main": [[]]
     }
   },
   "settings": {
