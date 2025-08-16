@@ -2,9 +2,22 @@
 
 ## Overview
 
-EO Clínica is a comprehensive medical clinic scheduling system that integrates AI-powered conversations, automated workflows, and complete medical appointment management. **Version 1.2.5** features fully implemented patient management, doctor management, consultation scheduling systems with intelligent medical experience calculation, advanced validations and professional interfaces.
+EO Clínica is a comprehensive medical clinic scheduling system that integrates AI-powered conversations, automated workflows, and complete medical appointment management. **Version 1.2.8** features fully implemented patient management, doctor management, consultation scheduling systems with functional appointment booking, backend stability improvements, and professional interfaces.
 
-## 🆕 Latest Updates - Version 1.2.5 (August 15, 2025)
+## 🆕 Latest Updates - Version 1.2.8 (August 16, 2025)
+
+### 🔧 **Sistema de Agendamentos Funcional - CORRIGIDO**
+- **✅ Botão "Confirmar Agendamento"**: Agora funciona corretamente para criar consultas
+- **🔧 Backend Estável**: Resolvido problema de reinicializações automáticas
+- **📋 Informações do Paciente**: Exibidas na etapa final do agendamento
+- **🛠️ Comando Estável**: `npm run start:stable` para servidor sem hot reload
+
+### 🐛 **Correções de Interface - RESOLVIDAS**
+- **🔴 Erros de Dashboard**: Corrigidos erros "Cannot read properties of undefined"
+- **📊 Componentes Estáveis**: upcoming-appointments e recent-appointments funcionando
+- **🔗 Estrutura de Dados**: Atualizada para usar fullName diretamente
+
+## 📋 Previous Updates - Version 1.2.5 (August 15, 2025)
 
 ### ✨ **Sistema Inteligente de Experiência Médica - NOVO**
 - **🧮 Cálculo Automático**: Experiência calculada automaticamente a partir da data de formatura ou registro no CRM

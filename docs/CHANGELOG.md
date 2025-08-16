@@ -11,6 +11,51 @@ This project follows [Semantic Versioning](https://semver.org/):
 
 ---
 
+## [1.2.8] - 2025-08-16 - **Correções de Estabilidade e Interface** 🔧
+
+### 🐛 **CORREÇÕES CRÍTICAS**
+
+#### Sistema de Agendamentos - CORRIGIDO:
+- ✅ **Botão "Confirmar Agendamento"**: Corrigido para funcionar corretamente
+- ✅ **PatientId obrigatório**: Adicionado patientId simulado para criação de appointments
+- ✅ **Schema do backend**: Corrigido include de dados do médico na API
+- ✅ **Informações do paciente**: Adicionada seção destacada na etapa final do agendamento
+
+#### Interface Dashboard - CORRIGIDO:
+- ✅ **upcoming-appointments.tsx**: Corrigido erro "Cannot read properties of undefined (reading 'name')"
+- ✅ **recent-appointments.tsx**: Corrigido mesmo erro em componente similar
+- ✅ **Estrutura de dados**: Atualizado para usar `fullName` diretamente de patient/doctor
+- ✅ **Fallbacks seguros**: Adicionado proteção contra propriedades undefined
+
+#### Estabilidade do Backend - RESOLVIDO:
+- ✅ **Hot reload identificado**: TSX causava reinicializações automáticas ("Shutting down gracefully")
+- ✅ **Script estável**: Adicionado `npm run start:stable` sem file watching
+- ✅ **Scripts auxiliares**: Criados `run-stable.sh` e `run-no-watch.sh`
+- ✅ **Documentação completa**: `docs/BACKEND_STABILITY.md` com troubleshooting
+
+### 🔧 **MELHORIAS TÉCNICAS**
+
+#### Backend:
+- Corrigido appointment creation schema para incluir dados corretos do médico
+- Adicionado suporte para patientId obrigatório na criação de consultas
+- Implementado comando estável `start:stable` sem hot reload
+
+#### Frontend:
+- Atualizadas referências de `appointment.patient.user.name` para `appointment.patient.fullName`
+- Atualizadas referências de `appointment.doctor.user.name` para `appointment.doctor.fullName`
+- Adicionada exibição de informações do paciente na confirmação de agendamento
+
+### 📋 **ARQUIVOS AFETADOS**
+- `frontend/src/components/appointments/appointment-booking-form.tsx`
+- `frontend/src/components/dashboard/upcoming-appointments.tsx`
+- `frontend/src/components/dashboard/recent-appointments.tsx`
+- `src/index-simple.ts`
+- `package.json`
+- `docs/BACKEND_STABILITY.md` (novo)
+- `docs/LOGIN_STATUS.md` (novo)
+
+---
+
 ## [1.2.7] - 2025-08-15 - **Melhorias em Agendamentos e Cadastro de Médicos** 🩺
 
 ### 🎯 **NOVAS FUNCIONALIDADES**
