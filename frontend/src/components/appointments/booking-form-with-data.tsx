@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -25,7 +25,6 @@ import { apiClient } from '@/lib/api'
 const bookingSchema = z.object({
   specialtyId: z.string().min(1, 'Selecione uma especialidade'),
   doctorId: z.string().min(1, 'Selecione um médico'),
-  scheduledAt: z.date({ required_error: 'Selecione data e horário' }),
   type: z.enum(['CONSULTATION', 'FOLLOW_UP'], { required_error: 'Selecione o tipo de consulta' }),
   notes: z.string().optional()
 })
@@ -85,7 +84,10 @@ export function BookingFormWithData({ initialSpecialties }: BookingFormWithDataP
     dateOfBirth: '',
     gender: ''
   })
-  const [needsPatientRegistration, setNeedsPatientRegistration] = useState(true) // Assume registration needed
+  const [needsPatientRegistration, setNeedsPatientRegistration] = useState(false) // Default to using existing patient
+  const [existingPatients, setExistingPatients] = useState<any[]>([])
+  const [loadingPatients, setLoadingPatients] = useState(false)
+  const [selectedPatientId, setSelectedPatientId] = useState<string>('')
   
   // Use as especialidades passadas como props ao invés de buscar
   const [specialties] = useState(initialSpecialties)
@@ -93,6 +95,30 @@ export function BookingFormWithData({ initialSpecialties }: BookingFormWithDataP
   
   const { doctors, isLoading: loadingDoctors, loadDoctors } = useDoctorsStore()
   const { createAppointment, isLoading: bookingAppointment } = useAppointmentsStore()
+  
+  // Função para buscar pacientes existentes
+  const loadExistingPatients = useCallback(async () => {
+    setLoadingPatients(true)
+    try {
+      const response = await apiClient.request({
+        method: 'GET',
+        url: '/api/v1/users?role=PATIENT&limit=50'
+      })
+      
+      if (response.success && response.data) {
+        setExistingPatients(response.data.users || [])
+      }
+    } catch (error) {
+      console.error('Error loading patients:', error)
+      toast({
+        title: 'Erro',
+        description: 'Falha ao carregar pacientes existentes',
+        variant: 'destructive'
+      })
+    } finally {
+      setLoadingPatients(false)
+    }
+  }, [])
   
   const {
     register,
@@ -119,6 +145,17 @@ export function BookingFormWithData({ initialSpecialties }: BookingFormWithDataP
       loadAvailableSlots()
     }
   }, [selectedDoctorId, selectedDate])
+
+  useEffect(() => {
+    if (!needsPatientRegistration) {
+      loadExistingPatients()
+    }
+  }, [needsPatientRegistration, loadExistingPatients])
+
+  // Load patients on mount since default is to use existing patient
+  useEffect(() => {
+    loadExistingPatients()
+  }, [])
 
   const createPatient = async () => {
     try {
@@ -223,8 +260,23 @@ export function BookingFormWithData({ initialSpecialties }: BookingFormWithDataP
       return
     }
     
+    // Validate required fields manually since we're combining external state
+    if (!data.specialtyId || !data.doctorId || !data.type) {
+      console.log('❌ Erro: Campos obrigatórios não preenchidos', {
+        specialtyId: data.specialtyId,
+        doctorId: data.doctorId, 
+        type: data.type
+      })
+      toast({
+        title: 'Erro',
+        description: 'Preencha todos os campos obrigatórios',
+        variant: 'destructive'
+      })
+      return
+    }
+    
     try {
-      let patientId = 'cmedgb3c50003iq743btkmh5w' // Default patient ID (Josevan Oliveira)
+      let patientId = ''
       
       // If patient registration is needed, create patient first
       if (needsPatientRegistration) {
@@ -236,6 +288,18 @@ export function BookingFormWithData({ initialSpecialties }: BookingFormWithDataP
         }
         patientId = newPatientId
         console.log('✅ Paciente criado com ID:', patientId)
+      } else {
+        // Use existing patient
+        if (!selectedPatientId) {
+          toast({
+            title: 'Erro',
+            description: 'Selecione um paciente existente',
+            variant: 'destructive'
+          })
+          return
+        }
+        patientId = selectedPatientId
+        console.log('✅ Usando paciente existente com ID:', patientId)
       }
       
       const [hours, minutes] = selectedTime.split(':').map(Number)
@@ -453,7 +517,7 @@ export function BookingFormWithData({ initialSpecialties }: BookingFormWithDataP
                     <input
                       type="radio"
                       {...register('doctorId')}
-                      value={doctor.id}
+                      value={doctor.userId}
                       className="sr-only peer"
                     />
                     <div className="p-4 border rounded-lg peer-checked:border-primary peer-checked:bg-primary/5 hover:bg-muted/50 transition-colors">
@@ -721,7 +785,7 @@ export function BookingFormWithData({ initialSpecialties }: BookingFormWithDataP
 
       {/* Step 4: Confirmation */}
       {step === 4 && (
-        <Card className="relative z-50 bg-white">
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CheckCircle className="h-5 w-5" />
@@ -731,9 +795,9 @@ export function BookingFormWithData({ initialSpecialties }: BookingFormWithDataP
               Revise os dados e confirme seu agendamento da consulta
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6 relative z-50">
+          <CardContent className="space-y-6">
             {/* Appointment Summary */}
-            <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl p-6 border relative z-50 bg-white/95 backdrop-blur-sm">
+            <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl p-6 border">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center">
                   <CheckCircle className="h-6 w-6 text-primary" />
@@ -815,14 +879,14 @@ export function BookingFormWithData({ initialSpecialties }: BookingFormWithDataP
 
             {/* Patient Registration Section */}
             {needsPatientRegistration && (
-              <div className="border rounded-xl p-6 bg-blue-50/50">
+              <div className="mt-6 pt-6 border-t">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                      <User className="h-5 w-5 text-blue-600" />
+                    <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                      <User className="h-4 w-4 text-primary" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-gray-900">Dados do Paciente</h3>
+                      <h3 className="font-semibold text-gray-900">Dados do Paciente</h3>
                       <p className="text-sm text-muted-foreground">Informações necessárias para o agendamento</p>
                     </div>
                   </div>
@@ -933,6 +997,88 @@ export function BookingFormWithData({ initialSpecialties }: BookingFormWithDataP
               </div>
             )}
 
+            {/* Existing Patient Selection */}
+            {!needsPatientRegistration && (
+              <div className="mt-6 pt-6 border-t">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                      <User className="h-4 w-4 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900">Selecionar Paciente</h3>
+                      <p className="text-sm text-muted-foreground">Escolha um paciente existente</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="createNewPatient"
+                      checked={needsPatientRegistration}
+                      onChange={(e) => setNeedsPatientRegistration(e.target.checked)}
+                      className="rounded"
+                    />
+                    <Label htmlFor="createNewPatient" className="text-sm font-medium">
+                      Cadastrar novo paciente
+                    </Label>
+                  </div>
+                </div>
+                
+                {loadingPatients ? (
+                  <div className="grid gap-3">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <div key={i} className="flex items-center space-x-4 p-4 border rounded-lg">
+                        <div className="h-10 w-10 bg-muted animate-pulse rounded-full" />
+                        <div className="space-y-2 flex-1">
+                          <div className="h-4 bg-muted animate-pulse rounded w-40" />
+                          <div className="h-3 bg-muted animate-pulse rounded w-60" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : existingPatients.length > 0 ? (
+                  <div className="grid gap-3 max-h-60 overflow-y-auto">
+                    {existingPatients.map((patient) => (
+                      <label key={patient.id} className="cursor-pointer">
+                        <input
+                          type="radio"
+                          name="existingPatient"
+                          value={patient.id}
+                          checked={selectedPatientId === patient.id}
+                          onChange={(e) => setSelectedPatientId(e.target.value)}
+                          className="sr-only peer"
+                        />
+                        <div className="p-4 border rounded-lg peer-checked:border-primary peer-checked:bg-primary/5 hover:bg-muted/50 transition-colors">
+                          <div className="flex items-center space-x-4">
+                            <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center">
+                              <span className="font-semibold text-primary">
+                                {patient.firstName?.charAt(0) || 'P'}
+                              </span>
+                            </div>
+                            <div className="flex-1">
+                              <h3 className="font-semibold">{patient.fullName || `${patient.firstName} ${patient.lastName}`}</h3>
+                              <p className="text-sm text-muted-foreground">
+                                Email: {patient.email}
+                              </p>
+                              {patient.phone && (
+                                <p className="text-sm text-muted-foreground">
+                                  Telefone: {patient.phone}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-center text-muted-foreground py-6">
+                    Nenhum paciente encontrado
+                  </p>
+                )}
+              </div>
+            )}
+
             {/* Consultation Type */}
             <div className="space-y-4">
               <div>
@@ -1019,7 +1165,8 @@ export function BookingFormWithData({ initialSpecialties }: BookingFormWithDataP
                     !patientData.cpf || 
                     !patientData.dateOfBirth || 
                     !patientData.gender
-                  ))
+                  )) ||
+                  (!needsPatientRegistration && !selectedPatientId)
                 }
                 className="w-full sm:w-auto sm:min-w-48 h-12 text-base font-semibold"
               >

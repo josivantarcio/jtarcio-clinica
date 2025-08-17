@@ -1449,46 +1449,341 @@ fastify.get('/api/v1/availability', async (request, reply) => {
   }
 });
 
-// Analytics
+// Analytics - Real data from database
 fastify.get('/api/v1/analytics', async (request, reply) => {
-  return {
-    success: true,
-    data: {
-      overview: {
-        totalRevenue: 0,
-        totalAppointments: 0,
-        totalPatients: 0,
-        averageRating: 0,
-        revenueGrowth: 0,
-        appointmentGrowth: 0,
-        patientGrowth: 0,
-        satisfactionGrowth: 0,
+  try {
+    console.log('=== ANALYTICS ENDPOINT CALLED ===');
+    
+    // Calculate date ranges
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfPreviousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const endOfPreviousMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+    const startOfToday = new Date(now.toDateString());
+    const endOfToday = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+    // Get real data from database
+    const [
+      totalPatients, 
+      totalAppointments, 
+      todayAppointments,
+      thisMonthPatients,
+      previousMonthPatients,
+      completedAppointments,
+      cancelledAppointments,
+      totalRevenue
+    ] = await Promise.all([
+      // Total patients (all time)
+      prisma.user.count({
+        where: {
+          role: 'PATIENT',
+          deletedAt: null,
+        },
+      }),
+      // Total appointments
+      prisma.appointment.count({
+        where: {
+          deletedAt: null,
+        },
+      }),
+      // Today's appointments
+      prisma.appointment.count({
+        where: {
+          scheduledAt: {
+            gte: startOfToday,
+            lt: endOfToday,
+          },
+          deletedAt: null,
+        },
+      }),
+      // This month new patients
+      prisma.user.count({
+        where: {
+          role: 'PATIENT',
+          createdAt: {
+            gte: startOfMonth,
+          },
+          deletedAt: null,
+        },
+      }),
+      // Previous month patients (for growth calculation)
+      prisma.user.count({
+        where: {
+          role: 'PATIENT',
+          createdAt: {
+            gte: startOfPreviousMonth,
+            lt: endOfPreviousMonth,
+          },
+          deletedAt: null,
+        },
+      }),
+      // Completed appointments
+      prisma.appointment.count({
+        where: {
+          status: 'COMPLETED',
+          deletedAt: null,
+        },
+      }),
+      // Cancelled appointments
+      prisma.appointment.count({
+        where: {
+          status: 'CANCELLED',
+          deletedAt: null,
+        },
+      }),
+      // Total revenue from completed appointments
+      prisma.appointment.aggregate({
+        where: {
+          status: 'COMPLETED',
+          fee: { not: null },
+          deletedAt: null,
+        },
+        _sum: {
+          fee: true,
+        },
+      }),
+    ]);
+
+    // Calculate growth rates
+    const patientGrowth = previousMonthPatients > 0 
+      ? ((thisMonthPatients - previousMonthPatients) / previousMonthPatients) * 100 
+      : thisMonthPatients > 0 ? 100 : 0;
+
+    // Calculate conversion and retention rates
+    const totalScheduledAppointments = totalAppointments;
+    const conversionRate = totalScheduledAppointments > 0 
+      ? (completedAppointments / totalScheduledAppointments) * 100 
+      : 0;
+    
+    const cancellationRate = totalScheduledAppointments > 0 
+      ? (cancelledAppointments / totalScheduledAppointments) * 100 
+      : 0;
+
+    console.log('Analytics data:', { 
+      totalPatients, 
+      totalAppointments, 
+      todayAppointments,
+      thisMonthPatients,
+      completedAppointments,
+      totalRevenue: totalRevenue._sum.fee || 0
+    });
+
+    return {
+      success: true,
+      data: {
+        overview: {
+          totalRevenue: Number(totalRevenue._sum.fee || 0),
+          totalAppointments,
+          totalPatients,
+          averageRating: 0, // No rating system implemented yet
+          revenueGrowth: 0, // Would need previous month revenue to calculate
+          appointmentGrowth: 0, // Would need previous month appointments to calculate
+          patientGrowth: Number(patientGrowth.toFixed(1)),
+          satisfactionGrowth: 0,
+        },
+        advanced: {
+          conversionRate: Number(conversionRate.toFixed(1)),
+          churnRate: Number(cancellationRate.toFixed(1)),
+          customerLifetimeValue: totalPatients > 0 ? Number((totalRevenue._sum.fee || 0) / totalPatients).toFixed(2) : 0,
+          averageSessionTime: 0, // Not tracking session time yet
+          bounceRate: 0, // Not tracking bounce rate yet
+          retentionRate: Number((100 - cancellationRate).toFixed(1)),
+          npsScore: 0, // No NPS survey implemented yet
+          operationalEfficiency: Number((100 - cancellationRate).toFixed(1)),
+        },
+        predictions: {
+          nextMonthRevenue: 0, // Would need historical data for prediction
+          nextMonthAppointments: 0, // Would need historical data for prediction
+          capacity: 0, // Would need doctor availability data
+          demandForecast: thisMonthPatients > previousMonthPatients ? 'Crescente' : 
+                         thisMonthPatients < previousMonthPatients ? 'Decrescente' : 'Estável',
+          seasonalTrends: thisMonthPatients > 0 ? [`Novos pacientes este mês: ${thisMonthPatients}`] : ['Nenhum dado disponível'],
+        },
+        realTime: {
+          activeUsers: 0, // Not tracking active users yet
+          todayBookings: todayAppointments,
+          systemLoad: 0, // Not monitoring system load yet
+          responseTime: 0, // Not monitoring response time yet
+        },
       },
-      advanced: {
-        conversionRate: 0,
-        churnRate: 0,
-        customerLifetimeValue: 0,
-        averageSessionTime: 0,
-        bounceRate: 0,
-        retentionRate: 0,
-        npsScore: 0,
-        operationalEfficiency: 0,
+    };
+  } catch (error) {
+    console.error('Analytics error:', error);
+    reply.status(500);
+    return {
+      success: false,
+      error: {
+        code: 'ANALYTICS_ERROR',
+        message: 'Erro ao buscar dados de analytics',
       },
-      predictions: {
-        nextMonthRevenue: 0,
-        nextMonthAppointments: 0,
-        capacity: 0,
-        demandForecast: 'Baixo',
-        seasonalTrends: ['Nenhum dado histórico disponível'],
+    };
+  }
+});
+
+// Revenue Chart Data - Real data for dashboard graphs
+fastify.get('/api/v1/analytics/revenue-chart', async (request, reply) => {
+  try {
+    const query = request.query as any;
+    const period = query?.period || 'month'; // week, month, quarter, year
+    
+    const now = new Date();
+    let rangeStart: Date;
+
+    switch (period) {
+      case 'week':
+        rangeStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case 'quarter':
+        rangeStart = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+        break;
+      case 'year':
+        rangeStart = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+        break;
+      default: // month
+        rangeStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    }
+
+    // Get completed appointments with fees in the period
+    const appointments = await prisma.appointment.findMany({
+      where: {
+        status: 'COMPLETED',
+        fee: { not: null },
+        scheduledAt: {
+          gte: rangeStart,
+          lte: now,
+        },
+        deletedAt: null,
       },
-      realTime: {
-        activeUsers: 0,
-        todayBookings: 0,
-        systemLoad: 0,
-        responseTime: 0,
+      select: {
+        scheduledAt: true,
+        fee: true,
       },
-    },
-  };
+      orderBy: {
+        scheduledAt: 'asc',
+      },
+    });
+
+    // Group by date and sum revenue
+    const revenueByDate = new Map<string, number>();
+    
+    appointments.forEach(appointment => {
+      if (appointment.scheduledAt && appointment.fee) {
+        const dateKey = appointment.scheduledAt.toISOString().split('T')[0];
+        const currentRevenue = revenueByDate.get(dateKey) || 0;
+        revenueByDate.set(dateKey, currentRevenue + Number(appointment.fee));
+      }
+    });
+
+    // Convert to chart format
+    const chartData = Array.from(revenueByDate.entries()).map(([date, revenue]) => ({
+      date,
+      revenue,
+    }));
+
+    return {
+      success: true,
+      data: chartData,
+    };
+  } catch (error) {
+    console.error('Revenue chart error:', error);
+    reply.status(500);
+    return {
+      success: false,
+      error: {
+        code: 'CHART_ERROR',
+        message: 'Erro ao buscar dados do gráfico',
+      },
+    };
+  }
+});
+
+// Appointments Chart Data - Real data for appointment trends
+fastify.get('/api/v1/analytics/appointments-chart', async (request, reply) => {
+  try {
+    const query = request.query as any;
+    const period = query?.period || 'month';
+    
+    const now = new Date();
+    let rangeStart: Date;
+
+    switch (period) {
+      case 'week':
+        rangeStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case 'quarter':
+        rangeStart = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+        break;
+      case 'year':
+        rangeStart = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+        break;
+      default: // month
+        rangeStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    }
+
+    // Get appointments grouped by date and status
+    const appointments = await prisma.appointment.groupBy({
+      by: ['scheduledAt', 'status'],
+      where: {
+        scheduledAt: {
+          gte: rangeStart,
+          lte: now,
+        },
+        deletedAt: null,
+      },
+      _count: {
+        id: true,
+      },
+      orderBy: {
+        scheduledAt: 'asc',
+      },
+    });
+
+    // Group by date
+    const appointmentsByDate = new Map<string, { scheduled: number, completed: number, cancelled: number }>();
+    
+    appointments.forEach(appointment => {
+      const dateKey = appointment.scheduledAt.toISOString().split('T')[0];
+      
+      if (!appointmentsByDate.has(dateKey)) {
+        appointmentsByDate.set(dateKey, { scheduled: 0, completed: 0, cancelled: 0 });
+      }
+      
+      const dayData = appointmentsByDate.get(dateKey)!;
+      
+      switch (appointment.status) {
+        case 'COMPLETED':
+          dayData.completed += appointment._count.id;
+          break;
+        case 'CANCELLED':
+          dayData.cancelled += appointment._count.id;
+          break;
+        default:
+          dayData.scheduled += appointment._count.id;
+      }
+    });
+
+    // Convert to chart format
+    const chartData = Array.from(appointmentsByDate.entries()).map(([date, counts]) => ({
+      date,
+      ...counts,
+      total: counts.scheduled + counts.completed + counts.cancelled,
+    }));
+
+    return {
+      success: true,
+      data: chartData,
+    };
+  } catch (error) {
+    console.error('Appointments chart error:', error);
+    reply.status(500);
+    return {
+      success: false,
+      error: {
+        code: 'CHART_ERROR',
+        message: 'Erro ao buscar dados do gráfico de consultas',
+      },
+    };
+  }
 });
 
 // Error handler
