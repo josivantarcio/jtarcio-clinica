@@ -5,21 +5,24 @@ import { verifyJWT } from '../plugins/auth';
 const prisma = new PrismaClient();
 
 // Helper functions for real-time metrics
-async function getActiveUsersCount(prisma: PrismaClient, now: Date): Promise<number> {
+async function getActiveUsersCount(
+  prisma: PrismaClient,
+  now: Date,
+): Promise<number> {
   try {
     // Users who have had activity in the last 30 minutes
     const thirtyMinutesAgo = new Date(now.getTime() - 30 * 60 * 1000);
-    
+
     // Count recent appointments, logins, or any activity
     const recentActivity = await prisma.appointment.count({
       where: {
         OR: [
           { createdAt: { gte: thirtyMinutesAgo } },
-          { updatedAt: { gte: thirtyMinutesAgo } }
-        ]
-      }
+          { updatedAt: { gte: thirtyMinutesAgo } },
+        ],
+      },
     });
-    
+
     // Simulate realistic active users based on recent activity
     return Math.max(recentActivity, Math.floor(Math.random() * 10) + 5);
   } catch (error) {
@@ -34,7 +37,7 @@ async function getSystemLoadMetrics(): Promise<number> {
     const startTime = Date.now();
     await prisma.appointment.findFirst();
     const queryTime = Date.now() - startTime;
-    
+
     // Convert query time to load percentage (lower is better)
     // 0-50ms = low load (20-40%), 50-200ms = medium (40-70%), >200ms = high (70-90%)
     let loadPercentage;
@@ -45,7 +48,7 @@ async function getSystemLoadMetrics(): Promise<number> {
     } else {
       loadPercentage = 70 + Math.random() * 20; // 70-90%
     }
-    
+
     return Math.round(loadPercentage);
   } catch (error) {
     console.log('Error calculating system load:', error);
@@ -57,7 +60,7 @@ async function getAverageResponseTime(): Promise<number> {
   try {
     // Measure actual database response time
     const measurements = [];
-    
+
     for (let i = 0; i < 3; i++) {
       const startTime = process.hrtime.bigint();
       await prisma.user.count();
@@ -65,8 +68,9 @@ async function getAverageResponseTime(): Promise<number> {
       const duration = Number(endTime - startTime) / 1000000; // Convert to milliseconds
       measurements.push(duration);
     }
-    
-    const avgResponseTime = measurements.reduce((a, b) => a + b, 0) / measurements.length;
+
+    const avgResponseTime =
+      measurements.reduce((a, b) => a + b, 0) / measurements.length;
     return Math.round(avgResponseTime);
   } catch (error) {
     console.log('Error calculating response time:', error);
@@ -74,42 +78,49 @@ async function getAverageResponseTime(): Promise<number> {
   }
 }
 
-async function calculateFunnelMetrics(prisma: PrismaClient, rangeStart: Date, rangeEnd: Date) {
+async function calculateFunnelMetrics(
+  prisma: PrismaClient,
+  rangeStart: Date,
+  rangeEnd: Date,
+) {
   try {
     // Step 1: Total registered patients (potential visitors)
     const totalPatients = await prisma.user.count({
-      where: { role: 'PATIENT' }
+      where: { role: 'PATIENT' },
     });
-    
+
     // Step 2: Patients who showed interest (created in period)
     const interestedPatients = await prisma.user.count({
       where: {
         role: 'PATIENT',
-        createdAt: { gte: rangeStart, lte: rangeEnd }
-      }
+        createdAt: { gte: rangeStart, lte: rangeEnd },
+      },
     });
-    
+
     // Step 3: Patients who scheduled appointments
     const scheduledAppointments = await prisma.appointment.count({
       where: {
-        scheduledAt: { gte: rangeStart, lte: rangeEnd }
-      }
+        scheduledAt: { gte: rangeStart, lte: rangeEnd },
+      },
     });
-    
+
     // Step 4: Patients who actually attended
     const attendedAppointments = await prisma.appointment.count({
       where: {
         scheduledAt: { gte: rangeStart, lte: rangeEnd },
-        status: 'COMPLETED'
-      }
+        status: 'COMPLETED',
+      },
     });
-    
+
     return {
       totalVisitors: totalPatients,
       interested: interestedPatients,
       scheduled: scheduledAppointments,
       attended: attendedAppointments,
-      conversionRate: scheduledAppointments > 0 ? ((attendedAppointments / scheduledAppointments) * 100) : 0
+      conversionRate:
+        scheduledAppointments > 0
+          ? (attendedAppointments / scheduledAppointments) * 100
+          : 0,
     };
   } catch (error) {
     console.log('Error calculating funnel metrics:', error);
@@ -118,31 +129,35 @@ async function calculateFunnelMetrics(prisma: PrismaClient, rangeStart: Date, ra
       interested: 0,
       scheduled: 0,
       attended: 0,
-      conversionRate: 0
+      conversionRate: 0,
     };
   }
 }
 
-async function calculateAverageRating(prisma: PrismaClient, rangeStart: Date, rangeEnd: Date): Promise<number> {
+async function calculateAverageRating(
+  prisma: PrismaClient,
+  rangeStart: Date,
+  rangeEnd: Date,
+): Promise<number> {
   try {
     // Calculate rating based on appointment completion success
     const totalAppointments = await prisma.appointment.count({
-      where: { scheduledAt: { gte: rangeStart, lte: rangeEnd } }
+      where: { scheduledAt: { gte: rangeStart, lte: rangeEnd } },
     });
-    
+
     const completedAppointments = await prisma.appointment.count({
       where: {
         scheduledAt: { gte: rangeStart, lte: rangeEnd },
-        status: 'COMPLETED'
-      }
+        status: 'COMPLETED',
+      },
     });
-    
+
     if (totalAppointments === 0) return 0;
-    
+
     // Convert completion rate to rating scale (1-5)
     const completionRate = completedAppointments / totalAppointments;
-    const rating = 2.5 + (completionRate * 2.5); // Scale 0-1 completion to 2.5-5.0 rating
-    
+    const rating = 2.5 + completionRate * 2.5; // Scale 0-1 completion to 2.5-5.0 rating
+
     return Math.round(rating * 10) / 10; // Round to 1 decimal place
   } catch (error) {
     console.log('Error calculating average rating:', error);
@@ -151,18 +166,26 @@ async function calculateAverageRating(prisma: PrismaClient, rangeStart: Date, ra
 }
 
 async function calculateSatisfactionGrowth(
-  prisma: PrismaClient, 
-  rangeStart: Date, 
-  rangeEnd: Date, 
-  previousStart: Date, 
-  previousEnd: Date
+  prisma: PrismaClient,
+  rangeStart: Date,
+  rangeEnd: Date,
+  previousStart: Date,
+  previousEnd: Date,
 ): Promise<number> {
   try {
-    const currentRating = await calculateAverageRating(prisma, rangeStart, rangeEnd);
-    const previousRating = await calculateAverageRating(prisma, previousStart, previousEnd);
-    
+    const currentRating = await calculateAverageRating(
+      prisma,
+      rangeStart,
+      rangeEnd,
+    );
+    const previousRating = await calculateAverageRating(
+      prisma,
+      previousStart,
+      previousEnd,
+    );
+
     if (previousRating === 0) return 0;
-    
+
     const growth = ((currentRating - previousRating) / previousRating) * 100;
     return Math.round(growth * 10) / 10; // Round to 1 decimal place
   } catch (error) {
@@ -404,9 +427,13 @@ export async function analyticsRoutes(fastify: FastifyInstance) {
             status: 'COMPLETED',
           },
         });
-        
+
         // FUNNEL ANALYTICS - Real conversion data
-        const funnelData = await calculateFunnelMetrics(prisma, rangeStart, rangeEnd);
+        const funnelData = await calculateFunnelMetrics(
+          prisma,
+          rangeStart,
+          rangeEnd,
+        );
 
         const cancelledAppointments = await prisma.appointment.count({
           where: {
@@ -478,26 +505,36 @@ export async function analyticsRoutes(fastify: FastifyInstance) {
             totalRevenue: Number(totalRevenue._sum.fee || 0),
             totalAppointments,
             totalPatients,
-            averageRating: await calculateAverageRating(prisma, rangeStart, rangeEnd),
+            averageRating: await calculateAverageRating(
+              prisma,
+              rangeStart,
+              rangeEnd,
+            ),
             revenueGrowth: Number(revenueGrowth.toFixed(1)),
             appointmentGrowth: Number(appointmentGrowth.toFixed(1)),
             patientGrowth: Number(patientGrowth.toFixed(1)),
-            satisfactionGrowth: await calculateSatisfactionGrowth(prisma, rangeStart, rangeEnd, previousStart, previousEnd)
+            satisfactionGrowth: await calculateSatisfactionGrowth(
+              prisma,
+              rangeStart,
+              rangeEnd,
+              previousStart,
+              previousEnd,
+            ),
           },
           // Add funnel data to the response
           patients: {
             totalVisitors: funnelData.totalVisitors,
             interested: funnelData.interested,
             scheduled: funnelData.scheduled,
-            attended: funnelData.attended
+            attended: funnelData.attended,
           },
           appointments: {
             completed: completedAppointments,
             scheduled: funnelData.scheduled,
-            attended: funnelData.attended
+            attended: funnelData.attended,
           },
           financial: {
-            monthlyData: [0, 0, 0, 0, 0, Number(totalRevenue._sum.fee || 0)] // Simple monthly data with current revenue
+            monthlyData: [0, 0, 0, 0, 0, Number(totalRevenue._sum.fee || 0)], // Simple monthly data with current revenue
           },
           advanced: {
             conversionRate: Number(conversionRate.toFixed(1)),

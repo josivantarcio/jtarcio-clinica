@@ -172,9 +172,11 @@ export default function AdminPage() {
       // Processar resposta do Audit
       if (auditResponse.ok) {
         const audit = await auditResponse.json()
-        auditData = audit.data
+        // A API retorna { data: { logs: [...] } }, extrair apenas os logs
+        auditData = audit.data?.logs || []
       } else {
         console.warn('Audit API not available, using sample data')
+        auditData = []
       }
 
       // Construir dados administrativos com dados reais ou fallback
@@ -201,19 +203,29 @@ export default function AdminPage() {
             createdAt: new Date('2024-01-01')
           }
         ],
-        logs: auditData || [
-          // Fallback mínimo
-          {
-            id: 'log-1',
-            userId: 'admin-1',
-            userName: 'Administrador Sistema',
-            action: 'SYSTEM_ACCESS',
-            resource: 'ADMIN_PANEL',
-            timestamp: new Date(),
-            ip: '127.0.0.1',
+        logs: Array.isArray(auditData) && auditData.length > 0 ? 
+          auditData.map(log => ({
+            id: log.id || `log-${Date.now()}`,
+            userId: log.userId || 'unknown',
+            userName: log.user?.firstName ? `${log.user.firstName} ${log.user.lastName}` : log.userEmail || 'Usuário Desconhecido',
+            action: log.action || 'UNKNOWN',
+            resource: log.resource || 'Sistema',
+            ip: log.ipAddress || '127.0.0.1',
+            timestamp: log.createdAt ? new Date(log.createdAt) : new Date(),
             success: true
-          }
-        ],
+          })) : [
+            // Fallback mínimo quando não há dados
+            {
+              id: 'log-fallback-1',
+              userId: 'admin-1',
+              userName: 'Sistema',
+              action: 'SYSTEM',
+              resource: 'Sistema Inicializando',
+              ip: '127.0.0.1',
+              timestamp: new Date(),
+              success: true
+            }
+          ],
         systemStats: {
           cpuUsage: analyticsData?.realTime?.systemLoad || 35.0,
           memoryUsage: 55.0, // Valor estimado
@@ -269,14 +281,32 @@ export default function AdminPage() {
     )
   }
 
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(date)
+  const formatDate = (date: Date | string | null | undefined) => {
+    try {
+      // Handle null/undefined cases
+      if (!date) {
+        return 'Data não disponível'
+      }
+      
+      // Convert string to Date if needed
+      const dateObj = typeof date === 'string' ? new Date(date) : date
+      
+      // Check if date is valid
+      if (isNaN(dateObj.getTime())) {
+        return 'Data inválida'
+      }
+      
+      return new Intl.DateTimeFormat('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }).format(dateObj)
+    } catch (error) {
+      console.error('Error formatting date:', error)
+      return 'Erro na data'
+    }
   }
 
   const formatUptime = (seconds: number) => {
@@ -378,8 +408,8 @@ export default function AdminPage() {
     }
   ]
 
-  // Filter users
-  const filteredUsers = adminData.users.filter(user => {
+  // Filter users - ensure adminData.users is an array
+  const filteredUsers = Array.isArray(adminData.users) ? adminData.users.filter(user => {
     const matchesSearch = !searchTerm || 
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase())
@@ -387,7 +417,7 @@ export default function AdminPage() {
     const matchesRole = filterRole === 'all' || user.role === filterRole
 
     return matchesSearch && matchesRole
-  })
+  }) : []
 
   return (
     <AppLayout>
@@ -737,7 +767,7 @@ export default function AdminPage() {
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <FileText className="h-5 w-5 mr-2 text-green-600" />
-                  Logs de Auditoria ({adminData.logs.length})
+                  Logs de Auditoria ({Array.isArray(adminData.logs) ? adminData.logs.length : 0})
                 </CardTitle>
                 <CardDescription>
                   Histórico de ações dos usuários no sistema
@@ -745,7 +775,7 @@ export default function AdminPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {adminData.logs.map((log) => (
+                  {Array.isArray(adminData.logs) ? adminData.logs.map((log) => (
                     <div key={log.id} className="flex items-center justify-between p-3 border rounded-lg">
                       <div className="flex items-center space-x-4">
                         <div className={`w-3 h-3 rounded-full ${log.success ? 'bg-green-500' : 'bg-red-500'}`}></div>
@@ -772,7 +802,12 @@ export default function AdminPage() {
                         </Button>
                       </div>
                     </div>
-                  ))}
+                  )) : (
+                    <div className="text-center text-muted-foreground py-8">
+                      <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                      <p>Nenhum log de auditoria disponível</p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

@@ -1,6 +1,7 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import { prisma } from './config/database';
+import { AuditRequestMiddleware } from './modules/audit/audit.middleware';
 
 // Criar instância do Fastify
 const fastify = Fastify({
@@ -15,6 +16,41 @@ fastify.register(cors, {
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
 });
+
+// Initialize Audit Middleware
+const auditMiddleware = new AuditRequestMiddleware(prisma);
+
+// Register audit middleware for authentication routes
+fastify.addHook('onRequest', auditMiddleware.createAuthAuditMiddleware());
+
+// Utility function to create audit logs
+const createAuditLog = async (logData: {
+  action: string;
+  resource: string;
+  userEmail?: string;
+  ipAddress?: string;
+  userAgent?: string;
+  oldValues?: any;
+  newValues?: any;
+  resourceId?: string;
+}) => {
+  try {
+    await prisma.auditLog.create({
+      data: {
+        action: logData.action,
+        resource: logData.resource,
+        userEmail: logData.userEmail || null,
+        ipAddress: logData.ipAddress || '127.0.0.1',
+        userAgent: logData.userAgent || 'EO Clinica System',
+        oldValues: logData.oldValues || null,
+        newValues: logData.newValues || null,
+        resourceId: logData.resourceId || null,
+      },
+    });
+  } catch (error) {
+    console.log('Audit log creation failed:', error);
+  }
+};
 
 // Health check
 fastify.get('/health', async (request, reply) => {
@@ -80,6 +116,23 @@ fastify.post('/api/v1/auth/login', async (request, reply) => {
       email === 'admin@eoclinica.com.br' &&
       (password === 'Admin123!' || password === 'Admin123')
     ) {
+      // Create audit log for successful login
+      await createAuditLog({
+        action: 'LOGIN_SUCCESS',
+        resource: 'AUTHENTICATION',
+        userEmail: email,
+        ipAddress:
+          request.headers['x-forwarded-for']?.toString() ||
+          request.ip ||
+          '127.0.0.1',
+        userAgent: request.headers['user-agent'] || 'Unknown',
+        newValues: {
+          loginTime: new Date().toISOString(),
+          role: 'ADMIN',
+          success: true,
+        },
+      });
+
       return {
         success: true,
         data: {
@@ -98,6 +151,23 @@ fastify.post('/api/v1/auth/login', async (request, reply) => {
     }
 
     // Only admin login is available now
+
+    // Create audit log for failed login
+    await createAuditLog({
+      action: 'LOGIN_FAILED',
+      resource: 'AUTHENTICATION',
+      userEmail: email,
+      ipAddress:
+        request.headers['x-forwarded-for']?.toString() ||
+        request.ip ||
+        '127.0.0.1',
+      userAgent: request.headers['user-agent'] || 'Unknown',
+      newValues: {
+        attemptTime: new Date().toISOString(),
+        reason: 'Invalid credentials',
+        success: false,
+      },
+    });
 
     reply.status(401);
     return {
@@ -1454,6 +1524,22 @@ fastify.get('/api/v1/analytics', async (request, reply) => {
   try {
     console.log('=== ANALYTICS ENDPOINT CALLED ===');
 
+    // Log analytics access
+    await createAuditLog({
+      action: 'VIEW',
+      resource: 'ANALYTICS_DASHBOARD',
+      userEmail: 'admin@eoclinica.com.br',
+      ipAddress:
+        request.headers['x-forwarded-for']?.toString() ||
+        request.ip ||
+        '127.0.0.1',
+      userAgent: request.headers['user-agent'] || 'Unknown',
+      newValues: {
+        accessTime: new Date().toISOString(),
+        requestQuery: request.query,
+      },
+    });
+
     // Calculate date ranges
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -1853,41 +1939,59 @@ const start = async () => {
 fastify.get('/api/v1/audit/logs', async (request, reply) => {
   try {
     const query = request.query as any;
+    const page = parseInt(query.page) || 1;
     const limit = parseInt(query.limit) || 20;
-    
-    // Generate mock audit data
-    const mockLogs = Array.from({ length: Math.min(limit, 10) }, (_, i) => ({
-      id: `audit_${i + 1}`,
-      userId: `user_${i + 1}`,
-      userEmail: `user${i + 1}@example.com`,
-      action: ['CREATE', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT'][i % 5],
-      resource: ['USER', 'APPOINTMENT', 'PATIENT', 'DOCTOR'][i % 4],
-      resourceId: `resource_${i + 1}`,
-      ipAddress: `192.168.1.${100 + i}`,
-      userAgent: 'Mozilla/5.0 (Development)',
-      createdAt: new Date(Date.now() - i * 3600000).toISOString(), // Hours ago
-      oldValues: null,
-      newValues: { example: 'data' },
-      user: {
-        id: `user_${i + 1}`,
-        email: `user${i + 1}@example.com`,
-        firstName: `User`,
-        lastName: `${i + 1}`,
-        role: 'ADMIN'
-      }
-    }));
+
+    // Log access to audit logs
+    await createAuditLog({
+      action: 'VIEW',
+      resource: 'AUDIT_LOGS',
+      userEmail: 'admin@eoclinica.com.br',
+      ipAddress:
+        request.headers['x-forwarded-for']?.toString() ||
+        request.ip ||
+        '127.0.0.1',
+      userAgent: request.headers['user-agent'] || 'Unknown',
+      newValues: {
+        page,
+        limit,
+        accessTime: new Date().toISOString(),
+      },
+    });
+
+    // Get real audit logs from database
+    const auditLogs = await prisma.auditLog.findMany({
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+            role: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+
+    const total = await prisma.auditLog.count();
 
     return {
       success: true,
       data: {
-        logs: mockLogs,
+        logs: auditLogs,
         pagination: {
-          page: 1,
-          limit: limit,
-          total: 10,
-          totalPages: 1
-        }
-      }
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      },
     };
   } catch (error) {
     console.error('Audit logs error:', error);
@@ -1895,8 +1999,8 @@ fastify.get('/api/v1/audit/logs', async (request, reply) => {
       success: false,
       error: {
         code: 'AUDIT_ERROR',
-        message: 'Error fetching audit logs'
-      }
+        message: 'Error fetching audit logs',
+      },
     });
   }
 });
