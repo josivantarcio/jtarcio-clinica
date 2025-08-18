@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
 import { Calendar } from '@/components/ui/calendar'
-import { Loader2, CheckCircle, Clock, User, Stethoscope, Calendar as CalendarIcon } from 'lucide-react'
+import { Loader2, CheckCircle, Clock, User, Stethoscope, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useDoctorsStore } from '@/store/doctors'
 import { useAppointmentsStore } from '@/store/appointments'
 import { formatCurrency, formatDateTime } from '@/lib/utils'
@@ -360,7 +360,7 @@ export function BookingFormWithData({ initialSpecialties }: BookingFormWithDataP
   }
   
   const selectedSpecialty = specialties.find(s => s.id === selectedSpecialtyId)
-  const selectedDoctor = doctors.find(d => d.id === selectedDoctorId)
+  const selectedDoctor = doctors.find(d => d.userId === selectedDoctorId)
   
   const nextStep = () => setStep(step + 1)
   const prevStep = () => setStep(step - 1)
@@ -591,7 +591,7 @@ export function BookingFormWithData({ initialSpecialties }: BookingFormWithDataP
                 <div className="flex-1">
                   <h3 className="font-semibold">{selectedSpecialty?.name}</h3>
                   <p className="text-sm text-muted-foreground">
-                    Dr. {selectedDoctor?.user?.name} • {selectedSpecialty?.duration} minutos
+                    Dr. {selectedDoctor?.user?.name || selectedDoctor?.name || 'Médico Selecionado'} • {selectedSpecialty?.duration} minutos
                   </p>
                 </div>
                 {selectedSpecialty?.price && (
@@ -618,11 +618,17 @@ export function BookingFormWithData({ initialSpecialties }: BookingFormWithDataP
                       mode="single"
                       selected={selectedDate}
                       onSelect={setSelectedDate}
-                      disabled={(date) => 
-                        date < new Date() || 
-                        date.getDay() === 0 || // Sunday
-                        date.getDay() === 6    // Saturday
-                      }
+                      disabled={(date) => {
+                        const today = new Date()
+                        const yesterday = new Date(today)
+                        yesterday.setDate(today.getDate() - 1)
+                        
+                        return (
+                          date < yesterday || 
+                          date.getDay() === 0 || // Sunday
+                          date.getDay() === 6    // Saturday
+                        )
+                      }}
                       formatters={{
                         formatCaption: (date: Date) => {
                           const months = [
@@ -810,41 +816,41 @@ export function BookingFormWithData({ initialSpecialties }: BookingFormWithDataP
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6">
                 <div className="space-y-4">
-                  <div className="flex items-start gap-3 p-3 bg-white/50 rounded-lg">
-                    <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center mt-0.5 shrink-0">
-                      <Stethoscope className="h-4 w-4 text-primary" />
+                  <div className="flex items-start gap-3 p-4 bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
+                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mt-0.5 shrink-0 shadow-sm">
+                      <Stethoscope className="h-4 w-4 text-green-700" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Especialidade</p>
-                      <p className="font-semibold text-gray-900 truncate">{selectedSpecialty?.name}</p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-xs font-bold text-green-600 uppercase tracking-wide">Especialidade</p>
+                      <p className="font-bold text-green-900 truncate text-lg">{selectedSpecialty?.name}</p>
+                      <p className="text-sm font-medium text-green-700">
                         Duração: {selectedSpecialty?.duration} minutos
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-3 p-3 bg-white/50 rounded-lg">
-                    <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center mt-0.5 shrink-0">
-                      <User className="h-4 w-4 text-primary" />
+                  <div className="flex items-start gap-3 p-4 bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
+                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mt-0.5 shrink-0 shadow-sm">
+                      <User className="h-4 w-4 text-green-700" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Médico</p>
-                      <p className="font-semibold text-gray-900 truncate">Dr. {selectedDoctor?.user?.name}</p>
-                      <p className="text-sm text-muted-foreground truncate">
-                        CRM: {selectedDoctor?.crm}
+                      <p className="text-xs font-bold text-green-600 uppercase tracking-wide">Médico</p>
+                      <p className="font-bold text-green-900 truncate text-lg">Dr. {selectedDoctor?.user?.name || selectedDoctor?.name || 'Médico Selecionado'}</p>
+                      <p className="text-sm font-medium text-green-700 truncate">
+                        CRM: {selectedDoctor?.crm || 'N/A'}
                       </p>
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-4">
-                  <div className="flex items-start gap-3 p-3 bg-white/50 rounded-lg">
-                    <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center mt-0.5 shrink-0">
-                      <CalendarIcon className="h-4 w-4 text-primary" />
+                  <div className="flex items-start gap-3 p-4 bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
+                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mt-0.5 shrink-0 shadow-sm">
+                      <CalendarIcon className="h-4 w-4 text-green-700" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Data</p>
-                      <p className="font-semibold text-gray-900 break-words">
+                      <p className="text-xs font-bold text-green-600 uppercase tracking-wide">Data</p>
+                      <p className="font-bold text-green-900 break-words text-lg">
                         {selectedDate?.toLocaleDateString('pt-BR', {
                           weekday: 'long',
                           year: 'numeric',
@@ -855,23 +861,23 @@ export function BookingFormWithData({ initialSpecialties }: BookingFormWithDataP
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-3 p-3 bg-white/50 rounded-lg">
-                    <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center mt-0.5 shrink-0">
-                      <Clock className="h-4 w-4 text-primary" />
+                  <div className="flex items-start gap-3 p-4 bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
+                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mt-0.5 shrink-0 shadow-sm">
+                      <Clock className="h-4 w-4 text-green-700" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Horário</p>
-                      <p className="font-semibold text-gray-900">{selectedTime}</p>
+                      <p className="text-xs font-bold text-green-600 uppercase tracking-wide">Horário</p>
+                      <p className="font-bold text-green-900 text-lg">{selectedTime}</p>
                     </div>
                   </div>
                 </div>
               </div>
 
               {selectedSpecialty?.price && (
-                <div className="mt-6 pt-4 border-t border-white/20">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-muted-foreground">Valor da consulta:</span>
-                    <span className="text-2xl font-bold text-primary">{formatCurrency(selectedSpecialty.price)}</span>
+                <div className="mt-6 pt-4 border-t border-green-200">
+                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-green-100 to-green-50 border border-green-300 rounded-xl shadow-md">
+                    <span className="text-base font-bold text-green-800">Valor da consulta:</span>
+                    <span className="text-2xl font-bold text-green-900 bg-white/70 px-3 py-1 rounded-lg shadow-sm">{formatCurrency(selectedSpecialty.price)}</span>
                   </div>
                 </div>
               )}
@@ -906,85 +912,85 @@ export function BookingFormWithData({ initialSpecialties }: BookingFormWithDataP
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="patientFirstName" className="text-sm font-medium">Nome *</Label>
+                    <Label htmlFor="patientFirstName" className="text-sm font-semibold text-gray-700">Nome *</Label>
                     <Input
                       id="patientFirstName"
                       value={patientData.firstName}
                       onChange={(e) => setPatientData(prev => ({ ...prev, firstName: e.target.value }))}
                       placeholder="Digite o nome"
-                      className="bg-white w-full"
+                      className="bg-green-50/30 border-green-200 text-white placeholder:text-white/70 focus:ring-green-500/20 focus:border-green-500 w-full"
                       required
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="patientLastName" className="text-sm font-medium">Sobrenome *</Label>
+                    <Label htmlFor="patientLastName" className="text-sm font-semibold text-gray-700">Sobrenome *</Label>
                     <Input
                       id="patientLastName"
                       value={patientData.lastName}
                       onChange={(e) => setPatientData(prev => ({ ...prev, lastName: e.target.value }))}
                       placeholder="Digite o sobrenome"
-                      className="bg-white"
+                      className="bg-green-50/30 border-green-200 text-white placeholder:text-white/70 focus:ring-green-500/20 focus:border-green-500"
                       required
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="patientEmail" className="text-sm font-medium">Email *</Label>
+                    <Label htmlFor="patientEmail" className="text-sm font-semibold text-gray-700">Email *</Label>
                     <Input
                       id="patientEmail"
                       type="email"
                       value={patientData.email}
                       onChange={(e) => setPatientData(prev => ({ ...prev, email: e.target.value }))}
                       placeholder="email@exemplo.com"
-                      className="bg-white"
+                      className="bg-green-50/30 border-green-200 text-white placeholder:text-white/70 focus:ring-green-500/20 focus:border-green-500"
                       required
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="patientPhone" className="text-sm font-medium">Telefone *</Label>
+                    <Label htmlFor="patientPhone" className="text-sm font-semibold text-gray-700">Telefone *</Label>
                     <Input
                       id="patientPhone"
                       value={patientData.phone}
                       onChange={(e) => setPatientData(prev => ({ ...prev, phone: e.target.value }))}
                       placeholder="(11) 99999-9999"
-                      className="bg-white"
+                      className="bg-green-50/30 border-green-200 text-white placeholder:text-white/70 focus:ring-green-500/20 focus:border-green-500"
                       required
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="patientCpf" className="text-sm font-medium">CPF *</Label>
+                    <Label htmlFor="patientCpf" className="text-sm font-semibold text-gray-700">CPF *</Label>
                     <Input
                       id="patientCpf"
                       value={patientData.cpf}
                       onChange={(e) => setPatientData(prev => ({ ...prev, cpf: formatCPF(e.target.value) }))}
                       placeholder="000.000.000-00"
-                      className="bg-white"
+                      className="bg-green-50/30 border-green-200 text-white placeholder:text-white/70 focus:ring-green-500/20 focus:border-green-500"
                       required
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="patientDateOfBirth" className="text-sm font-medium">Data de Nascimento *</Label>
+                    <Label htmlFor="patientDateOfBirth" className="text-sm font-semibold text-gray-700">Data de Nascimento *</Label>
                     <Input
                       id="patientDateOfBirth"
                       type="date"
                       value={patientData.dateOfBirth}
                       onChange={(e) => setPatientData(prev => ({ ...prev, dateOfBirth: e.target.value }))}
-                      className="bg-white"
+                      className="bg-green-50/30 border-green-200 text-white placeholder:text-white/70 focus:ring-green-500/20 focus:border-green-500"
                       required
                     />
                   </div>
 
                   <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="patientGender" className="text-sm font-medium">Gênero *</Label>
+                    <Label htmlFor="patientGender" className="text-sm font-semibold text-gray-700">Gênero *</Label>
                     <select
                       id="patientGender"
                       value={patientData.gender}
                       onChange={(e) => setPatientData(prev => ({ ...prev, gender: e.target.value }))}
-                      className="w-full p-3 border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                      className="w-full p-3 border border-green-200 rounded-lg bg-green-50/30 text-white focus:ring-2 focus:ring-green-500/20 focus:border-green-500"
                       required
                     >
                       <option value="">Selecione o gênero</option>
