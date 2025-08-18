@@ -373,12 +373,29 @@ export default function AnalyticsPage() {
                       )}
                     </div>
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Jul</span>
-                      <span className="text-muted-foreground">Ago</span>
-                      <span className="text-muted-foreground">Set</span>
-                      <span className="text-muted-foreground">Out</span>
-                      <span className="text-muted-foreground">Nov</span>
-                      <span className="font-medium text-primary">Dez</span>
+                      {(() => {
+                        const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
+                        const currentMonth = new Date().getMonth()
+                        const startMonth = Math.max(0, currentMonth - 5)
+                        
+                        return Array.from({ length: 6 }, (_, index) => {
+                          const monthIndex = (startMonth + index) % 12
+                          const isCurrentMonth = monthIndex === currentMonth
+                          
+                          return (
+                            <span 
+                              key={index}
+                              className={
+                                isCurrentMonth 
+                                  ? "font-semibold text-green-700 bg-green-100 px-2 py-1 rounded-md" 
+                                  : "text-muted-foreground hover:text-gray-700 transition-colors"
+                              }
+                            >
+                              {monthNames[monthIndex]}
+                            </span>
+                          )
+                        })
+                      })()}
                     </div>
                   </div>
                 </CardContent>
