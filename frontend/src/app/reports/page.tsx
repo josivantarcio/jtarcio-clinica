@@ -579,12 +579,29 @@ export default function ReportsPage() {
                       <div className="absolute top-0 left-4 right-4 h-0.5 bg-gradient-to-r from-green-200 via-green-300 to-green-200"></div>
                     </div>
                     <div className="flex items-center justify-between text-xs sm:text-sm px-2">
-                      <span className="text-muted-foreground">Jun</span>
-                      <span className="text-muted-foreground">Jul</span>
-                      <span className="text-muted-foreground">Ago</span>
-                      <span className="text-muted-foreground">Set</span>
-                      <span className="text-muted-foreground">Out</span>
-                      <span className="font-medium text-primary">Nov</span>
+                      {(() => {
+                        const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
+                        const currentMonth = new Date().getMonth()
+                        const startMonth = Math.max(0, currentMonth - 5)
+                        
+                        return Array.from({ length: 6 }, (_, index) => {
+                          const monthIndex = (startMonth + index) % 12
+                          const isCurrentMonth = monthIndex === currentMonth
+                          
+                          return (
+                            <span 
+                              key={index}
+                              className={
+                                isCurrentMonth 
+                                  ? "font-semibold text-green-700 bg-green-100 px-2 py-1 rounded-md" 
+                                  : "text-muted-foreground hover:text-gray-700 transition-colors"
+                              }
+                            >
+                              {monthNames[monthIndex]}
+                            </span>
+                          )
+                        })
+                      })()}
                     </div>
                   </div>
                 </CardContent>
@@ -604,14 +621,72 @@ export default function ReportsPage() {
                 <CardContent>
                   <div className="space-y-4">
                     <div className="flex items-center justify-center h-48">
-                      {/* Mock pie chart */}
-                      <div className="relative w-40 h-40 rounded-full bg-gradient-conic from-green-500 via-blue-500 to-red-500">
-                        <div className="absolute inset-6 bg-white rounded-full flex items-center justify-center">
+                      {/* Premium Donut Chart */}
+                      <div className="relative w-40 h-40 rounded-full">
+                        {/* Outer ring with segments */}
+                        <div className="absolute inset-0 rounded-full overflow-hidden">
+                          {(() => {
+                            const total = reportData.appointments.totalAppointments || 1
+                            const completed = reportData.appointments.completedAppointments
+                            const cancelled = reportData.appointments.cancelledAppointments
+                            const noShow = Math.round(total * (reportData.appointments.noShowRate / 100))
+                            
+                            const completedPercentage = (completed / total) * 100
+                            const cancelledPercentage = (cancelled / total) * 100
+                            const noShowPercentage = (noShow / total) * 100
+                            
+                            return (
+                              <div className="relative w-full h-full">
+                                {/* Completed segment - Green */}
+                                <div 
+                                  className="absolute inset-0 rounded-full"
+                                  style={{
+                                    background: `conic-gradient(
+                                      from 0deg,
+                                      #10b981 0deg ${completedPercentage * 3.6}deg,
+                                      transparent ${completedPercentage * 3.6}deg 360deg
+                                    )`
+                                  }}
+                                ></div>
+                                
+                                {/* Cancelled segment - Red */}
+                                <div 
+                                  className="absolute inset-0 rounded-full"
+                                  style={{
+                                    background: `conic-gradient(
+                                      from ${completedPercentage * 3.6}deg,
+                                      #ef4444 0deg ${cancelledPercentage * 3.6}deg,
+                                      transparent ${cancelledPercentage * 3.6}deg 360deg
+                                    )`
+                                  }}
+                                ></div>
+                                
+                                {/* No-show segment - Yellow */}
+                                <div 
+                                  className="absolute inset-0 rounded-full"
+                                  style={{
+                                    background: `conic-gradient(
+                                      from ${(completedPercentage + cancelledPercentage) * 3.6}deg,
+                                      #f59e0b 0deg ${noShowPercentage * 3.6}deg,
+                                      transparent ${noShowPercentage * 3.6}deg 360deg
+                                    )`
+                                  }}
+                                ></div>
+                              </div>
+                            )
+                          })()}
+                        </div>
+                        
+                        {/* Inner white circle (creating donut effect) */}
+                        <div className="absolute inset-8 bg-white rounded-full shadow-inner flex items-center justify-center border border-gray-100">
                           <div className="text-center">
-                            <div className="text-2xl font-bold">{reportData.appointments.totalAppointments}</div>
-                            <div className="text-xs text-muted-foreground">Total</div>
+                            <div className="text-2xl font-bold text-gray-900">{reportData.appointments.totalAppointments}</div>
+                            <div className="text-xs text-muted-foreground font-medium">Total</div>
                           </div>
                         </div>
+                        
+                        {/* Subtle shadow for depth */}
+                        <div className="absolute inset-0 rounded-full shadow-lg opacity-20"></div>
                       </div>
                     </div>
                     
@@ -645,7 +720,7 @@ export default function ReportsPage() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
                           <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                          <span className="text-sm">No-show</span>
+                          <span className="text-sm" title="Pacientes que faltaram à consulta sem avisar">No-show</span>
                         </div>
                         <div className="text-sm font-medium">
                           {Math.round(reportData.appointments.totalAppointments * (reportData.appointments.noShowRate / 100))}
@@ -806,6 +881,69 @@ export default function ReportsPage() {
                     <AlertCircle className="h-8 w-8 text-yellow-600 mx-auto mb-2" />
                     <div className="text-2xl font-bold text-yellow-600">{reportData.appointments.noShowRate}%</div>
                     <div className="text-sm text-muted-foreground">Taxa No-Show</div>
+                    <div className="text-xs text-yellow-700 mt-1 font-medium">
+                      Pacientes faltosos
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* No-Show Explanation Card */}
+            <Card className="bg-gradient-to-br from-yellow-50 to-amber-50 border-yellow-200">
+              <CardHeader>
+                <CardTitle className="flex items-center text-yellow-800">
+                  <AlertCircle className="h-5 w-5 mr-2 text-yellow-600" />
+                  O que é No-Show?
+                </CardTitle>
+                <CardDescription className="text-yellow-700">
+                  Entenda este importante indicador de gestão médica
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="bg-white/60 p-4 rounded-lg border border-yellow-200">
+                  <h4 className="font-semibold text-yellow-900 mb-2">📋 Definição</h4>
+                  <p className="text-sm text-yellow-800 leading-relaxed">
+                    <strong>No-show</strong> refere-se a pacientes que faltam à consulta agendada sem aviso prévio ou cancelamento. 
+                    É um termo técnico amplamente utilizado na gestão de clínicas e hospitais.
+                  </p>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-white/60 p-4 rounded-lg border border-yellow-200">
+                    <h4 className="font-semibold text-yellow-900 mb-2">📊 Impacto Operacional</h4>
+                    <ul className="text-sm text-yellow-800 space-y-1">
+                      <li>• <strong>Redução da receita:</strong> Horário perdido sem faturamento</li>
+                      <li>• <strong>Ineficiência da agenda:</strong> Slots vazios desnecessários</li>
+                      <li>• <strong>Desperdício de recursos:</strong> Equipe ociosa</li>
+                    </ul>
+                  </div>
+                  
+                  <div className="bg-white/60 p-4 rounded-lg border border-yellow-200">
+                    <h4 className="font-semibold text-yellow-900 mb-2">🎯 Taxa Ideal</h4>
+                    <ul className="text-sm text-yellow-800 space-y-1">
+                      <li>• <strong>Excelente:</strong> Menos de 5%</li>
+                      <li>• <strong>Aceitável:</strong> Entre 5% - 10%</li>
+                      <li>• <strong>Atenção:</strong> Acima de 10%</li>
+                    </ul>
+                  </div>
+                </div>
+                
+                <div className="bg-white/60 p-4 rounded-lg border border-yellow-200">
+                  <h4 className="font-semibold text-yellow-900 mb-2">💡 Estratégias de Redução</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm text-yellow-800">
+                    <div>
+                      <strong>Lembretes:</strong><br/>
+                      SMS, WhatsApp ou ligações 24h antes
+                    </div>
+                    <div>
+                      <strong>Confirmação:</strong><br/>
+                      Solicitar confirmação 48h antes
+                    </div>
+                    <div>
+                      <strong>Políticas:</strong><br/>
+                      Taxa de no-show para reincidentes
+                    </div>
                   </div>
                 </div>
               </CardContent>
