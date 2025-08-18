@@ -518,30 +518,65 @@ export default function ReportsPage() {
                 </CardHeader>
                 <CardContent className="p-4">
                   <div className="space-y-4">
-                    {/* Chart with proper spacing and responsiveness */}
-                    <div className="h-48 sm:h-64 bg-gradient-to-t from-green-50 to-transparent rounded-lg flex items-end justify-center p-3 sm:p-4 overflow-hidden">
-                      <div className="flex items-end justify-between w-full max-w-sm space-x-2">
-                        {reportData.financial.monthlyComparison.map((value, index) => {
-                          const maxValue = Math.max(...reportData.financial.monthlyComparison)
-                          const heightPercentage = maxValue > 0 ? (value / maxValue) * 100 : 0
-                          return (
-                            <div key={index} className="flex flex-col items-center space-y-1 flex-1">
-                              <div 
-                                className="bg-green-500 rounded-t transition-all hover:bg-green-600 min-h-[4px]"
-                                style={{ 
-                                  height: `${Math.max(heightPercentage, 4)}%`,
-                                  width: '100%',
-                                  maxWidth: '24px'
-                                }}
-                                title={formatCurrency(value)}
-                              ></div>
-                              <span className="text-xs text-muted-foreground text-center">
-                                {value > 1000 ? `${Math.round(value / 1000)}k` : value.toString()}
-                              </span>
-                            </div>
-                          )
-                        })}
+                    {/* Premium Chart Design */}
+                    <div className="relative h-48 sm:h-64 bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden">
+                      {/* Subtle grid background */}
+                      <div className="absolute inset-0 opacity-30">
+                        <div className="h-full w-full" 
+                             style={{
+                               backgroundImage: `
+                                 linear-gradient(to right, #f1f5f9 1px, transparent 1px),
+                                 linear-gradient(to bottom, #f1f5f9 1px, transparent 1px)
+                               `,
+                               backgroundSize: '20px 20px'
+                             }}>
+                        </div>
                       </div>
+                      
+                      {/* Chart bars */}
+                      <div className="relative flex items-end justify-center h-full p-4 sm:p-6">
+                        <div className="flex items-end justify-between w-full max-w-sm space-x-2">
+                          {reportData.financial.monthlyComparison.map((value, index) => {
+                            const maxValue = Math.max(...reportData.financial.monthlyComparison)
+                            const heightPercentage = maxValue > 0 ? (value / maxValue) * 100 : 0
+                            const isLast = index === reportData.financial.monthlyComparison.length - 1
+                            
+                            return (
+                              <div key={index} className="flex flex-col items-center space-y-2 flex-1 group">
+                                <div 
+                                  className={`
+                                    rounded-t-lg transition-all duration-300 min-h-[8px] shadow-sm
+                                    ${isLast 
+                                      ? 'bg-gradient-to-t from-green-600 to-green-500 group-hover:from-green-700 group-hover:to-green-600' 
+                                      : 'bg-gradient-to-t from-green-400 to-green-300 group-hover:from-green-500 group-hover:to-green-400'
+                                    }
+                                    group-hover:shadow-md group-hover:scale-105
+                                  `}
+                                  style={{ 
+                                    height: `${Math.max(heightPercentage, 8)}%`,
+                                    width: '100%',
+                                    maxWidth: '28px'
+                                  }}
+                                  title={`${formatCurrency(value)} ${isLast ? '(atual)' : ''}`}
+                                >
+                                  {/* Top highlight */}
+                                  <div className="w-full h-1 bg-white/20 rounded-t-lg"></div>
+                                </div>
+                                
+                                <span className={`
+                                  text-xs text-center transition-colors duration-300
+                                  ${isLast ? 'text-green-700 font-semibold' : 'text-muted-foreground group-hover:text-gray-700'}
+                                `}>
+                                  {value > 1000 ? `${Math.round(value / 1000)}k` : value.toString()}
+                                </span>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                      
+                      {/* Subtle top border accent */}
+                      <div className="absolute top-0 left-4 right-4 h-0.5 bg-gradient-to-r from-green-200 via-green-300 to-green-200"></div>
                     </div>
                     <div className="flex items-center justify-between text-xs sm:text-sm px-2">
                       <span className="text-muted-foreground">Jun</span>
