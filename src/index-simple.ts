@@ -1453,25 +1453,29 @@ fastify.get('/api/v1/availability', async (request, reply) => {
 fastify.get('/api/v1/analytics', async (request, reply) => {
   try {
     console.log('=== ANALYTICS ENDPOINT CALLED ===');
-    
+
     // Calculate date ranges
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const startOfPreviousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const startOfPreviousMonth = new Date(
+      now.getFullYear(),
+      now.getMonth() - 1,
+      1,
+    );
     const endOfPreviousMonth = new Date(now.getFullYear(), now.getMonth(), 0);
     const startOfToday = new Date(now.toDateString());
     const endOfToday = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
     // Get real data from database
     const [
-      totalPatients, 
-      totalAppointments, 
+      totalPatients,
+      totalAppointments,
       todayAppointments,
       thisMonthPatients,
       previousMonthPatients,
       completedAppointments,
       cancelledAppointments,
-      totalRevenue
+      totalRevenue,
     ] = await Promise.all([
       // Total patients (all time)
       prisma.user.count({
@@ -1545,27 +1549,34 @@ fastify.get('/api/v1/analytics', async (request, reply) => {
     ]);
 
     // Calculate growth rates
-    const patientGrowth = previousMonthPatients > 0 
-      ? ((thisMonthPatients - previousMonthPatients) / previousMonthPatients) * 100 
-      : thisMonthPatients > 0 ? 100 : 0;
+    const patientGrowth =
+      previousMonthPatients > 0
+        ? ((thisMonthPatients - previousMonthPatients) /
+            previousMonthPatients) *
+          100
+        : thisMonthPatients > 0
+          ? 100
+          : 0;
 
     // Calculate conversion and retention rates
     const totalScheduledAppointments = totalAppointments;
-    const conversionRate = totalScheduledAppointments > 0 
-      ? (completedAppointments / totalScheduledAppointments) * 100 
-      : 0;
-    
-    const cancellationRate = totalScheduledAppointments > 0 
-      ? (cancelledAppointments / totalScheduledAppointments) * 100 
-      : 0;
+    const conversionRate =
+      totalScheduledAppointments > 0
+        ? (completedAppointments / totalScheduledAppointments) * 100
+        : 0;
 
-    console.log('Analytics data:', { 
-      totalPatients, 
-      totalAppointments, 
+    const cancellationRate =
+      totalScheduledAppointments > 0
+        ? (cancelledAppointments / totalScheduledAppointments) * 100
+        : 0;
+
+    console.log('Analytics data:', {
+      totalPatients,
+      totalAppointments,
       todayAppointments,
       thisMonthPatients,
       completedAppointments,
-      totalRevenue: totalRevenue._sum.fee || 0
+      totalRevenue: totalRevenue._sum.fee || 0,
     });
 
     return {
@@ -1584,7 +1595,10 @@ fastify.get('/api/v1/analytics', async (request, reply) => {
         advanced: {
           conversionRate: Number(conversionRate.toFixed(1)),
           churnRate: Number(cancellationRate.toFixed(1)),
-          customerLifetimeValue: totalPatients > 0 ? Number((totalRevenue._sum.fee || 0) / totalPatients).toFixed(2) : 0,
+          customerLifetimeValue:
+            totalPatients > 0
+              ? Number((totalRevenue._sum.fee || 0) / totalPatients).toFixed(2)
+              : 0,
           averageSessionTime: 0, // Not tracking session time yet
           bounceRate: 0, // Not tracking bounce rate yet
           retentionRate: Number((100 - cancellationRate).toFixed(1)),
@@ -1595,9 +1609,16 @@ fastify.get('/api/v1/analytics', async (request, reply) => {
           nextMonthRevenue: 0, // Would need historical data for prediction
           nextMonthAppointments: 0, // Would need historical data for prediction
           capacity: 0, // Would need doctor availability data
-          demandForecast: thisMonthPatients > previousMonthPatients ? 'Crescente' : 
-                         thisMonthPatients < previousMonthPatients ? 'Decrescente' : 'Estável',
-          seasonalTrends: thisMonthPatients > 0 ? [`Novos pacientes este mês: ${thisMonthPatients}`] : ['Nenhum dado disponível'],
+          demandForecast:
+            thisMonthPatients > previousMonthPatients
+              ? 'Crescente'
+              : thisMonthPatients < previousMonthPatients
+                ? 'Decrescente'
+                : 'Estável',
+          seasonalTrends:
+            thisMonthPatients > 0
+              ? [`Novos pacientes este mês: ${thisMonthPatients}`]
+              : ['Nenhum dado disponível'],
         },
         realTime: {
           activeUsers: 0, // Not tracking active users yet
@@ -1625,7 +1646,7 @@ fastify.get('/api/v1/analytics/revenue-chart', async (request, reply) => {
   try {
     const query = request.query as any;
     const period = query?.period || 'month'; // week, month, quarter, year
-    
+
     const now = new Date();
     let rangeStart: Date;
 
@@ -1665,7 +1686,7 @@ fastify.get('/api/v1/analytics/revenue-chart', async (request, reply) => {
 
     // Group by date and sum revenue
     const revenueByDate = new Map<string, number>();
-    
+
     appointments.forEach(appointment => {
       if (appointment.scheduledAt && appointment.fee) {
         const dateKey = appointment.scheduledAt.toISOString().split('T')[0];
@@ -1675,10 +1696,12 @@ fastify.get('/api/v1/analytics/revenue-chart', async (request, reply) => {
     });
 
     // Convert to chart format
-    const chartData = Array.from(revenueByDate.entries()).map(([date, revenue]) => ({
-      date,
-      revenue,
-    }));
+    const chartData = Array.from(revenueByDate.entries()).map(
+      ([date, revenue]) => ({
+        date,
+        revenue,
+      }),
+    );
 
     return {
       success: true,
@@ -1702,7 +1725,7 @@ fastify.get('/api/v1/analytics/appointments-chart', async (request, reply) => {
   try {
     const query = request.query as any;
     const period = query?.period || 'month';
-    
+
     const now = new Date();
     let rangeStart: Date;
 
@@ -1739,17 +1762,24 @@ fastify.get('/api/v1/analytics/appointments-chart', async (request, reply) => {
     });
 
     // Group by date
-    const appointmentsByDate = new Map<string, { scheduled: number, completed: number, cancelled: number }>();
-    
+    const appointmentsByDate = new Map<
+      string,
+      { scheduled: number; completed: number; cancelled: number }
+    >();
+
     appointments.forEach(appointment => {
       const dateKey = appointment.scheduledAt.toISOString().split('T')[0];
-      
+
       if (!appointmentsByDate.has(dateKey)) {
-        appointmentsByDate.set(dateKey, { scheduled: 0, completed: 0, cancelled: 0 });
+        appointmentsByDate.set(dateKey, {
+          scheduled: 0,
+          completed: 0,
+          cancelled: 0,
+        });
       }
-      
+
       const dayData = appointmentsByDate.get(dateKey)!;
-      
+
       switch (appointment.status) {
         case 'COMPLETED':
           dayData.completed += appointment._count.id;
@@ -1763,11 +1793,13 @@ fastify.get('/api/v1/analytics/appointments-chart', async (request, reply) => {
     });
 
     // Convert to chart format
-    const chartData = Array.from(appointmentsByDate.entries()).map(([date, counts]) => ({
-      date,
-      ...counts,
-      total: counts.scheduled + counts.completed + counts.cancelled,
-    }));
+    const chartData = Array.from(appointmentsByDate.entries()).map(
+      ([date, counts]) => ({
+        date,
+        ...counts,
+        total: counts.scheduled + counts.completed + counts.cancelled,
+      }),
+    );
 
     return {
       success: true,
@@ -1816,5 +1848,57 @@ const start = async () => {
     process.exit(1);
   }
 };
+
+// Mock Audit Logs endpoint for development
+fastify.get('/api/v1/audit/logs', async (request, reply) => {
+  try {
+    const query = request.query as any;
+    const limit = parseInt(query.limit) || 20;
+    
+    // Generate mock audit data
+    const mockLogs = Array.from({ length: Math.min(limit, 10) }, (_, i) => ({
+      id: `audit_${i + 1}`,
+      userId: `user_${i + 1}`,
+      userEmail: `user${i + 1}@example.com`,
+      action: ['CREATE', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT'][i % 5],
+      resource: ['USER', 'APPOINTMENT', 'PATIENT', 'DOCTOR'][i % 4],
+      resourceId: `resource_${i + 1}`,
+      ipAddress: `192.168.1.${100 + i}`,
+      userAgent: 'Mozilla/5.0 (Development)',
+      createdAt: new Date(Date.now() - i * 3600000).toISOString(), // Hours ago
+      oldValues: null,
+      newValues: { example: 'data' },
+      user: {
+        id: `user_${i + 1}`,
+        email: `user${i + 1}@example.com`,
+        firstName: `User`,
+        lastName: `${i + 1}`,
+        role: 'ADMIN'
+      }
+    }));
+
+    return {
+      success: true,
+      data: {
+        logs: mockLogs,
+        pagination: {
+          page: 1,
+          limit: limit,
+          total: 10,
+          totalPages: 1
+        }
+      }
+    };
+  } catch (error) {
+    console.error('Audit logs error:', error);
+    return reply.status(500).send({
+      success: false,
+      error: {
+        code: 'AUDIT_ERROR',
+        message: 'Error fetching audit logs'
+      }
+    });
+  }
+});
 
 start();

@@ -555,13 +555,13 @@ export default function AdminPage() {
                         <Avatar className="h-12 w-12">
                           <AvatarImage src={userData.avatar} />
                           <AvatarFallback className="font-semibold">
-                            {userData.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                            {userData.name ? userData.name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
                           </AvatarFallback>
                         </Avatar>
                         
                         <div className="space-y-1">
                           <div className="flex items-center space-x-2">
-                            <h4 className="font-semibold">{userData.name}</h4>
+                            <h4 className="font-semibold">{userData.name || 'Nome não informado'}</h4>
                             {getRoleBadge(userData.role)}
                             {getStatusBadge(userData.status)}
                           </div>
