@@ -4,7 +4,25 @@
 
 EO Clínica is a comprehensive medical clinic scheduling system that integrates AI-powered conversations, automated workflows, and complete medical appointment management. **Version 1.3.0** features a revolutionary notification system with AI integration, enhanced visual design, intelligent scheduling with time filters, and complete appointment workflow automation.
 
-## 🚀 Latest Updates - Version 1.3.0 (August 18, 2025)
+## 🚀 Latest Updates - Version 1.3.1 (August 18, 2025)
+
+### 📊 **Sistema de Relatórios Premium - MELHORADO**
+- **🍩 Gráfico Rosca Profissional**: Conversão do gráfico pizza para rosca com CSS conic-gradient
+- **📅 Destaque Dinâmico de Mês**: Sistema inteligente que destaca automaticamente o mês atual
+- **📚 Educação No-Show**: Card explicativo completo sobre pacientes faltosos
+- **🎯 Benchmarks Médicos**: Taxas ideais da indústria (Excelente <5%, Aceitável 5-10%)
+- **💡 Estratégias de Redução**: Guia prático para diminuir taxa de no-show
+- **🎨 Design Premium**: Gradientes profissionais e hierarquia visual aprimorada
+- **📱 Responsividade Total**: Charts adaptados para todos os dispositivos
+
+### 🧮 **Melhorias Técnicas de Charts**
+- **⚡ Cálculos Dinâmicos**: Percentuais calculados em tempo real dos dados reais
+- **🎨 Sistema de Cores**: Verde/Vermelho/Amarelo para status de consultas
+- **📏 Segmentos Precisos**: Algoritmo matemático para divisão exata do gráfico
+- **💎 Efeitos Visuais**: Sombras sutis, bordas e destaque do mês atual
+- **🔄 Janela Móvel**: 6 meses automaticamente calculados a partir da data atual
+
+## 🚀 Previous Updates - Version 1.3.0 (August 18, 2025)
 
 ### 🔔 **Sistema de Notificações Revolucionário - NOVO**
 - **🎨 Interface Vibrante**: Sistema de cores gradientes com visual profissional e moderno
@@ -520,6 +538,7 @@ MIT License - see LICENSE file for details.
 - ✅ **Badge Dinâmico** no header com contador em tempo real
 - ✅ **Fluxo Completo** do chat IA ao agendamento automático (preparado)
 
-### 📚 Documentação Nova v1.2.9
+### 📚 Documentação Nova v1.3.1
 - [BOOKING_SYSTEM_PREMIUM.md](./BOOKING_SYSTEM_PREMIUM.md) - Sistema de agendamento premium com dark theme
 - [UI_UX_IMPROVEMENTS_v1.2.9.md](./UI_UX_IMPROVEMENTS_v1.2.9.md) - Melhorias visuais, glassmorphism e localização PT-BR
+- **CHARTS_PREMIUM_v1.3.1.md** - Sistema de gráficos profissionais e educação No-Show
