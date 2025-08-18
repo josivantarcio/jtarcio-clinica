@@ -135,8 +135,8 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
     
     addNotification({
       type: 'appointment',
-      title: '✅ Novo Agendamento Confirmado',
-      message: `Consulta de ${patientName} com Dr. ${doctorName} agendada para ${scheduledAt}`,
+      title: '🎉 Novo Agendamento Confirmado',
+      message: `✨ Consulta de ${patientName} com ${doctorName} foi agendada para ${scheduledAt}`,
       priority: 'medium',
       metadata: {
         appointmentId,
@@ -154,8 +154,8 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
     
     addNotification({
       type: 'ai_booking',
-      title: '🤖 Agendamento via IA Realizado',
-      message: `IA agendou consulta de ${patientName} com Dr. ${doctorName} para ${scheduledAt}`,
+      title: '🤖✨ Agendamento Inteligente Realizado',
+      message: `🎯 Nossa IA agendou automaticamente a consulta de ${patientName} com ${doctorName} para ${scheduledAt}`,
       priority: 'high',
       metadata: {
         appointmentId,
@@ -172,15 +172,15 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
     const { addNotification } = get()
     
     const titles = {
-      upcoming: '📅 Consulta se Aproximando',
-      today: '🕐 Consulta Hoje',
-      overdue: '⚠️ Consulta em Atraso'
+      upcoming: '📅✨ Consulta se Aproximando',
+      today: '🕐🎯 Consulta Hoje',
+      overdue: '⚠️❗ Consulta em Atraso'
     }
     
     const messages = {
-      upcoming: `Lembrete: ${patientName} tem consulta em ${scheduledAt}`,
-      today: `${patientName} tem consulta hoje às ${scheduledAt}`,
-      overdue: `${patientName} não compareceu à consulta de ${scheduledAt}`
+      upcoming: `🔔 Lembrete importante: ${patientName} tem consulta agendada para ${scheduledAt}`,
+      today: `📍 Atenção! ${patientName} tem consulta hoje às ${scheduledAt}`,
+      overdue: `🚨 ${patientName} não compareceu à consulta marcada para ${scheduledAt}`
     }
     
     addNotification({
@@ -202,27 +202,27 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
 if (typeof window !== 'undefined') {
   const store = useNotificationsStore.getState()
   
-  // Add some sample notifications
+  // Add some sample notifications with improved visual appeal
   setTimeout(() => {
     store.addAppointmentNotification({
       patientName: 'Maria Silva',
-      doctorName: 'João Santos',
-      scheduledAt: '20/08/2025 às 14:30',
+      doctorName: 'Dr. João Santos',
+      scheduledAt: 'segunda-feira, 20 de agosto às 14:30',
       appointmentId: 'apt_123',
       source: 'manual'
     })
     
     store.addAIBookingNotification({
       patientName: 'Carlos Oliveira',
-      doctorName: 'Ana Costa',
-      scheduledAt: '21/08/2025 às 09:15',
+      doctorName: 'Dra. Ana Costa',
+      scheduledAt: 'terça-feira, 21 de agosto às 09:15',
       appointmentId: 'apt_124',
       chatId: 'chat_456'
     })
     
     store.addReminderNotification({
       patientName: 'José Ferreira',
-      scheduledAt: '18/08/2025 às 16:00',
+      scheduledAt: 'hoje às 16:00',
       appointmentId: 'apt_125',
       reminderType: 'today'
     })
