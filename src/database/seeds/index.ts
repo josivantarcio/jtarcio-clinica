@@ -1,15 +1,13 @@
-import { PrismaClient } from '../generated/client';
 import { seedSpecialties } from './specialties';
 import { seedUsers } from './users';
 import { seedSystemConfigurations } from './system-configurations';
+import { prisma } from '../../config/database';
 
 // Simple logger for seed
 const logger = {
   info: (msg: string) => console.log(`[INFO] ${msg}`),
   error: (msg: string, err?: any) => console.error(`[ERROR] ${msg}`, err),
 };
-
-const prisma = new PrismaClient();
 
 async function main(): Promise<void> {
   try {
@@ -24,8 +22,6 @@ async function main(): Promise<void> {
   } catch (error) {
     logger.error('[ERROR] Database seeding failed:', error);
     throw error;
-  } finally {
-    await prisma.$disconnect();
   }
 }
 

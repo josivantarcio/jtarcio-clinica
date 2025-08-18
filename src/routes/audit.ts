@@ -1,9 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { AuditController } from '../modules/audit/audit.controller';
-import { PrismaClient } from '../../database/generated/client';
-
-// Initialize prisma client
-const prisma = new PrismaClient();
+import { prisma } from '../config/database';
 
 export async function auditRoutes(fastify: FastifyInstance) {
   const auditController = new AuditController(prisma);

@@ -1,8 +1,7 @@
 import { FastifyInstance } from 'fastify';
-import { PrismaClient } from '../database/generated/client';
+import { prisma } from '../config/database';
 import { verifyJWT } from '../plugins/auth';
-
-const prisma = new PrismaClient();
+import { PrismaClient } from '../database/generated/client';
 
 // Helper functions for real-time metrics
 async function getActiveUsersCount(

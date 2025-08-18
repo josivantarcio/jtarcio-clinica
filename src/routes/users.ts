@@ -2,9 +2,8 @@ import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { updateUserSchema, userResponseSchema } from '@/types/user';
 import { paginationSchema, responseSchema } from '@/types/common';
 import { UserService } from '@/services/user.service';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/config/database';
 
-const prisma = new PrismaClient();
 const userService = new UserService(prisma);
 
 export async function userRoutes(fastify: FastifyInstance): Promise<void> {

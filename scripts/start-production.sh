@@ -249,7 +249,7 @@ PORT=3000
 API_VERSION=v1
 
 # Database Configuration (local connection to Docker)
-DATABASE_URL=postgresql://clinic_user:clinic_password@localhost:5433/eo_clinica_app
+DATABASE_URL=postgresql://clinic_user:clinic_password@localhost:5433/eo_clinica_db
 
 # Redis Configuration (local connection to Docker) 
 REDIS_URL=redis://localhost:6380
@@ -492,8 +492,8 @@ setup_database() {
     
     local attempts=0
     while [ $attempts -lt 30 ]; do
-        if pg_isready -h localhost -p $postgres_port -U clinic_user -d eo_clinica_app >/dev/null 2>&1 || \
-           docker-compose exec -T postgres pg_isready -U clinic_user -d eo_clinica_app >/dev/null 2>&1; then
+        if pg_isready -h localhost -p $postgres_port -U clinic_user -d eo_clinica_db >/dev/null 2>&1 || \
+           docker-compose exec -T postgres pg_isready -U clinic_user -d eo_clinica_db >/dev/null 2>&1; then
             log_success "PostgreSQL está pronto na porta $postgres_port!"
             break
         fi
@@ -517,9 +517,9 @@ setup_database() {
         return 1
     fi
     
-    # Run migrations locally
+    # Run migrations locally (production-safe)
     log_step "Executando migrações..."
-    if npm run db:migrate; then
+    if npm run db:migrate:prod; then
         log_success "Migrações executadas"
     else
         log_error "Falha nas migrações"

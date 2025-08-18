@@ -1,7 +1,10 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
-import { prisma } from './config/database';
+import { prisma, setupGracefulShutdown } from './config/database';
 import { AuditRequestMiddleware } from './modules/audit/audit.middleware';
+
+// Setup graceful shutdown handlers (only once)
+setupGracefulShutdown();
 
 // Criar instância do Fastify
 const fastify = Fastify({
@@ -1919,6 +1922,7 @@ fastify.setErrorHandler((error, request, reply) => {
 // Iniciar servidor
 const start = async () => {
   try {
+
     await fastify.listen({
       port: Number(process.env.PORT) || 3000,
       host: '0.0.0.0',

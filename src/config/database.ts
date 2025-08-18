@@ -44,17 +44,46 @@ export async function checkDatabaseHealth(): Promise<boolean> {
   }
 }
 
-// Graceful shutdown
-process.on('beforeExit', async () => {
-  await disconnectDatabase();
-});
+// SOLUÇÃO DEFINITIVA - Graceful shutdown handlers sem loop infinito
+const setupGracefulShutdown = (() => {
+  let initialized = false;
+  let isShuttingDown = false;
 
-process.on('SIGINT', async () => {
-  await disconnectDatabase();
-  process.exit(0);
-});
+  return () => {
+    if (initialized) return;
+    initialized = true;
 
-process.on('SIGTERM', async () => {
-  await disconnectDatabase();
-  process.exit(0);
-});
+    // Setup graceful shutdown handlers (loop-safe)
+
+    // beforeExit é problemático - não vamos usar
+
+    process.on('SIGINT', async () => {
+      if (isShuttingDown) return;
+      isShuttingDown = true;
+      // SIGINT received, gracefully shutting down
+      try {
+        await prisma.$disconnect();
+        // Database disconnected gracefully
+      } catch (error) {
+        // Error during graceful shutdown
+      }
+      process.exit(0);
+    });
+
+    process.on('SIGTERM', async () => {
+      if (isShuttingDown) return;
+      isShuttingDown = true;
+      // SIGTERM received, gracefully shutting down
+      try {
+        await prisma.$disconnect();
+        // Database disconnected gracefully
+      } catch (error) {
+        // Error during graceful shutdown
+      }
+      process.exit(0);
+    });
+  };
+})();
+
+// Only setup event listeners when explicitly called, not on import
+export { setupGracefulShutdown };

@@ -4,7 +4,24 @@
 
 EO Clínica is a comprehensive medical clinic scheduling system that integrates AI-powered conversations, automated workflows, and complete medical appointment management. **Version 1.3.0** features a revolutionary notification system with AI integration, enhanced visual design, intelligent scheduling with time filters, and complete appointment workflow automation.
 
-## 🚀 Latest Updates - Version 1.3.2 (August 18, 2025)
+## 🚀 Latest Updates - Version 1.3.3 (August 18, 2025)
+
+### 🔧 **Critical Database Infrastructure Fix - RESOLVIDO**
+- **🛠️ Loop Infinito Eliminado**: Resolvido problema crítico de logs infinitos "Database disconnected successfully"
+- **🔄 Event Listeners Otimizados**: Removido problemático `beforeExit` handler que causava loops
+- **📦 Prisma Consolidado**: Unificadas 6+ instâncias duplicadas do PrismaClient em uma única instância
+- **⚡ Graceful Shutdown**: Implementado sistema seguro de desligamento com controle `isShuttingDown`
+- **🎯 Singleton Pattern**: Sistema de event listeners com proteção contra duplicação
+- **✅ Production Ready**: Sistema estável para deploy em produção sem loops de log
+
+### 📋 **Database Connection Management - OTIMIZADO**
+- **🔧 Instância Única**: Centralizada em `/src/config/database.ts`
+- **🔌 Imports Consolidados**: Atualizados todos arquivos para usar instância compartilhada
+- **🛡️ Thread Safety**: Proteção contra múltiplos event listeners
+- **📊 Health Monitoring**: Sistema de verificação de saúde do banco otimizado
+- **🚀 Performance**: Eliminado overhead de múltiplas conexões
+
+## 🚀 Previous Updates - Version 1.3.2 (August 18, 2025)
 
 ### ✅ **Admin Page - 4 Abas Totalmente Funcionais - COMPLETO**
 - **👥 Aba Usuários**: Gestão completa com filtros seguros e Array.isArray() validation
@@ -20,12 +37,13 @@ EO Clínica is a comprehensive medical clinic scheduling system that integrates 
 - **🔧 Audit System**: Implementado sistema de auditoria REAL com PostgreSQL
 - **📊 Real Data**: Logs reais de LOGIN_SUCCESS/FAILED, analytics access, audit views  
 - **🧹 Cleanup**: Removidos arquivos de log temporários e pasta /erros
+- **✅ No Fictitious Data**: Sistema exibe apenas logs autênticos ou estado vazio
 
 ### 📊 **Sistema de Auditoria Real - NOVO**
 - **🗃️ PostgreSQL Integration**: AuditLog table com dados reais do banco
 - **🔍 Auto-Capture**: Middleware automático para LOGIN, analytics access, audit views
 - **📈 Real-Time Logs**: Captura IP, User-Agent, timestamps, oldValues/newValues
-- **🏗️ Sample Data**: Auto-criação de logs sample na primeira execução
+- **🎯 Authentic Only**: Removida criação automática de dados fictícios/demo
 - **🔐 LGPD Compliance**: Estrutura completa para auditoria e conformidade
 
 ### 🚀 **Analytics 100% Real Data - IMPLEMENTADO**
