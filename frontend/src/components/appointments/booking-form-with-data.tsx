@@ -16,6 +16,7 @@ import { Calendar } from '@/components/ui/calendar'
 import { Loader2, CheckCircle, Clock, User, Stethoscope, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useDoctorsStore } from '@/store/doctors'
 import { useAppointmentsStore } from '@/store/appointments'
+import { useNotificationsStore } from '@/store/notifications'
 import { formatCurrency, formatDateTime } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
 import { validateCPF, formatCPF, cleanCPF } from '@/lib/cpf-validation'
@@ -95,6 +96,7 @@ export function BookingFormWithData({ initialSpecialties }: BookingFormWithDataP
   
   const { doctors, isLoading: loadingDoctors, loadDoctors } = useDoctorsStore()
   const { createAppointment, isLoading: bookingAppointment } = useAppointmentsStore()
+  const { addAppointmentNotification } = useNotificationsStore()
   
   // Função para buscar pacientes existentes
   const loadExistingPatients = useCallback(async () => {
@@ -382,6 +384,28 @@ export function BookingFormWithData({ initialSpecialties }: BookingFormWithDataP
       
       if (success) {
         console.log('✅ Agendamento realizado com sucesso!')
+        
+        // Create notification for successful appointment
+        const patientName = needsPatientRegistration 
+          ? `${patientData.firstName} ${patientData.lastName}`
+          : existingPatients.find(p => p.id === selectedPatientId)?.fullName || 'Paciente'
+        
+        const doctorName = selectedDoctor?.user?.name || selectedDoctor?.name || 'Médico'
+        const formattedDate = selectedDate?.toLocaleDateString('pt-BR', {
+          weekday: 'long',
+          day: 'numeric',
+          month: 'long'
+        })
+        const scheduledAtFormatted = `${formattedDate} às ${selectedTime}`
+        
+        addAppointmentNotification({
+          patientName,
+          doctorName,
+          scheduledAt: scheduledAtFormatted,
+          appointmentId: bookingData.slotId, // Using temp slot ID for now
+          source: 'manual'
+        })
+        
         toast({
           title: 'Sucesso!',
           description: needsPatientRegistration 

@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Bell, Menu, Search, User, LogOut, Settings } from "lucide-react"
+import { Menu, Search, User, LogOut, Settings } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useAuthStore } from "@/store/auth"
 import { getInitials } from "@/lib/utils"
+import { NotificationsDropdown } from "./notifications-dropdown"
+import { AIDemoButton } from "./ai-demo-button"
 
 interface HeaderProps {
   onMenuClick?: () => void
@@ -79,10 +81,11 @@ export function Header({ onMenuClick, showSidebar = true }: HeaderProps) {
 
           {/* Right side */}
           <div className="flex items-center space-x-2">
+            {/* AI Demo Button (temporary) */}
+            <AIDemoButton />
+            
             {/* Notifications */}
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-4 w-4" />
-            </Button>
+            <NotificationsDropdown />
 
             {/* User menu */}
             <DropdownMenu>
