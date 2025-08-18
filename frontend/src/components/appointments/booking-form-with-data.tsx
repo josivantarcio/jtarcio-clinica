@@ -223,15 +223,45 @@ export function BookingFormWithData({ initialSpecialties }: BookingFormWithDataP
     
     setIsLoadingSlots(true)
     try {
-      // Mock available slots - in real app, this would be an API call
-      const slots = [
+      // All possible time slots
+      const allSlots = [
         '08:00', '08:30', '09:00', '09:30', '10:00', '10:30',
-        '14:00', '14:30', '15:00', '15:30', '16:00', '16:30'
+        '11:00', '11:30', '12:00', '12:30', '13:00', '13:30',
+        '14:00', '14:30', '15:00', '15:30', '16:00', '16:30',
+        '17:00', '17:30', '18:00', '18:30'
       ]
+      
+      // Filter slots based on selected date and current time
+      let filteredSlots = allSlots
+      
+      // If selected date is today, filter out past slots + 30min buffer
+      const today = new Date()
+      const isToday = selectedDate?.toDateString() === today.toDateString()
+      
+      if (isToday) {
+        const now = new Date()
+        const currentHour = now.getHours()
+        const currentMinute = now.getMinutes()
+        
+        // Add 30 minutes buffer to current time
+        const bufferTime = new Date(now.getTime() + 30 * 60 * 1000)
+        const minHour = bufferTime.getHours()
+        const minMinute = bufferTime.getMinutes()
+        
+        filteredSlots = allSlots.filter(slot => {
+          const [slotHour, slotMinute] = slot.split(':').map(Number)
+          
+          // Compare slot time with minimum allowed time (now + 30min)
+          const slotInMinutes = slotHour * 60 + slotMinute
+          const minInMinutes = minHour * 60 + minMinute
+          
+          return slotInMinutes >= minInMinutes
+        })
+      }
       
       // Simulate loading
       await new Promise(resolve => setTimeout(resolve, 1000))
-      setAvailableSlots(slots)
+      setAvailableSlots(filteredSlots)
     } catch (error) {
       toast({
         title: 'Erro',
@@ -302,21 +332,53 @@ export function BookingFormWithData({ initialSpecialties }: BookingFormWithDataP
         console.log('✅ Usando paciente existente com ID:', patientId)
       }
       
+      // Create scheduled date/time
       const [hours, minutes] = selectedTime.split(':').map(Number)
       const scheduledAt = new Date(selectedDate)
-      scheduledAt.setHours(hours, minutes)
+      scheduledAt.setHours(hours, minutes, 0, 0)
       
+      // Get specialty duration for the booking
+      const selectedSpecialtyData = specialties.find(s => s.id === data.specialtyId)
+      const duration = selectedSpecialtyData?.duration || 30
+      
+      // Transform data to match API schema
       const bookingData = {
-        ...data,
         patientId,
-        scheduledAt
+        doctorId: data.doctorId,
+        specialtyId: data.specialtyId,
+        slotId: `temp-slot-${Date.now()}`, // Temporary slot ID - API should handle this
+        appointmentType: data.type, // 'CONSULTATION' or 'FOLLOW_UP'
+        duration,
+        notes: data.notes || '',
+        urgencyLevel: 5,
+        // Additional data for the backend to understand scheduling
+        scheduledAt: scheduledAt.toISOString(),
+        selectedTime
       }
       
       console.log('📤 Enviando dados do agendamento:', bookingData)
       
       const success = await createAppointment(bookingData)
       
-      console.log('📥 Resposta da API:', success)
+      console.log('📥 Resposta createAppointment - Success:', success)
+      
+      // Debug: verificar estado da store após a chamada
+      const storeState = useAppointmentsStore.getState()
+      console.log('📥 Estado da store:', {
+        isLoading: storeState.isLoading,
+        error: storeState.error
+      })
+      
+      // Mostrar erro se houver
+      if (!success && storeState.error) {
+        console.log('❌ Erro no agendamento:', storeState.error)
+        toast({
+          title: 'Erro no agendamento',
+          description: storeState.error,
+          variant: 'destructive'
+        })
+        return // Sair da função em caso de erro
+      }
       
       if (success) {
         console.log('✅ Agendamento realizado com sucesso!')
