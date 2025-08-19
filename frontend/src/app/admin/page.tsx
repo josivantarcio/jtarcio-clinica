@@ -519,7 +519,7 @@ export default function AdminPage() {
   // Filter users - ensure adminData.users is an array
   const filteredUsers = Array.isArray(adminData.users) ? adminData.users.filter(user => {
     const matchesSearch = !searchTerm || 
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.fullName || user.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase())
 
     const matchesRole = filterRole === 'all' || user.role === filterRole

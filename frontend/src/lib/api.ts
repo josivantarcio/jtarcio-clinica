@@ -6,11 +6,8 @@ class ApiClient {
   private token: string | null = null
 
   constructor() {
-    // Em produção ou quando estiver no navegador, usa o proxy do Next.js
-    // Em desenvolvimento no servidor, usa o backend direto
-    const baseURL = typeof window !== 'undefined' 
-      ? '' // Usa o proxy do Next.js (rotas /api/*)
-      : process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
+    // Always use the direct backend URL since we don't have Next.js API routes
+    const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
     
     console.log('🌐 Inicializando API Client com baseURL:', baseURL || 'proxy local')
     
@@ -189,7 +186,8 @@ class ApiClient {
   }
 
   async register(userData: {
-    name: string
+    firstName: string
+    lastName: string
     email: string
     password: string
     role: string

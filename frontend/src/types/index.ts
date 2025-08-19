@@ -1,7 +1,10 @@
 export interface User {
   id: string
   email: string
-  name: string
+  firstName: string
+  lastName: string
+  fullName: string
+  name?: string // For backward compatibility
   role: 'PATIENT' | 'DOCTOR' | 'ADMIN' | 'RECEPTIONIST'
   avatar?: string
   createdAt: Date

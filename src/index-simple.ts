@@ -191,6 +191,160 @@ fastify.post('/api/v1/auth/login', async (request, reply) => {
   }
 });
 
+// Register endpoint
+fastify.post('/api/v1/auth/register', async (request, reply) => {
+  try {
+    const { email, password, firstName, lastName, phone, cpf } = request.body as any;
+
+    console.log('Registration attempt:', { email, firstName, lastName, phone, cpf });
+
+    // Validate required fields
+    if (!email || !password || !firstName || !lastName) {
+      reply.status(400);
+      return {
+        success: false,
+        error: {
+          code: 'MISSING_FIELDS',
+          message: 'Email, senha, nome e sobrenome são obrigatórios',
+        },
+      };
+    }
+
+    // Check if user with email already exists
+    const existingUser = await prisma.user.findFirst({
+      where: { email },
+    });
+
+    if (existingUser) {
+      reply.status(400);
+      return {
+        success: false,
+        error: {
+          code: 'EMAIL_ALREADY_EXISTS',
+          message: 'Um usuário com este email já existe',
+        },
+      };
+    }
+
+    // Validate CPF if provided
+    if (cpf) {
+      // Basic CPF validation (you can import the full validation later)
+      const cleanCpf = cpf.replace(/\D/g, '');
+      if (cleanCpf.length !== 11) {
+        reply.status(400);
+        return {
+          success: false,
+          error: {
+            code: 'INVALID_CPF',
+            message: 'CPF inválido',
+          },
+        };
+      }
+
+      // Check if CPF already exists
+      const existingCpf = await prisma.user.findFirst({
+        where: { cpf: cleanCpf },
+      });
+
+      if (existingCpf) {
+        reply.status(400);
+        return {
+          success: false,
+          error: {
+            code: 'CPF_ALREADY_EXISTS',
+            message: 'CPF já cadastrado',
+          },
+        };
+      }
+    }
+
+    // Create the user
+    const user = await prisma.user.create({
+      data: {
+        firstName,
+        lastName,
+        fullName: `${firstName} ${lastName}`,
+        email,
+        password, // In production, this should be hashed
+        phone: phone || null,
+        cpf: cpf ? cpf.replace(/\D/g, '') : null,
+        role: 'PATIENT',
+        status: 'ACTIVE',
+        timezone: 'America/Sao_Paulo',
+      },
+    });
+
+    // Create patient profile
+    if (user.role === 'PATIENT') {
+      await prisma.patient.create({
+        data: {
+          userId: user.id,
+          emergencyContactName: null,
+          emergencyContactPhone: null,
+          allergies: [],
+          medications: [],
+          address: null,
+        },
+      });
+    }
+
+    // Create audit log
+    await createAuditLog({
+      action: 'USER_REGISTRATION',
+      resource: 'USER',
+      userEmail: email,
+      ipAddress: request.headers['x-forwarded-for']?.toString() || request.ip || '127.0.0.1',
+      userAgent: request.headers['user-agent'] || 'Unknown',
+      newValues: {
+        userId: user.id,
+        role: user.role,
+        registrationTime: new Date().toISOString(),
+      },
+    });
+
+    return {
+      success: true,
+      data: {
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          fullName: user.fullName,
+          role: user.role,
+          status: user.status,
+        },
+        tokens: {
+          accessToken: 'fake-jwt-token-for-testing', // In production, generate real JWT
+          refreshToken: 'fake-refresh-token',
+        },
+      },
+    };
+  } catch (error: any) {
+    console.error('Registration error:', error);
+
+    if (error.code === 'P2002' && error.meta?.target?.includes('email')) {
+      reply.status(409);
+      return {
+        success: false,
+        error: {
+          code: 'EMAIL_EXISTS',
+          message: 'Este email já está em uso',
+        },
+      };
+    }
+
+    reply.status(500);
+    return {
+      success: false,
+      error: {
+        code: 'REGISTRATION_FAILED',
+        message: 'Erro ao criar conta',
+      },
+    };
+  }
+});
+
 // Individual user by ID
 fastify.get('/api/v1/users/:id', async (request, reply) => {
   try {

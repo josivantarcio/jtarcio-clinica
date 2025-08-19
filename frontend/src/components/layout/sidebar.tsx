@@ -199,15 +199,15 @@ export function Sidebar({ className, isOpen, onClose, isCollapsed = false }: Sid
           )}>
             <div 
               className="flex h-8 w-8 items-center justify-center rounded-full bg-muted flex-shrink-0"
-              title={isCollapsed ? user.name : undefined}
+              title={isCollapsed ? (user.fullName || user.name) : undefined}
             >
               <span className="text-sm font-medium">
-                {user.name.charAt(0).toUpperCase()}
+                {(user.fullName || user.name || 'U').charAt(0).toUpperCase()}
               </span>
             </div>
             {!isCollapsed && (
               <div className="flex-1 overflow-hidden">
-                <p className="text-sm font-medium truncate">{user.name}</p>
+                <p className="text-sm font-medium truncate">{user.fullName || user.name}</p>
                 <p className="text-xs text-muted-foreground truncate">
                   {user.email}
                 </p>

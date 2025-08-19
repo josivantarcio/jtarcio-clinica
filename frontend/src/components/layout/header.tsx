@@ -92,9 +92,9 @@ export function Header({ onMenuClick, showSidebar = true }: HeaderProps) {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={user?.avatar} alt={user?.name || ''} />
+                    <AvatarImage src={user?.avatar} alt={user?.fullName || user?.name || ''} />
                     <AvatarFallback>
-                      {user ? getInitials(user.name) : 'U'}
+                      {user ? getInitials(user.fullName || user.name || '') : 'U'}
                     </AvatarFallback>
                   </Avatar>
                 </Button>
@@ -103,7 +103,7 @@ export function Header({ onMenuClick, showSidebar = true }: HeaderProps) {
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">
-                      {user?.name}
+                      {user?.fullName || user?.name || ''}
                     </p>
                     <p className="text-xs leading-none text-muted-foreground">
                       {user?.email}

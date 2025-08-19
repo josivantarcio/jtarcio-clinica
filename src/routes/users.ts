@@ -2,6 +2,7 @@ import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { UserService } from '@/services/user.service';
 import { prisma } from '@/config/database';
 import { verifyJWT } from '@/plugins/auth';
+import { validateCPF, checkCPFExists } from '@/utils/cpf-validation';
 
 const userService = new UserService(prisma);
 
@@ -471,6 +472,152 @@ export async function userRoutes(fastify: FastifyInstance): Promise<void> {
     },
   );
 
+  // Create user/patient endpoint
+  fastify.post(
+    '/',
+    {
+      schema: {
+        tags: ['Users'],
+        summary: 'Create a new user/patient',
+        body: {
+          type: 'object',
+          required: ['firstName', 'lastName', 'email', 'role'],
+          properties: {
+            firstName: { type: 'string', minLength: 2 },
+            lastName: { type: 'string', minLength: 2 },
+            fullName: { type: 'string' },
+            email: { type: 'string', format: 'email' },
+            phone: { type: 'string' },
+            cpf: { type: 'string' },
+            dateOfBirth: { type: 'string', format: 'date' },
+            gender: { type: 'string', enum: ['M', 'F', 'OTHER'] },
+            role: { type: 'string', enum: ['PATIENT', 'RECEPTIONIST'] },
+            allergies: {
+              type: 'array',
+              items: { type: 'string' }
+            },
+            medications: {
+              type: 'array',
+              items: { type: 'string' }
+            },
+            emergencyContactName: { type: 'string' },
+            emergencyContactPhone: { type: 'string' },
+            address: {
+              type: 'object',
+              properties: {
+                street: { type: 'string' },
+                neighborhood: { type: 'string' },
+                city: { type: 'string' },
+                state: { type: 'string' },
+                zipCode: { type: 'string' }
+              }
+            },
+            password: { type: 'string' }
+          },
+        },
+        response: {
+          201: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean' },
+              data: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  email: { type: 'string' },
+                  firstName: { type: 'string' },
+                  lastName: { type: 'string' },
+                  fullName: { type: 'string' },
+                  role: { type: 'string' },
+                  status: { type: 'string' },
+                  phone: { type: 'string' },
+                  cpf: { type: 'string' },
+                  createdAt: { type: 'string' },
+                  updatedAt: { type: 'string' },
+                },
+              },
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+    async (request: FastifyRequest<{ Body: any }>, reply: FastifyReply) => {
+      try {
+        const userData = request.body;
+
+        // Check if user with email already exists
+        const existingUser = await userService.findAll({
+          search: userData.email,
+        });
+        if (existingUser.users.length > 0) {
+          return reply.status(400).send({
+            success: false,
+            error: {
+              code: 'EMAIL_ALREADY_EXISTS',
+              message: 'Um usuário com este email já existe',
+            },
+          });
+        }
+
+        // Validate and check CPF if provided
+        if (userData.cpf) {
+          if (!validateCPF(userData.cpf)) {
+            return reply.status(400).send({
+              success: false,
+              error: {
+                code: 'INVALID_CPF',
+                message: 'CPF inválido',
+              },
+            });
+          }
+
+          const cpfCheck = await checkCPFExists(userData.cpf, prisma);
+          if (cpfCheck.exists) {
+            return reply.status(400).send({
+              success: false,
+              error: {
+                code: 'CPF_ALREADY_EXISTS',
+                message: `CPF já cadastrado para: ${cpfCheck.user?.fullName} (${cpfCheck.user?.email})`,
+              },
+            });
+          }
+        }
+
+        // Set default fullName if not provided
+        if (!userData.fullName) {
+          userData.fullName = `${userData.firstName} ${userData.lastName}`;
+        }
+
+        // Create user with password (use provided password or default)
+        const userDataForCreation = {
+          ...userData,
+          password: userData.password || 'TempPassword123!', // Use provided password or default
+          status: 'ACTIVE'
+        };
+
+        const createdUser = await userService.create(userDataForCreation);
+
+        return reply.status(201).send({
+          success: true,
+          data: createdUser,
+          message: 'Usuário criado com sucesso',
+        });
+      } catch (error) {
+        console.error('Error creating user:', error);
+
+        return reply.status(500).send({
+          success: false,
+          error: {
+            code: 'INTERNAL_ERROR',
+            message:
+              error instanceof Error ? error.message : 'Erro ao criar usuário',
+          },
+        });
+      }
+    },
+  );
+
   // Create doctor endpoint
   fastify.post(
     '/doctors',
@@ -553,6 +700,30 @@ export async function userRoutes(fastify: FastifyInstance): Promise<void> {
               message: 'Um usuário com este email já existe',
             },
           });
+        }
+
+        // Validate and check CPF if provided
+        if (doctorData.cpf) {
+          if (!validateCPF(doctorData.cpf)) {
+            return reply.status(400).send({
+              success: false,
+              error: {
+                code: 'INVALID_CPF',
+                message: 'CPF inválido',
+              },
+            });
+          }
+
+          const cpfCheck = await checkCPFExists(doctorData.cpf, prisma);
+          if (cpfCheck.exists) {
+            return reply.status(400).send({
+              success: false,
+              error: {
+                code: 'CPF_ALREADY_EXISTS',
+                message: `CPF já cadastrado para: ${cpfCheck.user?.fullName} (${cpfCheck.user?.email})`,
+              },
+            });
+          }
         }
 
         const createdDoctor = await userService.createDoctor(doctorData);
@@ -670,6 +841,85 @@ export async function userRoutes(fastify: FastifyInstance): Promise<void> {
               error instanceof Error
                 ? error.message
                 : 'Failed to fetch user profile',
+          },
+        });
+      }
+    },
+  );
+
+  // Check CPF existence endpoint
+  fastify.get(
+    '/check-cpf/:cpf',
+    {
+      schema: {
+        tags: ['Users'],
+        summary: 'Check if CPF already exists',
+        params: {
+          type: 'object',
+          required: ['cpf'],
+          properties: {
+            cpf: { type: 'string', minLength: 11, maxLength: 14 },
+          },
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean' },
+              data: {
+                type: 'object',
+                properties: {
+                  exists: { type: 'boolean' },
+                  user: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'string' },
+                      fullName: { type: 'string' },
+                      email: { type: 'string' },
+                      cpf: { type: 'string' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    async (
+      request: FastifyRequest<{ Params: { cpf: string } }>,
+      reply: FastifyReply,
+    ) => {
+      try {
+        const { cpf } = request.params;
+
+        // Validate CPF format
+        if (!validateCPF(cpf)) {
+          return reply.status(400).send({
+            success: false,
+            error: {
+              code: 'INVALID_CPF',
+              message: 'CPF inválido',
+            },
+          });
+        }
+
+        // Check if CPF exists
+        const result = await checkCPFExists(cpf, prisma);
+
+        return reply.status(200).send({
+          success: true,
+          data: result,
+        });
+      } catch (error) {
+        return reply.status(500).send({
+          success: false,
+          error: {
+            code: 'INTERNAL_ERROR',
+            message:
+              error instanceof Error
+                ? error.message
+                : 'Failed to check CPF',
           },
         });
       }

@@ -388,4 +388,83 @@ export class UserService {
       throw error;
     }
   }
+
+  /**
+   * Create a new user (patient or other roles)
+   */
+  async create(userData: {
+    firstName: string;
+    lastName: string;
+    fullName?: string;
+    email: string;
+    password?: string;
+    phone?: string;
+    cpf?: string;
+    dateOfBirth?: string;
+    gender?: string;
+    role: UserRole;
+    status?: UserStatus;
+    allergies?: string[];
+    medications?: string[];
+    emergencyContactName?: string;
+    emergencyContactPhone?: string;
+    address?: any;
+  }) {
+    try {
+      // Hash password if provided
+      let hashedPassword = undefined;
+      if (userData.password) {
+        const saltRounds = Number(env.BCRYPT_SALT_ROUNDS) || 12;
+        hashedPassword = await bcrypt.hash(userData.password, saltRounds);
+      }
+
+      // Set default fullName if not provided
+      const fullName = userData.fullName || `${userData.firstName} ${userData.lastName}`;
+
+      // Create user in transaction to ensure consistency
+      const result = await this.prisma.$transaction(async (prisma) => {
+        // Create user
+        const user = await prisma.user.create({
+          data: {
+            firstName: userData.firstName,
+            lastName: userData.lastName,
+            fullName,
+            email: userData.email,
+            password: hashedPassword,
+            phone: userData.phone,
+            cpf: userData.cpf,
+            dateOfBirth: userData.dateOfBirth ? new Date(userData.dateOfBirth) : undefined,
+            gender: userData.gender,
+            role: userData.role,
+            status: userData.status || 'PENDING_VERIFICATION',
+            timezone: 'America/Sao_Paulo',
+          },
+        });
+
+        // If creating a patient, create patient profile
+        if (userData.role === 'PATIENT') {
+          await prisma.patient.create({
+            data: {
+              userId: user.id,
+              emergencyContactName: userData.emergencyContactName,
+              emergencyContactPhone: userData.emergencyContactPhone,
+              allergies: userData.allergies || [],
+              medications: userData.medications || [],
+              address: userData.address || undefined,
+            },
+          });
+        }
+
+        return user;
+      });
+
+      logger.info(`User created successfully: ${result.email} (${result.role})`);
+
+      // Return full user data with profile
+      return await this.findById(result.id);
+    } catch (error) {
+      logger.error(`Error creating user:`, error);
+      throw error;
+    }
+  }
 }

@@ -13,9 +13,12 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useAuthStore } from "@/store/auth"
 import { cn, validateCPF, formatCPF, formatPhone } from "@/lib/utils"
+import { cleanCPF } from "@/lib/cpf-validation"
+import { apiClient } from "@/lib/api"
 
 const registerSchema = z.object({
-  name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
+  firstName: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
+  lastName: z.string().min(2, "Sobrenome deve ter pelo menos 2 caracteres"),
   email: z.string().email("Email inválido"),
   password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
   confirmPassword: z.string(),
@@ -36,6 +39,8 @@ interface RegisterFormProps {
 export function RegisterForm({ className, onSuccess }: RegisterFormProps) {
   const [showPassword, setShowPassword] = React.useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false)
+  const [cpfError, setCpfError] = React.useState<string>('')
+  const [checkingCpf, setCheckingCpf] = React.useState(false)
   const router = useRouter()
   const { register: registerUser, isLoading, error, clearError } = useAuthStore()
   
@@ -54,10 +59,53 @@ export function RegisterForm({ className, onSuccess }: RegisterFormProps) {
     clearError()
   }, [clearError])
 
+  const checkCpfDuplicate = async (cpf: string) => {
+    if (!cpf || cpf.trim() === '') {
+      setCpfError('')
+      return
+    }
+
+    const cleanedCpf = cleanCPF(cpf)
+    if (cleanedCpf.length < 11) {
+      setCpfError('')
+      return
+    }
+
+    // First validate CPF format
+    if (!validateCPF(cleanedCpf)) {
+      setCpfError('CPF inválido')
+      return
+    }
+
+    setCheckingCpf(true)
+    setCpfError('')
+    
+    try {
+      const response = await apiClient.request({
+        method: 'GET',
+        url: `/api/v1/users/check-cpf/${cleanedCpf}`
+      })
+      
+      if (response.success && response.data.exists) {
+        const existingUser = response.data.user
+        setCpfError(`CPF já cadastrado para: ${existingUser.fullName} (${existingUser.email})`)
+      }
+    } catch (error) {
+      console.error('Error checking CPF:', error)
+    } finally {
+      setCheckingCpf(false)
+    }
+  }
+
   // Format CPF and phone as user types
   const handleCPFChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, '')
     setValue('cpf', formatCPF(value))
+    setCpfError('')
+  }
+
+  const handleCPFBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    checkCpfDuplicate(e.target.value)
   }
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -66,8 +114,20 @@ export function RegisterForm({ className, onSuccess }: RegisterFormProps) {
   }
 
   const onSubmit = async (data: RegisterFormData) => {
+    // Check if there are CPF errors
+    if (cpfError) {
+      return
+    }
+
+    // Final CPF validation before submit
+    if (!validateCPF(data.cpf)) {
+      setCpfError('CPF inválido')
+      return
+    }
+
     const userData = {
-      name: data.name,
+      firstName: data.firstName,
+      lastName: data.lastName,
       email: data.email,
       password: data.password,
       role: 'PATIENT', // Default role for registration
@@ -95,18 +155,33 @@ export function RegisterForm({ className, onSuccess }: RegisterFormProps) {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Nome Completo</Label>
-            <Input
-              id="name"
-              type="text"
-              placeholder="Seu nome completo"
-              disabled={isLoading}
-              {...register("name")}
-            />
-            {errors.name && (
-              <p className="text-sm text-destructive">{errors.name.message}</p>
-            )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="firstName">Nome</Label>
+              <Input
+                id="firstName"
+                type="text"
+                placeholder="Seu nome"
+                disabled={isLoading}
+                {...register("firstName")}
+              />
+              {errors.firstName && (
+                <p className="text-sm text-destructive">{errors.firstName.message}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="lastName">Sobrenome</Label>
+              <Input
+                id="lastName"
+                type="text"
+                placeholder="Seu sobrenome"
+                disabled={isLoading}
+                {...register("lastName")}
+              />
+              {errors.lastName && (
+                <p className="text-sm text-destructive">{errors.lastName.message}</p>
+              )}
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -125,16 +200,28 @@ export function RegisterForm({ className, onSuccess }: RegisterFormProps) {
 
           <div className="space-y-2">
             <Label htmlFor="cpf">CPF</Label>
-            <Input
-              id="cpf"
-              type="text"
-              placeholder="000.000.000-00"
-              disabled={isLoading}
-              {...register("cpf")}
-              onChange={handleCPFChange}
-            />
+            <div className="relative">
+              <Input
+                id="cpf"
+                type="text"
+                placeholder="000.000.000-00"
+                disabled={isLoading}
+                {...register("cpf")}
+                onChange={handleCPFChange}
+                onBlur={handleCPFBlur}
+                className={`${errors.cpf || cpfError ? 'border-destructive' : ''}`}
+              />
+              {checkingCpf && (
+                <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                </div>
+              )}
+            </div>
             {errors.cpf && (
               <p className="text-sm text-destructive">{errors.cpf.message}</p>
+            )}
+            {cpfError && (
+              <p className="text-sm text-destructive">{cpfError}</p>
             )}
           </div>
 

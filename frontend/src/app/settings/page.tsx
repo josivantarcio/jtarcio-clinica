@@ -178,8 +178,8 @@ export default function SettingsPage() {
           setSettings(prev => ({
             ...prev,
             profile: {
-              firstName: user.name.split(' ')[0] || '',
-              lastName: user.name.split(' ').slice(1).join(' ') || '',
+              firstName: user.firstName || user.name?.split(' ')[0] || '',
+              lastName: user.lastName || user.name?.split(' ').slice(1).join(' ') || '',
               email: user.email,
               phone: '',
               timezone: 'America/Sao_Paulo',
@@ -196,8 +196,8 @@ export default function SettingsPage() {
         setSettings(prev => ({
           ...prev,
           profile: {
-            firstName: user.name.split(' ')[0] || '',
-            lastName: user.name.split(' ').slice(1).join(' ') || '',
+            firstName: user.firstName || user.name?.split(' ')[0] || '',
+            lastName: user.lastName || user.name?.split(' ').slice(1).join(' ') || '',
             email: user.email,
             phone: '',
             timezone: 'America/Sao_Paulo',
