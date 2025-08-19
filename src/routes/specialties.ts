@@ -1,5 +1,4 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import { paginationSchema, responseSchema } from '@/types/common';
 import { prisma } from '@/config/database';
 
 export async function specialtyRoutes(fastify: FastifyInstance): Promise<void> {
@@ -10,28 +9,45 @@ export async function specialtyRoutes(fastify: FastifyInstance): Promise<void> {
       schema: {
         tags: ['Specialties'],
         summary: 'Get all medical specialties',
-        querystring: paginationSchema.extend({
-          search: { type: 'string' },
-          isActive: { type: 'boolean' },
-          withActiveDoctors: { type: 'boolean' },
-        }),
+        querystring: {
+          type: 'object',
+          properties: {
+            page: { type: 'integer', minimum: 1, default: 1 },
+            limit: { type: 'integer', minimum: 1, maximum: 100, default: 20 },
+            sortBy: { type: 'string' },
+            sortOrder: {
+              type: 'string',
+              enum: ['asc', 'desc'],
+              default: 'desc',
+            },
+            search: { type: 'string' },
+            isActive: { type: 'boolean' },
+            withActiveDoctors: { type: 'boolean' },
+          },
+        },
         response: {
-          200: responseSchema({
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                id: { type: 'string', format: 'uuid' },
-                name: { type: 'string' },
-                description: { type: 'string' },
-                duration: { type: 'number' },
-                price: { type: 'number' },
-                isActive: { type: 'boolean' },
-                createdAt: { type: 'string', format: 'date-time' },
-                updatedAt: { type: 'string', format: 'date-time' },
+          200: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean' },
+              data: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string', format: 'uuid' },
+                    name: { type: 'string' },
+                    description: { type: 'string' },
+                    duration: { type: 'number' },
+                    price: { type: 'number' },
+                    isActive: { type: 'boolean' },
+                    createdAt: { type: 'string', format: 'date-time' },
+                    updatedAt: { type: 'string', format: 'date-time' },
+                  },
+                },
               },
             },
-          }),
+          },
         },
       },
     },
@@ -128,37 +144,43 @@ export async function specialtyRoutes(fastify: FastifyInstance): Promise<void> {
           },
         },
         response: {
-          200: responseSchema({
+          200: {
             type: 'object',
             properties: {
-              id: { type: 'string', format: 'uuid' },
-              name: { type: 'string' },
-              description: { type: 'string' },
-              duration: { type: 'number' },
-              isActive: { type: 'boolean' },
-              createdAt: { type: 'string', format: 'date-time' },
-              updatedAt: { type: 'string', format: 'date-time' },
-              doctors: {
-                type: 'array',
-                items: {
-                  type: 'object',
-                  properties: {
-                    id: { type: 'string', format: 'uuid' },
-                    userId: { type: 'string', format: 'uuid' },
-                    crm: { type: 'string' },
-                    user: {
+              success: { type: 'boolean' },
+              data: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string', format: 'uuid' },
+                  name: { type: 'string' },
+                  description: { type: 'string' },
+                  duration: { type: 'number' },
+                  isActive: { type: 'boolean' },
+                  createdAt: { type: 'string', format: 'date-time' },
+                  updatedAt: { type: 'string', format: 'date-time' },
+                  doctors: {
+                    type: 'array',
+                    items: {
                       type: 'object',
                       properties: {
-                        firstName: { type: 'string' },
-                        lastName: { type: 'string' },
-                        fullName: { type: 'string' },
+                        id: { type: 'string', format: 'uuid' },
+                        userId: { type: 'string', format: 'uuid' },
+                        crm: { type: 'string' },
+                        user: {
+                          type: 'object',
+                          properties: {
+                            firstName: { type: 'string' },
+                            lastName: { type: 'string' },
+                            fullName: { type: 'string' },
+                          },
+                        },
                       },
                     },
                   },
                 },
               },
             },
-          }),
+          },
         },
       },
     },
@@ -195,18 +217,24 @@ export async function specialtyRoutes(fastify: FastifyInstance): Promise<void> {
           },
         },
         response: {
-          201: responseSchema({
+          201: {
             type: 'object',
             properties: {
-              id: { type: 'string', format: 'uuid' },
-              name: { type: 'string' },
-              description: { type: 'string' },
-              duration: { type: 'number' },
-              isActive: { type: 'boolean' },
-              createdAt: { type: 'string', format: 'date-time' },
-              updatedAt: { type: 'string', format: 'date-time' },
+              success: { type: 'boolean' },
+              data: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string', format: 'uuid' },
+                  name: { type: 'string' },
+                  description: { type: 'string' },
+                  duration: { type: 'number' },
+                  isActive: { type: 'boolean' },
+                  createdAt: { type: 'string', format: 'date-time' },
+                  updatedAt: { type: 'string', format: 'date-time' },
+                },
+              },
             },
-          }),
+          },
         },
       },
     },
@@ -247,18 +275,24 @@ export async function specialtyRoutes(fastify: FastifyInstance): Promise<void> {
           },
         },
         response: {
-          200: responseSchema({
+          200: {
             type: 'object',
             properties: {
-              id: { type: 'string', format: 'uuid' },
-              name: { type: 'string' },
-              description: { type: 'string' },
-              duration: { type: 'number' },
-              isActive: { type: 'boolean' },
-              createdAt: { type: 'string', format: 'date-time' },
-              updatedAt: { type: 'string', format: 'date-time' },
+              success: { type: 'boolean' },
+              data: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string', format: 'uuid' },
+                  name: { type: 'string' },
+                  description: { type: 'string' },
+                  duration: { type: 'number' },
+                  isActive: { type: 'boolean' },
+                  createdAt: { type: 'string', format: 'date-time' },
+                  updatedAt: { type: 'string', format: 'date-time' },
+                },
+              },
             },
-          }),
+          },
         },
       },
     },
@@ -323,36 +357,53 @@ export async function specialtyRoutes(fastify: FastifyInstance): Promise<void> {
             id: { type: 'string', format: 'uuid' },
           },
         },
-        querystring: paginationSchema.extend({
-          isActive: { type: 'boolean' },
-          acceptsNewPatients: { type: 'boolean' },
-        }),
+        querystring: {
+          type: 'object',
+          properties: {
+            page: { type: 'integer', minimum: 1, default: 1 },
+            limit: { type: 'integer', minimum: 1, maximum: 100, default: 20 },
+            sortBy: { type: 'string' },
+            sortOrder: {
+              type: 'string',
+              enum: ['asc', 'desc'],
+              default: 'desc',
+            },
+            isActive: { type: 'boolean' },
+            acceptsNewPatients: { type: 'boolean' },
+          },
+        },
         response: {
-          200: responseSchema({
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                id: { type: 'string', format: 'uuid' },
-                userId: { type: 'string', format: 'uuid' },
-                crm: { type: 'string' },
-                experience: { type: 'number' },
-                consultationFee: { type: 'number' },
-                consultationDuration: { type: 'number' },
-                isActive: { type: 'boolean' },
-                acceptsNewPatients: { type: 'boolean' },
-                user: {
+          200: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean' },
+              data: {
+                type: 'array',
+                items: {
                   type: 'object',
                   properties: {
-                    firstName: { type: 'string' },
-                    lastName: { type: 'string' },
-                    fullName: { type: 'string' },
-                    avatar: { type: 'string' },
+                    id: { type: 'string', format: 'uuid' },
+                    userId: { type: 'string', format: 'uuid' },
+                    crm: { type: 'string' },
+                    experience: { type: 'number' },
+                    consultationFee: { type: 'number' },
+                    consultationDuration: { type: 'number' },
+                    isActive: { type: 'boolean' },
+                    acceptsNewPatients: { type: 'boolean' },
+                    user: {
+                      type: 'object',
+                      properties: {
+                        firstName: { type: 'string' },
+                        lastName: { type: 'string' },
+                        fullName: { type: 'string' },
+                        avatar: { type: 'string' },
+                      },
+                    },
                   },
                 },
               },
             },
-          }),
+          },
         },
       },
     },

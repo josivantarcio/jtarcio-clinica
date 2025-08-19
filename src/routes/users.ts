@@ -1,6 +1,4 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import { updateUserSchema, userResponseSchema } from '@/types/user';
-import { paginationSchema, responseSchema } from '@/types/common';
 import { UserService } from '@/services/user.service';
 import { prisma } from '@/config/database';
 import { verifyJWT } from '@/plugins/auth';
@@ -16,22 +14,64 @@ export async function userRoutes(fastify: FastifyInstance): Promise<void> {
         tags: ['Users'],
         summary: 'Get all users',
         security: [{ Bearer: [] }],
-        querystring: paginationSchema.extend({
-          role: {
-            type: 'string',
-            enum: ['PATIENT', 'DOCTOR', 'ADMIN', 'RECEPTIONIST'],
+        querystring: {
+          type: 'object',
+          properties: {
+            page: { type: 'integer', minimum: 1, default: 1 },
+            limit: { type: 'integer', minimum: 1, maximum: 100, default: 20 },
+            sortBy: { type: 'string' },
+            sortOrder: {
+              type: 'string',
+              enum: ['asc', 'desc'],
+              default: 'desc',
+            },
+            role: {
+              type: 'string',
+              enum: ['PATIENT', 'DOCTOR', 'ADMIN', 'RECEPTIONIST'],
+            },
+            status: {
+              type: 'string',
+              enum: ['ACTIVE', 'INACTIVE', 'SUSPENDED', 'PENDING_VERIFICATION'],
+            },
+            search: { type: 'string' },
           },
-          status: {
-            type: 'string',
-            enum: ['ACTIVE', 'INACTIVE', 'SUSPENDED', 'PENDING_VERIFICATION'],
-          },
-          search: { type: 'string' },
-        }),
+        },
         response: {
-          200: responseSchema({
-            type: 'array',
-            items: userResponseSchema,
-          }),
+          200: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean' },
+              data: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string' },
+                    email: { type: 'string' },
+                    firstName: { type: 'string' },
+                    lastName: { type: 'string' },
+                    fullName: { type: 'string' },
+                    role: { type: 'string' },
+                    status: { type: 'string' },
+                    phone: { type: 'string' },
+                    timezone: { type: 'string' },
+                    avatar: { type: 'string' },
+                    createdAt: { type: 'string' },
+                    updatedAt: { type: 'string' },
+                  },
+                },
+              },
+              pagination: {
+                type: 'object',
+                properties: {
+                  page: { type: 'integer' },
+                  limit: { type: 'integer' },
+                  total: { type: 'integer' },
+                  totalPages: { type: 'integer' },
+                },
+              },
+            },
+          },
         },
       },
     },
@@ -84,7 +124,29 @@ export async function userRoutes(fastify: FastifyInstance): Promise<void> {
           },
         },
         response: {
-          200: responseSchema(userResponseSchema),
+          200: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean' },
+              data: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  email: { type: 'string' },
+                  firstName: { type: 'string' },
+                  lastName: { type: 'string' },
+                  fullName: { type: 'string' },
+                  role: { type: 'string' },
+                  status: { type: 'string' },
+                  phone: { type: 'string' },
+                  timezone: { type: 'string' },
+                  avatar: { type: 'string' },
+                  createdAt: { type: 'string' },
+                  updatedAt: { type: 'string' },
+                },
+              },
+            },
+          },
         },
       },
     },
@@ -134,9 +196,67 @@ export async function userRoutes(fastify: FastifyInstance): Promise<void> {
             id: { type: 'string', format: 'uuid' },
           },
         },
-        body: updateUserSchema,
+        body: {
+          type: 'object',
+          properties: {
+            phone: { type: 'string' },
+            firstName: { type: 'string', minLength: 2 },
+            lastName: { type: 'string', minLength: 2 },
+            dateOfBirth: { type: 'string', format: 'date' },
+            gender: { type: 'string', enum: ['M', 'F', 'OTHER'] },
+            avatar: { type: 'string', format: 'uri' },
+            timezone: { type: 'string' },
+            doctorProfile: {
+              type: 'object',
+              properties: {
+                update: {
+                  type: 'object',
+                  properties: {
+                    crm: { type: 'string' },
+                    biography: { type: 'string' },
+                    consultationFee: { type: 'number', minimum: 0 },
+                    consultationDuration: {
+                      type: 'number',
+                      minimum: 15,
+                      maximum: 120,
+                    },
+                    acceptsNewPatients: { type: 'boolean' },
+                    graduationDate: { type: 'string', format: 'date-time' },
+                    crmRegistrationDate: {
+                      type: 'string',
+                      format: 'date-time',
+                    },
+                    experience: { type: 'number', minimum: 0 },
+                  },
+                },
+              },
+            },
+          },
+        },
         response: {
-          200: responseSchema(userResponseSchema),
+          200: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean' },
+              data: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  email: { type: 'string' },
+                  firstName: { type: 'string' },
+                  lastName: { type: 'string' },
+                  fullName: { type: 'string' },
+                  role: { type: 'string' },
+                  status: { type: 'string' },
+                  phone: { type: 'string' },
+                  timezone: { type: 'string' },
+                  avatar: { type: 'string' },
+                  createdAt: { type: 'string' },
+                  updatedAt: { type: 'string' },
+                },
+              },
+            },
+          },
         },
       },
     },
@@ -235,11 +355,22 @@ export async function userRoutes(fastify: FastifyInstance): Promise<void> {
             id: { type: 'string', format: 'uuid' },
           },
         },
-        querystring: paginationSchema.extend({
-          status: { type: 'string' },
-          dateFrom: { type: 'string', format: 'date' },
-          dateTo: { type: 'string', format: 'date' },
-        }),
+        querystring: {
+          type: 'object',
+          properties: {
+            page: { type: 'integer', minimum: 1, default: 1 },
+            limit: { type: 'integer', minimum: 1, maximum: 100, default: 20 },
+            sortBy: { type: 'string' },
+            sortOrder: {
+              type: 'string',
+              enum: ['asc', 'desc'],
+              default: 'desc',
+            },
+            status: { type: 'string' },
+            dateFrom: { type: 'string', format: 'date' },
+            dateTo: { type: 'string', format: 'date' },
+          },
+        },
       },
     },
     async (
@@ -379,7 +510,30 @@ export async function userRoutes(fastify: FastifyInstance): Promise<void> {
           },
         },
         response: {
-          201: responseSchema(userResponseSchema),
+          201: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean' },
+              data: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  email: { type: 'string' },
+                  firstName: { type: 'string' },
+                  lastName: { type: 'string' },
+                  fullName: { type: 'string' },
+                  role: { type: 'string' },
+                  status: { type: 'string' },
+                  phone: { type: 'string' },
+                  timezone: { type: 'string' },
+                  avatar: { type: 'string' },
+                  createdAt: { type: 'string' },
+                  updatedAt: { type: 'string' },
+                },
+              },
+              message: { type: 'string' },
+            },
+          },
         },
       },
     },
@@ -433,15 +587,39 @@ export async function userRoutes(fastify: FastifyInstance): Promise<void> {
         summary: 'Get current user profile',
         security: [{ Bearer: [] }],
         response: {
-          200: responseSchema(userResponseSchema),
+          200: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean' },
+              data: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  email: { type: 'string' },
+                  firstName: { type: 'string' },
+                  lastName: { type: 'string' },
+                  fullName: { type: 'string' },
+                  role: { type: 'string' },
+                  status: { type: 'string' },
+                  phone: { type: 'string' },
+                  timezone: { type: 'string' },
+                  avatar: { type: 'string' },
+                  createdAt: { type: 'string' },
+                  updatedAt: { type: 'string' },
+                  settings: { type: 'object' },
+                  bio: { type: 'string' },
+                },
+              },
+            },
+          },
         },
       },
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       try {
         // Get user ID from JWT token (assuming middleware sets it in request)
-        const userId = (request as any).user?.userId
-        
+        const userId = (request as any).user?.userId;
+
         if (!userId) {
           return reply.status(401).send({
             success: false,
@@ -449,20 +627,21 @@ export async function userRoutes(fastify: FastifyInstance): Promise<void> {
               code: 'UNAUTHORIZED',
               message: 'User not authenticated',
             },
-          })
+          });
         }
 
-        const user = await userService.findById(userId)
+        const user = await userService.findById(userId);
 
         // Parse settings from encryptedData if exists
-        let settings = null
+        let settings = null;
         if (user.encryptedData) {
           try {
-            settings = typeof user.encryptedData === 'string' 
-              ? JSON.parse(user.encryptedData)
-              : user.encryptedData
+            settings =
+              typeof user.encryptedData === 'string'
+                ? JSON.parse(user.encryptedData)
+                : user.encryptedData;
           } catch (error) {
-            console.error('Error parsing user settings:', error)
+            console.error('Error parsing user settings:', error);
           }
         }
 
@@ -471,26 +650,31 @@ export async function userRoutes(fastify: FastifyInstance): Promise<void> {
           data: {
             ...user,
             settings,
-            bio: user.doctorProfile?.biography || user.patientProfile?.medicalHistory || ''
+            bio:
+              user.doctorProfile?.biography ||
+              user.patientProfile?.medicalHistory ||
+              '',
           },
-        })
+        });
       } catch (error) {
         const statusCode =
           error instanceof Error && error.message === 'User not found'
             ? 404
-            : 500
+            : 500;
 
         return reply.status(statusCode).send({
           success: false,
           error: {
             code: statusCode === 404 ? 'NOT_FOUND' : 'INTERNAL_ERROR',
             message:
-              error instanceof Error ? error.message : 'Failed to fetch user profile',
+              error instanceof Error
+                ? error.message
+                : 'Failed to fetch user profile',
           },
-        })
+        });
       }
     },
-  )
+  );
 
   // Update current user profile
   fastify.patch(
@@ -515,21 +699,45 @@ export async function userRoutes(fastify: FastifyInstance): Promise<void> {
                 notifications: { type: 'object' },
                 privacy: { type: 'object' },
                 appearance: { type: 'object' },
-                security: { type: 'object' }
-              }
-            }
+                security: { type: 'object' },
+              },
+            },
           },
         },
         response: {
-          200: responseSchema(userResponseSchema),
+          200: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean' },
+              data: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  email: { type: 'string' },
+                  firstName: { type: 'string' },
+                  lastName: { type: 'string' },
+                  fullName: { type: 'string' },
+                  role: { type: 'string' },
+                  status: { type: 'string' },
+                  phone: { type: 'string' },
+                  timezone: { type: 'string' },
+                  avatar: { type: 'string' },
+                  createdAt: { type: 'string' },
+                  updatedAt: { type: 'string' },
+                  settings: { type: 'object' },
+                  bio: { type: 'string' },
+                },
+              },
+            },
+          },
         },
       },
     },
     async (request: FastifyRequest<{ Body: any }>, reply: FastifyReply) => {
       try {
         // Get user ID from JWT token
-        const userId = (request as any).user?.userId
-        
+        const userId = (request as any).user?.userId;
+
         if (!userId) {
           return reply.status(401).send({
             success: false,
@@ -537,55 +745,56 @@ export async function userRoutes(fastify: FastifyInstance): Promise<void> {
               code: 'UNAUTHORIZED',
               message: 'User not authenticated',
             },
-          })
+          });
         }
 
-        const updateData = request.body
-        const { bio, settings, ...userFields } = updateData
+        const updateData = request.body;
+        const { bio, settings, ...userFields } = updateData;
 
         // Prepare user update data
         const userUpdateData: any = {
           ...userFields,
-        }
+        };
 
         // Update fullName if firstName or lastName changed
         if (userFields.firstName || userFields.lastName) {
-          const currentUser = await userService.findById(userId)
-          const firstName = userFields.firstName || currentUser.firstName
-          const lastName = userFields.lastName || currentUser.lastName
-          userUpdateData.fullName = `${firstName} ${lastName}`
+          const currentUser = await userService.findById(userId);
+          const firstName = userFields.firstName || currentUser.firstName;
+          const lastName = userFields.lastName || currentUser.lastName;
+          userUpdateData.fullName = `${firstName} ${lastName}`;
         }
 
         // Store settings in encryptedData field
         if (settings) {
-          userUpdateData.encryptedData = JSON.stringify(settings)
+          userUpdateData.encryptedData = JSON.stringify(settings);
         }
 
-        const updatedUser = await userService.update(userId, userUpdateData)
+        const updatedUser = await userService.update(userId, userUpdateData);
 
         // Update bio in the appropriate profile
         if (bio !== undefined) {
           if (updatedUser.doctorProfile) {
             await prisma.doctor.update({
               where: { userId },
-              data: { biography: bio }
-            })
+              data: { biography: bio },
+            });
           }
           // For patients, we could store bio in a custom field or medicalHistory
         }
 
         // Fetch updated user with all data
-        const refreshedUser = await userService.findById(userId)
-        
+        const refreshedUser = await userService.findById(userId);
+
         // Parse settings for response
-        let parsedSettings = null
+        let parsedSettings = null;
         if (refreshedUser.encryptedData) {
           try {
-            parsedSettings = typeof refreshedUser.encryptedData === 'string' 
-              ? JSON.parse(refreshedUser.encryptedData)
-              : refreshedUser.encryptedData
+            parsedSettings =
+              typeof refreshedUser.encryptedData === 'string'
+                ? JSON.parse(refreshedUser.encryptedData)
+                : refreshedUser.encryptedData;
           } catch (error) {
-            console.error('Error parsing user settings:', error)
+            console.error('Error parsing user settings:', error);
           }
         }
 
@@ -594,24 +803,26 @@ export async function userRoutes(fastify: FastifyInstance): Promise<void> {
           data: {
             ...refreshedUser,
             settings: parsedSettings,
-            bio: refreshedUser.doctorProfile?.biography || ''
+            bio: refreshedUser.doctorProfile?.biography || '',
           },
-        })
+        });
       } catch (error) {
         const statusCode =
           error instanceof Error && error.message === 'User not found'
             ? 404
-            : 500
+            : 500;
 
         return reply.status(statusCode).send({
           success: false,
           error: {
             code: statusCode === 404 ? 'NOT_FOUND' : 'INTERNAL_ERROR',
             message:
-              error instanceof Error ? error.message : 'Failed to update user profile',
+              error instanceof Error
+                ? error.message
+                : 'Failed to update user profile',
           },
-        })
+        });
       }
     },
-  )
+  );
 }

@@ -1,7 +1,6 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import { prisma, setupGracefulShutdown } from './config/database';
-import { AuditRequestMiddleware } from './modules/audit/audit.middleware';
 
 // Setup graceful shutdown handlers (only once)
 setupGracefulShutdown();
@@ -20,11 +19,10 @@ fastify.register(cors, {
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
 });
 
-// Initialize Audit Middleware
-const auditMiddleware = new AuditRequestMiddleware(prisma);
-
-// Register audit middleware for authentication routes
-fastify.addHook('onRequest', auditMiddleware.createAuthAuditMiddleware());
+// Simple logging hook instead of complex audit middleware
+fastify.addHook('onRequest', async (request, reply) => {
+  console.log(`[${new Date().toISOString()}] ${request.method} ${request.url}`);
+});
 
 // Utility function to create audit logs
 const createAuditLog = async (logData: {

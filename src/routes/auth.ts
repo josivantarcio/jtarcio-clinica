@@ -1,11 +1,4 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import {
-  loginSchema,
-  createUserSchema,
-  resetPasswordSchema,
-  verifyEmailSchema,
-} from '@/types/user';
-import { responseSchema } from '@/types/common';
 import { AuthService } from '@/services/auth.service';
 import { UserService } from '@/services/user.service';
 import { prisma } from '@/config/database';
@@ -74,13 +67,40 @@ export async function authRoutes(fastify: FastifyInstance): Promise<void> {
       schema: {
         tags: ['Auth'],
         summary: 'User registration',
-        body: createUserSchema,
+        body: {
+          type: 'object',
+          required: ['email', 'password', 'firstName', 'lastName'],
+          properties: {
+            email: { type: 'string', format: 'email' },
+            password: { type: 'string', minLength: 8 },
+            firstName: { type: 'string', minLength: 2 },
+            lastName: { type: 'string', minLength: 2 },
+            phone: { type: 'string' },
+            cpf: { type: 'string' },
+            role: {
+              type: 'string',
+              enum: ['PATIENT', 'DOCTOR', 'ADMIN', 'RECEPTIONIST'],
+            },
+            timezone: { type: 'string', default: 'America/Sao_Paulo' },
+          },
+        },
         response: {
-          201: responseSchema(
-            createUserSchema.omit({ password: true }).extend({
-              id: loginSchema.shape.email,
-            }),
-          ),
+          201: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean' },
+              data: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  email: { type: 'string' },
+                  firstName: { type: 'string' },
+                  lastName: { type: 'string' },
+                  role: { type: 'string' },
+                },
+              },
+            },
+          },
         },
       },
     },
@@ -163,7 +183,13 @@ export async function authRoutes(fastify: FastifyInstance): Promise<void> {
       schema: {
         tags: ['Auth'],
         summary: 'Request password reset',
-        body: resetPasswordSchema,
+        body: {
+          type: 'object',
+          required: ['email'],
+          properties: {
+            email: { type: 'string', format: 'email' },
+          },
+        },
       },
     },
     async (request: FastifyRequest<{ Body: any }>, reply: FastifyReply) => {
@@ -214,7 +240,14 @@ export async function authRoutes(fastify: FastifyInstance): Promise<void> {
       schema: {
         tags: ['Auth'],
         summary: 'Verify email address',
-        body: verifyEmailSchema,
+        body: {
+          type: 'object',
+          required: ['email', 'token'],
+          properties: {
+            email: { type: 'string', format: 'email' },
+            token: { type: 'string' },
+          },
+        },
       },
     },
     async (request: FastifyRequest<{ Body: any }>, reply: FastifyReply) => {
@@ -243,7 +276,7 @@ export async function authRoutes(fastify: FastifyInstance): Promise<void> {
     async (request: FastifyRequest, reply: FastifyReply) => {
       try {
         const userId = (request as any).user?.userId;
-        
+
         if (!userId) {
           return reply.status(401).send({
             success: false,
@@ -260,9 +293,10 @@ export async function authRoutes(fastify: FastifyInstance): Promise<void> {
         let settings = null;
         if (user.encryptedData) {
           try {
-            settings = typeof user.encryptedData === 'string' 
-              ? JSON.parse(user.encryptedData)
-              : user.encryptedData;
+            settings =
+              typeof user.encryptedData === 'string'
+                ? JSON.parse(user.encryptedData)
+                : user.encryptedData;
           } catch (error) {
             console.error('Error parsing user settings:', error);
           }
@@ -284,7 +318,7 @@ export async function authRoutes(fastify: FastifyInstance): Promise<void> {
             settings,
             bio: user.doctorProfile?.biography || '',
             createdAt: user.createdAt,
-            updatedAt: user.updatedAt
+            updatedAt: user.updatedAt,
           },
         });
       } catch (error) {
@@ -298,7 +332,9 @@ export async function authRoutes(fastify: FastifyInstance): Promise<void> {
           error: {
             code: statusCode === 404 ? 'NOT_FOUND' : 'INTERNAL_ERROR',
             message:
-              error instanceof Error ? error.message : 'Failed to fetch user profile',
+              error instanceof Error
+                ? error.message
+                : 'Failed to fetch user profile',
           },
         });
       }

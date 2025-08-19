@@ -1,6 +1,4 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import { timeSlotSchema } from '@/types/appointment';
-import { responseSchema } from '@/types/common';
 
 export async function availabilityRoutes(
   fastify: FastifyInstance,
@@ -33,17 +31,33 @@ export async function availabilityRoutes(
           },
         },
         response: {
-          200: responseSchema({
+          200: {
             type: 'object',
             properties: {
-              doctorId: { type: 'string', format: 'uuid' },
-              date: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
-              timeSlots: {
-                type: 'array',
-                items: timeSlotSchema,
+              success: { type: 'boolean' },
+              data: {
+                type: 'object',
+                properties: {
+                  doctorId: { type: 'string', format: 'uuid' },
+                  date: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
+                  timeSlots: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        id: { type: 'string' },
+                        startTime: { type: 'string' },
+                        endTime: { type: 'string' },
+                        duration: { type: 'number' },
+                        isAvailable: { type: 'boolean' },
+                        isBooked: { type: 'boolean' },
+                      },
+                    },
+                  },
+                },
               },
             },
-          }),
+          },
         },
       },
     },
@@ -88,33 +102,49 @@ export async function availabilityRoutes(
           },
         },
         response: {
-          200: responseSchema({
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                doctorId: { type: 'string', format: 'uuid' },
-                doctor: {
+          200: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean' },
+              data: {
+                type: 'array',
+                items: {
                   type: 'object',
                   properties: {
-                    crm: { type: 'string' },
-                    user: {
+                    doctorId: { type: 'string', format: 'uuid' },
+                    doctor: {
                       type: 'object',
                       properties: {
-                        firstName: { type: 'string' },
-                        lastName: { type: 'string' },
-                        fullName: { type: 'string' },
+                        crm: { type: 'string' },
+                        user: {
+                          type: 'object',
+                          properties: {
+                            firstName: { type: 'string' },
+                            lastName: { type: 'string' },
+                            fullName: { type: 'string' },
+                          },
+                        },
+                      },
+                    },
+                    timeSlots: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          id: { type: 'string' },
+                          startTime: { type: 'string' },
+                          endTime: { type: 'string' },
+                          duration: { type: 'number' },
+                          isAvailable: { type: 'boolean' },
+                          isBooked: { type: 'boolean' },
+                        },
                       },
                     },
                   },
                 },
-                timeSlots: {
-                  type: 'array',
-                  items: timeSlotSchema,
-                },
               },
             },
-          }),
+          },
         },
       },
     },
@@ -175,22 +205,28 @@ export async function availabilityRoutes(
           },
         },
         response: {
-          200: responseSchema({
+          200: {
             type: 'object',
             properties: {
-              id: { type: 'string', format: 'uuid' },
-              doctorId: { type: 'string', format: 'uuid' },
-              dayOfWeek: { type: 'number' },
-              startTime: { type: 'string' },
-              endTime: { type: 'string' },
-              slotDuration: { type: 'number' },
-              isActive: { type: 'boolean' },
-              validFrom: { type: 'string', format: 'date-time' },
-              validUntil: { type: 'string', format: 'date-time' },
-              createdAt: { type: 'string', format: 'date-time' },
-              updatedAt: { type: 'string', format: 'date-time' },
+              success: { type: 'boolean' },
+              data: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string', format: 'uuid' },
+                  doctorId: { type: 'string', format: 'uuid' },
+                  dayOfWeek: { type: 'number' },
+                  startTime: { type: 'string' },
+                  endTime: { type: 'string' },
+                  slotDuration: { type: 'number' },
+                  isActive: { type: 'boolean' },
+                  validFrom: { type: 'string', format: 'date-time' },
+                  validUntil: { type: 'string', format: 'date-time' },
+                  createdAt: { type: 'string', format: 'date-time' },
+                  updatedAt: { type: 'string', format: 'date-time' },
+                },
+              },
             },
-          }),
+          },
         },
       },
     },
@@ -225,22 +261,28 @@ export async function availabilityRoutes(
           },
         },
         response: {
-          200: responseSchema({
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                id: { type: 'string', format: 'uuid' },
-                dayOfWeek: { type: 'number' },
-                startTime: { type: 'string' },
-                endTime: { type: 'string' },
-                slotDuration: { type: 'number' },
-                isActive: { type: 'boolean' },
-                validFrom: { type: 'string', format: 'date-time' },
-                validUntil: { type: 'string', format: 'date-time' },
+          200: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean' },
+              data: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string', format: 'uuid' },
+                    dayOfWeek: { type: 'number' },
+                    startTime: { type: 'string' },
+                    endTime: { type: 'string' },
+                    slotDuration: { type: 'number' },
+                    isActive: { type: 'boolean' },
+                    validFrom: { type: 'string', format: 'date-time' },
+                    validUntil: { type: 'string', format: 'date-time' },
+                  },
+                },
               },
             },
-          }),
+          },
         },
       },
     },
@@ -293,21 +335,27 @@ export async function availabilityRoutes(
           },
         },
         response: {
-          200: responseSchema({
+          200: {
             type: 'object',
             properties: {
-              id: { type: 'string', format: 'uuid' },
-              doctorId: { type: 'string', format: 'uuid' },
-              dayOfWeek: { type: 'number' },
-              startTime: { type: 'string' },
-              endTime: { type: 'string' },
-              slotDuration: { type: 'number' },
-              isActive: { type: 'boolean' },
-              validFrom: { type: 'string', format: 'date-time' },
-              validUntil: { type: 'string', format: 'date-time' },
-              updatedAt: { type: 'string', format: 'date-time' },
+              success: { type: 'boolean' },
+              data: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string', format: 'uuid' },
+                  doctorId: { type: 'string', format: 'uuid' },
+                  dayOfWeek: { type: 'number' },
+                  startTime: { type: 'string' },
+                  endTime: { type: 'string' },
+                  slotDuration: { type: 'number' },
+                  isActive: { type: 'boolean' },
+                  validFrom: { type: 'string', format: 'date-time' },
+                  validUntil: { type: 'string', format: 'date-time' },
+                  updatedAt: { type: 'string', format: 'date-time' },
+                },
+              },
             },
-          }),
+          },
         },
       },
     },

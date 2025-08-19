@@ -1,21 +1,10 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import {
-  updateAppointmentSchema,
-  rescheduleAppointmentSchema,
-  cancelAppointmentSchema,
-  confirmAppointmentSchema,
-  completeAppointmentSchema,
-  searchAppointmentsSchema,
-  appointmentSchema,
   RescheduleAppointmentDto,
   CancelAppointmentDto,
   CompleteAppointmentDto,
 } from '@/types/appointment';
-import {
-  appointmentBookingSchema,
-  AppointmentBooking,
-} from '@/types/scheduling';
-import { paginationSchema, responseSchema } from '@/types/common';
+import { AppointmentBooking } from '@/types/scheduling';
 import { ServiceFactory } from '@/services';
 
 export async function appointmentRoutes(
@@ -29,9 +18,83 @@ export async function appointmentRoutes(
         tags: ['Appointments'],
         summary: 'Create new appointment',
         security: [{ Bearer: [] }],
-        body: appointmentBookingSchema,
+        body: {
+          type: 'object',
+          required: [
+            'patientId',
+            'doctorId',
+            'specialtyId',
+            'slotId',
+            'appointmentType',
+            'duration',
+          ],
+          properties: {
+            patientId: { type: 'string', format: 'uuid' },
+            doctorId: { type: 'string', format: 'uuid' },
+            specialtyId: { type: 'string', format: 'uuid' },
+            slotId: { type: 'string', format: 'uuid' },
+            appointmentType: {
+              type: 'string',
+              enum: [
+                'CONSULTATION',
+                'FOLLOW_UP',
+                'EMERGENCY',
+                'ROUTINE_CHECKUP',
+              ],
+            },
+            duration: { type: 'number', minimum: 1 },
+            reason: { type: 'string', minLength: 10 },
+            symptoms: { type: 'string' },
+            notes: { type: 'string' },
+            urgencyLevel: {
+              type: 'number',
+              minimum: 1,
+              maximum: 10,
+              default: 5,
+            },
+            preferredLanguage: { type: 'string' },
+            specialRequests: {
+              type: 'array',
+              items: { type: 'string' },
+            },
+          },
+        },
         response: {
-          201: responseSchema(appointmentSchema),
+          201: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean' },
+              data: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  patientId: { type: 'string' },
+                  doctorId: { type: 'string' },
+                  specialtyId: { type: 'string' },
+                  status: { type: 'string' },
+                  scheduledAt: { type: 'string' },
+                  duration: { type: 'number' },
+                  appointmentType: { type: 'string' },
+                  reason: { type: 'string' },
+                  symptoms: { type: 'string' },
+                  notes: { type: 'string' },
+                  createdAt: { type: 'string' },
+                  updatedAt: { type: 'string' },
+                },
+              },
+              meta: {
+                type: 'object',
+                properties: {
+                  warnings: { type: 'array', items: { type: 'string' } },
+                  suggestedImprovements: {
+                    type: 'array',
+                    items: { type: 'string' },
+                  },
+                  confirmationRequired: { type: 'boolean' },
+                },
+              },
+            },
+          },
         },
       },
     },
@@ -84,20 +147,63 @@ export async function appointmentRoutes(
         tags: ['Appointments'],
         summary: 'Get appointments',
         security: [{ Bearer: [] }],
-        querystring: paginationSchema.merge(searchAppointmentsSchema),
+        querystring: {
+          type: 'object',
+          properties: {
+            page: { type: 'integer', minimum: 1, default: 1 },
+            limit: { type: 'integer', minimum: 1, maximum: 100, default: 20 },
+            sortBy: { type: 'string' },
+            sortOrder: {
+              type: 'string',
+              enum: ['asc', 'desc'],
+              default: 'desc',
+            },
+            doctorId: { type: 'string', format: 'uuid' },
+            patientId: { type: 'string', format: 'uuid' },
+            specialtyId: { type: 'string', format: 'uuid' },
+            status: { type: 'string' },
+            appointmentType: { type: 'string' },
+            startDate: { type: 'string', format: 'date' },
+            endDate: { type: 'string', format: 'date' },
+            search: { type: 'string' },
+          },
+        },
         response: {
-          200: responseSchema({
+          200: {
             type: 'object',
             properties: {
-              appointments: {
-                type: 'array',
-                items: appointmentSchema,
+              success: { type: 'boolean' },
+              data: {
+                type: 'object',
+                properties: {
+                  appointments: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        id: { type: 'string' },
+                        patientId: { type: 'string' },
+                        doctorId: { type: 'string' },
+                        specialtyId: { type: 'string' },
+                        status: { type: 'string' },
+                        scheduledAt: { type: 'string' },
+                        duration: { type: 'number' },
+                        appointmentType: { type: 'string' },
+                        reason: { type: 'string' },
+                        symptoms: { type: 'string' },
+                        notes: { type: 'string' },
+                        createdAt: { type: 'string' },
+                        updatedAt: { type: 'string' },
+                      },
+                    },
+                  },
+                  total: { type: 'number' },
+                  page: { type: 'number' },
+                  pageSize: { type: 'number' },
+                },
               },
-              total: { type: 'number' },
-              page: { type: 'number' },
-              pageSize: { type: 'number' },
             },
-          }),
+          },
         },
       },
     },
@@ -166,7 +272,30 @@ export async function appointmentRoutes(
           },
         },
         response: {
-          200: responseSchema(appointmentSchema),
+          200: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean' },
+              data: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  patientId: { type: 'string' },
+                  doctorId: { type: 'string' },
+                  specialtyId: { type: 'string' },
+                  status: { type: 'string' },
+                  scheduledAt: { type: 'string' },
+                  duration: { type: 'number' },
+                  appointmentType: { type: 'string' },
+                  reason: { type: 'string' },
+                  symptoms: { type: 'string' },
+                  notes: { type: 'string' },
+                  createdAt: { type: 'string' },
+                  updatedAt: { type: 'string' },
+                },
+              },
+            },
+          },
         },
       },
     },
@@ -230,9 +359,53 @@ export async function appointmentRoutes(
             id: { type: 'string', format: 'uuid' },
           },
         },
-        body: updateAppointmentSchema,
+        body: {
+          type: 'object',
+          properties: {
+            scheduledAt: { type: 'string', format: 'date-time' },
+            duration: { type: 'number', minimum: 1 },
+            reason: { type: 'string' },
+            symptoms: { type: 'string' },
+            notes: { type: 'string' },
+            status: {
+              type: 'string',
+              enum: [
+                'SCHEDULED',
+                'CONFIRMED',
+                'IN_PROGRESS',
+                'COMPLETED',
+                'CANCELLED',
+                'NO_SHOW',
+              ],
+            },
+            urgencyLevel: { type: 'number', minimum: 1, maximum: 10 },
+          },
+        },
         response: {
-          200: responseSchema(appointmentSchema),
+          200: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean' },
+              data: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  patientId: { type: 'string' },
+                  doctorId: { type: 'string' },
+                  specialtyId: { type: 'string' },
+                  status: { type: 'string' },
+                  scheduledAt: { type: 'string' },
+                  duration: { type: 'number' },
+                  appointmentType: { type: 'string' },
+                  reason: { type: 'string' },
+                  symptoms: { type: 'string' },
+                  notes: { type: 'string' },
+                  createdAt: { type: 'string' },
+                  updatedAt: { type: 'string' },
+                },
+              },
+            },
+          },
         },
       },
     },
@@ -266,9 +439,39 @@ export async function appointmentRoutes(
             id: { type: 'string', format: 'uuid' },
           },
         },
-        body: rescheduleAppointmentSchema,
+        body: {
+          type: 'object',
+          required: ['newScheduledAt'],
+          properties: {
+            newScheduledAt: { type: 'string', format: 'date-time' },
+            reason: { type: 'string', minLength: 10 },
+          },
+        },
         response: {
-          200: responseSchema(appointmentSchema),
+          200: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean' },
+              data: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  patientId: { type: 'string' },
+                  doctorId: { type: 'string' },
+                  specialtyId: { type: 'string' },
+                  status: { type: 'string' },
+                  scheduledAt: { type: 'string' },
+                  duration: { type: 'number' },
+                  appointmentType: { type: 'string' },
+                  reason: { type: 'string' },
+                  symptoms: { type: 'string' },
+                  notes: { type: 'string' },
+                  createdAt: { type: 'string' },
+                  updatedAt: { type: 'string' },
+                },
+              },
+            },
+          },
         },
       },
     },
@@ -334,20 +537,33 @@ export async function appointmentRoutes(
             id: { type: 'string', format: 'uuid' },
           },
         },
-        body: cancelAppointmentSchema,
+        body: {
+          type: 'object',
+          required: ['reason'],
+          properties: {
+            reason: { type: 'string', minLength: 10 },
+            code: { type: 'string' },
+            refundable: { type: 'boolean' },
+          },
+        },
         response: {
-          200: responseSchema({
+          200: {
             type: 'object',
             properties: {
               success: { type: 'boolean' },
-              refundAmount: { type: 'number' },
-              cancellationFee: { type: 'number' },
-              reschedulingSuggestions: {
-                type: 'array',
-                items: { type: 'object' },
+              data: {
+                type: 'object',
+                properties: {
+                  refundAmount: { type: 'number' },
+                  cancellationFee: { type: 'number' },
+                  reschedulingSuggestions: {
+                    type: 'array',
+                    items: { type: 'object' },
+                  },
+                },
               },
             },
-          }),
+          },
         },
       },
     },
@@ -408,9 +624,38 @@ export async function appointmentRoutes(
             id: { type: 'string', format: 'uuid' },
           },
         },
-        body: confirmAppointmentSchema,
+        body: {
+          type: 'object',
+          properties: {
+            confirmedAt: { type: 'string', format: 'date-time' },
+            notes: { type: 'string' },
+          },
+        },
         response: {
-          200: responseSchema(appointmentSchema),
+          200: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean' },
+              data: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  patientId: { type: 'string' },
+                  doctorId: { type: 'string' },
+                  specialtyId: { type: 'string' },
+                  status: { type: 'string' },
+                  scheduledAt: { type: 'string' },
+                  duration: { type: 'number' },
+                  appointmentType: { type: 'string' },
+                  reason: { type: 'string' },
+                  symptoms: { type: 'string' },
+                  notes: { type: 'string' },
+                  createdAt: { type: 'string' },
+                  updatedAt: { type: 'string' },
+                },
+              },
+            },
+          },
         },
       },
     },
@@ -444,9 +689,45 @@ export async function appointmentRoutes(
             id: { type: 'string', format: 'uuid' },
           },
         },
-        body: completeAppointmentSchema,
+        body: {
+          type: 'object',
+          properties: {
+            diagnosis: { type: 'string' },
+            treatment: { type: 'string' },
+            notes: { type: 'string' },
+            prescriptions: {
+              type: 'array',
+              items: { type: 'string' },
+            },
+            followUpRequired: { type: 'boolean' },
+            followUpDate: { type: 'string', format: 'date-time' },
+          },
+        },
         response: {
-          200: responseSchema(appointmentSchema),
+          200: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean' },
+              data: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  patientId: { type: 'string' },
+                  doctorId: { type: 'string' },
+                  specialtyId: { type: 'string' },
+                  status: { type: 'string' },
+                  scheduledAt: { type: 'string' },
+                  duration: { type: 'number' },
+                  appointmentType: { type: 'string' },
+                  reason: { type: 'string' },
+                  symptoms: { type: 'string' },
+                  notes: { type: 'string' },
+                  createdAt: { type: 'string' },
+                  updatedAt: { type: 'string' },
+                },
+              },
+            },
+          },
         },
       },
     },
@@ -525,10 +806,33 @@ export async function appointmentRoutes(
           },
         },
         response: {
-          200: responseSchema({
-            type: 'array',
-            items: appointmentSchema,
-          }),
+          200: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean' },
+              data: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string' },
+                    patientId: { type: 'string' },
+                    doctorId: { type: 'string' },
+                    specialtyId: { type: 'string' },
+                    status: { type: 'string' },
+                    scheduledAt: { type: 'string' },
+                    duration: { type: 'number' },
+                    appointmentType: { type: 'string' },
+                    reason: { type: 'string' },
+                    symptoms: { type: 'string' },
+                    notes: { type: 'string' },
+                    createdAt: { type: 'string' },
+                    updatedAt: { type: 'string' },
+                  },
+                },
+              },
+            },
+          },
         },
       },
     },

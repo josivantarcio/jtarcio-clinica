@@ -120,25 +120,19 @@ export const securityLogger = winston.createLogger({
 });
 
 // HTTP request logger middleware
-export const httpLogger = (req: any, res: any, next: any): void => {
+export const httpLogger = async (request: any, reply: any): Promise<void> => {
   const start = Date.now();
 
-  res.on('finish', () => {
-    const duration = Date.now() - start;
-    const message = `${req.method} ${req.originalUrl} ${res.statusCode} - ${duration}ms`;
+  // Simple logging without complex hooks
+  const message = `${request.method} ${request.url}`;
 
-    logger.http(message, {
-      method: req.method,
-      url: req.originalUrl,
-      status: res.statusCode,
-      duration,
-      userAgent: req.get('User-Agent'),
-      ip: req.ip,
-      userId: req.user?.id,
-    });
+  logger.http(`Request: ${message}`, {
+    method: request.method,
+    url: request.url,
+    userAgent: request.headers['user-agent'],
+    ip: request.ip,
+    userId: (request as any).user?.id,
   });
-
-  next();
 };
 
 // Utility functions
