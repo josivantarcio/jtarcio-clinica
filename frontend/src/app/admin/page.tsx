@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/store/auth'
+import { UserActionsModal } from '@/components/admin/user-actions-modal'
+import { apiClient } from '@/lib/api'
 import { AppLayout } from '@/components/layout/app-layout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -93,6 +95,11 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState('users')
   const [searchTerm, setSearchTerm] = useState('')
   const [filterRole, setFilterRole] = useState('all')
+  
+  // Modal states
+  const [selectedUser, setSelectedUser] = useState<any>(null)
+  const [modalMode, setModalMode] = useState<'view' | 'edit' | 'suspend'>('view')
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   useEffect(() => {
     useAuthStore.persist.rehydrate()
@@ -246,6 +253,93 @@ export default function AdminPage() {
 
   const refreshData = () => {
     loadAdminData()
+  }
+
+  // User action handlers
+  const handleViewUser = (userData: any) => {
+    setSelectedUser(userData)
+    setModalMode('view')
+    setIsModalOpen(true)
+  }
+
+  const handleEditUser = (userData: any) => {
+    setSelectedUser(userData)
+    setModalMode('edit')
+    setIsModalOpen(true)
+  }
+
+  const handleSuspendUser = (userData: any) => {
+    setSelectedUser(userData)
+    setModalMode('suspend')
+    setIsModalOpen(true)
+  }
+
+  const handleSaveUser = async (updatedData: any) => {
+    try {
+      const response = await apiClient.updateUser(updatedData.id, {
+        firstName: updatedData.name?.split(' ')[0] || '',
+        lastName: updatedData.name?.split(' ').slice(1).join(' ') || '',
+        fullName: updatedData.name || '',
+        email: updatedData.email,
+        phone: updatedData.phone
+      })
+
+      if (response.success) {
+        // Update local data
+        if (adminData) {
+          const updatedUsers = adminData.users.map(u => 
+            u.id === updatedData.id ? { ...u, ...updatedData } : u
+          )
+          setAdminData({ ...adminData, users: updatedUsers })
+        }
+      }
+    } catch (error) {
+      console.error('Error updating user:', error)
+      throw error
+    }
+  }
+
+  const handleSuspendUserConfirm = async (userId: string, reason: string) => {
+    try {
+      const response = await apiClient.suspendUser(userId, reason)
+      
+      if (response.success) {
+        // Update local data
+        if (adminData) {
+          const updatedUsers = adminData.users.map(u => 
+            u.id === userId ? { ...u, status: 'suspended' } : u
+          )
+          setAdminData({ ...adminData, users: updatedUsers })
+        }
+      }
+    } catch (error) {
+      console.error('Error suspending user:', error)
+      throw error
+    }
+  }
+
+  const handleActivateUser = async (userId: string) => {
+    try {
+      const response = await apiClient.activateUser(userId)
+      
+      if (response.success) {
+        // Update local data
+        if (adminData) {
+          const updatedUsers = adminData.users.map(u => 
+            u.id === userId ? { ...u, status: 'active' } : u
+          )
+          setAdminData({ ...adminData, users: updatedUsers })
+        }
+      }
+    } catch (error) {
+      console.error('Error activating user:', error)
+      throw error
+    }
+  }
+
+  const closeModal = () => {
+    setIsModalOpen(false)
+    setSelectedUser(null)
   }
 
   // Show loading while checking auth
@@ -605,16 +699,36 @@ export default function AdminPage() {
                       </div>
 
                       <div className="flex items-center space-x-2">
-                        <Button variant="ghost" size="sm" title="Ver detalhes">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          title="Ver detalhes"
+                          onClick={() => handleViewUser(userData)}
+                        >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" title="Editar usuário">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          title="Editar usuário"
+                          onClick={() => handleEditUser(userData)}
+                        >
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" title="Suspender usuário">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          title={userData.status === 'suspended' ? 'Reativar usuário' : 'Suspender usuário'}
+                          onClick={() => handleSuspendUser(userData)}
+                        >
                           <UserX className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          title="Mais opções"
+                          onClick={() => handleSuspendUser(userData)}
+                        >
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </div>
@@ -888,6 +1002,17 @@ export default function AdminPage() {
         <footer className="text-center text-sm text-muted-foreground py-4">
           <p>&copy; 2025 Jtarcio Desenvolvimento. Todos os direitos reservados.</p>
         </footer>
+
+        {/* User Actions Modal */}
+        <UserActionsModal
+          user={selectedUser}
+          isOpen={isModalOpen}
+          onClose={closeModal}
+          mode={modalMode}
+          onSave={handleSaveUser}
+          onSuspend={handleSuspendUserConfirm}
+          onActivate={handleActivateUser}
+        />
       </div>
     </AppLayout>
   )

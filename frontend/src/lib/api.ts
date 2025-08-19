@@ -316,11 +316,37 @@ class ApiClient {
     })
   }
 
+  async getUserById(id: string) {
+    return this.request<any>({
+      method: 'GET',
+      url: `/api/v1/users/${id}`
+    })
+  }
+
   async updateUser(id: string, updateData: any) {
     return this.request<any>({
       method: 'PATCH',
       url: `/api/v1/users/${id}`,
       data: updateData
+    })
+  }
+
+  async suspendUser(id: string, reason?: string) {
+    return this.request<any>({
+      method: 'PATCH',
+      url: `/api/v1/users/${id}`,
+      data: { 
+        status: 'SUSPENDED',
+        suspendReason: reason 
+      }
+    })
+  }
+
+  async activateUser(id: string) {
+    return this.request<any>({
+      method: 'PATCH',
+      url: `/api/v1/users/${id}`,
+      data: { status: 'ACTIVE' }
     })
   }
 
