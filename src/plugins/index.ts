@@ -66,31 +66,43 @@ export async function registerPlugins(fastify: FastifyInstance): Promise<void> {
     swagger: {
       info: {
         title: 'EO Clinica API',
-        description: 'Medical clinic scheduling system with AI integration',
-        version: '1.0.0',
+        description: 'Sistema completo de agendamento médico com integração IA - Production Ready v1.3.6',
+        version: '1.3.6',
+        contact: {
+          name: 'EO Clínica Support',
+          email: 'support@eoclinica.com.br'
+        },
+        license: {
+          name: 'MIT',
+          url: 'https://opensource.org/licenses/MIT'
+        }
       },
       host: `localhost:${env.PORT}`,
       schemes: ['http', 'https'],
       consumes: ['application/json'],
       produces: ['application/json'],
       tags: [
-        { name: 'Health', description: 'Health check endpoints' },
-        { name: 'Auth', description: 'Authentication endpoints' },
-        { name: 'Users', description: 'User management endpoints' },
-        {
-          name: 'Appointments',
-          description: 'Appointment management endpoints',
-        },
-        { name: 'Specialties', description: 'Medical specialties endpoints' },
-        { name: 'Availability', description: 'Doctor availability endpoints' },
+        { name: 'Health', description: 'Health check e status do sistema' },
+        { name: 'Auth', description: 'Autenticação e autorização JWT' },
+        { name: 'Users', description: 'Gestão completa de usuários (CRUD + Admin)' },
+        { name: 'Appointments', description: 'Agendamentos médicos completos' },
+        { name: 'Specialties', description: 'Especialidades médicas disponíveis' },
+        { name: 'Availability', description: 'Disponibilidade de médicos' },
+        { name: 'Analytics', description: 'Analytics e relatórios do sistema' },
+        { name: 'Audit', description: 'Logs de auditoria e compliance' },
+        { name: 'Admin', description: 'Funcionalidades administrativas' }
       ],
       securityDefinitions: {
         Bearer: {
           type: 'apiKey',
           name: 'Authorization',
           in: 'header',
-          description: 'Enter JWT token with Bearer prefix',
-        },
+          description: 'JWT Bearer Token - Format: "Bearer {token}"'
+        }
+      },
+      externalDocs: {
+        description: 'EO Clínica GitHub Repository',
+        url: 'https://github.com/josivantarcio/jtarcio-clinica'
       },
     },
   });

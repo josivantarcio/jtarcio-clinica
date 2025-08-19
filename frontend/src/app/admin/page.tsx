@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/store/auth'
 import { UserActionsModal } from '@/components/admin/user-actions-modal'
 import { apiClient } from '@/lib/api'
+import { LoadingState, LoadingButton, useLoading } from '@/components/ui/loading'
+import { toastUtils } from '@/hooks/use-toast'
 import { AppLayout } from '@/components/layout/app-layout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -100,6 +102,9 @@ export default function AdminPage() {
   const [selectedUser, setSelectedUser] = useState<any>(null)
   const [modalMode, setModalMode] = useState<'view' | 'edit' | 'suspend'>('view')
   const [isModalOpen, setIsModalOpen] = useState(false)
+  
+  // Loading states
+  const { isLoading: isRefreshing, withLoading } = useLoading()
 
   useEffect(() => {
     useAuthStore.persist.rehydrate()
@@ -252,7 +257,10 @@ export default function AdminPage() {
   }
 
   const refreshData = () => {
-    loadAdminData()
+    withLoading(async () => {
+      await loadAdminData()
+      toastUtils.success('Dados atualizados', 'Informações do painel foram atualizadas com sucesso')
+    })
   }
 
   // User action handlers
@@ -292,9 +300,11 @@ export default function AdminPage() {
           )
           setAdminData({ ...adminData, users: updatedUsers })
         }
+        toastUtils.success('Usuário atualizado', 'As informações do usuário foram salvas com sucesso')
       }
     } catch (error) {
       console.error('Error updating user:', error)
+      toastUtils.error('Erro ao atualizar', 'Não foi possível salvar as alterações do usuário')
       throw error
     }
   }
@@ -311,9 +321,11 @@ export default function AdminPage() {
           )
           setAdminData({ ...adminData, users: updatedUsers })
         }
+        toastUtils.warning('Usuário suspenso', 'O usuário foi suspenso do sistema')
       }
     } catch (error) {
       console.error('Error suspending user:', error)
+      toastUtils.error('Erro ao suspender', 'Não foi possível suspender o usuário')
       throw error
     }
   }
@@ -330,9 +342,11 @@ export default function AdminPage() {
           )
           setAdminData({ ...adminData, users: updatedUsers })
         }
+        toastUtils.success('Usuário reativado', 'O usuário foi reativado no sistema')
       }
     } catch (error) {
       console.error('Error activating user:', error)
+      toastUtils.error('Erro ao reativar', 'Não foi possível reativar o usuário')
       throw error
     }
   }
@@ -539,10 +553,15 @@ export default function AdminPage() {
             </div>
           </div>
           <div className="flex items-center space-x-2">
-            <Button variant="outline" onClick={refreshData} disabled={loading}>
-              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            <LoadingButton 
+              variant="outline" 
+              onClick={refreshData} 
+              isLoading={isRefreshing}
+              loadingText="Atualizando..."
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
               Atualizar Dados
-            </Button>
+            </LoadingButton>
             
             <Button variant="outline">
               <Download className="h-4 w-4 mr-2" />
@@ -672,8 +691,13 @@ export default function AdminPage() {
                 </div>
 
                 {/* Users Table */}
-                <div className="space-y-4">
-                  {filteredUsers.map((userData) => (
+                <LoadingState 
+                  isLoading={loading && filteredUsers.length === 0}
+                  loadingText="Carregando usuários..."
+                  spinnerSize="lg"
+                >
+                  <div className="space-y-4">
+                    {filteredUsers.map((userData) => (
                     <div key={userData.id} className="flex items-center justify-between p-4 border rounded-lg hover:shadow-sm transition-shadow">
                       <div className="flex items-center space-x-4">
                         <Avatar className="h-12 w-12">
@@ -732,9 +756,11 @@ export default function AdminPage() {
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </div>
+                      </div>
                     </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                </LoadingState>
               </CardContent>
             </Card>
           </TabsContent>

@@ -29,7 +29,7 @@ export async function registerRoutes(fastify: FastifyInstance): Promise<void> {
   });
   // await fastify.register(aiChatRoutes, { prefix: apiPrefix }); // Temporarily disabled due to ChromaDB issue
   // await fastify.register(auditRoutes, { prefix: apiPrefix }); // Temporarily disabled due to middleware issue
-  // await fastify.register(analyticsRoutes, { prefix: apiPrefix }); // Temporarily disabled due to route conflict
+  await fastify.register(analyticsRoutes, { prefix: apiPrefix }); // ✅ Re-enabled - route conflict resolved
 
   // Root endpoint
   fastify.get('/', async (_request, _reply) => {
@@ -46,8 +46,8 @@ export async function registerRoutes(fastify: FastifyInstance): Promise<void> {
     };
   });
 
-  // API status endpoint
-  fastify.get(`${apiPrefix}`, async (_request, _reply) => {
+  // API status endpoint - moved to /status to avoid conflicts
+  fastify.get(`${apiPrefix}/status`, async (_request, _reply) => {
     return {
       message: 'EO Clinica API v1',
       status: 'operational',

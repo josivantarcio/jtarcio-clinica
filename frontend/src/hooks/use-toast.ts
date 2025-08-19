@@ -189,4 +189,48 @@ function useToast() {
   }
 }
 
-export { useToast, toast }
+// Convenience functions for different toast types
+const toastUtils = {
+  success: (title: string, description?: string) => {
+    return toast({
+      title,
+      description,
+      variant: "default",
+      className: "border-green-200 bg-green-50 text-green-900"
+    })
+  },
+  
+  error: (title: string, description?: string) => {
+    return toast({
+      title,
+      description,
+      variant: "destructive"
+    })
+  },
+  
+  warning: (title: string, description?: string) => {
+    return toast({
+      title,
+      description,
+      className: "border-yellow-200 bg-yellow-50 text-yellow-900"
+    })
+  },
+  
+  info: (title: string, description?: string) => {
+    return toast({
+      title,
+      description,
+      className: "border-blue-200 bg-blue-50 text-blue-900"
+    })
+  },
+  
+  loading: (title: string, description?: string) => {
+    return toast({
+      title,
+      description,
+      className: "border-gray-200 bg-gray-50"
+    })
+  }
+}
+
+export { useToast, toast, toastUtils }
