@@ -2,9 +2,20 @@
 
 ## Overview
 
-EO Clínica is a comprehensive medical clinic scheduling system that integrates AI-powered conversations, automated workflows, and complete medical appointment management. **Version 1.3.0** features a revolutionary notification system with AI integration, enhanced visual design, intelligent scheduling with time filters, and complete appointment workflow automation.
+EO Clínica is a comprehensive medical clinic scheduling system that integrates AI-powered conversations, automated workflows, and complete medical appointment management. **Version 1.3.5** features complete backend stability with resolved health check issues, simplified audit system, and production-ready infrastructure.
 
-## 🚀 Latest Updates - Version 1.3.4 (August 19, 2025)
+## 🚀 Latest Updates - Version 1.3.5 (August 19, 2025)
+
+### 🐛 **Critical Backend Fix - RESOLVIDO**
+- **🔧 Health Check Fixed**: Resolvido falha crítica no health check do backend
+- **🛠️ Audit Middleware**: Removido AuditRequestMiddleware complexo que causava erros de validação
+- **📋 Schema Validation**: Corrigido erro FST_ERR_SCH_VALIDATION_BUILD do Fastify
+- **⚡ Simple Logging**: Implementado sistema de log simplificado e estável
+- **✅ Backend Stability**: Servidor agora responde corretamente na porta 3000
+- **🗑️ Error Cleanup**: Removida pasta /erros e arquivo erro-backend.log
+- **🧹 Code Quality**: Limpeza de imports não utilizados e warnings ESLint
+
+## 🚀 Previous Updates - Version 1.3.4 (August 19, 2025)
 
 ### 🔧 **Production Infrastructure Fixes - RESOLVIDO**
 - **🛡️ Schema Validation**: Convertidos schemas Zod para JSON Schema no Fastify
