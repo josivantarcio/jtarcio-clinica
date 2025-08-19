@@ -194,9 +194,16 @@ fastify.post('/api/v1/auth/login', async (request, reply) => {
 // Register endpoint
 fastify.post('/api/v1/auth/register', async (request, reply) => {
   try {
-    const { email, password, firstName, lastName, phone, cpf } = request.body as any;
+    const { email, password, firstName, lastName, phone, cpf } =
+      request.body as any;
 
-    console.log('Registration attempt:', { email, firstName, lastName, phone, cpf });
+    console.log('Registration attempt:', {
+      email,
+      firstName,
+      lastName,
+      phone,
+      cpf,
+    });
 
     // Validate required fields
     if (!email || !password || !firstName || !lastName) {
@@ -293,7 +300,10 @@ fastify.post('/api/v1/auth/register', async (request, reply) => {
       action: 'USER_REGISTRATION',
       resource: 'USER',
       userEmail: email,
-      ipAddress: request.headers['x-forwarded-for']?.toString() || request.ip || '127.0.0.1',
+      ipAddress:
+        request.headers['x-forwarded-for']?.toString() ||
+        request.ip ||
+        '127.0.0.1',
       userAgent: request.headers['user-agent'] || 'Unknown',
       newValues: {
         userId: user.id,

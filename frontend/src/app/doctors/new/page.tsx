@@ -6,6 +6,7 @@ import { useAuthStore } from '@/store/auth'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { validateCPF, formatCPF, cleanCPF } from '@/lib/cpf-validation'
 import { AppLayout } from '@/components/layout/app-layout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -26,12 +27,10 @@ const newDoctorSchema = z.object({
   phone: z.string().min(10, 'Telefone inválido'),
   cpf: z.string().optional().refine(
     (cpf) => {
-      if (!cpf) return true; // CPF é opcional
-      // Remove formatação
-      const cleanCpf = cpf.replace(/\D/g, '');
-      return cleanCpf.length === 11;
+      if (!cpf || cpf.trim() === '') return true; // CPF é opcional
+      return validateCPF(cpf);
     },
-    { message: 'CPF deve ter 11 dígitos' }
+    { message: 'CPF inválido' }
   ),
   specialtyId: z.string().min(1, 'Especialidade principal é obrigatória'),
   subSpecialties: z.array(z.string()).optional(),
@@ -211,6 +210,8 @@ export default function NewDoctorPage() {
   const [saving, setSaving] = useState(false)
   const [selectedSpecialtyId, setSelectedSpecialtyId] = useState<string>('')
   const [selectedSubSpecialties, setSelectedSubSpecialties] = useState<string[]>([])
+  const [cpfError, setCpfError] = useState<string>('')
+  const [checkingCpf, setCheckingCpf] = useState(false)
 
   const {
     register,
@@ -242,7 +243,55 @@ export default function NewDoctorPage() {
     }
   }, [user, isAuthenticated, router])
 
+  const checkCpfDuplicate = async (cpf: string) => {
+    if (!cpf || cpf.trim() === '') {
+      setCpfError('')
+      return
+    }
+
+    const cleanedCpf = cleanCPF(cpf)
+    if (cleanedCpf.length < 11) {
+      setCpfError('')
+      return
+    }
+
+    // First validate CPF format
+    if (!validateCPF(cleanedCpf)) {
+      setCpfError('CPF inválido')
+      return
+    }
+
+    setCheckingCpf(true)
+    setCpfError('')
+    
+    try {
+      const response = await apiClient.request({
+        method: 'GET',
+        url: `/api/v1/users/check-cpf/${cleanedCpf}`
+      })
+      
+      if (response.success && response.data.exists) {
+        const existingUser = response.data.user
+        setCpfError(`CPF já cadastrado para: ${existingUser.fullName} (${existingUser.email})`)
+      }
+    } catch (error) {
+      console.error('Error checking CPF:', error)
+    } finally {
+      setCheckingCpf(false)
+    }
+  }
+
   const onSubmit = async (data: NewDoctorForm) => {
+    // Validate CPF before submitting
+    if (data.cpf && !validateCPF(data.cpf)) {
+      setCpfError('CPF inválido')
+      return
+    }
+
+    if (cpfError) {
+      return
+    }
+
     setSaving(true)
     try {
       const response = await apiClient.createDoctor({
@@ -419,11 +468,38 @@ export default function NewDoctorPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="cpf">CPF</Label>
-                      <Input
-                        id="cpf"
-                        placeholder="000.000.000-00"
-                        {...register('cpf')}
-                      />
+                      <div className="relative">
+                        <Input
+                          id="cpf"
+                          placeholder="000.000.000-00"
+                          {...register('cpf')}
+                          className={`${errors.cpf || cpfError ? 'border-red-500' : ''}`}
+                          onBlur={(e) => {
+                            const formattedCpf = formatCPF(e.target.value)
+                            setValue('cpf', formattedCpf)
+                            checkCpfDuplicate(e.target.value)
+                          }}
+                          onChange={(e) => {
+                            const formattedCpf = formatCPF(e.target.value)
+                            setValue('cpf', formattedCpf)
+                            setCpfError('')
+                          }}
+                        />
+                        {checkingCpf && (
+                          <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                          </div>
+                        )}
+                      </div>
+                      {errors.cpf && (
+                        <p className="text-sm text-red-500">{errors.cpf.message}</p>
+                      )}
+                      {cpfError && (
+                        <p className="text-sm text-red-500">{cpfError}</p>
+                      )}
+                      <p className="text-xs text-muted-foreground">
+                        Campo opcional. Se preenchido, será validado e verificado se não está duplicado.
+                      </p>
                     </div>
                   </div>
                 </CardContent>

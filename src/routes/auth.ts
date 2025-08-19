@@ -3,6 +3,7 @@ import { AuthService } from '@/services/auth.service';
 import { UserService } from '@/services/user.service';
 import { prisma } from '@/config/database';
 import { verifyJWT } from '@/plugins/auth';
+import { validateCPF, checkCPFExists } from '@/utils/cpf-validation';
 
 export async function authRoutes(fastify: FastifyInstance): Promise<void> {
   const authService = new AuthService();
@@ -105,14 +106,101 @@ export async function authRoutes(fastify: FastifyInstance): Promise<void> {
       },
     },
     async (request: FastifyRequest<{ Body: any }>, reply: FastifyReply) => {
-      // TODO: Implement user registration logic
-      return reply.status(501).send({
-        success: false,
-        error: {
-          code: 'NOT_IMPLEMENTED',
-          message: 'Register endpoint not yet implemented',
-        },
-      });
+      try {
+        const {
+          email,
+          password,
+          firstName,
+          lastName,
+          phone,
+          cpf,
+          role = 'PATIENT',
+          timezone = 'America/Sao_Paulo',
+        } = request.body;
+
+        // Check if user with email already exists
+        const existingUser = await userService.findAll({
+          search: email,
+        });
+        if (existingUser.users.length > 0) {
+          return reply.status(400).send({
+            success: false,
+            error: {
+              code: 'EMAIL_ALREADY_EXISTS',
+              message: 'Um usuário com este email já existe',
+            },
+          });
+        }
+
+        // Validate and check CPF if provided
+        if (cpf) {
+          if (!validateCPF(cpf)) {
+            return reply.status(400).send({
+              success: false,
+              error: {
+                code: 'INVALID_CPF',
+                message: 'CPF inválido',
+              },
+            });
+          }
+
+          const cpfCheck = await checkCPFExists(cpf, prisma);
+          if (cpfCheck.exists) {
+            return reply.status(400).send({
+              success: false,
+              error: {
+                code: 'CPF_ALREADY_EXISTS',
+                message: `CPF já cadastrado para: ${cpfCheck.user?.fullName} (${cpfCheck.user?.email})`,
+              },
+            });
+          }
+        }
+
+        // Create user
+        const userData = {
+          email,
+          password,
+          firstName,
+          lastName,
+          phone,
+          cpf,
+          role: role || 'PATIENT',
+          timezone: timezone || 'America/Sao_Paulo',
+          status: 'ACTIVE',
+        };
+
+        const user = await userService.create(userData);
+
+        // Generate tokens
+        const tokens = await authService.generateTokens(user.id, user.role);
+
+        return reply.status(201).send({
+          success: true,
+          data: {
+            user: {
+              id: user.id,
+              email: user.email,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              fullName: user.fullName,
+              role: user.role,
+              status: user.status,
+            },
+            tokens,
+          },
+        });
+      } catch (error: any) {
+        console.error('Registration error:', error);
+
+        return reply.status(500).send({
+          success: false,
+          error: {
+            code: 'REGISTRATION_FAILED',
+            message:
+              error instanceof Error ? error.message : 'Erro ao criar conta',
+          },
+        });
+      }
     },
   );
 

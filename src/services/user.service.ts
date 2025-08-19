@@ -419,10 +419,11 @@ export class UserService {
       }
 
       // Set default fullName if not provided
-      const fullName = userData.fullName || `${userData.firstName} ${userData.lastName}`;
+      const fullName =
+        userData.fullName || `${userData.firstName} ${userData.lastName}`;
 
       // Create user in transaction to ensure consistency
-      const result = await this.prisma.$transaction(async (prisma) => {
+      const result = await this.prisma.$transaction(async prisma => {
         // Create user
         const user = await prisma.user.create({
           data: {
@@ -433,7 +434,9 @@ export class UserService {
             password: hashedPassword,
             phone: userData.phone,
             cpf: userData.cpf,
-            dateOfBirth: userData.dateOfBirth ? new Date(userData.dateOfBirth) : undefined,
+            dateOfBirth: userData.dateOfBirth
+              ? new Date(userData.dateOfBirth)
+              : undefined,
             gender: userData.gender,
             role: userData.role,
             status: userData.status || 'PENDING_VERIFICATION',
@@ -458,7 +461,9 @@ export class UserService {
         return user;
       });
 
-      logger.info(`User created successfully: ${result.email} (${result.role})`);
+      logger.info(
+        `User created successfully: ${result.email} (${result.role})`,
+      );
 
       // Return full user data with profile
       return await this.findById(result.id);

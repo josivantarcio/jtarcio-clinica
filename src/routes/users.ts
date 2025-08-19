@@ -494,11 +494,11 @@ export async function userRoutes(fastify: FastifyInstance): Promise<void> {
             role: { type: 'string', enum: ['PATIENT', 'RECEPTIONIST'] },
             allergies: {
               type: 'array',
-              items: { type: 'string' }
+              items: { type: 'string' },
             },
             medications: {
               type: 'array',
-              items: { type: 'string' }
+              items: { type: 'string' },
             },
             emergencyContactName: { type: 'string' },
             emergencyContactPhone: { type: 'string' },
@@ -509,10 +509,10 @@ export async function userRoutes(fastify: FastifyInstance): Promise<void> {
                 neighborhood: { type: 'string' },
                 city: { type: 'string' },
                 state: { type: 'string' },
-                zipCode: { type: 'string' }
-              }
+                zipCode: { type: 'string' },
+              },
             },
-            password: { type: 'string' }
+            password: { type: 'string' },
           },
         },
         response: {
@@ -593,7 +593,7 @@ export async function userRoutes(fastify: FastifyInstance): Promise<void> {
         const userDataForCreation = {
           ...userData,
           password: userData.password || 'TempPassword123!', // Use provided password or default
-          status: 'ACTIVE'
+          status: 'ACTIVE',
         };
 
         const createdUser = await userService.create(userDataForCreation);
@@ -917,9 +917,7 @@ export async function userRoutes(fastify: FastifyInstance): Promise<void> {
           error: {
             code: 'INTERNAL_ERROR',
             message:
-              error instanceof Error
-                ? error.message
-                : 'Failed to check CPF',
+              error instanceof Error ? error.message : 'Failed to check CPF',
           },
         });
       }

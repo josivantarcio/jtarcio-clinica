@@ -57,13 +57,14 @@ export function formatExperience(years: number): string {
 
 /**
  * Fix timezone issues with date inputs
- * @param dateString - Date string from input
- * @returns Properly formatted date string for API
+ * @param dateString - Date string from input (YYYY-MM-DD)
+ * @returns Properly formatted date string for API (without timezone conversion)
  */
 export function formatDateForAPI(dateString: string): string {
   if (!dateString) return ''
-  // Ensure the date is treated as local time to avoid timezone shifts
-  return `${dateString}T00:00:00.000Z`
+  // Return the date without timezone conversion to avoid day shifts
+  // The backend should receive the date exactly as entered by the user
+  return dateString
 }
 
 /**
@@ -76,12 +77,16 @@ export function parseDateFromAPI(dateValue: string | Date | null | undefined): D
   
   const dateStr = typeof dateValue === 'string' ? dateValue : dateValue.toISOString()
   
+  // Extract just the date part if it's an ISO string
   if (dateStr.includes('T')) {
-    // If it's ISO string, use it directly
-    return new Date(dateStr)
+    const datePart = dateStr.split('T')[0]
+    // Create date object in local timezone, not UTC
+    const [year, month, day] = datePart.split('-').map(Number)
+    return new Date(year, month - 1, day) // month is 0-indexed
   } else {
-    // If it's just date string, append local time to avoid timezone issues
-    return new Date(dateStr + 'T00:00:00')
+    // If it's just date string (YYYY-MM-DD), parse as local date
+    const [year, month, day] = dateStr.split('-').map(Number)
+    return new Date(year, month - 1, day) // month is 0-indexed
   }
 }
 
@@ -93,7 +98,9 @@ export function parseDateFromAPI(dateValue: string | Date | null | undefined): D
 export function formatDateForDisplay(date: Date | string | null | undefined): string {
   if (!date) return ''
   
-  const dateObj = typeof date === 'string' ? new Date(date) : date
+  // Use our timezone-safe parsing function
+  const dateObj = typeof date === 'string' ? parseDateFromAPI(date) : date
+  if (!dateObj) return ''
   
   return dateObj.toLocaleDateString('pt-BR', {
     day: '2-digit',
@@ -110,12 +117,23 @@ export function formatDateForDisplay(date: Date | string | null | undefined): st
 export function formatDateForInput(date: Date | string | null | undefined): string {
   if (!date) return ''
   
+  if (typeof date === 'string') {
+    // If it's already a string in YYYY-MM-DD format, return as is
+    if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return date
+    }
+    // If it's an ISO string, extract only the date part
+    if (date.includes('T')) {
+      return date.split('T')[0]
+    }
+  }
+  
   const dateObj = typeof date === 'string' ? new Date(date) : date
   
-  // Get date components accounting for timezone
-  const year = dateObj.getFullYear()
-  const month = String(dateObj.getMonth() + 1).padStart(2, '0')
-  const day = String(dateObj.getDate()).padStart(2, '0')
+  // Use UTC methods to avoid timezone conversion issues
+  const year = dateObj.getUTCFullYear()
+  const month = String(dateObj.getUTCMonth() + 1).padStart(2, '0')
+  const day = String(dateObj.getUTCDate()).padStart(2, '0')
   
   return `${year}-${month}-${day}`
 }

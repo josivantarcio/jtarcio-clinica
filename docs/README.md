@@ -2,11 +2,29 @@
 
 ## Overview
 
-EO Clínica is a comprehensive medical clinic scheduling system that integrates AI-powered conversations, automated workflows, and complete medical appointment management. **Version 1.3.5** features complete backend stability with resolved health check issues, simplified audit system, and production-ready infrastructure.
+EO Clínica is a comprehensive medical clinic scheduling system that integrates AI-powered conversations, automated workflows, and complete medical appointment management. **Version 1.3.6** features complete CPF validation system, backend stability with resolved health check issues, and production-ready infrastructure.
 
-## 🚀 Latest Updates - Version 1.3.5 (August 19, 2025)
+## 🚀 Latest Updates - Version 1.3.6 (August 19, 2025)
 
-### 🐛 **Critical Backend Fix - RESOLVIDO**
+### 🔐 **CPF Validation System - IMPLEMENTADO COMPLETAMENTE**
+- **✅ Frontend Validation**: CPF validation padronizada em todos os formulários (Médicos, Pacientes, Agendamento Passo 4, Usuários)
+- **🛡️ Backend Validation**: Sistema completo de validação CPF com algoritmo brasileiro oficial
+- **🚫 Duplicate Prevention**: Verificação de duplicatas em tempo real com debounce
+- **⚡ Real-Time Check**: Endpoint `/api/v1/users/check-cpf/:cpf` para validação instantânea
+- **🎯 Unified Library**: Biblioteca `/src/utils/cpf-validation.ts` para validação unificada
+- **📝 Smart Formatting**: Auto-formatação CPF (000.000.000-00) em todos os campos
+- **🔄 Integration Complete**: Rotas de usuários e autenticação com validação CPF integrada
+- **✅ Tested & Working**: Sistema testado end-to-end com frontend + backend funcionando
+
+### 🎯 **Locais com Validação CPF Implementada**
+- **👥 Cadastro de Usuários**: Formulário de registro com validação completa
+- **👨‍⚕️ Cadastro de Médicos**: Validação CPF opcional com verificação de duplicatas
+- **📅 Agendamento Passo 4**: Validação ao cadastrar paciente durante agendamento
+- **🔐 API Registration**: Endpoint `/api/v1/auth/register` com validação CPF
+- **🏥 API Doctors**: Endpoint `/api/v1/users/doctors` com validação CPF
+- **✅ All Forms Standardized**: Mesmo algoritmo de validação em todo sistema
+
+### 🔧 **Previous Updates - Version 1.3.5** 
 - **🔧 Health Check Fixed**: Resolvido falha crítica no health check do backend
 - **🛠️ Audit Middleware**: Removido AuditRequestMiddleware complexo que causava erros de validação
 - **📋 Schema Validation**: Corrigido erro FST_ERR_SCH_VALIDATION_BUILD do Fastify
@@ -460,9 +478,16 @@ The system seeds with default users (password: `Admin123!`):
 - `GET /api/v1/users` - List users (with role filtering)
 - `GET /api/v1/users/:id` - Get user by ID (with patient profile)
 - `PATCH /api/v1/users/:id` - Update user (with patient data persistence)
-- `POST /api/v1/users` - Create new user/patient
-- `GET /api/v1/users/check-cpf/:cpf` - Check CPF uniqueness
+- `POST /api/v1/users` - Create new user/patient (with CPF validation)
+- `GET /api/v1/users/check-cpf/:cpf` - Check CPF uniqueness with validation
 - `DELETE /api/v1/users/:id` - Delete user (soft delete)
+
+### CPF Validation System ✅ NEW
+- **Brazilian Algorithm**: Complete CPF validation with digit verification
+- **Duplicate Prevention**: Real-time checking across all user creation endpoints
+- **Auto-formatting**: Transforms input to standard format (000.000.000-00)
+- **Frontend Integration**: Debounced validation in all forms
+- **Backend Standardization**: Unified validation in auth and user routes
 
 ### Doctors ✅ NEW
 - `POST /api/v1/doctors` - Create new doctor with full profile

@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
 import { Calendar } from '@/components/ui/calendar'
-import { Loader2, CheckCircle, Clock, User, Stethoscope, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Loader2, CheckCircle, Clock, User, Stethoscope, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Search } from 'lucide-react'
 import { useDoctorsStore } from '@/store/doctors'
 import { useAppointmentsStore } from '@/store/appointments'
 import { useNotificationsStore } from '@/store/notifications'
@@ -87,8 +87,10 @@ export function BookingFormWithData({ initialSpecialties }: BookingFormWithDataP
   })
   const [needsPatientRegistration, setNeedsPatientRegistration] = useState(false) // Default to using existing patient
   const [existingPatients, setExistingPatients] = useState<any[]>([])
+  const [filteredPatients, setFilteredPatients] = useState<any[]>([])
   const [loadingPatients, setLoadingPatients] = useState(false)
   const [selectedPatientId, setSelectedPatientId] = useState<string>('')
+  const [patientSearchQuery, setPatientSearchQuery] = useState('')
   
   // Use as especialidades passadas como props ao invés de buscar
   const [specialties] = useState(initialSpecialties)
@@ -108,7 +110,10 @@ export function BookingFormWithData({ initialSpecialties }: BookingFormWithDataP
       })
       
       if (response.success && response.data) {
-        setExistingPatients(response.data.users || [])
+        // Handle both possible response formats
+        const patients = Array.isArray(response.data) ? response.data : (response.data.users || [])
+        setExistingPatients(patients)
+        setFilteredPatients(patients)
       }
     } catch (error) {
       console.error('Error loading patients:', error)
@@ -159,16 +164,66 @@ export function BookingFormWithData({ initialSpecialties }: BookingFormWithDataP
     loadExistingPatients()
   }, [])
 
+  // Filter patients based on search query
+  useEffect(() => {
+    if (!patientSearchQuery.trim()) {
+      setFilteredPatients(existingPatients)
+      return
+    }
+
+    const query = patientSearchQuery.toLowerCase()
+    const filtered = existingPatients.filter(patient => {
+      const fullName = (patient.fullName || `${patient.firstName} ${patient.lastName}`).toLowerCase()
+      const email = (patient.email || '').toLowerCase()
+      const phone = (patient.phone || '').toLowerCase()
+      const cpf = (patient.cpf || '').replace(/\D/g, '')
+      
+      return fullName.includes(query) || 
+             email.includes(query) || 
+             phone.includes(query) ||
+             cpf.includes(query.replace(/\D/g, ''))
+    })
+    
+    setFilteredPatients(filtered)
+  }, [patientSearchQuery, existingPatients])
+
   const createPatient = async () => {
     try {
       // Validate patient data
       const validatedPatient = patientSchema.parse(patientData)
       
-      // Validate CPF
+      // Validate CPF format
       if (!validateCPF(validatedPatient.cpf)) {
         toast({
           title: 'Erro',
           description: 'CPF inválido',
+          variant: 'destructive'
+        })
+        return null
+      }
+
+      // Check CPF uniqueness
+      const cleanedCpf = cleanCPF(validatedPatient.cpf)
+      try {
+        const cpfCheckResponse = await apiClient.request({
+          method: 'GET',
+          url: `/api/v1/users/check-cpf/${cleanedCpf}`
+        })
+        
+        if (cpfCheckResponse.success && cpfCheckResponse.data.exists) {
+          const existingUser = cpfCheckResponse.data.user
+          toast({
+            title: 'CPF já cadastrado',
+            description: `Este CPF já pertence a: ${existingUser.fullName} (${existingUser.email})`,
+            variant: 'destructive'
+          })
+          return null
+        }
+      } catch (error) {
+        console.error('Error checking CPF:', error)
+        toast({
+          title: 'Erro',
+          description: 'Erro ao verificar CPF. Tente novamente.',
           variant: 'destructive'
         })
         return null
@@ -1116,6 +1171,20 @@ export function BookingFormWithData({ initialSpecialties }: BookingFormWithDataP
                   </div>
                 </div>
                 
+                {/* Patient Search */}
+                <div className="mb-4">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="text"
+                      placeholder="Buscar por nome, email, telefone ou CPF..."
+                      value={patientSearchQuery}
+                      onChange={(e) => setPatientSearchQuery(e.target.value)}
+                      className="pl-10 bg-white"
+                    />
+                  </div>
+                </div>
+                
                 {loadingPatients ? (
                   <div className="grid gap-3">
                     {Array.from({ length: 3 }).map((_, i) => (
@@ -1128,9 +1197,9 @@ export function BookingFormWithData({ initialSpecialties }: BookingFormWithDataP
                       </div>
                     ))}
                   </div>
-                ) : existingPatients.length > 0 ? (
+                ) : filteredPatients.length > 0 ? (
                   <div className="grid gap-3 max-h-60 overflow-y-auto">
-                    {existingPatients.map((patient) => (
+                    {filteredPatients.map((patient) => (
                       <label key={patient.id} className="cursor-pointer">
                         <input
                           type="radio"
@@ -1164,9 +1233,19 @@ export function BookingFormWithData({ initialSpecialties }: BookingFormWithDataP
                     ))}
                   </div>
                 ) : (
-                  <p className="text-center text-muted-foreground py-6">
-                    Nenhum paciente encontrado
-                  </p>
+                  <div className="text-center text-muted-foreground py-6">
+                    {patientSearchQuery.trim() ? (
+                      <div>
+                        <p className="font-medium">Nenhum paciente encontrado</p>
+                        <p className="text-sm">Tente outro termo de busca ou cadastre um novo paciente</p>
+                      </div>
+                    ) : (
+                      <div>
+                        <p className="font-medium">Nenhum paciente cadastrado</p>
+                        <p className="text-sm">Cadastre um novo paciente para continuar</p>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             )}
