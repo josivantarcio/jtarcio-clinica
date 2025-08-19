@@ -145,7 +145,53 @@ export default function SettingsPage() {
   const loadUserSettings = async () => {
     setLoading(true)
     try {
-      // Load user settings - using mock data for now
+      if (user) {
+        // Load user profile from API
+        const response = await fetch('/api/auth/me', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+            'Content-Type': 'application/json'
+          }
+        })
+        
+        if (response.ok) {
+          const userData = await response.json()
+          
+          setSettings(prev => ({
+            ...prev,
+            profile: {
+              firstName: userData.data.firstName || '',
+              lastName: userData.data.lastName || '',
+              email: userData.data.email || '',
+              phone: userData.data.phone || '',
+              timezone: userData.data.timezone || 'America/Sao_Paulo',
+              language: userData.data.language || 'pt-BR',
+              bio: userData.data.bio || ''
+            },
+            notifications: userData.data.settings?.notifications || prev.notifications,
+            privacy: userData.data.settings?.privacy || prev.privacy,
+            appearance: userData.data.settings?.appearance || prev.appearance,
+            security: userData.data.settings?.security || prev.security
+          }))
+        } else {
+          // Fallback to basic user data
+          setSettings(prev => ({
+            ...prev,
+            profile: {
+              firstName: user.name.split(' ')[0] || '',
+              lastName: user.name.split(' ').slice(1).join(' ') || '',
+              email: user.email,
+              phone: '',
+              timezone: 'America/Sao_Paulo',
+              language: 'pt-BR',
+              bio: ''
+            }
+          }))
+        }
+      }
+    } catch (error) {
+      console.error('Error loading settings:', error)
+      // Fallback to basic user data on error
       if (user) {
         setSettings(prev => ({
           ...prev,
@@ -153,17 +199,13 @@ export default function SettingsPage() {
             firstName: user.name.split(' ')[0] || '',
             lastName: user.name.split(' ').slice(1).join(' ') || '',
             email: user.email,
-            phone: '(11) 99999-9999',
+            phone: '',
             timezone: 'America/Sao_Paulo',
             language: 'pt-BR',
-            bio: user.role === 'DOCTOR' ? 'Médico especialista com experiência em atendimento humanizado.' : 
-                 user.role === 'PATIENT' ? 'Paciente da EO Clínica desde 2024.' : 
-                 'Usuário do sistema EO Clínica.'
+            bio: ''
           }
         }))
       }
-    } catch (error) {
-      console.error('Error loading settings:', error)
     } finally {
       setLoading(false)
     }
@@ -172,12 +214,40 @@ export default function SettingsPage() {
   const saveSettings = async (section?: string) => {
     setSaving(true)
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      console.log('Settings saved:', section || 'all', settings)
-      // Show success message
+      const response = await fetch('/api/users/profile', {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          firstName: settings.profile.firstName,
+          lastName: settings.profile.lastName,
+          phone: settings.profile.phone,
+          timezone: settings.profile.timezone,
+          bio: settings.profile.bio,
+          settings: {
+            notifications: settings.notifications,
+            privacy: settings.privacy,
+            appearance: settings.appearance,
+            security: {
+              twoFactorEnabled: settings.security.twoFactorEnabled,
+              loginNotifications: settings.security.loginNotifications,
+              sessionTimeout: settings.security.sessionTimeout
+            }
+          }
+        })
+      })
+      
+      if (response.ok) {
+        console.log('Settings saved successfully:', section || 'all')
+        // TODO: Show success toast notification
+      } else {
+        throw new Error('Failed to save settings')
+      }
     } catch (error) {
       console.error('Error saving settings:', error)
+      // TODO: Show error toast notification
     } finally {
       setSaving(false)
     }

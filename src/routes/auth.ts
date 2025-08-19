@@ -7,9 +7,13 @@ import {
 } from '@/types/user';
 import { responseSchema } from '@/types/common';
 import { AuthService } from '@/services/auth.service';
+import { UserService } from '@/services/user.service';
+import { prisma } from '@/config/database';
+import { verifyJWT } from '@/plugins/auth';
 
 export async function authRoutes(fastify: FastifyInstance): Promise<void> {
   const authService = new AuthService();
+  const userService = new UserService(prisma);
 
   // Login endpoint
   fastify.post(
@@ -229,6 +233,7 @@ export async function authRoutes(fastify: FastifyInstance): Promise<void> {
   fastify.get(
     '/me',
     {
+      preHandler: [verifyJWT],
       schema: {
         tags: ['Auth'],
         summary: 'Get current user profile',
@@ -236,14 +241,67 @@ export async function authRoutes(fastify: FastifyInstance): Promise<void> {
       },
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
-      // TODO: Implement get current user logic
-      return reply.status(501).send({
-        success: false,
-        error: {
-          code: 'NOT_IMPLEMENTED',
-          message: 'Get profile endpoint not yet implemented',
-        },
-      });
+      try {
+        const userId = (request as any).user?.userId;
+        
+        if (!userId) {
+          return reply.status(401).send({
+            success: false,
+            error: {
+              code: 'UNAUTHORIZED',
+              message: 'User not authenticated',
+            },
+          });
+        }
+
+        const user = await userService.findById(userId);
+
+        // Parse settings from encryptedData if exists
+        let settings = null;
+        if (user.encryptedData) {
+          try {
+            settings = typeof user.encryptedData === 'string' 
+              ? JSON.parse(user.encryptedData)
+              : user.encryptedData;
+          } catch (error) {
+            console.error('Error parsing user settings:', error);
+          }
+        }
+
+        return reply.send({
+          success: true,
+          data: {
+            id: user.id,
+            email: user.email,
+            name: user.fullName,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            role: user.role,
+            status: user.status,
+            phone: user.phone,
+            timezone: user.timezone,
+            avatar: user.avatar,
+            settings,
+            bio: user.doctorProfile?.biography || '',
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt
+          },
+        });
+      } catch (error) {
+        const statusCode =
+          error instanceof Error && error.message === 'User not found'
+            ? 404
+            : 500;
+
+        return reply.status(statusCode).send({
+          success: false,
+          error: {
+            code: statusCode === 404 ? 'NOT_FOUND' : 'INTERNAL_ERROR',
+            message:
+              error instanceof Error ? error.message : 'Failed to fetch user profile',
+          },
+        });
+      }
     },
   );
 }

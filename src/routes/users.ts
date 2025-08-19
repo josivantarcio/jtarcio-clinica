@@ -3,6 +3,7 @@ import { updateUserSchema, userResponseSchema } from '@/types/user';
 import { paginationSchema, responseSchema } from '@/types/common';
 import { UserService } from '@/services/user.service';
 import { prisma } from '@/config/database';
+import { verifyJWT } from '@/plugins/auth';
 
 const userService = new UserService(prisma);
 
@@ -421,4 +422,196 @@ export async function userRoutes(fastify: FastifyInstance): Promise<void> {
       }
     },
   );
+
+  // Get current user profile
+  fastify.get(
+    '/profile',
+    {
+      preHandler: [verifyJWT],
+      schema: {
+        tags: ['Users'],
+        summary: 'Get current user profile',
+        security: [{ Bearer: [] }],
+        response: {
+          200: responseSchema(userResponseSchema),
+        },
+      },
+    },
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      try {
+        // Get user ID from JWT token (assuming middleware sets it in request)
+        const userId = (request as any).user?.userId
+        
+        if (!userId) {
+          return reply.status(401).send({
+            success: false,
+            error: {
+              code: 'UNAUTHORIZED',
+              message: 'User not authenticated',
+            },
+          })
+        }
+
+        const user = await userService.findById(userId)
+
+        // Parse settings from encryptedData if exists
+        let settings = null
+        if (user.encryptedData) {
+          try {
+            settings = typeof user.encryptedData === 'string' 
+              ? JSON.parse(user.encryptedData)
+              : user.encryptedData
+          } catch (error) {
+            console.error('Error parsing user settings:', error)
+          }
+        }
+
+        return reply.status(200).send({
+          success: true,
+          data: {
+            ...user,
+            settings,
+            bio: user.doctorProfile?.biography || user.patientProfile?.medicalHistory || ''
+          },
+        })
+      } catch (error) {
+        const statusCode =
+          error instanceof Error && error.message === 'User not found'
+            ? 404
+            : 500
+
+        return reply.status(statusCode).send({
+          success: false,
+          error: {
+            code: statusCode === 404 ? 'NOT_FOUND' : 'INTERNAL_ERROR',
+            message:
+              error instanceof Error ? error.message : 'Failed to fetch user profile',
+          },
+        })
+      }
+    },
+  )
+
+  // Update current user profile
+  fastify.patch(
+    '/profile',
+    {
+      preHandler: [verifyJWT],
+      schema: {
+        tags: ['Users'],
+        summary: 'Update current user profile',
+        security: [{ Bearer: [] }],
+        body: {
+          type: 'object',
+          properties: {
+            firstName: { type: 'string' },
+            lastName: { type: 'string' },
+            phone: { type: 'string' },
+            timezone: { type: 'string' },
+            bio: { type: 'string' },
+            settings: {
+              type: 'object',
+              properties: {
+                notifications: { type: 'object' },
+                privacy: { type: 'object' },
+                appearance: { type: 'object' },
+                security: { type: 'object' }
+              }
+            }
+          },
+        },
+        response: {
+          200: responseSchema(userResponseSchema),
+        },
+      },
+    },
+    async (request: FastifyRequest<{ Body: any }>, reply: FastifyReply) => {
+      try {
+        // Get user ID from JWT token
+        const userId = (request as any).user?.userId
+        
+        if (!userId) {
+          return reply.status(401).send({
+            success: false,
+            error: {
+              code: 'UNAUTHORIZED',
+              message: 'User not authenticated',
+            },
+          })
+        }
+
+        const updateData = request.body
+        const { bio, settings, ...userFields } = updateData
+
+        // Prepare user update data
+        const userUpdateData: any = {
+          ...userFields,
+        }
+
+        // Update fullName if firstName or lastName changed
+        if (userFields.firstName || userFields.lastName) {
+          const currentUser = await userService.findById(userId)
+          const firstName = userFields.firstName || currentUser.firstName
+          const lastName = userFields.lastName || currentUser.lastName
+          userUpdateData.fullName = `${firstName} ${lastName}`
+        }
+
+        // Store settings in encryptedData field
+        if (settings) {
+          userUpdateData.encryptedData = JSON.stringify(settings)
+        }
+
+        const updatedUser = await userService.update(userId, userUpdateData)
+
+        // Update bio in the appropriate profile
+        if (bio !== undefined) {
+          if (updatedUser.doctorProfile) {
+            await prisma.doctor.update({
+              where: { userId },
+              data: { biography: bio }
+            })
+          }
+          // For patients, we could store bio in a custom field or medicalHistory
+        }
+
+        // Fetch updated user with all data
+        const refreshedUser = await userService.findById(userId)
+        
+        // Parse settings for response
+        let parsedSettings = null
+        if (refreshedUser.encryptedData) {
+          try {
+            parsedSettings = typeof refreshedUser.encryptedData === 'string' 
+              ? JSON.parse(refreshedUser.encryptedData)
+              : refreshedUser.encryptedData
+          } catch (error) {
+            console.error('Error parsing user settings:', error)
+          }
+        }
+
+        return reply.status(200).send({
+          success: true,
+          data: {
+            ...refreshedUser,
+            settings: parsedSettings,
+            bio: refreshedUser.doctorProfile?.biography || ''
+          },
+        })
+      } catch (error) {
+        const statusCode =
+          error instanceof Error && error.message === 'User not found'
+            ? 404
+            : 500
+
+        return reply.status(statusCode).send({
+          success: false,
+          error: {
+            code: statusCode === 404 ? 'NOT_FOUND' : 'INTERNAL_ERROR',
+            message:
+              error instanceof Error ? error.message : 'Failed to update user profile',
+          },
+        })
+      }
+    },
+  )
 }

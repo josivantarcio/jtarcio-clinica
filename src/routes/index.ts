@@ -17,7 +17,7 @@ export async function registerRoutes(fastify: FastifyInstance): Promise<void> {
   // Register all route modules
   await fastify.register(authRoutes, { prefix: `${apiPrefix}/auth` });
   await fastify.register(userRoutes, { prefix: `${apiPrefix}/users` });
-  await fastify.register(userRoutes, { prefix: `${apiPrefix}` }); // For /doctors endpoint
+  // await fastify.register(userRoutes, { prefix: `${apiPrefix}` }); // For /doctors endpoint - temporarily disabled
   await fastify.register(appointmentRoutes, {
     prefix: `${apiPrefix}/appointments`,
   });
@@ -27,9 +27,9 @@ export async function registerRoutes(fastify: FastifyInstance): Promise<void> {
   await fastify.register(availabilityRoutes, {
     prefix: `${apiPrefix}/availability`,
   });
-  await fastify.register(aiChatRoutes, { prefix: apiPrefix });
-  await fastify.register(auditRoutes, { prefix: apiPrefix });
-  await fastify.register(analyticsRoutes, { prefix: apiPrefix });
+  // await fastify.register(aiChatRoutes, { prefix: apiPrefix }); // Temporarily disabled due to ChromaDB issue
+  // await fastify.register(auditRoutes, { prefix: apiPrefix }); // Temporarily disabled due to middleware issue
+  // await fastify.register(analyticsRoutes, { prefix: apiPrefix }); // Temporarily disabled due to route conflict
 
   // Root endpoint
   fastify.get('/', async (_request, _reply) => {

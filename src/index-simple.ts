@@ -1922,7 +1922,6 @@ fastify.setErrorHandler((error, request, reply) => {
 // Iniciar servidor
 const start = async () => {
   try {
-
     await fastify.listen({
       port: Number(process.env.PORT) || 3000,
       host: '0.0.0.0',

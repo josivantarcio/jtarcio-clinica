@@ -1,8 +1,16 @@
 # EO CLÍNICA - API Documentation
-## Complete REST API Reference
+## Complete REST API Reference - Version 1.3.4
 
 ### 🌐 BASE URL
 - **Development**: `http://localhost:3000/api/v1`
+- **Production**: `https://api.eoclinica.com.br/api/v1`
+
+### 🆕 LATEST ADDITIONS - Settings API
+Adicionados endpoints completos para gerenciamento de configurações de usuário:
+- **GET** `/auth/me` - Perfil do usuário autenticado
+- **GET** `/users/profile` - Perfil completo com configurações
+- **PATCH** `/users/profile` - Atualizar perfil e settings
+- **JWT Middleware** - Sistema de autenticação completo
 - **Production**: `https://api.eo-clinica.com/api/v1`
 
 ### 🔐 AUTHENTICATION
@@ -674,6 +682,139 @@ Import the complete API collection: `docs/postman/eo-clinica-api.json`
 }
 ```
 **Password**: `Admin123!` (for all test users)
+
+---
+
+## ⚙️ USER SETTINGS ENDPOINTS - NEW v1.3.4
+
+### GET `/auth/me`
+Obter perfil completo do usuário autenticado com configurações.
+
+**Headers:**
+```
+Authorization: Bearer <jwt_token>
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "cm1abc123def456",
+    "email": "user@example.com",
+    "name": "João Silva",
+    "firstName": "João",
+    "lastName": "Silva",
+    "role": "PATIENT",
+    "phone": "+55 11 99999-9999",
+    "timezone": "America/Sao_Paulo",
+    "bio": "Biografia do usuário",
+    "settings": {
+      "notifications": {
+        "email": true,
+        "sms": true,
+        "appointmentReminders": true,
+        "reminderTiming": 24
+      },
+      "privacy": {
+        "profileVisibility": "contacts",
+        "shareActivityStatus": true
+      },
+      "appearance": {
+        "theme": "light",
+        "fontSize": "medium"
+      },
+      "security": {
+        "twoFactorEnabled": false,
+        "sessionTimeout": 60
+      }
+    }
+  }
+}
+```
+
+### GET `/users/profile`
+Endpoint alternativo para obter perfil (mesmo retảrno que `/auth/me`).
+
+### PATCH `/users/profile`
+Atualizar perfil e configurações do usuário.
+
+**Headers:**
+```
+Authorization: Bearer <jwt_token>
+Content-Type: application/json
+```
+
+**Request:**
+```json
+{
+  "firstName": "João",
+  "lastName": "Silva Santos",
+  "phone": "+55 11 98765-4321",
+  "bio": "Nova biografia",
+  "settings": {
+    "notifications": {
+      "email": false,
+      "sms": true,
+      "appointmentReminders": true,
+      "reminderTiming": 48
+    },
+    "privacy": {
+      "profileVisibility": "private",
+      "shareActivityStatus": false
+    },
+    "appearance": {
+      "theme": "dark",
+      "fontSize": "large"
+    },
+    "security": {
+      "twoFactorEnabled": true,
+      "sessionTimeout": 120
+    }
+  }
+}
+```
+
+**Response:** Objeto completo do usuário atualizado (mesmo formato do GET).
+
+### Estrutura de Configurações
+
+#### Notificações (`settings.notifications`)
+- `email`: boolean - Notificações por email
+- `sms`: boolean - Notificações por SMS  
+- `push`: boolean - Notificações push
+- `appointmentReminders`: boolean - Lembretes de consulta
+- `cancellationAlerts`: boolean - Alertas de cancelamento
+- `reminderTiming`: number - Horas antes (1, 2, 6, 24, 48)
+
+#### Privacidade (`settings.privacy`)
+- `profileVisibility`: "public" | "contacts" | "private"
+- `shareActivityStatus`: boolean
+- `allowDirectMessages`: boolean
+- `showOnlineStatus`: boolean
+
+#### Aparência (`settings.appearance`)  
+- `theme`: "light" | "dark" | "system"
+- `fontSize`: "small" | "medium" | "large"
+- `reducedMotion`: boolean
+- `highContrast`: boolean
+
+#### Segurança (`settings.security`)
+- `twoFactorEnabled`: boolean
+- `loginNotifications`: boolean  
+- `sessionTimeout`: number (minutos)
+
+### Códigos de Erro Settings
+- `401 UNAUTHORIZED`: Token inválido ou expirado
+- `404 NOT_FOUND`: Usuário não encontrado
+- `400 BAD_REQUEST`: Dados inválidos no request
+- `500 INTERNAL_ERROR`: Erro interno do servidor
+
+### Segurança e Armazenamento
+- **JWT Middleware**: Validação completa de tokens
+- **Role-based Access**: Controle por perfil de usuário
+- **Encrypted Storage**: Configurações no campo `encryptedData`
+- **Input Validation**: Sanitização e validação rigorosa
 
 ---
 
