@@ -13,7 +13,8 @@ import {
   Clock,
   FileText,
   Shield,
-  Home
+  Home,
+  DollarSign
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -75,6 +76,12 @@ const navigationItems: NavItem[] = [
     href: "/reports",
     icon: FileText,
     roles: ["DOCTOR", "ADMIN"]
+  },
+  {
+    title: "Financeiro",
+    href: "/financial",
+    icon: DollarSign,
+    roles: ["ADMIN", "FINANCIAL_MANAGER"]
   },
   {
     title: "Analytics",
