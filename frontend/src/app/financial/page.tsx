@@ -20,7 +20,7 @@ import {
   Shield
 } from "lucide-react"
 import { useAuthStore } from "@/store/auth"
-import { api } from "@/lib/api"
+import { apiClient } from "@/lib/api"
 
 interface FinancialDashboardData {
   totalRevenue: number
@@ -48,13 +48,14 @@ export default function FinancialDashboard() {
   const [dashboardData, setDashboardData] = useState<FinancialDashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isHydrated, setIsHydrated] = useState(false)
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true)
       setError(null)
       
-      const response = await api.get('/financial/dashboard')
+      const response = await apiClient.get('/api/v1/financial/dashboard')
       if (response.data.success) {
         setDashboardData(response.data.data)
       } else {
@@ -69,8 +70,28 @@ export default function FinancialDashboard() {
   }
 
   useEffect(() => {
-    fetchDashboardData()
+    // Hydrate the persisted store
+    useAuthStore.persist.rehydrate()
+    setIsHydrated(true)
   }, [])
+
+  useEffect(() => {
+    if (isHydrated && user?.role === 'ADMIN') {
+      fetchDashboardData()
+    }
+  }, [isHydrated, user])
+
+  // Show loading while hydrating
+  if (!isHydrated) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="flex items-center justify-center min-h-96">
+          <RefreshCw className="h-8 w-8 animate-spin text-primary" />
+          <span className="ml-2">Carregando...</span>
+        </div>
+      </div>
+    )
+  }
 
   // Check if user has financial access
   const hasFinancialAccess = user?.role === 'ADMIN' || user?.role === 'FINANCIAL_MANAGER'
@@ -78,9 +99,26 @@ export default function FinancialDashboard() {
   if (!hasFinancialAccess) {
     return (
       <div className="container mx-auto p-6">
-        <div className="text-center">
+        <div className="text-center space-y-4">
           <h1 className="text-2xl font-bold text-gray-800 mb-4">Acesso Restrito</h1>
           <p className="text-gray-600">Você não tem permissão para acessar o módulo financeiro.</p>
+          <p className="text-sm text-gray-500">
+            Role atual: {user?.role || 'Não definido'} | 
+            Requerido: ADMIN ou FINANCIAL_MANAGER
+          </p>
+          <Button 
+            onClick={() => {
+              const { initDevelopmentMode } = useAuthStore.getState()
+              if (typeof initDevelopmentMode === 'function') {
+                initDevelopmentMode()
+              }
+              window.location.reload()
+            }}
+            variant="outline"
+            size="sm"
+          >
+            🧪 Ativar Modo Dev
+          </Button>
         </div>
       </div>
     )
