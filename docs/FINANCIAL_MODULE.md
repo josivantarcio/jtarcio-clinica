@@ -319,11 +319,11 @@ src/
 - [x] Interface responsiva
 - [x] Integração frontend-backend
 
-### 🚧 Fase 3 - Payables & Suppliers (Em Andamento)
-- [ ] Página de contas a pagar
-- [ ] Página de fornecedores
-- [ ] Workflow de aprovação
-- [ ] Notificações de vencimento
+### ✅ Fase 3 - Payables & Suppliers (100% Concluída)
+- [x] Página de contas a pagar
+- [x] Página de fornecedores
+- [x] Workflow de aprovação
+- [x] Notificações de vencimento
 
 ### ⏳ Próximas Fases
 - [ ] **Fase 4**: Relatórios Avançados & Integrações
