@@ -38,6 +38,8 @@ import {
   Clock,
   Languages
 } from 'lucide-react'
+import { apiClient } from '@/lib/api'
+import { useTheme } from '@/providers/theme-provider'
 
 interface UserSettings {
   profile: {
@@ -124,6 +126,9 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [activeTab, setActiveTab] = useState('profile')
+  
+  // Theme provider hook
+  const { theme, setTheme } = useTheme()
 
   useEffect(() => {
     // Hydrate the persisted store
@@ -142,36 +147,42 @@ export default function SettingsPage() {
     }
   }, [user, isAuthenticated])
 
+  // Sync theme from ThemeProvider to local settings
+  useEffect(() => {
+    setSettings(prev => ({
+      ...prev,
+      appearance: {
+        ...prev.appearance,
+        theme: theme
+      }
+    }))
+  }, [theme])
+
   const loadUserSettings = async () => {
     setLoading(true)
     try {
       if (user) {
-        // Load user profile from API
-        const response = await fetch('/api/auth/me', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-            'Content-Type': 'application/json'
-          }
-        })
+        // Load user profile from API using apiClient
+        const response = await apiClient.get('/auth/me')
         
-        if (response.ok) {
-          const userData = await response.json()
+        if (response.success && response.data) {
+          const userData = response.data
           
           setSettings(prev => ({
             ...prev,
             profile: {
-              firstName: userData.data.firstName || '',
-              lastName: userData.data.lastName || '',
-              email: userData.data.email || '',
-              phone: userData.data.phone || '',
-              timezone: userData.data.timezone || 'America/Sao_Paulo',
-              language: userData.data.language || 'pt-BR',
-              bio: userData.data.bio || ''
+              firstName: userData.firstName || '',
+              lastName: userData.lastName || '',
+              email: userData.email || '',
+              phone: userData.phone || '',
+              timezone: userData.timezone || 'America/Sao_Paulo',
+              language: userData.language || 'pt-BR',
+              bio: userData.bio || ''
             },
-            notifications: userData.data.settings?.notifications || prev.notifications,
-            privacy: userData.data.settings?.privacy || prev.privacy,
-            appearance: userData.data.settings?.appearance || prev.appearance,
-            security: userData.data.settings?.security || prev.security
+            notifications: userData.settings?.notifications || prev.notifications,
+            privacy: userData.settings?.privacy || prev.privacy,
+            appearance: userData.settings?.appearance || prev.appearance,
+            security: userData.settings?.security || prev.security
           }))
         } else {
           // Fallback to basic user data
@@ -214,32 +225,25 @@ export default function SettingsPage() {
   const saveSettings = async (section?: string) => {
     setSaving(true)
     try {
-      const response = await fetch('/api/users/profile', {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          firstName: settings.profile.firstName,
-          lastName: settings.profile.lastName,
-          phone: settings.profile.phone,
-          timezone: settings.profile.timezone,
-          bio: settings.profile.bio,
-          settings: {
-            notifications: settings.notifications,
-            privacy: settings.privacy,
-            appearance: settings.appearance,
-            security: {
-              twoFactorEnabled: settings.security.twoFactorEnabled,
-              loginNotifications: settings.security.loginNotifications,
-              sessionTimeout: settings.security.sessionTimeout
-            }
+      const response = await apiClient.patch('/users/profile', {
+        firstName: settings.profile.firstName,
+        lastName: settings.profile.lastName,
+        phone: settings.profile.phone,
+        timezone: settings.profile.timezone,
+        bio: settings.profile.bio,
+        settings: {
+          notifications: settings.notifications,
+          privacy: settings.privacy,
+          appearance: settings.appearance,
+          security: {
+            twoFactorEnabled: settings.security.twoFactorEnabled,
+            loginNotifications: settings.security.loginNotifications,
+            sessionTimeout: settings.security.sessionTimeout
           }
-        })
+        }
       })
       
-      if (response.ok) {
+      if (response.success) {
         console.log('Settings saved successfully:', section || 'all')
         // TODO: Show success toast notification
       } else {
@@ -261,6 +265,11 @@ export default function SettingsPage() {
         [key]: value
       }
     }))
+    
+    // If updating theme, also update ThemeProvider
+    if (section === 'appearance' && key === 'theme') {
+      setTheme(value)
+    }
   }
 
   // Show loading while checking auth
@@ -678,7 +687,7 @@ export default function SettingsPage() {
                   Preferências de Aparência
                 </CardTitle>
                 <CardDescription>
-                  Personalize a aparência do sistema
+                  Personalize a aparência do sistema. Tema atual: <strong>{theme === 'light' ? 'Claro' : theme === 'dark' ? 'Escuro' : 'Sistema'}</strong>
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
