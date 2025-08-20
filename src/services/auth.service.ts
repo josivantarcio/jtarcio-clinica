@@ -31,7 +31,7 @@ export class AuthService {
     const { email, password } = loginData;
 
     // Find user by email
-    const user = await prisma.users.findUnique({
+    const user = await prisma.user.findUnique({
       where: { email: email.toLowerCase() },
       select: {
         id: true,
@@ -65,7 +65,7 @@ export class AuthService {
     const refreshToken = this.generateRefreshToken(user.id);
 
     // Update last login
-    await prisma.users.update({
+    await prisma.user.update({
       where: { id: user.id },
       data: { lastLoginAt: new Date() },
     });
@@ -135,7 +135,7 @@ export class AuthService {
       }
 
       // Get user to check if still active
-      const user = await prisma.users.findUnique({
+      const user = await prisma.user.findUnique({
         where: { id: decoded.userId },
         select: { id: true, role: true, status: true },
       });
@@ -150,5 +150,18 @@ export class AuthService {
     } catch (error) {
       throw new Error('INVALID_REFRESH_TOKEN');
     }
+  }
+
+  async generateTokens(userId: string, role: string): Promise<{
+    accessToken: string;
+    refreshToken: string;
+  }> {
+    const accessToken = this.generateAccessToken(userId, role);
+    const refreshToken = this.generateRefreshToken(userId);
+
+    return {
+      accessToken,
+      refreshToken,
+    };
   }
 }

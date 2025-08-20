@@ -5,6 +5,7 @@
 
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { FinancialPermission } from '@/types/financial';
+import { verifyJWT } from '@/plugins/auth';
 
 interface AuthenticatedRequest extends FastifyRequest {
   user?: {
