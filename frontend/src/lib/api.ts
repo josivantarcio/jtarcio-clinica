@@ -65,6 +65,16 @@ class ApiClient {
         return response
       },
       (error) => {
+        // Handle network errors gracefully in development
+        if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
+          console.warn('🌐 Network Error: Backend server might be down')
+          console.warn('📡 Network Error:', error.message || error)
+          
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('🧪 Development mode: Continuing without backend connection')
+          }
+        }
+        
         if (error.response?.status === 401) {
           // Token expired or invalid - but only redirect if using real auth
           if (this.token && this.token !== 'fake-jwt-token-for-testing') {

@@ -16,6 +16,7 @@ interface AuthState {
   logout: () => void
   loadUser: () => Promise<void>
   clearError: () => void
+  initDevelopmentMode: () => void
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -115,6 +116,26 @@ export const useAuthStore = create<AuthState>()(
           return
         }
         
+        // Skip authentication in development if backend is not running
+        if (process.env.NODE_ENV === 'development' && token === 'fake-jwt-token-for-testing') {
+          console.log('🧪 Development mode: Skipping user profile loading')
+          set({
+            user: {
+              id: 'dev-user-1',
+              firstName: 'Admin',
+              lastName: 'Developer',
+              email: 'admin@dev.local',
+              role: 'ADMIN',
+              isActive: true,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            },
+            isAuthenticated: true,
+            isLoading: false
+          })
+          return
+        }
+        
         set({ isLoading: true })
         
         try {
@@ -133,9 +154,28 @@ export const useAuthStore = create<AuthState>()(
             console.warn('Failed to load user profile, logging out')
             get().logout()
           }
-        } catch (_error) {
+        } catch (error) {
           console.error('Error loading user:', error)
-          get().logout()
+          // In development, don't logout on API errors - backend might be down
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('🧪 Development mode: API error ignored, staying logged in')
+            set({
+              user: {
+                id: 'dev-user-1',
+                firstName: 'Admin',
+                lastName: 'Developer', 
+                email: 'admin@dev.local',
+                role: 'ADMIN',
+                isActive: true,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+              },
+              isAuthenticated: true,
+              isLoading: false
+            })
+          } else {
+            get().logout()
+          }
         } finally {
           set({ isLoading: false })
         }
@@ -143,6 +183,30 @@ export const useAuthStore = create<AuthState>()(
 
       clearError: () => {
         set({ error: null })
+      },
+
+      // Development helper: initialize with fake user if needed
+      initDevelopmentMode: () => {
+        if (process.env.NODE_ENV === 'development') {
+          const { token } = get()
+          if (!token) {
+            console.log('🧪 Development mode: Auto-initializing with fake token')
+            set({
+              token: 'fake-jwt-token-for-testing',
+              user: {
+                id: 'dev-user-1',
+                firstName: 'Admin',
+                lastName: 'Developer',
+                email: 'admin@dev.local',
+                role: 'ADMIN',
+                isActive: true,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+              },
+              isAuthenticated: true
+            })
+          }
+        }
       }
     }),
     {
