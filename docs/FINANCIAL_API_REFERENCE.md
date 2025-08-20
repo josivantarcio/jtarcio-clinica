@@ -710,6 +710,108 @@ Similar ao `/transactions` mas filtra automaticamente por:
 | `endDate` | string | Hoje | Data fim |
 | `groupBy` | string | `doctor` | `doctor`, `specialty`, `month` |
 
+#### Response
+```json
+{
+  "success": true,
+  "data": {
+    "period": {
+      "startDate": "2025-01-01T00:00:00.000Z",
+      "endDate": "2025-08-20T23:59:59.999Z"
+    },
+    "summary": {
+      "totalRevenue": 250000.00,
+      "totalExpenses": 75000.00,
+      "netProfit": 175000.00,
+      "profitMargin": 70.0
+    },
+    "breakdown": [
+      {
+        "category": "Dr. João Silva",
+        "revenue": 45000.00,
+        "expenses": 12000.00,
+        "profit": 33000.00,
+        "margin": 73.3
+      }
+    ]
+  }
+}
+```
+
+### GET `/reports/aging-report`
+**Descrição**: Relatório de aging de recebíveis
+**Autenticação**: Requerida
+**Permissões**: `financial.reports.view`
+
+#### Query Parameters
+| Parâmetro | Tipo | Padrão | Descrição |
+|-----------|------|--------|-----------|
+| `asOfDate` | string | Hoje | Data de referência (YYYY-MM-DD) |
+
+#### Response
+```json
+{
+  "success": true,
+  "data": {
+    "asOfDate": "2025-08-20T00:00:00.000Z",
+    "totalReceivables": 25000.00,
+    "agingBuckets": [
+      {
+        "range": "Current",
+        "amount": 10000.00,
+        "count": 15,
+        "percentage": 40.0
+      },
+      {
+        "range": "1-30 days",
+        "amount": 8000.00,
+        "count": 12,
+        "percentage": 32.0
+      }
+    ]
+  }
+}
+```
+
+### GET `/reports/dre`
+**Descrição**: Demonstração de Resultado do Exercício (DRE)
+**Autenticação**: Requerida
+**Permissões**: `financial.reports.view`
+
+#### Query Parameters
+| Parâmetro | Tipo | Padrão | Descrição |
+|-----------|------|--------|-----------|
+| `startDate` | string | Início do ano | Data início |
+| `endDate` | string | Hoje | Data fim |
+
+#### Response
+```json
+{
+  "success": true,
+  "data": {
+    "period": {
+      "startDate": "2025-01-01T00:00:00.000Z",
+      "endDate": "2025-08-20T23:59:59.999Z"
+    },
+    "receitas": {
+      "receitaBruta": 300000.00,
+      "deducoes": 15000.00,
+      "receitaLiquida": 285000.00
+    },
+    "custos": {
+      "custosVariaveis": 45000.00,
+      "custosFixos": 30000.00,
+      "custoTotal": 75000.00
+    },
+    "resultado": {
+      "lucroOperacional": 210000.00,
+      "lucroLiquido": 195000.00,
+      "margem": 68.4
+    }
+  }
+}
+```
+
 ### GET `/reports/summary`
 **Descrição**: Resumo financeiro geral
 **Autenticação**: Requerida
