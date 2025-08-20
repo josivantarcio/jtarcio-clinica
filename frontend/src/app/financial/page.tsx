@@ -15,7 +15,9 @@ import {
   RefreshCw,
   FileText,
   Users,
-  Calendar
+  Calendar,
+  BarChart3,
+  Shield
 } from "lucide-react"
 import { useAuthStore } from "@/store/auth"
 import { api } from "@/lib/api"
@@ -185,12 +187,56 @@ export default function FinancialDashboard() {
             <RefreshCw className="h-4 w-4 mr-2" />
             Atualizar
           </Button>
-          <Button>
+          <Button onClick={() => window.location.href = '/financial/reports'}>
             <FileText className="h-4 w-4 mr-2" />
             Relatórios
           </Button>
         </div>
       </div>
+
+      {/* Quick Navigation */}
+      <Card>
+        <CardContent className="p-6">
+          <h2 className="text-lg font-semibold mb-4">Navegação Rápida</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Button 
+              variant="outline" 
+              className="h-20 flex flex-col items-center justify-center space-y-2"
+              onClick={() => window.location.href = '/financial/payables'}
+            >
+              <DollarSign className="h-6 w-6 text-red-600" />
+              <span className="text-sm">Contas a Pagar</span>
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              className="h-20 flex flex-col items-center justify-center space-y-2"
+              onClick={() => window.location.href = '/financial/suppliers'}
+            >
+              <Users className="h-6 w-6 text-blue-600" />
+              <span className="text-sm">Fornecedores</span>
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              className="h-20 flex flex-col items-center justify-center space-y-2"
+              onClick={() => window.location.href = '/financial/insurance'}
+            >
+              <Shield className="h-6 w-6 text-green-600" />
+              <span className="text-sm">Convênios</span>
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              className="h-20 flex flex-col items-center justify-center space-y-2"
+              onClick={() => window.location.href = '/financial/reports'}
+            >
+              <BarChart3 className="h-6 w-6 text-purple-600" />
+              <span className="text-sm">Relatórios</span>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Financial Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -313,9 +359,39 @@ export default function FinancialDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-center text-gray-500 py-12">
-                🚧 Módulo de transações em desenvolvimento
-              </p>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <h3 className="font-semibold">Ações Rápidas</h3>
+                  <div className="space-y-2">
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start"
+                      onClick={() => window.location.href = '/financial/transactions'}
+                    >
+                      <FileText className="h-4 w-4 mr-2" />
+                      Ver Todas as Transações
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start"
+                      onClick={() => window.location.href = '/financial/reports'}
+                    >
+                      <BarChart className="h-4 w-4 mr-2" />
+                      Relatórios Detalhados
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="font-semibold">Status</h3>
+                  <div className="text-sm text-gray-600">
+                    <p>• API completa implementada</p>
+                    <p>• Filtros avançados disponíveis</p>
+                    <p>• Integração com dashboard</p>
+                    <p>• Relatórios em tempo real</p>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -331,9 +407,39 @@ export default function FinancialDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-center text-gray-500 py-12">
-                🚧 Módulo de recebíveis em desenvolvimento
-              </p>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <h3 className="font-semibold">Ações Rápidas</h3>
+                  <div className="space-y-2">
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start"
+                      onClick={() => window.location.href = '/financial/receivables'}
+                    >
+                      <DollarSign className="h-4 w-4 mr-2" />
+                      Gerenciar Recebíveis
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start"
+                      onClick={() => window.location.href = '/financial/insurance'}
+                    >
+                      <Shield className="h-4 w-4 mr-2" />
+                      Planos de Convênio
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="font-semibold">Recursos</h3>
+                  <div className="text-sm text-gray-600">
+                    <p>• Gestão completa de convênios</p>
+                    <p>• Aging report automático</p>
+                    <p>• Alertas de vencimento</p>
+                    <p>• Conciliação bancária</p>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
