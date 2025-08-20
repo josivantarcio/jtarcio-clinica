@@ -38,6 +38,12 @@ model User {
   doctorProfile      Doctor?
   notifications      Notification[]
   patientProfile     Patient?
+  
+  // Financial relations
+  patientTransactions   FinancialTransaction[] @relation("PatientTransactions")
+  doctorTransactions    FinancialTransaction[] @relation("DoctorTransactions")
+  createdTransactions   FinancialTransaction[] @relation("CreatedTransactions")
+  createdPayables       AccountsPayable[]      @relation("CreatedPayables")
 
   @@index([email])
   @@index([phone])
@@ -138,6 +144,9 @@ model Appointment {
   patient         User              @relation("PatientAppointments", fields: [patientId], references: [id])
   specialty       Specialty         @relation(fields: [specialtyId], references: [id])
   notifications   Notification[]
+  
+  // Financial relations
+  financialTransactions FinancialTransaction[]
 
   @@index([scheduledAt])
   @@index([patientId])
@@ -692,11 +701,176 @@ model workflows_tags {
   @@index([workflowId], map: "idx_workflows_tags_workflow_id")
 }
 
+// Financial Module Models
+model FinancialTransaction {
+  id                String            @id @default(cuid())
+  appointmentId     String?
+  patientId         String
+  doctorId          String?
+  transactionType   TransactionType
+  categoryId        String?
+  
+  // Amounts
+  grossAmount       Decimal           @db.Decimal(10,2)
+  discountAmount    Decimal           @default(0) @db.Decimal(10,2)
+  taxAmount         Decimal           @default(0) @db.Decimal(10,2)
+  netAmount         Decimal           @db.Decimal(10,2)
+  
+  // Payment
+  paymentMethod     PaymentMethod?
+  paymentDate       DateTime?
+  dueDate           DateTime?
+  installments      Int               @default(1)
+  installmentNumber Int               @default(1)
+  
+  // Insurance/Convênio
+  insuranceId       String?
+  insuranceAuth     String?
+  
+  // Status and notes
+  status            FinancialStatus   @default(PENDING)
+  description       String?
+  notes             String?
+  reconciledAt      DateTime?
+  
+  // Audit fields
+  createdBy         String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  deletedAt         DateTime?
+  
+  // Relations
+  appointment       Appointment?      @relation(fields: [appointmentId], references: [id])
+  patient           User              @relation("PatientTransactions", fields: [patientId], references: [id])
+  doctor            User?             @relation("DoctorTransactions", fields: [doctorId], references: [id])
+  insurance         InsurancePlan?    @relation(fields: [insuranceId], references: [id])
+  category          FinancialCategory? @relation(fields: [categoryId], references: [id])
+  creator           User?             @relation("CreatedTransactions", fields: [createdBy], references: [id])
+  
+  @@index([appointmentId])
+  @@index([patientId])
+  @@index([doctorId])
+  @@index([status])
+  @@index([paymentDate])
+  @@index([dueDate])
+  @@map("financial_transactions")
+}
+
+model InsurancePlan {
+  id                      String            @id @default(cuid())
+  name                    String
+  code                    String?           @unique
+  category                InsuranceCategory
+  contactInfo             Json?
+  
+  // Financial settings
+  defaultDiscountPercentage Decimal?        @db.Decimal(5,2)
+  paymentTerms            Int               @default(30)
+  requiresAuthorization   Boolean           @default(false)
+  
+  // Status
+  isActive                Boolean           @default(true)
+  createdAt               DateTime          @default(now())
+  updatedAt               DateTime          @updatedAt
+  
+  // Relations
+  transactions            FinancialTransaction[]
+  
+  @@map("insurance_plans")
+}
+
+model FinancialCategory {
+  id            String          @id @default(cuid())
+  name          String
+  type          CategoryType
+  parentId      String?
+  color         String?         // HEX color
+  icon          String?
+  isActive      Boolean         @default(true)
+  createdAt     DateTime        @default(now())
+  
+  // Relations
+  parent        FinancialCategory? @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children      FinancialCategory[] @relation("CategoryHierarchy")
+  transactions  FinancialTransaction[]
+  payables      AccountsPayable[]
+  
+  @@map("financial_categories")
+}
+
+model Supplier {
+  id            String          @id @default(cuid())
+  name          String
+  document      String?         @unique // CNPJ/CPF
+  category      SupplierCategory?
+  
+  // Contact
+  email         String?
+  phone         String?
+  address       Json?
+  
+  // Financial
+  paymentTerms  Int             @default(30)
+  creditLimit   Decimal?        @db.Decimal(10,2)
+  
+  // Status
+  isActive      Boolean         @default(true)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  
+  // Relations
+  payables      AccountsPayable[]
+  
+  @@map("suppliers")
+}
+
+model AccountsPayable {
+  id            String          @id @default(cuid())
+  supplierId    String?
+  categoryId    String?
+  
+  // Document
+  documentNumber String?
+  description   String
+  
+  // Amounts
+  grossAmount   Decimal         @db.Decimal(10,2)
+  discountAmount Decimal        @default(0) @db.Decimal(10,2)
+  taxAmount     Decimal         @default(0) @db.Decimal(10,2)
+  netAmount     Decimal         @db.Decimal(10,2)
+  
+  // Dates
+  issueDate     DateTime
+  dueDate       DateTime
+  paymentDate   DateTime?
+  
+  // Status and payment
+  status        PayableStatus   @default(PENDING)
+  paymentMethod PaymentMethod?
+  
+  // Audit
+  createdBy     String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  
+  // Relations
+  supplier      Supplier?       @relation(fields: [supplierId], references: [id])
+  category      FinancialCategory? @relation(fields: [categoryId], references: [id])
+  creator       User?           @relation("CreatedPayables", fields: [createdBy], references: [id])
+  
+  @@index([supplierId])
+  @@index([status])
+  @@index([dueDate])
+  @@index([paymentDate])
+  @@map("accounts_payable")
+}
+
 enum UserRole {
   PATIENT
   DOCTOR
   ADMIN
   RECEPTIONIST
+  FINANCIAL_MANAGER
 }
 
 enum UserStatus {
@@ -743,4 +917,61 @@ enum NotificationStatus {
   SENT
   DELIVERED
   FAILED
+}
+
+// Financial Module Enums
+enum TransactionType {
+  RECEIPT
+  PAYMENT
+  TRANSFER
+  ADJUSTMENT
+}
+
+enum FinancialStatus {
+  PENDING
+  CONFIRMED
+  PAID
+  PARTIAL
+  OVERDUE
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CASH
+  DEBIT_CARD
+  CREDIT_CARD
+  PIX
+  BANK_TRANSFER
+  CHECK
+  INSURANCE
+}
+
+enum InsuranceCategory {
+  PUBLIC
+  PRIVATE
+  CORPORATE
+}
+
+enum CategoryType {
+  INCOME
+  EXPENSE
+  INVESTMENT
+}
+
+enum SupplierCategory {
+  MEDICAL_SUPPLIES
+  EQUIPMENT
+  SERVICES
+  PHARMACEUTICALS
+  OFFICE_SUPPLIES
+  UTILITIES
+  OTHER
+}
+
+enum PayableStatus {
+  PENDING
+  APPROVED
+  PAID
+  CANCELLED
 }

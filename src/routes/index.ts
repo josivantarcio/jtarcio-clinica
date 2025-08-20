@@ -10,6 +10,7 @@ import { availabilityRoutes } from './availability';
 import aiChatRoutes from './ai-chat';
 import { auditRoutes } from './audit';
 import { analyticsRoutes } from './analytics';
+import financialRoutes from './financial';
 
 export async function registerRoutes(fastify: FastifyInstance): Promise<void> {
   const apiPrefix = `/api/${env.API_VERSION}`;
@@ -30,6 +31,7 @@ export async function registerRoutes(fastify: FastifyInstance): Promise<void> {
   // await fastify.register(aiChatRoutes, { prefix: apiPrefix }); // Temporarily disabled due to ChromaDB issue
   // await fastify.register(auditRoutes, { prefix: apiPrefix }); // Temporarily disabled due to middleware issue
   await fastify.register(analyticsRoutes, { prefix: apiPrefix }); // ✅ Re-enabled - route conflict resolved
+  await fastify.register(financialRoutes, { prefix: `${apiPrefix}/financial` }); // ✅ Financial module routes
 
   // Root endpoint
   fastify.get('/', async (_request, _reply) => {
@@ -62,6 +64,7 @@ export async function registerRoutes(fastify: FastifyInstance): Promise<void> {
         `${apiPrefix}/chat`,
         `${apiPrefix}/audit`,
         `${apiPrefix}/analytics`,
+        `${apiPrefix}/financial`,
       ],
     };
   });

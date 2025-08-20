@@ -2,9 +2,38 @@
 
 ## Overview
 
-EO Clínica is a comprehensive medical clinic scheduling system that integrates AI-powered conversations, automated workflows, and complete medical appointment management. **Version 1.3.6** features complete CPF validation system, backend stability with resolved health check issues, and production-ready infrastructure.
+EO Clínica is a comprehensive medical clinic scheduling system that integrates AI-powered conversations, automated workflows, and complete medical appointment management. **Version 1.4.0** features a complete financial management module with real-time KPIs, transaction management, insurance integration, and advanced financial reporting - all with real PostgreSQL database connections.
 
-## 🚀 Latest Updates - Version 1.3.6 (August 19, 2025)
+## 🚀 Latest Updates - Version 1.4.0 (August 20, 2025)
+
+### 💰 **Módulo Financeiro - IMPLEMENTADO COMPLETAMENTE** 
+- **🏗️ Foundation Complete**: Database schema, migrations, tipos TypeScript
+- **🔐 Authentication System**: Role-based access (ADMIN, FINANCIAL_MANAGER, DOCTOR)
+- **💳 Financial Transactions**: CRUD completo com conexões reais ao PostgreSQL
+- **📊 Real-Time Dashboard**: KPIs financeiros calculados em tempo real
+- **📈 Advanced Reports**: Cash flow, lucratividade, aging analysis
+- **🏥 Insurance Integration**: Planos de convênio com cálculo de cobertura
+- **🏢 Supplier Management**: Gestão de fornecedores por categoria
+- **📁 Hierarchical Categories**: Sistema de categorias financeiras hierárquico
+- **📥 Accounts Receivable**: Controle de recebíveis com aging buckets
+- **📤 Accounts Payable**: Workflow de aprovação de contas a pagar
+- **🌐 8 API Endpoints**: Health, dashboard, transactions, receivables, payables, insurance, suppliers, categories, reports
+- **📋 No Mock Data**: 100% conexões reais com banco PostgreSQL conforme solicitado
+- **📚 Complete Documentation**: Documentação técnica e referência da API
+- **✅ Phase 1 Complete**: Foundation pronta, aguardando próximas fases
+
+### 🎯 **Endpoints Financeiros Implementados**
+- **GET** `/api/v1/financial/health` - Health check (público)
+- **GET** `/api/v1/financial/dashboard` - Dashboard com KPIs em tempo real
+- **GET/POST/PUT/DELETE** `/api/v1/financial/transactions` - Transações financeiras
+- **GET** `/api/v1/financial/receivables` - Contas a receber com aging analysis
+- **GET/POST/PUT** `/api/v1/financial/payables` - Contas a pagar com workflow
+- **GET/POST/PUT** `/api/v1/financial/insurance` - Planos de convênio
+- **GET/POST/PUT** `/api/v1/financial/suppliers` - Gestão de fornecedores
+- **GET/POST/PUT** `/api/v1/financial/categories` - Categorias hierárquicas
+- **GET** `/api/v1/financial/reports/*` - Relatórios financeiros avançados
+
+## 🚀 Previous Updates - Version 1.3.6 (August 19, 2025)
 
 ### 🔐 **CPF Validation System - IMPLEMENTADO COMPLETAMENTE**
 - **✅ Frontend Validation**: CPF validation padronizada em todos os formulários (Médicos, Pacientes, Agendamento Passo 4, Usuários)
@@ -379,10 +408,17 @@ For detailed frontend documentation, see: [`frontend/README.md`](frontend/README
 
 The system includes comprehensive models for:
 
-- **Users**: Patients, doctors, admins, and receptionists
-- **Appointments**: Complete scheduling with status tracking
+- **Users**: Patients, doctors, admins, receptionists, and financial managers
+- **Appointments**: Complete scheduling with status tracking and financial integration
 - **Medical Specialties**: Configurable medical specialties
 - **Availability**: Doctor availability management
+- **Financial Module**: Complete financial management system
+  - **Financial Transactions**: Revenue and payment tracking
+  - **Accounts Payable**: Supplier management and payment workflow
+  - **Accounts Receivable**: Patient billing and aging analysis
+  - **Insurance Plans**: Health insurance coverage and calculations
+  - **Suppliers**: Vendor management by category
+  - **Financial Categories**: Hierarchical expense/income categorization
 - **Conversations**: AI conversation history
 - **Audit Logs**: LGPD compliance and security tracking
 
@@ -481,6 +517,28 @@ The system seeds with default users (password: `Admin123!`):
 - `POST /api/v1/users` - Create new user/patient (with CPF validation)
 - `GET /api/v1/users/check-cpf/:cpf` - Check CPF uniqueness with validation
 - `DELETE /api/v1/users/:id` - Delete user (soft delete)
+
+### Financial Management
+- `GET /api/v1/financial/health` - Financial module health check (public)
+- `GET /api/v1/financial/dashboard` - Financial KPIs and dashboard data
+- `GET /api/v1/financial/dashboard/kpi/:metric` - Specific KPI with historical data
+- `GET/POST/PUT/DELETE /api/v1/financial/transactions` - Financial transactions CRUD
+- `GET /api/v1/financial/receivables` - Accounts receivable with aging analysis
+- `GET /api/v1/financial/receivables/overdue` - Overdue receivables
+- `POST /api/v1/financial/receivables/:id/mark-paid` - Mark receivable as paid
+- `GET/POST/PUT /api/v1/financial/payables` - Accounts payable management
+- `POST /api/v1/financial/payables/:id/approve` - Approve payable for payment
+- `GET /api/v1/financial/payables/overdue/list` - Overdue payables
+- `GET/POST/PUT/DELETE /api/v1/financial/insurance` - Insurance plans management
+- `POST /api/v1/financial/insurance/:id/calculate-coverage` - Calculate insurance coverage
+- `GET/POST/PUT/DELETE /api/v1/financial/suppliers` - Supplier management
+- `GET /api/v1/financial/suppliers/top-suppliers` - Top suppliers by volume
+- `GET/POST/PUT/DELETE /api/v1/financial/categories` - Financial categories (hierarchical)
+- `GET /api/v1/financial/categories/tree/structure` - Category tree structure
+- `GET /api/v1/financial/reports/cash-flow` - Cash flow reports
+- `GET /api/v1/financial/reports/profitability` - Profitability analysis
+- `GET /api/v1/financial/reports/receivables-aging` - Receivables aging report
+- `GET /api/v1/financial/reports/summary` - Financial summary report
 
 ### CPF Validation System ✅ NEW
 - **Brazilian Algorithm**: Complete CPF validation with digit verification
@@ -682,7 +740,14 @@ MIT License - see LICENSE file for details.
 - **📋 Aba Logs**: Sistema de auditoria REAL com PostgreSQL AuditLog table  
 - **🔧 Aba Manutenção**: Backup, limpeza DB, otimização, verificação segurança
 
-### 📚 Documentação Atualizada v1.3.2
+### 📚 Documentação Atualizada v1.4.0
+
+#### 💰 Financial Module Documentation
+- [**FINANCIAL_MODULE.md**](./FINANCIAL_MODULE.md) - Complete financial management system documentation
+- [**FINANCIAL_API_REFERENCE.md**](./FINANCIAL_API_REFERENCE.md) - Comprehensive API reference for financial endpoints
+- [**FINANCIAL_MODULE_CHECKLIST.md**](./FINANCIAL_MODULE_CHECKLIST.md) - Implementation progress tracking
+
+#### 🏥 Medical System Documentation  
 - [BOOKING_SYSTEM_PREMIUM.md](./BOOKING_SYSTEM_PREMIUM.md) - Sistema de agendamento premium com dark theme
 - [UI_UX_IMPROVEMENTS_v1.2.9.md](./UI_UX_IMPROVEMENTS_v1.2.9.md) - Melhorias visuais, glassmorphism e localização PT-BR
 - **CHARTS_PREMIUM_v1.3.1.md** - Sistema de gráficos profissionais e educação No-Show
