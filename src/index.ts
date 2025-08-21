@@ -1,10 +1,11 @@
 import Fastify from 'fastify';
 import { env } from '@/config/env';
 import { logger, httpLogger } from '@/config/logger';
-import { connectDatabase } from '@/config/database';
-import { connectRedis } from '@/config/redis';
+import { connectDatabase, prisma } from '@/config/database';
+import { connectRedis, redis } from '@/config/redis';
 import { registerPlugins } from '@/plugins';
 import { registerRoutes } from '@/routes';
+import { ServiceFactory } from '@/services';
 
 // Create Fastify instance
 const fastify = Fastify({
@@ -48,6 +49,9 @@ const start = async (): Promise<void> => {
     // Connect to external services
     await connectDatabase();
     await connectRedis();
+
+    // Initialize service container
+    await ServiceFactory.create(prisma, redis, logger);
 
     // Register plugins
     await registerPlugins(fastify);

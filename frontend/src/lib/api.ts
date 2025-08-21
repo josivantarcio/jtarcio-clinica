@@ -7,7 +7,7 @@ class ApiClient {
 
   constructor() {
     // Always use the direct backend URL since we don't have Next.js API routes
-    const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002'
+    const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
     
     console.log('🌐 Inicializando API Client com baseURL:', baseURL || 'proxy local')
     

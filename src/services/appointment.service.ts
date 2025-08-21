@@ -553,30 +553,8 @@ export class AppointmentService {
         prisma.appointment.findMany({
           where,
           include: {
-            patient: {
-              include: {
-                user: {
-                  select: {
-                    id: true,
-                    firstName: true,
-                    lastName: true,
-                    email: true,
-                    phone: true,
-                  },
-                },
-              },
-            },
-            doctor: {
-              include: {
-                user: {
-                  select: {
-                    id: true,
-                    firstName: true,
-                    lastName: true,
-                  },
-                },
-              },
-            },
+            patient: true,
+            doctor: true,
             specialty: true,
           },
           orderBy: { scheduledAt: 'desc' },

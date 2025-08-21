@@ -226,7 +226,7 @@ export async function appointmentRoutes(
 
         const result = await services.appointmentService.searchAppointments(
           filters,
-          userId,
+          _userId,
           userRole,
         );
 
@@ -240,6 +240,15 @@ export async function appointmentRoutes(
           },
         });
       } catch (error) {
+        console.error('=== APPOINTMENTS ERROR DETAILS ===');
+        console.error('Error:', error);
+        console.error('Error message:', error?.message);
+        console.error('Error stack:', error?.stack);
+        console.error('Query:', request.query);
+        console.error('User ID:', _userId);
+        console.error('User Role:', userRole);
+        console.error('=====================================');
+
         fastify.log.error('Error getting appointments', {
           error,
           query: request.query,
@@ -310,7 +319,7 @@ export async function appointmentRoutes(
         const appointment =
           await services.appointmentService.getAppointmentById(
             request.params.id,
-            userId,
+            _userId,
           );
 
         if (!appointment) {
@@ -489,7 +498,7 @@ export async function appointmentRoutes(
         const result = await services.appointmentService.rescheduleAppointment(
           request.params.id,
           request.body,
-          userId,
+          _userId,
         );
 
         return reply.send({
@@ -581,7 +590,7 @@ export async function appointmentRoutes(
         const result = await services.appointmentService.cancelAppointment(
           request.params.id,
           request.body,
-          userId,
+          _userId,
         );
 
         return reply.send({
