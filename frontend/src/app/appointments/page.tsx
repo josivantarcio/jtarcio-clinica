@@ -72,12 +72,16 @@ export default function AppointmentsPage() {
       
       const response = await apiClient.getAppointments(params)
       if (response.success) {
-        setAppointments(response.data || [])
+        // Ensure we always set an array
+        const appointmentsData = response.data?.appointments || response.data || []
+        setAppointments(Array.isArray(appointmentsData) ? appointmentsData : [])
       } else {
         console.error('Error loading appointments:', response.error)
+        setAppointments([])
       }
     } catch (error) {
       console.error('Error loading appointments:', error)
+      setAppointments([])
     } finally {
       setLoading(false)
     }
@@ -97,6 +101,11 @@ export default function AppointmentsPage() {
 
   // Filter appointments based on status and user role
   const filterAppointments = (status: string) => {
+    // Ensure appointments is always an array
+    if (!Array.isArray(appointments)) {
+      return []
+    }
+
     let filtered = appointments
 
     // Filter by user role
@@ -121,7 +130,7 @@ export default function AppointmentsPage() {
       )
     }
 
-    return filtered
+    return filtered || []
   }
 
   const getStatusBadge = (status: string) => {
