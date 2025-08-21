@@ -117,7 +117,7 @@ export function Sidebar({ className, isOpen, onClose, isCollapsed = false }: Sid
   // Filter navigation items based on user role
   const visibleItems = navigationItems.filter(item => 
     !item.roles || !user?.role || item.roles.includes(user.role)
-  )
+  ) || []
 
   return (
     <div className={cn(
@@ -157,9 +157,11 @@ export function Sidebar({ className, isOpen, onClose, isCollapsed = false }: Sid
 
       {/* Navigation */}
       <nav className="flex-1 space-y-1 p-2">
-        {visibleItems.map((item) => {
+        {visibleItems && visibleItems.map((item) => {
+          if (!item || !item.href) return null
+          
           const isActive = pathname === item.href || 
-            (item.href !== '/dashboard' && pathname.startsWith(item.href))
+            (item.href !== '/dashboard' && pathname?.startsWith(item.href))
           
           return (
             <Link

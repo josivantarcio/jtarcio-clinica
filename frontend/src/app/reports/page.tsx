@@ -270,18 +270,21 @@ export default function ReportsPage() {
   }
 
   const formatPercentage = (value: number) => {
-    return `${value > 0 ? '+' : ''}${value.toFixed(1)}%`
+    const safeValue = value || 0
+    return `${safeValue > 0 ? '+' : ''}${safeValue.toFixed(1)}%`
   }
 
   const getGrowthIcon = (growth: number) => {
-    if (growth > 0) return <ArrowUp className="h-4 w-4 text-green-600" />
-    if (growth < 0) return <ArrowDown className="h-4 w-4 text-red-600" />
+    const safeGrowth = growth || 0
+    if (safeGrowth > 0) return <ArrowUp className="h-4 w-4 text-green-600" />
+    if (safeGrowth < 0) return <ArrowDown className="h-4 w-4 text-red-600" />
     return <Minus className="h-4 w-4 text-gray-600" />
   }
 
   const getGrowthColor = (growth: number) => {
-    if (growth > 0) return 'text-green-600'
-    if (growth < 0) return 'text-red-600'
+    const safeGrowth = growth || 0
+    if (safeGrowth > 0) return 'text-green-600'
+    if (safeGrowth < 0) return 'text-red-600'
     return 'text-gray-600'
   }
 
@@ -298,7 +301,7 @@ export default function ReportsPage() {
       'DADOS FINANCEIROS',
       `Receita Total,${reportData.financial.totalRevenue}`,
       `Receita Mensal,${reportData.financial.monthlyRevenue}`,
-      `Ticket Médio,${reportData.financial.averageTicket.toFixed(2)}`,
+      `Ticket Médio,${(reportData.financial.averageTicket || 0).toFixed(2)}`,
       `Pagamentos Pendentes,${reportData.financial.pendingPayments}`,
       `Crescimento da Receita,${reportData.financial.revenueGrowth}%`,
       '',
@@ -356,26 +359,26 @@ export default function ReportsPage() {
   const mainStats = [
     {
       title: 'Receita Total',
-      value: formatCurrency(reportData.financial.totalRevenue),
-      subtitle: `${formatCurrency(reportData.financial.monthlyRevenue)} este mês`,
-      growth: reportData.financial.revenueGrowth,
+      value: formatCurrency(reportData.financial.totalRevenue || 0),
+      subtitle: `${formatCurrency(reportData.financial.monthlyRevenue || 0)} este mês`,
+      growth: reportData.financial.revenueGrowth || 0,
       icon: DollarSign,
       color: 'text-green-600',
       bgColor: 'bg-green-50'
     },
     {
       title: 'Total de Consultas',
-      value: reportData.appointments.totalAppointments.toLocaleString(),
-      subtitle: `${reportData.appointments.completedAppointments} concluídas`,
-      growth: reportData.appointments.appointmentGrowth,
+      value: (reportData.appointments.totalAppointments || 0).toLocaleString(),
+      subtitle: `${reportData.appointments.completedAppointments || 0} concluídas`,
+      growth: reportData.appointments.appointmentGrowth || 0,
       icon: Calendar,
       color: 'text-blue-600',
       bgColor: 'bg-blue-50'
     },
     {
       title: 'Pacientes Ativos',
-      value: reportData.patients.totalPatients.toLocaleString(),
-      subtitle: `${reportData.patients.newPatients} novos este mês`,
+      value: (reportData.patients.totalPatients || 0).toLocaleString(),
+      subtitle: `${reportData.patients.newPatients || 0} novos este mês`,
       growth: analyticsData?.patients?.growthPercentage || 0,
       icon: Users,
       color: 'text-purple-600',
@@ -383,7 +386,7 @@ export default function ReportsPage() {
     },
     {
       title: 'Satisfação',
-      value: `${reportData.patients.patientSatisfaction}/5.0`,
+      value: `${reportData.patients.patientSatisfaction || 0}/5.0`,
       subtitle: `Base: ${analyticsData?.patients?.totalReviews || 0} avaliações`,
       growth: analyticsData?.patients?.satisfactionGrowth || 0,
       icon: Award,
@@ -629,10 +632,10 @@ export default function ReportsPage() {
                             const total = reportData.appointments.totalAppointments || 1
                             const completed = reportData.appointments.completedAppointments
                             const cancelled = reportData.appointments.cancelledAppointments
-                            const noShow = Math.round(total * (reportData.appointments.noShowRate / 100))
+                            const noShow = Math.round(total * ((reportData.appointments.noShowRate || 0) / 100))
                             
-                            const completedPercentage = (completed / total) * 100
-                            const cancelledPercentage = (cancelled / total) * 100
+                            const completedPercentage = ((completed || 0) / total) * 100
+                            const cancelledPercentage = ((cancelled || 0) / total) * 100
                             const noShowPercentage = (noShow / total) * 100
                             
                             return (
@@ -699,7 +702,7 @@ export default function ReportsPage() {
                         <div className="text-sm font-medium">
                           {reportData.appointments.completedAppointments} 
                           <span className="text-muted-foreground ml-1">
-                            ({Math.round((reportData.appointments.completedAppointments / reportData.appointments.totalAppointments) * 100)}%)
+                            ({Math.round(((reportData.appointments.completedAppointments || 0) / (reportData.appointments.totalAppointments || 1)) * 100)}%)
                           </span>
                         </div>
                       </div>
@@ -712,7 +715,7 @@ export default function ReportsPage() {
                         <div className="text-sm font-medium">
                           {reportData.appointments.cancelledAppointments}
                           <span className="text-muted-foreground ml-1">
-                            ({Math.round((reportData.appointments.cancelledAppointments / reportData.appointments.totalAppointments) * 100)}%)
+                            ({Math.round(((reportData.appointments.cancelledAppointments || 0) / (reportData.appointments.totalAppointments || 1)) * 100)}%)
                           </span>
                         </div>
                       </div>
@@ -723,7 +726,7 @@ export default function ReportsPage() {
                           <span className="text-sm" title="Pacientes que faltaram à consulta sem avisar">No-show</span>
                         </div>
                         <div className="text-sm font-medium">
-                          {Math.round(reportData.appointments.totalAppointments * (reportData.appointments.noShowRate / 100))}
+                          {Math.round((reportData.appointments.totalAppointments || 0) * ((reportData.appointments.noShowRate || 0) / 100))}
                           <span className="text-muted-foreground ml-1">
                             ({reportData.appointments.noShowRate}%)
                           </span>
@@ -750,7 +753,7 @@ export default function ReportsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="text-center space-y-2">
                     <div className="text-3xl font-bold text-green-600">
-                      {formatCurrency(reportData.financial.averageTicket)}
+                      {formatCurrency(reportData.financial.averageTicket || 0)}
                     </div>
                     <div className="text-sm text-muted-foreground">Ticket Médio</div>
                     <div className="flex items-center justify-center space-x-1 text-green-600">
@@ -796,19 +799,19 @@ export default function ReportsPage() {
                 <CardContent className="space-y-4">
                   <div className="flex justify-between items-center py-2">
                     <span className="text-muted-foreground">Receita Bruta</span>
-                    <span className="font-semibold">{formatCurrency(reportData.financial.totalRevenue)}</span>
+                    <span className="font-semibold">{formatCurrency(reportData.financial.totalRevenue || 0)}</span>
                   </div>
                   <div className="flex justify-between items-center py-2">
                     <span className="text-muted-foreground">Receita Líquida</span>
-                    <span className="font-semibold">{formatCurrency(analyticsData?.financial?.netRevenue || reportData.financial.totalRevenue)}</span>
+                    <span className="font-semibold">{formatCurrency(analyticsData?.financial?.netRevenue || reportData.financial.totalRevenue || 0)}</span>
                   </div>
                   <div className="flex justify-between items-center py-2">
                     <span className="text-muted-foreground">Ticket Médio</span>
-                    <span className="font-semibold">{formatCurrency(reportData.financial.averageTicket)}</span>
+                    <span className="font-semibold">{formatCurrency(reportData.financial.averageTicket || 0)}</span>
                   </div>
                   <div className="flex justify-between items-center py-2 border-t">
                     <span className="text-red-600">Pendências</span>
-                    <span className="font-semibold text-red-600">{formatCurrency(reportData.financial.pendingPayments)}</span>
+                    <span className="font-semibold text-red-600">{formatCurrency(reportData.financial.pendingPayments || 0)}</span>
                   </div>
                 </CardContent>
               </Card>
@@ -826,7 +829,7 @@ export default function ReportsPage() {
                           <div className="flex justify-between items-center">
                             <span className="text-sm font-medium">{item.name || item.specialty}</span>
                             <span className="text-sm text-muted-foreground">
-                              {formatCurrency(item.revenue)} ({item.percentage?.toFixed(1) || 0}%)
+                              {formatCurrency(item.revenue || 0)} ({(item.percentage || 0).toFixed(1)}%)
                             </span>
                           </div>
                           <div className="w-full bg-gray-200 rounded-full h-2">

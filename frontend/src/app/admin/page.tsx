@@ -137,7 +137,7 @@ export default function AdminPage() {
       }
 
       // Fazer chamadas paralelas para todas as APIs necessárias
-      const [analyticsResponse, usersResponse, auditResponse] = await Promise.all([
+      const [analyticsResponse, usersResponse] = await Promise.all([
         // Analytics para estatísticas do sistema
         fetch('/api/v1/analytics?period=month', {
           headers: {
@@ -151,15 +151,12 @@ export default function AdminPage() {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           }
-        }),
-        // Logs de auditoria
-        fetch('/api/v1/audit/logs?limit=20', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
         })
       ])
+
+      // Logs de auditoria - API não implementada ainda
+      // TODO: Implementar API de auditoria /api/v1/audit/logs
+      let auditResponse = null
 
       let analyticsData = null
       let usersData = null
@@ -181,15 +178,8 @@ export default function AdminPage() {
         console.warn('Users API not fully implemented, using sample data')
       }
 
-      // Processar resposta do Audit
-      if (auditResponse.ok) {
-        const audit = await auditResponse.json()
-        // A API retorna { data: { logs: [...] } }, extrair apenas os logs
-        auditData = audit.data?.logs || []
-      } else {
-        console.warn('Audit API not available, using sample data')
-        auditData = []
-      }
+      // Processar resposta do Audit - API não implementada, usar dados vazios
+      auditData = []
 
       // Construir dados administrativos com dados reais ou fallback
       const adminDataFromAPI: AdminData = {

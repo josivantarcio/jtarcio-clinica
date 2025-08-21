@@ -118,7 +118,10 @@ export default function SchedulePage() {
       })
 
       if (response.success && response.data) {
-        const realSchedule = formatAppointmentsToSchedule(response.data, startDate, endDate, viewMode)
+        // Handle both response.data.appointments and response.data array formats
+        const appointmentsData = response.data.appointments || response.data || []
+        const safeAppointments = Array.isArray(appointmentsData) ? appointmentsData : []
+        const realSchedule = formatAppointmentsToSchedule(safeAppointments, startDate, endDate, viewMode)
         setScheduleData(realSchedule)
       } else {
         // No appointments found - create empty schedule
@@ -148,12 +151,15 @@ export default function SchedulePage() {
     const schedule: DaySchedule[] = []
     const days = viewMode === 'day' ? 1 : viewMode === 'week' ? 7 : 30
     
+    // Ensure appointments is always an array
+    const safeAppointments = Array.isArray(appointments) ? appointments : []
+    
     for (let i = 0; i < days; i++) {
       const currentDay = new Date(startDate)
       currentDay.setDate(startDate.getDate() + i)
       
       // Filter appointments for this day
-      const dayAppointments = appointments.filter(apt => {
+      const dayAppointments = safeAppointments.filter(apt => {
         const aptDate = new Date(apt.scheduledAt)
         return aptDate.toDateString() === currentDay.toDateString()
       })

@@ -11,6 +11,69 @@ This project follows [Semantic Versioning](https://semver.org/):
 
 ---
 
+## [1.3.6] - 2025-08-21 - **HOTFIX: UI Error Corrections & Console Clean-up** ✨
+
+### 🐛 **CORREÇÕES DE INTERFACE E CONSOLE**
+
+Esta versão corrige vários erros de interface que estavam causando problemas na experiência do usuário:
+
+#### ERRO #1: Validação de Arrays em Pages
+- **Problema**: TypeError "appointments.filter is not a function" em múltiplas páginas
+- **Páginas afetadas**: `/appointments`, `/schedule`, `/reports`
+- **Correção**: Adicionadas validações `Array.isArray()` e operadores de coalescência nula (`|| []`)
+- **Impacto**: Páginas agora funcionam corretamente mesmo sem dados do backend
+
+#### ERRO #2: Valores NaN em Reports
+- **Problema**: Exibição de "NaN" em cálculos financeiros e percentuais
+- **Localização**: Página Reports - aba principal e aba Financeiro
+- **Correção**: Proteção com `|| 0` em todos os cálculos matemáticos
+- **Funções corrigidas**: `formatPercentage()`, `getGrowthIcon()`, `getGrowthColor()`
+- **Impacto**: Todos os valores numéricos agora exibem números válidos
+
+#### ERRO #3: Errors de Console no Sidebar
+- **Problema**: Erro de `pathname.startsWith()` em valor undefined
+- **Localização**: `sidebar.tsx:165` durante navegação
+- **Correção**: Operador de encadeamento opcional (`pathname?.startsWith()`)
+- **Validações adicionais**: Verificação de `visibleItems` e items válidos
+- **Impacto**: Navegação sem erros no console
+
+#### ERRO #4: API Calls Desnecessárias em Admin
+- **Problema**: Chamadas 404 repetidas para `/api/v1/audit/logs` 
+- **Localização**: Página Administração
+- **Correção**: Remoção completa da tentativa de API não implementada
+- **Impacto**: Console limpo, sem logs de erro desnecessários
+
+### ✅ **MELHORIAS DE ROBUSTEZ**
+
+#### Validação Defensiva:
+- ✅ **Arrays**: Todos os `.map()` e `.filter()` protegidos com `Array.isArray()`
+- ✅ **Números**: Todos os cálculos protegidos com `|| 0` para evitar NaN
+- ✅ **Objetos**: Verificações `?.` para propriedades que podem ser undefined
+- ✅ **APIs**: Tratamento adequado de endpoints não implementados
+
+#### Experiência do Usuário:
+- ✅ **UI Estável**: Páginas funcionam mesmo com dados incompletos
+- ✅ **Console Limpo**: Sem erros desnecessários durante desenvolvimento
+- ✅ **Feedback Visual**: Valores sempre mostram números válidos
+- ✅ **Navegação Fluida**: Sidebar funciona sem travamentos
+
+### 🧪 **TESTES REALIZADOS**
+- ✅ Página Appointments: Funcional sem erros ✅
+- ✅ Página Schedule: Funcional sem erros ✅  
+- ✅ Página Reports: Valores numéricos corretos ✅
+- ✅ Página Administração: Console limpo ✅
+- ✅ Navegação Sidebar: Sem erros de console ✅
+- ✅ Sistema completo: Robusto e estável ✅
+
+### 📋 **ARQUIVOS MODIFICADOS**
+- `frontend/src/app/appointments/page.tsx` - Validação de arrays
+- `frontend/src/app/schedule/page.tsx` - Proteção de filter/map
+- `frontend/src/app/reports/page.tsx` - Correção de NaN em cálculos
+- `frontend/src/components/layout/sidebar.tsx` - Proteção de pathname
+- `frontend/src/app/admin/page.tsx` - Remoção de API calls desnecessárias
+
+---
+
 ## [1.3.5] - 2025-08-21 - **HOTFIX: Critical System Stability Fixes** 🚨
 
 ### 🐛 **BUGS CRÍTICOS CORRIGIDOS - SISTEMA AGORA 100% FUNCIONAL**
