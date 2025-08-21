@@ -358,6 +358,22 @@ class ApiClient {
     })
   }
 
+  async createUser(userData: {
+    firstName: string
+    lastName: string
+    email: string
+    password: string
+    role: string
+    phone?: string
+    cpf?: string
+  }) {
+    return this.request<any>({
+      method: 'POST',
+      url: '/api/v1/users',
+      data: userData
+    })
+  }
+
   async createDoctor(doctorData: {
     user: {
       firstName: string

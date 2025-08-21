@@ -546,9 +546,9 @@ start_local_services() {
     pkill -f "tsx.*src/index" 2>/dev/null || true
     sleep 3
     
-    # Start backend locally
+    # Start backend locally using production index.ts
     log_step "Iniciando Backend local (porta 3000)..."
-    npm run start &
+    PORT=3000 npx tsx src/index.ts &
     BACKEND_PID=$!
     log_info "Backend PID: $BACKEND_PID"
     

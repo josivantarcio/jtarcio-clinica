@@ -34,7 +34,7 @@ export const requireFinancialAccess = async (
       role: 'ADMIN',
       email: 'admin@dev.local',
       firstName: 'Admin',
-      lastName: 'Developer'
+      lastName: 'Developer',
     };
   }
 

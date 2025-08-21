@@ -56,7 +56,7 @@ export default function FinancialDashboard() {
       setError(null)
       
       const response = await apiClient.get('/api/v1/financial/dashboard')
-      if (response.data.success) {
+      if (response.data && response.data.success) {
         setDashboardData(response.data.data)
       } else {
         throw new Error('Failed to load financial data')

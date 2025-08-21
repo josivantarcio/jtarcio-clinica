@@ -282,6 +282,12 @@ export default function AdminPage() {
     setIsModalOpen(true)
   }
 
+  const handleCreateUser = () => {
+    setSelectedUser(null)
+    setModalMode('create')
+    setIsModalOpen(true)
+  }
+
   const handleSaveUser = async (updatedData: any) => {
     try {
       const response = await apiClient.updateUser(updatedData.id, {
@@ -347,6 +353,36 @@ export default function AdminPage() {
     } catch (error) {
       console.error('Error activating user:', error)
       toastUtils.error('Erro ao reativar', 'Não foi possível reativar o usuário')
+      throw error
+    }
+  }
+
+  const handleCreateUserSave = async (userData: any) => {
+    try {
+      // Transform data to match API format
+      const [firstName, ...lastNameParts] = (userData.name || '').split(' ')
+      const lastName = lastNameParts.join(' ')
+      
+      const createData = {
+        firstName: firstName || '',
+        lastName: lastName || '',
+        email: userData.email || '',
+        password: userData.password || 'TempPassword123!',
+        role: userData.role || 'PATIENT',
+        phone: userData.phone || '',
+        cpf: userData.cpf || ''
+      }
+
+      const response = await apiClient.createUser(createData)
+      
+      if (response.success) {
+        // Reload admin data to include new user
+        await loadAdminData()
+        toastUtils.success('Usuário criado', 'O novo usuário foi criado com sucesso')
+      }
+    } catch (error) {
+      console.error('Error creating user:', error)
+      toastUtils.error('Erro ao criar usuário', 'Não foi possível criar o usuário')
       throw error
     }
   }
@@ -650,7 +686,7 @@ export default function AdminPage() {
                       Administre usuários, permissões e acessos do sistema
                     </CardDescription>
                   </div>
-                  <Button>
+                  <Button onClick={handleCreateUser}>
                     <Plus className="h-4 w-4 mr-2" />
                     Novo Usuário
                   </Button>
@@ -1037,6 +1073,7 @@ export default function AdminPage() {
           onSave={handleSaveUser}
           onSuspend={handleSuspendUserConfirm}
           onActivate={handleActivateUser}
+          onCreate={handleCreateUserSave}
         />
       </div>
     </AppLayout>

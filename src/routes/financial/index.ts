@@ -54,7 +54,9 @@ export default async function financialRoutes(fastify: FastifyInstance) {
     fastify.addHook('preHandler', requireFinancialAccess);
 
     // Register sub-routes with authentication
-    await fastify.register(import('./dashboard-simple'), { prefix: '/dashboard' });
+    await fastify.register(import('./dashboard-simple'), {
+      prefix: '/dashboard',
+    });
     // TODO: Re-enable other routes after testing
     // await fastify.register(import('./transactions'), {
     //   prefix: '/transactions',

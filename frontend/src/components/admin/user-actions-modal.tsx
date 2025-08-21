@@ -57,10 +57,11 @@ interface UserActionsModalProps {
   user: User | null
   isOpen: boolean
   onClose: () => void
-  mode: 'view' | 'edit' | 'suspend'
+  mode: 'view' | 'edit' | 'suspend' | 'create'
   onSave?: (userData: Partial<User>) => void
   onSuspend?: (userId: string, reason: string) => void
   onActivate?: (userId: string) => void
+  onCreate?: (userData: any) => void
 }
 
 export function UserActionsModal({
@@ -70,31 +71,43 @@ export function UserActionsModal({
   mode,
   onSave,
   onSuspend,
-  onActivate
+  onActivate,
+  onCreate
 }: UserActionsModalProps) {
-  const [isEditing, setIsEditing] = useState(mode === 'edit')
+  const [isEditing, setIsEditing] = useState(mode === 'edit' || mode === 'create')
   const [editData, setEditData] = useState<Partial<User>>({})
   const [suspendReason, setSuspendReason] = useState('')
   const [loading, setLoading] = useState(false)
 
-  if (!user) return null
+  if (!user && mode !== 'create') return null
 
   const handleSave = async () => {
-    if (!onSave) return
-    setLoading(true)
-    try {
-      await onSave({ ...editData, id: user.id })
-      setIsEditing(false)
-      onClose()
-    } catch (error) {
-      console.error('Error saving user:', error)
-    } finally {
-      setLoading(false)
+    if (mode === 'create' && onCreate) {
+      setLoading(true)
+      try {
+        await onCreate(editData)
+        onClose()
+      } catch (error) {
+        console.error('Error creating user:', error)
+      } finally {
+        setLoading(false)
+      }
+    } else if (onSave && user) {
+      setLoading(true)
+      try {
+        await onSave({ ...editData, id: user.id })
+        setIsEditing(false)
+        onClose()
+      } catch (error) {
+        console.error('Error saving user:', error)
+      } finally {
+        setLoading(false)
+      }
     }
   }
 
   const handleSuspend = async () => {
-    if (!onSuspend || !suspendReason.trim()) return
+    if (!onSuspend || !suspendReason.trim() || !user) return
     setLoading(true)
     try {
       await onSuspend(user.id, suspendReason)
@@ -107,7 +120,7 @@ export function UserActionsModal({
   }
 
   const handleActivate = async () => {
-    if (!onActivate) return
+    if (!onActivate || !user) return
     setLoading(true)
     try {
       await onActivate(user.id)
@@ -173,12 +186,14 @@ export function UserActionsModal({
 
   const getDialogTitle = () => {
     if (mode === 'suspend') return 'Suspender Usuário'
+    if (mode === 'create') return 'Criar Novo Usuário'
     if (isEditing) return 'Editar Usuário'
     return 'Detalhes do Usuário'
   }
 
   const getDialogDescription = () => {
     if (mode === 'suspend') return 'Suspender o usuário impedirá o acesso ao sistema'
+    if (mode === 'create') return 'Preencha as informações do novo usuário'
     if (isEditing) return 'Edite as informações do usuário'
     return 'Visualize as informações detalhadas do usuário'
   }
@@ -198,46 +213,48 @@ export function UserActionsModal({
 
         <div className="space-y-6">
           {/* User Avatar and Basic Info */}
-          <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg">
-            <Avatar className="h-16 w-16">
-              <AvatarImage src={user.avatar} />
-              <AvatarFallback className="text-lg font-semibold">
-                {user.name ? user.name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
-              </AvatarFallback>
-            </Avatar>
-            
-            <div className="flex-1 space-y-2">
-              <div className="flex items-center gap-2">
-                <h3 className="text-lg font-semibold">{user.name}</h3>
-                {getRoleBadge(user.role)}
-                {getStatusBadge(user.status)}
-              </div>
+          {mode !== 'create' && user && (
+            <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg">
+              <Avatar className="h-16 w-16">
+                <AvatarImage src={user.avatar} />
+                <AvatarFallback className="text-lg font-semibold">
+                  {user.name ? user.name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
+                </AvatarFallback>
+              </Avatar>
               
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Mail className="h-4 w-4" />
-                <span>{user.email}</span>
-              </div>
-              
-              {user.phone && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Phone className="h-4 w-4" />
-                  <span>{user.phone}</span>
+              <div className="flex-1 space-y-2">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-lg font-semibold">{user.name}</h3>
+                  {getRoleBadge(user.role)}
+                  {getStatusBadge(user.status)}
                 </div>
+                
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Mail className="h-4 w-4" />
+                  <span>{user.email}</span>
+                </div>
+                
+                {user.phone && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Phone className="h-4 w-4" />
+                    <span>{user.phone}</span>
+                  </div>
+                )}
+              </div>
+
+              {mode !== 'suspend' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsEditing(!isEditing)}
+                  disabled={loading}
+                >
+                  <Edit className="h-4 w-4 mr-2" />
+                  {isEditing ? 'Cancelar' : 'Editar'}
+                </Button>
               )}
             </div>
-
-            {mode !== 'suspend' && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsEditing(!isEditing)}
-                disabled={loading}
-              >
-                <Edit className="h-4 w-4 mr-2" />
-                {isEditing ? 'Cancelar' : 'Editar'}
-              </Button>
-            )}
-          </div>
+          )}
 
           {/* Suspend Mode */}
           {mode === 'suspend' && (
@@ -281,16 +298,17 @@ export function UserActionsModal({
             </div>
           )}
 
-          {/* Edit/View Mode Fields */}
+          {/* Edit/View/Create Mode Fields */}
           {mode !== 'suspend' && (
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Nome Completo</Label>
                 <Input
                   id="name"
-                  value={isEditing ? (editData.name ?? user.name) : user.name}
+                  value={mode === 'create' ? (editData.name ?? '') : (isEditing ? (editData.name ?? user?.name) : user?.name)}
                   onChange={(e) => setEditData({ ...editData, name: e.target.value })}
-                  disabled={!isEditing}
+                  disabled={!isEditing && mode !== 'create'}
+                  placeholder={mode === 'create' ? 'Digite o nome completo' : ''}
                 />
               </div>
 
@@ -299,9 +317,10 @@ export function UserActionsModal({
                 <Input
                   id="email"
                   type="email"
-                  value={isEditing ? (editData.email ?? user.email) : user.email}
+                  value={mode === 'create' ? (editData.email ?? '') : (isEditing ? (editData.email ?? user?.email) : user?.email)}
                   onChange={(e) => setEditData({ ...editData, email: e.target.value })}
-                  disabled={!isEditing}
+                  disabled={!isEditing && mode !== 'create'}
+                  placeholder={mode === 'create' ? 'Digite o email' : ''}
                 />
               </div>
 
@@ -309,9 +328,10 @@ export function UserActionsModal({
                 <Label htmlFor="phone">Telefone</Label>
                 <Input
                   id="phone"
-                  value={isEditing ? (editData.phone ?? user.phone ?? '') : (user.phone ?? '')}
+                  value={mode === 'create' ? (editData.phone ?? '') : (isEditing ? (editData.phone ?? user?.phone ?? '') : (user?.phone ?? ''))}
                   onChange={(e) => setEditData({ ...editData, phone: e.target.value })}
-                  disabled={!isEditing}
+                  disabled={!isEditing && mode !== 'create'}
+                  placeholder={mode === 'create' ? 'Digite o telefone' : ''}
                 />
               </div>
 
@@ -319,28 +339,62 @@ export function UserActionsModal({
                 <Label htmlFor="cpf">CPF</Label>
                 <Input
                   id="cpf"
-                  value={user.cpf ?? 'Não informado'}
-                  disabled
+                  value={mode === 'create' ? (editData.cpf ?? '') : (user?.cpf ?? 'Não informado')}
+                  onChange={(e) => setEditData({ ...editData, cpf: e.target.value })}
+                  disabled={mode !== 'create'}
+                  placeholder={mode === 'create' ? 'Digite o CPF' : ''}
                 />
               </div>
 
-              <div className="col-span-2 grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Último Login</Label>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Calendar className="h-4 w-4" />
-                    <span>{formatDate(user.lastLogin)}</span>
+              {mode === 'create' && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Senha</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={editData.password ?? ''}
+                      onChange={(e) => setEditData({ ...editData, password: e.target.value })}
+                      placeholder="Digite a senha"
+                    />
                   </div>
-                </div>
 
-                <div className="space-y-2">
-                  <Label>Cadastro</Label>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Calendar className="h-4 w-4" />
-                    <span>{formatDate(user.createdAt)}</span>
+                  <div className="space-y-2">
+                    <Label htmlFor="role">Função</Label>
+                    <select
+                      id="role"
+                      value={editData.role ?? 'PATIENT'}
+                      onChange={(e) => setEditData({ ...editData, role: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                    >
+                      <option value="PATIENT">Paciente</option>
+                      <option value="DOCTOR">Médico</option>
+                      <option value="RECEPTIONIST">Recepcionista</option>
+                      <option value="ADMIN">Administrador</option>
+                    </select>
+                  </div>
+                </>
+              )}
+
+              {mode !== 'create' && user && (
+                <div className="col-span-2 grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Último Login</Label>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Calendar className="h-4 w-4" />
+                      <span>{formatDate(user.lastLogin)}</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Cadastro</Label>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Calendar className="h-4 w-4" />
+                      <span>{formatDate(user.createdAt)}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
         </div>
@@ -372,12 +426,12 @@ export function UserActionsModal({
           ) : (
             <div className="flex justify-between w-full">
               <Button variant="outline" onClick={onClose} disabled={loading}>
-                {isEditing ? 'Cancelar' : 'Fechar'}
+                {isEditing || mode === 'create' ? 'Cancelar' : 'Fechar'}
               </Button>
-              {isEditing && (
+              {(isEditing || mode === 'create') && (
                 <Button onClick={handleSave} disabled={loading}>
                   <Save className="h-4 w-4 mr-2" />
-                  Salvar Alterações
+                  {mode === 'create' ? 'Criar Usuário' : 'Salvar Alterações'}
                 </Button>
               )}
             </div>

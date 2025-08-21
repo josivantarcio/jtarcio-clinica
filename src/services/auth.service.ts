@@ -152,7 +152,10 @@ export class AuthService {
     }
   }
 
-  async generateTokens(userId: string, role: string): Promise<{
+  async generateTokens(
+    userId: string,
+    role: string,
+  ): Promise<{
     accessToken: string;
     refreshToken: string;
   }> {

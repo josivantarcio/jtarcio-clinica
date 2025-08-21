@@ -80,7 +80,13 @@ export async function authRoutes(fastify: FastifyInstance): Promise<void> {
             cpf: { type: 'string' },
             role: {
               type: 'string',
-              enum: ['PATIENT', 'DOCTOR', 'ADMIN', 'RECEPTIONIST', 'FINANCIAL_MANAGER'],
+              enum: [
+                'PATIENT',
+                'DOCTOR',
+                'ADMIN',
+                'RECEPTIONIST',
+                'FINANCIAL_MANAGER',
+              ],
             },
             timezone: { type: 'string', default: 'America/Sao_Paulo' },
           },
