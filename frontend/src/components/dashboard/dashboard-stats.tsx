@@ -22,15 +22,29 @@ export function DashboardStats() {
       if (response.success && response.data) {
         const analyticsData = response.data
         
+        // Helper function to safely get numeric values
+        const safeNumber = (value: any): number => {
+          if (value === null || value === undefined || isNaN(value)) {
+            return 0
+          }
+          return Number(value) || 0
+        }
+
+        const totalAppts = safeNumber(analyticsData.overview?.totalAppointments)
+        const todayBookings = safeNumber(analyticsData.realTime?.todayBookings)
+        const totalRevenue = safeNumber(analyticsData.overview?.totalRevenue)
+        const patientGrowth = safeNumber(analyticsData.overview?.patientGrowth)
+        const averageRating = safeNumber(analyticsData.overview?.averageRating)
+
         const dashboardStats: StatsType = {
-          totalAppointments: analyticsData.overview.totalAppointments,
-          todayAppointments: analyticsData.realTime.todayBookings,
-          pendingAppointments: Math.floor(analyticsData.overview.totalAppointments * 0.1), // Estimate 10% pending
-          completedAppointments: Math.floor(analyticsData.overview.totalAppointments * 0.8), // Estimate 80% completed
-          cancelledAppointments: Math.floor(analyticsData.overview.totalAppointments * 0.1), // Estimate 10% cancelled
-          revenue: analyticsData.overview.totalRevenue,
-          patientGrowth: analyticsData.overview.patientGrowth,
-          satisfactionScore: analyticsData.overview.averageRating
+          totalAppointments: totalAppts,
+          todayAppointments: todayBookings,
+          pendingAppointments: Math.floor(totalAppts * 0.1), // Estimate 10% pending
+          completedAppointments: Math.floor(totalAppts * 0.8), // Estimate 80% completed
+          cancelledAppointments: Math.floor(totalAppts * 0.1), // Estimate 10% cancelled
+          revenue: totalRevenue,
+          patientGrowth: patientGrowth,
+          satisfactionScore: averageRating
         }
         
         setStats(dashboardStats)
