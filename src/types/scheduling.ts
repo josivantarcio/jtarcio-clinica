@@ -1,5 +1,12 @@
 import { z } from 'zod';
 import { AppointmentStatus, AppointmentType } from './appointment';
+import {
+  CONFLICT_TYPE_VALUES,
+  CONFLICT_SEVERITY_VALUES,
+  RESOLUTION_STRATEGY_VALUES,
+  CANCELLATION_CODE_VALUES,
+  APPOINTMENT_TYPE_VALUES,
+} from '../constants/enums';
 
 // Core scheduling interfaces
 export interface SchedulingCriteria {
@@ -131,55 +138,17 @@ export interface CancellationReason {
   fee?: number;
 }
 
-// Enums
-export enum ConflictType {
-  DOUBLE_BOOKING = 'DOUBLE_BOOKING',
-  RESOURCE_CONFLICT = 'RESOURCE_CONFLICT',
-  DOCTOR_UNAVAILABLE = 'DOCTOR_UNAVAILABLE',
-  ROOM_UNAVAILABLE = 'ROOM_UNAVAILABLE',
-  EQUIPMENT_UNAVAILABLE = 'EQUIPMENT_UNAVAILABLE',
-  OUTSIDE_BUSINESS_HOURS = 'OUTSIDE_BUSINESS_HOURS',
-  INSUFFICIENT_BUFFER = 'INSUFFICIENT_BUFFER',
-  SPECIALTY_MISMATCH = 'SPECIALTY_MISMATCH',
-}
-
-export enum ConflictSeverity {
-  LOW = 'LOW',
-  MEDIUM = 'MEDIUM',
-  HIGH = 'HIGH',
-  CRITICAL = 'CRITICAL',
-}
-
-export enum ResolutionStrategy {
-  AUTO_RESCHEDULE = 'AUTO_RESCHEDULE',
-  MANUAL_INTERVENTION = 'MANUAL_INTERVENTION',
-  OVERFLOW_BOOKING = 'OVERFLOW_BOOKING',
-  WAITLIST = 'WAITLIST',
-  RESOURCE_SUBSTITUTION = 'RESOURCE_SUBSTITUTION',
-}
-
-export enum CancellationCode {
-  PATIENT_REQUEST = 'PATIENT_REQUEST',
-  DOCTOR_UNAVAILABLE = 'DOCTOR_UNAVAILABLE',
-  MEDICAL_EMERGENCY = 'MEDICAL_EMERGENCY',
-  EQUIPMENT_FAILURE = 'EQUIPMENT_FAILURE',
-  WEATHER_CONDITIONS = 'WEATHER_CONDITIONS',
-  SYSTEM_ERROR = 'SYSTEM_ERROR',
-  NO_SHOW = 'NO_SHOW',
-  LATE_ARRIVAL = 'LATE_ARRIVAL',
-  ADMINISTRATIVE = 'ADMINISTRATIVE',
-}
+// Types using centralized constants
+export type ConflictType = (typeof CONFLICT_TYPE_VALUES)[number];
+export type ConflictSeverity = (typeof CONFLICT_SEVERITY_VALUES)[number];
+export type ResolutionStrategy = (typeof RESOLUTION_STRATEGY_VALUES)[number];
+export type CancellationCode = (typeof CANCELLATION_CODE_VALUES)[number];
 
 // Zod schemas for validation
 export const schedulingCriteriaSchema = z.object({
   doctorId: z.string().uuid().optional(),
   specialtyId: z.string().uuid(),
-  appointmentType: z.enum([
-    'CONSULTATION',
-    'FOLLOW_UP',
-    'EMERGENCY',
-    'ROUTINE_CHECKUP',
-  ]),
+  appointmentType: z.enum(APPOINTMENT_TYPE_VALUES as [string, ...string[]]),
   duration: z.number().int().positive(),
   startDate: z.date(),
   endDate: z.date(),
@@ -215,12 +184,7 @@ export const queueEntrySchema = z.object({
   patientId: z.string().uuid(),
   doctorId: z.string().uuid().optional(),
   specialtyId: z.string().uuid(),
-  appointmentType: z.enum([
-    'CONSULTATION',
-    'FOLLOW_UP',
-    'EMERGENCY',
-    'ROUTINE_CHECKUP',
-  ]),
+  appointmentType: z.enum(APPOINTMENT_TYPE_VALUES as [string, ...string[]]),
   priorityScore: z.number().int().min(1).max(20),
   preferredDates: z.array(z.date()),
   preferredTimes: z.array(z.string()),
@@ -237,12 +201,7 @@ export const appointmentBookingSchema = z.object({
   doctorId: z.string().uuid(),
   specialtyId: z.string().uuid(),
   slotId: z.string().uuid(),
-  appointmentType: z.enum([
-    'CONSULTATION',
-    'FOLLOW_UP',
-    'EMERGENCY',
-    'ROUTINE_CHECKUP',
-  ]),
+  appointmentType: z.enum(APPOINTMENT_TYPE_VALUES as [string, ...string[]]),
   duration: z.number().int().positive(),
   reason: z.string().min(10).optional(),
   symptoms: z.string().optional(),
@@ -253,7 +212,7 @@ export const appointmentBookingSchema = z.object({
 });
 
 export const cancellationReasonSchema = z.object({
-  code: z.nativeEnum(CancellationCode),
+  code: z.enum(CANCELLATION_CODE_VALUES as [string, ...string[]]),
   description: z.string().min(10),
   initiatedBy: z.enum(['PATIENT', 'DOCTOR', 'SYSTEM', 'ADMIN']),
   refundable: z.boolean(),
@@ -275,7 +234,7 @@ export const availabilitySearchSchema = z.object({
   endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   duration: z.number().int().positive().default(30),
   appointmentType: z
-    .enum(['CONSULTATION', 'FOLLOW_UP', 'EMERGENCY', 'ROUTINE_CHECKUP'])
+    .enum(APPOINTMENT_TYPE_VALUES as [string, ...string[]])
     .default('CONSULTATION'),
   preferredTimes: z.array(z.string()).optional(),
   maxSlots: z.number().int().positive().max(100).default(20),

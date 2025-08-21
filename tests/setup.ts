@@ -1,5 +1,5 @@
 import { beforeAll, afterAll } from '@jest/globals';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../src/database/generated/client';
 
 const prisma = new PrismaClient({
   datasources: {

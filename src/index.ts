@@ -60,11 +60,20 @@ const start = async (): Promise<void> => {
     // Apply security middleware
     await securityMiddleware.applyHelmetSecurity(fastify);
     await securityMiddleware.applyRateLimit(fastify);
-    
+
     // Register security hooks
-    fastify.addHook('onRequest', securityMiddleware.createInputSanitizationMiddleware());
-    fastify.addHook('onRequest', securityMiddleware.createSecurityLoggingMiddleware());
-    fastify.addHook('onRequest', securityMiddleware.createRequestIntegrityMiddleware());
+    fastify.addHook(
+      'onRequest',
+      securityMiddleware.createInputSanitizationMiddleware(),
+    );
+    fastify.addHook(
+      'onRequest',
+      securityMiddleware.createSecurityLoggingMiddleware(),
+    );
+    fastify.addHook(
+      'onRequest',
+      securityMiddleware.createRequestIntegrityMiddleware(),
+    );
 
     // Register custom HTTP logger
     fastify.addHook('onRequest', httpLogger);

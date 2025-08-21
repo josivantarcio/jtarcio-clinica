@@ -1,31 +1,21 @@
 import { z } from 'zod';
 import { uuidSchema, dateTimeSchema } from './common';
+import {
+  APPOINTMENT_STATUS_VALUES,
+  APPOINTMENT_TYPE_VALUES,
+  PAYMENT_STATUS_VALUES,
+} from '../constants/enums';
 
-// Appointment enums
-export const AppointmentStatusSchema = z.enum([
-  'SCHEDULED',
-  'CONFIRMED',
-  'IN_PROGRESS',
-  'COMPLETED',
-  'CANCELLED',
-  'NO_SHOW',
-  'RESCHEDULED',
-]);
-
-export const AppointmentTypeSchema = z.enum([
-  'CONSULTATION',
-  'FOLLOW_UP',
-  'EMERGENCY',
-  'ROUTINE_CHECKUP',
-]);
-
-export const PaymentStatusSchema = z.enum([
-  'PENDING',
-  'PAID',
-  'PARTIAL',
-  'CANCELLED',
-  'REFUNDED',
-]);
+// Appointment enums using centralized constants
+export const AppointmentStatusSchema = z.enum(
+  APPOINTMENT_STATUS_VALUES as [string, ...string[]],
+);
+export const AppointmentTypeSchema = z.enum(
+  APPOINTMENT_TYPE_VALUES as [string, ...string[]],
+);
+export const PaymentStatusSchema = z.enum(
+  PAYMENT_STATUS_VALUES as [string, ...string[]],
+);
 
 export type AppointmentStatus = z.infer<typeof AppointmentStatusSchema>;
 export type AppointmentType = z.infer<typeof AppointmentTypeSchema>;
