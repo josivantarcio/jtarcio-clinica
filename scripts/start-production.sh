@@ -181,6 +181,13 @@ create_backup() {
         --exclude='logs' \
         --exclude='dist' \
         --exclude='backups' \
+        --exclude='.next' \
+        --exclude='frontend/.next' \
+        --exclude='frontend/node_modules' \
+        --exclude='*.log' \
+        --exclude='cookies.txt' \
+        --exclude='erros' \
+        --warning=no-file-changed \
         . || {
         log_warning "Backup de arquivos falhou"
         return 1

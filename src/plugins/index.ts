@@ -48,18 +48,21 @@ export async function registerPlugins(fastify: FastifyInstance): Promise<void> {
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   });
 
-  // Rate limiting
-  await fastify.register(rateLimit, {
-    max: env.RATE_LIMIT_MAX_REQUESTS,
-    timeWindow: env.RATE_LIMIT_WINDOW_MS,
-    redis,
-    skipOnError: true,
-    errorResponseBuilder: (request, context) => ({
-      error: 'Rate limit exceeded',
-      message: `Too many requests, retry after ${Math.round(context.ttl / 1000)} seconds`,
-      retryAfter: Math.round(context.ttl / 1000),
-    }),
-  });
+  // Rate limiting - Disabled for development debugging
+  if (env.NODE_ENV === 'production') {
+    await fastify.register(rateLimit, {
+      max: env.RATE_LIMIT_MAX_REQUESTS,
+      timeWindow: env.RATE_LIMIT_WINDOW_MS,
+      redis,
+      skipOnError: true,
+      skipSuccessfulRequests: true,
+      errorResponseBuilder: (request, context) => ({
+        error: 'Rate limit exceeded',
+        message: `Too many requests, retry after ${Math.round(context.ttl / 1000)} seconds`,
+        retryAfter: Math.round(context.ttl / 1000),
+      }),
+    });
+  }
 
   // API Documentation
   await fastify.register(swagger, {

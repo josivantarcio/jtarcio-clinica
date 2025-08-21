@@ -406,7 +406,9 @@ export const NOTIFICATION_CHANNEL_VALUES = Object.values(NOTIFICATION_CHANNEL);
 export const isValidAppointmentStatus = (
   status: string,
 ): status is AppointmentStatusType => {
-  return APPOINTMENT_STATUS_VALUES.includes(status as (typeof APPOINTMENT_STATUS_VALUES)[number]);
+  return APPOINTMENT_STATUS_VALUES.includes(
+    status as (typeof APPOINTMENT_STATUS_VALUES)[number],
+  );
 };
 
 /**
@@ -415,7 +417,9 @@ export const isValidAppointmentStatus = (
 export const isValidAppointmentType = (
   type: string,
 ): type is AppointmentTypeType => {
-  return APPOINTMENT_TYPE_VALUES.includes(type as (typeof APPOINTMENT_TYPE_VALUES)[number]);
+  return APPOINTMENT_TYPE_VALUES.includes(
+    type as (typeof APPOINTMENT_TYPE_VALUES)[number],
+  );
 };
 
 /**
@@ -429,7 +433,9 @@ export const isValidUserRole = (role: string): role is UserRoleType => {
  * Valida se um valor é um status de usuário válido
  */
 export const isValidUserStatus = (status: string): status is UserStatusType => {
-  return USER_STATUS_VALUES.includes(status as (typeof USER_STATUS_VALUES)[number]);
+  return USER_STATUS_VALUES.includes(
+    status as (typeof USER_STATUS_VALUES)[number],
+  );
 };
 
 /**

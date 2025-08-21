@@ -109,7 +109,7 @@ export class SecurityMiddleware {
       timeWindow: this.config.rateLimit.timeWindow,
       skipOnError: this.config.rateLimit.skipOnError,
       keyGenerator:
-        this.config.rateLimit.keyGenerator || this.defaultKeyGenerator,
+        this.config.rateLimit.keyGenerator || ((request: FastifyRequest) => this.defaultKeyGenerator(request)),
       errorResponseBuilder: (request, context) => ({
         error: {
           code: 'RATE_LIMIT_EXCEEDED',
