@@ -6,6 +6,7 @@ import { connectRedis, redis } from '@/config/redis';
 import { registerPlugins } from '@/plugins';
 import { registerRoutes } from '@/routes';
 import { ServiceFactory } from '@/services';
+import { securityMiddleware } from '@/modules/security/security.middleware';
 
 // Create Fastify instance
 const fastify = Fastify({
@@ -55,6 +56,15 @@ const start = async (): Promise<void> => {
 
     // Register plugins
     await registerPlugins(fastify);
+
+    // Apply security middleware
+    await securityMiddleware.applyHelmetSecurity(fastify);
+    await securityMiddleware.applyRateLimit(fastify);
+    
+    // Register security hooks
+    fastify.addHook('onRequest', securityMiddleware.createInputSanitizationMiddleware());
+    fastify.addHook('onRequest', securityMiddleware.createSecurityLoggingMiddleware());
+    fastify.addHook('onRequest', securityMiddleware.createRequestIntegrityMiddleware());
 
     // Register custom HTTP logger
     fastify.addHook('onRequest', httpLogger);

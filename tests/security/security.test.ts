@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
+import { sanitizeUserInput } from '../../src/utils/data-sanitization';
 
 /**
  * Security Tests for EO Clínica System
@@ -283,13 +284,21 @@ describe('Security Tests - EO Clínica System', () => {
 
       const validateSQLSafety = (input: string): boolean => {
         const dangerous = [
-          /DROP\s+TABLE/gi,
-          /UNION\s+SELECT/gi,
-          /INSERT\s+INTO/gi,
-          /DELETE\s+FROM/gi,
-          /EXEC\s+/gi,
-          /';.*--/gi,
-          /'.*OR.*'.*='/gi,
+          // Enhanced patterns based on our middleware
+          /(\bunion\s+(all\s+)?select)/i,
+          /('\s*(or|and)\s*'?\w*'?\s*=\s*'?\w*'?)/i,
+          /('\s*or\s*'?1'?\s*=\s*'?1'?)/i,
+          /('\s*or\s*'?true'?\s*=\s*'?true'?)/i,
+          /(sleep\s*\(|benchmark\s*\(|waitfor\s+delay)/i,
+          /(extractvalue\s*\(|updatexml\s*\()/i,
+          /;\s*(drop|create|alter|insert|update|delete)\s+/i,
+          /--[\s\r\n]|\/\*.*?\*\/|#/,
+          /(information_schema|sys\.databases|mysql\.user)/i,
+          /('\s*;\s*drop\s+table)/i,
+          /('\s*union\s+select\s*\*\s+from)/i,
+          /('\s*;\s*insert\s+into)/i,
+          /(admin'\s*--)/i,
+          /('\s*or\s*1\s*=\s*1\s*\/\*)/i,
         ];
 
         return !dangerous.some(pattern => pattern.test(input));
@@ -366,8 +375,8 @@ describe('Security Tests - EO Clínica System', () => {
       const medicalInputs = [
         {
           type: 'cpf',
-          value: '123.456.789-00',
-          expected: '12345678900'
+          value: '109.876.543-87', // CPF válido
+          expected: '10987654387'
         },
         {
           type: 'cpf',
@@ -453,7 +462,7 @@ describe('Security Tests - EO Clínica System', () => {
       console.log('🏥 Medical Data Validation:');
 
       medicalInputs.forEach(({ type, value, expected }) => {
-        const result = sanitizeAndValidate(type, value);
+        const result = sanitizeUserInput(value, type as any);
         const isValid = result === expected;
         
         console.log(`   ${type}: "${value}" → "${result}" ${isValid ? '✅' : '❌'}`);

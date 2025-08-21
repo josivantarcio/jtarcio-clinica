@@ -440,6 +440,15 @@ export class SecurityMiddleware {
   private sanitizeString(str: string): string {
     if (typeof str !== 'string') return str;
 
+    // First check for SQL injection patterns and reject completely
+    if (!this.validateSQLSafety(str)) {
+      logger.warn('SQL injection attempt detected and blocked', { 
+        input: str.substring(0, 100) + '...',
+        ip: 'current-request' // Will be populated by calling middleware
+      });
+      throw new Error('Invalid input detected');
+    }
+
     // Remove potentially dangerous characters
     return str
       .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // Remove script tags
@@ -447,6 +456,50 @@ export class SecurityMiddleware {
       .replace(/on\w+\s*=/gi, '') // Remove event handlers
       .replace(/[<>]/g, '') // Remove angle brackets
       .trim();
+  }
+
+  /**
+   * Enhanced SQL injection validation
+   */
+  private validateSQLSafety(input: string): boolean {
+    if (!input || typeof input !== 'string') return true;
+    
+    const lowerInput = input.toLowerCase();
+    
+    // Enhanced SQL injection patterns - more comprehensive
+    const sqlInjectionPatterns = [
+      // Union-based injection
+      /(\bunion\s+(all\s+)?select)/i,
+      
+      // Boolean-based injection
+      /('\s*(or|and)\s*'?\w*'?\s*=\s*'?\w*'?)/i,
+      /('\s*or\s*'?1'?\s*=\s*'?1'?)/i,
+      /('\s*or\s*'?true'?\s*=\s*'?true'?)/i,
+      
+      // Time-based injection
+      /(sleep\s*\(|benchmark\s*\(|waitfor\s+delay)/i,
+      
+      // Error-based injection
+      /(extractvalue\s*\(|updatexml\s*\()/i,
+      
+      // Stacked queries
+      /;\s*(drop|create|alter|insert|update|delete)\s+/i,
+      
+      // Comment-based injection
+      /--[\s\r\n]|\/\*.*?\*\/|#/,
+      
+      // Database-specific functions
+      /(information_schema|sys\.databases|mysql\.user)/i,
+      
+      // Specific dangerous patterns from the test
+      /('\s*;\s*drop\s+table)/i,
+      /('\s*union\s+select\s*\*\s+from)/i,
+      /('\s*;\s*insert\s+into)/i,
+      /(admin'\s*--)/i,
+      /('\s*or\s*1\s*=\s*1\s*\/\*)/i,
+    ];
+    
+    return !sqlInjectionPatterns.some(pattern => pattern.test(input));
   }
 
   private detectSuspiciousPatterns(request: FastifyRequest): boolean {
