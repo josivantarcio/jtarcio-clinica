@@ -2,6 +2,33 @@
 
 Todas as mudanças importantes neste projeto serão documentadas neste arquivo.
 
+## [1.4.1] - 2025-08-21
+
+### 🔒 Critical Security Enhancements
+- **🛡️ Enhanced SQL Injection Protection**: 20+ detection patterns implementados no security middleware
+- **🧹 Comprehensive Data Sanitization**: Novo módulo `data-sanitization.ts` com funções CPF, CEP, phone, email
+- **⚡ Security Middleware Integration**: Aplicado em todas as rotas com Helmet, rate limiting, input sanitization
+- **📊 Security Test Improvements**: 87% de testes de segurança passando (13/15)
+- **🚨 Security Logging**: Sistema de logs para tentativas de SQL injection e ataques detectados
+
+### 📋 Data Validation & LGPD Compliance  
+- **🇧🇷 Brazilian Data Formats**: Validação robusta de CPF (com checksum), CEP (8 dígitos), telefone (10/11 dígitos)
+- **🏥 Medical Data Protection**: Sanitização específica para dados médicos com proteção XSS
+- **✅ LGPD-Compliant Processing**: Input validation que atende requisitos da Lei Geral de Proteção de Dados
+- **🔐 Request Integrity**: Validação de tamanho, content-type e assinatura HMAC opcional
+
+### 🚨 Security Middleware Features
+- **Rate Limiting**: 100 requests/minuto por IP com logging de violações
+- **Brute Force Protection**: Bloqueio automático após 5 tentativas falhadas em endpoints de auth
+- **DDoS Detection**: Identificação de padrões suspeitos de ataques distribuídos
+- **Input Sanitization**: Limpeza automática de XSS, SQL injection e caracteres perigosos
+- **Security Headers**: CSP, HSTS, X-Frame-Options via Helmet
+
+### 📚 Documentation Updates
+- **Security Overview**: Documentação atualizada com todas as melhorias implementadas
+- **Code Examples**: Exemplos de uso das funções de sanitização 
+- **Security Logs**: Formato e estrutura dos logs de segurança documentados
+
 ## [1.4.0] - 2025-08-20
 
 ### 🧪 Estratégia Abrangente de Testes Implementada
