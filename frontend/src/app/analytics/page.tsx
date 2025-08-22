@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/store/auth'
-import { apiClient } from '@/lib/api'
+import { useAnalyticsStore } from '@/store/analytics'
 import { AppLayout } from '@/components/layout/app-layout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -79,10 +79,13 @@ interface AnalyticsData {
 
 export default function AnalyticsPage() {
   const { user, isAuthenticated, isLoading } = useAuthStore()
+  const { 
+    analytics: analyticsData, 
+    isLoading: analyticsLoading, 
+    error: analyticsError,
+    loadAnalytics 
+  } = useAnalyticsStore()
   const router = useRouter()
-  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [selectedPeriod, setSelectedPeriod] = useState('month')
   const [activeTab, setActiveTab] = useState('overview')
   const [dateRange, setDateRange] = useState({
@@ -106,37 +109,16 @@ export default function AnalyticsPage() {
         router.push('/dashboard')
         return
       }
-      loadAnalyticsData()
+      loadAnalytics(selectedPeriod as 'today' | 'week' | 'month' | 'quarter' | 'year')
     }
-  }, [user, isAuthenticated, selectedPeriod])
+  }, [user, isAuthenticated, selectedPeriod, loadAnalytics])
 
-  const loadAnalyticsData = async () => {
-    setLoading(true)
-    setError(null)
-    
-    try {
-      const response = await apiClient.getAnalytics({
-        period: selectedPeriod as 'today' | 'week' | 'month' | 'quarter' | 'year'
-      })
 
-      if (response.success && response.data) {
-        setAnalyticsData(response.data)
-      } else {
-        setError(response.error?.message || 'Erro ao carregar dados de analytics')
-      }
-    } catch (error: any) {
-      console.error('Error loading analytics:', error)
-      setError('Erro de conexão ao carregar analytics')
-    } finally {
-      setLoading(false)
-    }
-  }
+  const refreshData = useCallback(() => {
+    loadAnalytics(selectedPeriod as 'today' | 'week' | 'month' | 'quarter' | 'year')
+  }, [loadAnalytics, selectedPeriod])
 
-  const refreshData = () => {
-    loadAnalyticsData()
-  }
-
-  if (isLoading || !isAuthenticated || loading) {
+  if (isLoading || !isAuthenticated || analyticsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -147,14 +129,14 @@ export default function AnalyticsPage() {
     )
   }
 
-  if (error || (!analyticsData && !loading)) {
+  if (analyticsError || (!analyticsData && !analyticsLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <h3 className="text-lg font-semibold mb-2">Erro ao carregar dados</h3>
           <p className="text-muted-foreground mb-4">
-            {error || 'Não foi possível carregar os dados analíticos'}
+            {analyticsError || 'Não foi possível carregar os dados analíticos'}
           </p>
           <Button onClick={refreshData}>
             <RefreshCw className="h-4 w-4 mr-2" />
@@ -254,8 +236,8 @@ export default function AnalyticsPage() {
               <option value="year">Este Ano</option>
             </select>
             
-            <Button variant="outline" onClick={refreshData} disabled={loading}>
-              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            <Button variant="outline" onClick={refreshData} disabled={analyticsLoading}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${analyticsLoading ? 'animate-spin' : ''}`} />
               Atualizar
             </Button>
             
