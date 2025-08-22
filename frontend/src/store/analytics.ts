@@ -14,7 +14,7 @@ interface AnalyticsData {
 }
 
 interface AnalyticsState {
-  data: AnalyticsData | null
+  analytics: AnalyticsData | null
   isLoading: boolean
   error: string | null
   
@@ -29,26 +29,26 @@ interface AnalyticsState {
   pendingRequest: Promise<any> | null
   
   // Actions
-  loadAnalytics: () => Promise<void>
+  loadAnalytics: (period?: 'today' | 'week' | 'month' | 'quarter' | 'year') => Promise<void>
   clearCache: () => void
   clearError: () => void
 }
 
 export const useAnalyticsStore = create<AnalyticsState>((set, get) => ({
-  data: null,
+  analytics: null,
   isLoading: false,
   error: null,
   cache: null,
   pendingRequest: null,
 
-  loadAnalytics: async () => {
+  loadAnalytics: async (period: 'today' | 'week' | 'month' | 'quarter' | 'year' = 'month') => {
     const { cache, pendingRequest } = get()
     const CACHE_TTL = 3 * 60 * 1000 // 3 minutos para analytics (dados menos dinâmicos)
     
     // Verificar cache válido
     if (cache && Date.now() - cache.timestamp < cache.ttl) {
       set({
-        data: cache.data,
+        analytics: cache.data,
         isLoading: false,
         error: null
       })
@@ -65,14 +65,14 @@ export const useAnalyticsStore = create<AnalyticsState>((set, get) => ({
     // Criar e armazenar a Promise pendente
     const requestPromise = (async () => {
       try {
-        const response = await apiClient.getAnalytics()
+        const response = await apiClient.getAnalytics({ period })
         
         if (response.success && response.data) {
           const analyticsData = response.data
           
           // Atualizar cache e dados
           set({
-            data: analyticsData,
+            analytics: analyticsData,
             isLoading: false,
             cache: {
               data: analyticsData,
