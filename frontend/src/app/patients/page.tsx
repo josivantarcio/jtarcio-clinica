@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/store/auth'
+import { usePatientsStore } from '@/store/patients'
 import { AppLayout } from '@/components/layout/app-layout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -43,17 +44,21 @@ interface PatientWithStats extends Patient {
 
 export default function PatientsPage() {
   const { user, isAuthenticated, isLoading } = useAuthStore()
+  const { patients, isLoading: patientsLoading, loadPatients, updatePatientStatus, clearCache } = usePatientsStore()
   const router = useRouter()
-  const [patients, setPatients] = useState<PatientWithStats[]>([])
-  const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
   const [dropdownOpen, setDropdownOpen] = useState<string | null>(null)
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null)
 
   useEffect(() => {
-    // Hydrate the persisted store
-    useAuthStore.persist.rehydrate()
+    // Hydrate the persisted store only once
+    const unsubscribe = useAuthStore.persist.rehydrate()
+    return () => {
+      if (typeof unsubscribe === 'function') {
+        unsubscribe()
+      }
+    }
   }, [])
 
   useEffect(() => {
@@ -62,7 +67,7 @@ export default function PatientsPage() {
     }
   }, [isAuthenticated, isLoading, router])
 
-  useEffect(() => {
+  const loadPatientsForUser = useCallback(() => {
     if (user && isAuthenticated) {
       // Check if user has permission to access patients page
       if (!['DOCTOR', 'ADMIN', 'RECEPTIONIST'].includes(user.role)) {
@@ -71,7 +76,11 @@ export default function PatientsPage() {
       }
       loadPatients()
     }
-  }, [user, isAuthenticated])
+  }, [user, isAuthenticated, loadPatients, router])
+
+  useEffect(() => {
+    loadPatientsForUser()
+  }, [loadPatientsForUser])
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -87,71 +96,8 @@ export default function PatientsPage() {
     }
   }, [dropdownOpen])
 
-  const loadPatients = async () => {
-    setLoading(true)
-    try {
-      const response = await apiClient.getPatients()
-      if (response.success) {
-        // Transform users to patients with real data
-        const patientsData: PatientWithStats[] = (response.data || []).map((userData: any) => {
-          // Calculate real stats from appointments
-          const appointments = userData.appointments || []
-          const totalAppointments = appointments.length
-          
-          // Find last appointment
-          const lastAppointment = appointments.length > 0 
-            ? new Date(appointments[0].scheduledAt)
-            : undefined
-          
-          // Find next appointment (future appointments)
-          const futureAppointments = appointments.filter((apt: any) => new Date(apt.scheduledAt) > new Date())
-          const nextAppointment = futureAppointments.length > 0
-            ? new Date(futureAppointments[futureAppointments.length - 1].scheduledAt)
-            : undefined
-
-          // Map status from backend enum to frontend enum
-          const statusMap: { [key: string]: 'active' | 'inactive' | 'pending' } = {
-            'ACTIVE': 'active',
-            'INACTIVE': 'inactive',
-            'SUSPENDED': 'inactive',
-            'PENDING_VERIFICATION': 'pending'
-          }
-
-          return {
-            id: userData.id,
-            userId: userData.id,
-            user: {
-              ...userData,
-              name: userData.fullName || `${userData.firstName || ''} ${userData.lastName || ''}`.trim()
-            },
-            cpf: userData.cpf || 'Não informado',
-            phone: userData.phone || 'Não informado',
-            birthDate: parseDateFromAPI(userData.dateOfBirth),
-            address: userData.patientProfile?.address 
-              ? `${userData.patientProfile.address.city || ''}, ${userData.patientProfile.address.state || ''}`.trim().replace(/^,\s*|,\s*$/g, '') || 'Não informado'
-              : 'Não informado',
-            emergencyContact: userData.patientProfile?.emergencyContactName || 'Não informado',
-            medicalHistory: userData.patientProfile?.allergies?.length > 0 || userData.patientProfile?.medications?.length > 0 
-              ? 'Possui histórico médico' 
-              : 'Nenhum histórico médico',
-            insurance: 'Não informado', // This would need to be added to the schema
-            totalAppointments,
-            lastAppointment,
-            nextAppointment,
-            status: statusMap[userData.status] || 'pending'
-          }
-        })
-        setPatients(patientsData)
-      }
-    } catch (error) {
-      console.error('Error loading patients:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
   // Show loading while checking auth
-  if (isLoading || !isAuthenticated || loading) {
+  if (isLoading || !isAuthenticated || patientsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -302,29 +248,15 @@ export default function PatientsPage() {
       
       console.log('Novo status será:', newStatus)
       
-      const response = await apiClient.updateUser(patientId, { status: newStatus })
+      const success = await updatePatientStatus(patientId, newStatus)
       
-      console.log('Resposta da API:', response)
-      
-      if (response.success) {
-        // Update patient in the local state
-        setPatients(prevPatients => 
-          prevPatients.map(patient => 
-            patient.id === patientId 
-              ? { ...patient, status: newStatus === 'ACTIVE' ? 'active' : 'inactive' }
-              : patient
-          )
-        )
-        
+      if (success) {
         // Show success message
         console.log(`Status alterado com sucesso para: ${newStatus}`)
         alert(`Paciente ${statusLabel} com sucesso!`)
         
-        // Reload patients data to ensure consistency
-        await loadPatients()
-      } else {
-        console.error('Erro na resposta da API:', response.error)
-        alert(`Erro ao atualizar status do paciente: ${response.error?.message || 'Erro desconhecido'}`)
+        // Recarregar dados do store (com cache invalidado)
+        loadPatientsForUser()
       }
     } catch (error) {
       console.error('Error updating patient status:', error)
