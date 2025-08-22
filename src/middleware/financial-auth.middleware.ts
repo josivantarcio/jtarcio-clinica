@@ -27,15 +27,25 @@ export const requireFinancialAccess = async (
   // Development mode: Check for fake token
   const authHeader = request.headers.authorization;
   if (authHeader && authHeader.includes('fake-jwt-token-for-testing')) {
-    console.log('🧪 Development mode: Using fake user for financial access');
     // Inject fake user for development
-    (request as any).user = {
+    (request as AuthenticatedRequest).user = {
       id: 'dev-user-1',
       role: 'ADMIN',
       email: 'admin@dev.local',
       firstName: 'Admin',
       lastName: 'Developer',
     };
+  } else {
+    // Execute JWT verification first to populate request.user
+    try {
+      await verifyJWT(request, reply);
+    } catch {
+      return reply.status(401).send({
+        success: false,
+        error: 'Authentication required',
+        code: 'AUTH_REQUIRED',
+      });
+    }
   }
 
   if (!request.user) {

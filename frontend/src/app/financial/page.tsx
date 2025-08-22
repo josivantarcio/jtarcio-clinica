@@ -49,6 +49,9 @@ export default function FinancialDashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isHydrated, setIsHydrated] = useState(false)
+  
+  // Check if user has financial access
+  const hasFinancialAccess = user?.role === 'ADMIN' || user?.role === 'FINANCIAL_MANAGER'
 
   const fetchDashboardData = async () => {
     try {
@@ -76,7 +79,7 @@ export default function FinancialDashboard() {
   }, [])
 
   useEffect(() => {
-    if (isHydrated && user?.role === 'ADMIN') {
+    if (isHydrated && hasFinancialAccess) {
       fetchDashboardData()
     }
   }, [isHydrated, user])
@@ -92,9 +95,6 @@ export default function FinancialDashboard() {
       </div>
     )
   }
-
-  // Check if user has financial access
-  const hasFinancialAccess = user?.role === 'ADMIN' || user?.role === 'FINANCIAL_MANAGER'
 
   if (!hasFinancialAccess) {
     return (
