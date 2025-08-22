@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/store/auth'
+import { useDoctorsStore } from '@/store/doctors'
 import { AppLayout } from '@/components/layout/app-layout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -53,9 +54,8 @@ interface DoctorWithStats extends Doctor {
 
 export default function DoctorsPage() {
   const { user, isAuthenticated, isLoading } = useAuthStore()
+  const { doctors, isLoading: doctorsLoading, loadDoctors, updateDoctorStatus, clearCache } = useDoctorsStore()
   const router = useRouter()
-  const [doctors, setDoctors] = useState<DoctorWithStats[]>([])
-  const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
   const [filterSpecialty, setFilterSpecialty] = useState('all')
@@ -72,8 +72,13 @@ export default function DoctorsPage() {
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null)
 
   useEffect(() => {
-    // Hydrate the persisted store
-    useAuthStore.persist.rehydrate()
+    // Hydrate the persisted store only once
+    const unsubscribe = useAuthStore.persist.rehydrate()
+    return () => {
+      if (typeof unsubscribe === 'function') {
+        unsubscribe()
+      }
+    }
   }, [])
 
   useEffect(() => {
@@ -82,7 +87,7 @@ export default function DoctorsPage() {
     }
   }, [isAuthenticated, isLoading, router])
 
-  useEffect(() => {
+  const loadDoctorsForUser = useCallback(() => {
     if (user && isAuthenticated) {
       // Check if user has permission to access doctors page
       if (!['ADMIN', 'RECEPTIONIST'].includes(user.role)) {
@@ -91,7 +96,11 @@ export default function DoctorsPage() {
       }
       loadDoctors()
     }
-  }, [user, isAuthenticated])
+  }, [user, isAuthenticated, loadDoctors, router])
+
+  useEffect(() => {
+    loadDoctorsForUser()
+  }, [loadDoctorsForUser])
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -106,65 +115,6 @@ export default function DoctorsPage() {
       return () => document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [dropdownOpen])
-
-  const loadDoctors = async () => {
-    setLoading(true)
-    try {
-      const response = await apiClient.getDoctors()
-      if (response.success && response.data) {
-        // Transform API data to doctors with calculated stats
-        const doctorsData: DoctorWithStats[] = response.data
-          .filter((user: any) => user.doctorProfile) // Only users with doctor profile
-          .map((user: any) => {
-            const doctor = user.doctorProfile
-            return {
-              id: doctor.id,
-              userId: user.id,
-              user: {
-                id: user.id,
-                email: user.email,
-                name: user.fullName,
-                role: user.role,
-                avatar: user.avatar,
-                createdAt: user.createdAt,
-                updatedAt: user.updatedAt
-              },
-              crm: doctor.crm,
-              specialtyId: doctor.specialty?.id || '',
-              specialty: doctor.specialty,
-              subSpecialties: doctor.subSpecialties || [],
-              biography: doctor.biography,
-              experience: doctor.experience,
-              consultationFee: doctor.consultationFee,
-              consultationDuration: doctor.consultationDuration || 30,
-              isActive: doctor.isActive,
-              acceptsNewPatients: doctor.acceptsNewPatients,
-              phone: user.phone,
-              createdAt: user.createdAt,
-              updatedAt: user.updatedAt,
-              // Stats (will be calculated from actual data later)
-              totalPatients: 0,
-              totalAppointments: 0,
-              rating: 0,
-              reviewsCount: 0,
-              nextAppointment: undefined,
-              status: doctor.isActive ? 'active' : 'inactive',
-              specialtyNames: doctor.specialty ? [doctor.specialty.name] : []
-            }
-          })
-        setDoctors(doctorsData)
-      } else {
-        // No doctors found - clean state
-        setDoctors([])
-      }
-    } catch (error) {
-      console.error('Error loading doctors:', error)
-      // Clean state if API fails
-      setDoctors([])
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const loadSpecialties = async () => {
     try {
@@ -233,29 +183,15 @@ export default function DoctorsPage() {
       
       console.log('Novo status será:', newStatus)
       
-      const response = await apiClient.updateUser(doctorId, { status: newStatus })
+      const success = await updateDoctorStatus(doctorId, newStatus)
       
-      console.log('Resposta da API:', response)
-      
-      if (response.success) {
-        // Update doctor in the local state
-        setDoctors(prevDoctors => 
-          prevDoctors.map(doctor => 
-            doctor.id === doctorId 
-              ? { ...doctor, status: newStatus === 'ACTIVE' ? 'active' : 'inactive' }
-              : doctor
-          )
-        )
-        
+      if (success) {
         // Show success message
         console.log(`Status alterado com sucesso para: ${newStatus}`)
         alert(`Médico ${statusLabel} com sucesso!`)
         
-        // Reload doctors data to ensure consistency
-        await loadDoctors()
-      } else {
-        console.error('Erro na resposta da API:', response.error)
-        alert(`Erro ao atualizar status do médico: ${response.error?.message || 'Erro desconhecido'}`)
+        // Recarregar dados do store (com cache invalidado)
+        loadDoctorsForUser()
       }
     } catch (error) {
       console.error('Error updating doctor status:', error)
@@ -269,7 +205,7 @@ export default function DoctorsPage() {
   }
 
   // Show loading while checking auth
-  if (isLoading || !isAuthenticated || loading) {
+  if (isLoading || !isAuthenticated || doctorsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
