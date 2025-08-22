@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/store/auth'
 import { AppLayout } from '@/components/layout/app-layout'
@@ -127,6 +127,7 @@ export default function SettingsPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [activeTab, setActiveTab] = useState('profile')
   const [loadingTimeout, setLoadingTimeout] = useState(false)
+  const isLoadingRef = useRef(false)
   
   // Theme provider hook
   const { theme, setTheme } = useTheme()
@@ -145,7 +146,7 @@ export default function SettingsPage() {
   }, [isAuthenticated, isLoading, router])
 
   useEffect(() => {
-    if (user && isAuthenticated && !loading) {
+    if (user && isAuthenticated && !isLoadingRef.current) {
       loadUserSettings()
     }
   }, [user, isAuthenticated])
@@ -158,7 +159,7 @@ export default function SettingsPage() {
         setLoadingTimeout(true)
         setLoading(false)
       }
-    }, 10000) // 10 second timeout
+    }, 5000) // 5 second timeout
 
     return () => clearTimeout(timeout)
   }, [loading])
@@ -177,17 +178,19 @@ export default function SettingsPage() {
   }, [theme, settings.appearance.theme])
 
   const loadUserSettings = async () => {
-    if (!user) {
-      setLoading(false)
+    if (!user || isLoadingRef.current) {
       return
     }
 
+    isLoadingRef.current = true
     setLoading(true)
     try {
       console.log('🔄 Loading user settings for:', user.email)
       
       // Load user profile from API using apiClient
+      console.log('📡 Making API call to /auth/me...')
       const response = await apiClient.get('/auth/me')
+      console.log('📡 API Response received:', response)
       
       if (response.success && response.data) {
         const userData = response.data
@@ -210,7 +213,8 @@ export default function SettingsPage() {
           security: userData.settings?.security || prev.security
         }))
       } else {
-        console.warn('⚠️ API response was not successful, using fallback data')
+        console.warn('⚠️ API response was not successful:', response.error?.message || 'Unknown error')
+        console.log('🔄 Using fallback data from user object:', user)
         // Fallback to basic user data
         setSettings(prev => ({
           ...prev,
@@ -242,6 +246,7 @@ export default function SettingsPage() {
       }))
     } finally {
       console.log('✅ Settings loading completed')
+      isLoadingRef.current = false
       setLoading(false)
     }
   }
