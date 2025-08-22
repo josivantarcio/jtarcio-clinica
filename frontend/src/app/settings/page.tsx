@@ -188,8 +188,8 @@ export default function SettingsPage() {
       console.log('🔄 Loading user settings for:', user.email)
       
       // Load user profile from API using apiClient
-      console.log('📡 Making API call to /auth/me...')
-      const response = await apiClient.get('/auth/me')
+      console.log('📡 Making API call to /api/v1/auth/me...')
+      const response = await apiClient.get('/api/v1/auth/me')
       console.log('📡 API Response received:', response)
       
       if (response.success && response.data) {
