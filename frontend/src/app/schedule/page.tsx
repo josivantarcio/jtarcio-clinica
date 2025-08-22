@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/store/auth'
+import { useAppointmentsStore } from '@/store/appointments'
 import { AppLayout } from '@/components/layout/app-layout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -57,17 +58,22 @@ interface DaySchedule {
 
 export default function SchedulePage() {
   const { user, isAuthenticated, isLoading } = useAuthStore()
+  const { appointments, isLoading: appointmentsLoading, loadAppointments } = useAppointmentsStore()
   const router = useRouter()
   const [currentDate, setCurrentDate] = useState(new Date())
   const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('week')
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [scheduleData, setScheduleData] = useState<DaySchedule[]>([])
-  const [loading, setLoading] = useState(true)
   const [selectedDoctor, setSelectedDoctor] = useState<string>('all')
 
   useEffect(() => {
-    // Hydrate the persisted store
-    useAuthStore.persist.rehydrate()
+    // Hydrate the persisted store only once
+    const unsubscribe = useAuthStore.persist.rehydrate()
+    return () => {
+      if (typeof unsubscribe === 'function') {
+        unsubscribe()
+      }
+    }
   }, [])
 
   useEffect(() => {
@@ -76,20 +82,14 @@ export default function SchedulePage() {
     }
   }, [isAuthenticated, isLoading, router])
 
-  useEffect(() => {
+  const loadScheduleDataForUser = useCallback(() => {
     if (user && isAuthenticated) {
       // Check if user has permission to access schedule page
       if (!['DOCTOR', 'ADMIN', 'RECEPTIONIST'].includes(user.role)) {
         router.push('/dashboard')
         return
       }
-      loadScheduleData()
-    }
-  }, [user, isAuthenticated, currentDate, viewMode, selectedDoctor])
-
-  const loadScheduleData = async () => {
-    setLoading(true)
-    try {
+      
       // Calculate date range based on view mode
       const startDate = new Date(currentDate)
       const endDate = new Date(currentDate)
@@ -110,42 +110,47 @@ export default function SchedulePage() {
         endDate.setDate(1)
       }
 
-      // Fetch real appointments from API
-      const response = await apiClient.getAppointments({
+      // Use store with appropriate parameters
+      const params: any = {
         startDate: startDate.toISOString().split('T')[0],
-        endDate: endDate.toISOString().split('T')[0],
-        doctorId: selectedDoctor !== 'all' ? selectedDoctor : undefined
-      })
-
-      if (response.success && response.data) {
-        // Handle both response.data.appointments and response.data array formats
-        const appointmentsData = response.data.appointments || response.data || []
-        const safeAppointments = Array.isArray(appointmentsData) ? appointmentsData : []
-        const realSchedule = formatAppointmentsToSchedule(safeAppointments, startDate, endDate, viewMode)
-        setScheduleData(realSchedule)
-      } else {
-        // No appointments found - create empty schedule
-        const emptySchedule = createEmptySchedule(startDate, endDate, viewMode)
-        setScheduleData(emptySchedule)
+        endDate: endDate.toISOString().split('T')[0]
       }
-    } catch (error) {
-      console.error('Error loading schedule:', error)
-      // Create empty schedule on error
+      
+      if (selectedDoctor !== 'all') {
+        params.doctorId = selectedDoctor
+      }
+      
+      loadAppointments(params)
+    }
+  }, [user, isAuthenticated, currentDate, viewMode, selectedDoctor, loadAppointments, router])
+
+  useEffect(() => {
+    loadScheduleDataForUser()
+  }, [loadScheduleDataForUser])
+
+  // Update schedule data when appointments change
+  useEffect(() => {
+    if (appointments) {
       const startDate = new Date(currentDate)
       const endDate = new Date(currentDate)
-      if (viewMode === 'week') {
-        endDate.setDate(startDate.getDate() + 7)
-      } else if (viewMode === 'month') {
-        endDate.setMonth(startDate.getMonth() + 1)
-      } else {
+      
+      if (viewMode === 'day') {
         endDate.setDate(startDate.getDate() + 1)
+      } else if (viewMode === 'week') {
+        const dayOfWeek = startDate.getDay()
+        const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
+        startDate.setDate(startDate.getDate() + mondayOffset)
+        endDate.setDate(startDate.getDate() + 7)
+      } else {
+        startDate.setDate(1)
+        endDate.setMonth(startDate.getMonth() + 1)
+        endDate.setDate(1)
       }
-      const emptySchedule = createEmptySchedule(startDate, endDate, viewMode)
-      setScheduleData(emptySchedule)
-    } finally {
-      setLoading(false)
+
+      const formattedSchedule = formatAppointmentsToSchedule(appointments, startDate, endDate, viewMode)
+      setScheduleData(formattedSchedule)
     }
-  }
+  }, [appointments, currentDate, viewMode])
 
   const formatAppointmentsToSchedule = (appointments: any[], startDate: Date, endDate: Date, viewMode: string): DaySchedule[] => {
     const schedule: DaySchedule[] = []
@@ -243,7 +248,7 @@ export default function SchedulePage() {
   }
 
   // Show loading while checking auth
-  if (isLoading || !isAuthenticated || loading) {
+  if (isLoading || !isAuthenticated || appointmentsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
