@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/store/auth'
+import { useAppointmentsStore } from '@/store/appointments'
 import { AppLayout } from '@/components/layout/app-layout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -31,9 +32,8 @@ import { View } from 'react-big-calendar'
 
 export default function AppointmentsPage() {
   const { user, isAuthenticated, isLoading } = useAuthStore()
+  const { appointments, isLoading: appointmentsLoading, loadAppointments, clearCache } = useAppointmentsStore()
   const router = useRouter()
-  const [appointments, setAppointments] = useState<Appointment[]>([])
-  const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
@@ -41,8 +41,13 @@ export default function AppointmentsPage() {
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('list')
 
   useEffect(() => {
-    // Hydrate the persisted store
-    useAuthStore.persist.rehydrate()
+    // Hydrate the persisted store only once
+    const unsubscribe = useAuthStore.persist.rehydrate()
+    return () => {
+      if (typeof unsubscribe === 'function') {
+        unsubscribe()
+      }
+    }
   }, [])
 
   useEffect(() => {
@@ -51,44 +56,27 @@ export default function AppointmentsPage() {
     }
   }, [isAuthenticated, isLoading, router])
 
-  useEffect(() => {
+  const loadAppointmentsForUser = useCallback(() => {
     if (user && isAuthenticated) {
-      loadAppointments()
-    }
-  }, [user, isAuthenticated])
-
-  const loadAppointments = async () => {
-    setLoading(true)
-    try {
-      // Definir parâmetros baseados no role do usuário
       const params: any = {}
       
-      if (user?.role === 'PATIENT') {
+      if (user.role === 'PATIENT') {
         params.patientId = user.id
-      } else if (user?.role === 'DOCTOR') {
+      } else if (user.role === 'DOCTOR') {
         params.doctorId = user.id
       }
       // ADMIN e RECEPTIONIST veem todas as consultas
       
-      const response = await apiClient.getAppointments(params)
-      if (response.success) {
-        // Ensure we always set an array
-        const appointmentsData = response.data?.appointments || response.data || []
-        setAppointments(Array.isArray(appointmentsData) ? appointmentsData : [])
-      } else {
-        console.error('Error loading appointments:', response.error)
-        setAppointments([])
-      }
-    } catch (error) {
-      console.error('Error loading appointments:', error)
-      setAppointments([])
-    } finally {
-      setLoading(false)
+      loadAppointments(params)
     }
-  }
+  }, [user, isAuthenticated, loadAppointments])
+
+  useEffect(() => {
+    loadAppointmentsForUser()
+  }, [loadAppointmentsForUser])
 
   // Show loading while checking auth
-  if (isLoading || !isAuthenticated || loading) {
+  if (isLoading || !isAuthenticated || appointmentsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -579,7 +567,8 @@ export default function AppointmentsPage() {
           onConfirm={async (appointment) => {
             try {
               await apiClient.updateAppointment(appointment.id, { status: 'CONFIRMED' })
-              await loadAppointments() // Reload appointments
+              clearCache() // Invalidar cache
+              loadAppointmentsForUser() // Recarregar com cache
             } catch (error) {
               console.error('Error confirming appointment:', error)
             }
@@ -587,7 +576,8 @@ export default function AppointmentsPage() {
           onCancel={async (appointment) => {
             try {
               await apiClient.cancelAppointment(appointment.id, 'Cancelado pelo usuário')
-              await loadAppointments() // Reload appointments
+              clearCache() // Invalidar cache
+              loadAppointmentsForUser() // Recarregar com cache
             } catch (error) {
               console.error('Error canceling appointment:', error)
             }
@@ -595,7 +585,8 @@ export default function AppointmentsPage() {
           onComplete={async (appointment) => {
             try {
               await apiClient.updateAppointment(appointment.id, { status: 'COMPLETED' })
-              await loadAppointments() // Reload appointments
+              clearCache() // Invalidar cache
+              loadAppointmentsForUser() // Recarregar com cache
             } catch (error) {
               console.error('Error completing appointment:', error)
             }
