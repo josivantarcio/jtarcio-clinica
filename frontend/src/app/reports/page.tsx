@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/store/auth'
+import { useAnalyticsStore } from '@/store/analytics'
 import { AppLayout } from '@/components/layout/app-layout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -34,7 +35,6 @@ import {
   Eye,
   Printer
 } from 'lucide-react'
-import { apiClient } from '@/lib/api'
 
 interface ReportData {
   financial: {
@@ -77,10 +77,14 @@ interface ReportData {
 
 export default function ReportsPage() {
   const { user, isAuthenticated, isLoading } = useAuthStore()
+  const { 
+    analytics: analyticsData, 
+    isLoading: analyticsLoading, 
+    error: analyticsError,
+    loadAnalytics 
+  } = useAnalyticsStore()
   const router = useRouter()
   const [reportData, setReportData] = useState<ReportData | null>(null)
-  const [analyticsData, setAnalyticsData] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
   const [selectedPeriod, setSelectedPeriod] = useState('month')
   const [selectedReportType, setSelectedReportType] = useState('overview')
   const [dateRange, setDateRange] = useState({
@@ -99,105 +103,45 @@ export default function ReportsPage() {
     }
   }, [isAuthenticated, isLoading, router])
 
-  useEffect(() => {
-    if (user && isAuthenticated) {
-      // Check if user has permission to access reports page
-      if (!['DOCTOR', 'ADMIN'].includes(user.role)) {
-        router.push('/dashboard')
-        return
-      }
-      loadReportData()
-    }
-  }, [user, isAuthenticated, selectedPeriod])
-
-  const loadReportData = async () => {
-    setLoading(true)
-    try {
-      // Fetch real analytics data from the API
-      const analyticsResponse = await apiClient.getAnalytics({
-        period: selectedPeriod as 'today' | 'week' | 'month' | 'quarter' | 'year'
-      })
-
-      if (analyticsResponse.success && analyticsResponse.data) {
-        const analytics = analyticsResponse.data
-        setAnalyticsData(analytics)
-        
-        // Convert analytics data to report format
-        const realReportData: ReportData = {
-          financial: {
-            totalRevenue: analytics.overview.totalRevenue,
-            monthlyRevenue: analytics.financial?.monthlyRevenue || analytics.overview.totalRevenue,
-            averageTicket: analytics.overview.totalRevenue / (analytics.overview.totalAppointments || 1),
-            pendingPayments: analytics.financial?.pendingPayments || 0,
-            revenueGrowth: analytics.overview.revenueGrowth,
-            monthlyComparison: analytics.financial?.monthlyData || [0, 0, 0, 0, 0, 0]
-          },
-          appointments: {
-            totalAppointments: analytics.overview.totalAppointments,
-            completedAppointments: analytics.appointments?.completed || 0,
-            cancelledAppointments: analytics.appointments?.cancelled || 0,
-            noShowRate: analytics.appointments?.noShowRate || 0,
-            appointmentGrowth: analytics.overview.appointmentGrowth,
-            dailyAppointments: analytics.appointments?.dailyData || [0, 0, 0, 0, 0, 0, 0]
-          },
-          patients: {
-            totalPatients: analytics.overview.totalPatients,
-            newPatients: analytics.patients?.newPatients || 0,
-            returningPatients: analytics.patients?.returningPatients || analytics.overview.totalPatients,
-            patientRetention: analytics.advanced.retentionRate || 0,
-            patientSatisfaction: analytics.overview.averageRating,
-            patientGrowth: analytics.patients?.growthData || [0, 0, 0, 0, 0, 0]
-          },
-          doctors: {
-            totalDoctors: analytics.doctors?.totalDoctors || 0,
-            averageRating: analytics.overview.averageRating,
-            mostBookedDoctor: analytics.doctors?.mostBookedDoctor || 'Não disponível',
-            doctorEfficiency: analytics.advanced.operationalEfficiency || 0,
-            doctorPerformance: analytics.doctors?.performance || []
-          }
+  const loadReportDataFromAnalytics = useCallback(() => {
+    if (analyticsData) {
+      // Convert analytics data to report format
+      const realReportData: ReportData = {
+        financial: {
+          totalRevenue: analyticsData.overview.totalRevenue,
+          monthlyRevenue: analyticsData.financial?.monthlyRevenue || analyticsData.overview.totalRevenue,
+          averageTicket: analyticsData.overview.totalRevenue / (analyticsData.overview.totalAppointments || 1),
+          pendingPayments: analyticsData.financial?.pendingPayments || 0,
+          revenueGrowth: analyticsData.overview.revenueGrowth,
+          monthlyComparison: analyticsData.financial?.monthlyData || [0, 0, 0, 0, 0, 0]
+        },
+        appointments: {
+          totalAppointments: analyticsData.overview.totalAppointments,
+          completedAppointments: analyticsData.appointments?.completed || 0,
+          cancelledAppointments: analyticsData.appointments?.cancelled || 0,
+          noShowRate: analyticsData.appointments?.noShowRate || 0,
+          appointmentGrowth: analyticsData.overview.appointmentGrowth,
+          dailyAppointments: analyticsData.appointments?.dailyData || [0, 0, 0, 0, 0, 0, 0]
+        },
+        patients: {
+          totalPatients: analyticsData.overview.totalPatients,
+          newPatients: analyticsData.patients?.newPatients || 0,
+          returningPatients: analyticsData.patients?.returningPatients || analyticsData.overview.totalPatients,
+          patientRetention: analyticsData.advanced.retentionRate || 0,
+          patientSatisfaction: analyticsData.overview.averageRating,
+          patientGrowth: analyticsData.patients?.growthData || [0, 0, 0, 0, 0, 0]
+        },
+        doctors: {
+          totalDoctors: analyticsData.doctors?.totalDoctors || 0,
+          averageRating: analyticsData.overview.averageRating,
+          mostBookedDoctor: analyticsData.doctors?.mostBookedDoctor || 'Não disponível',
+          doctorEfficiency: analyticsData.advanced.operationalEfficiency || 0,
+          doctorPerformance: analyticsData.doctors?.performance || []
         }
-        
-        setReportData(realReportData)
-      } else {
-        // No data available - create empty report
-        const emptyReport: ReportData = {
-          financial: {
-            totalRevenue: 0,
-            monthlyRevenue: 0,
-            averageTicket: 0,
-            pendingPayments: 0,
-            revenueGrowth: 0,
-            monthlyComparison: [0, 0, 0, 0, 0, 0]
-          },
-          appointments: {
-            totalAppointments: 0,
-            completedAppointments: 0,
-            cancelledAppointments: 0,
-            noShowRate: 0,
-            appointmentGrowth: 0,
-            dailyAppointments: [0, 0, 0, 0, 0, 0, 0]
-          },
-          patients: {
-            totalPatients: 0,
-            newPatients: 0,
-            returningPatients: 0,
-            patientRetention: 0,
-            patientSatisfaction: 0,
-            patientGrowth: [0, 0, 0, 0, 0, 0]
-          },
-          doctors: {
-            totalDoctors: 0,
-            averageRating: 0,
-            mostBookedDoctor: 'Nenhum médico',
-            doctorEfficiency: 0,
-            doctorPerformance: []
-          }
-        }
-        setReportData(emptyReport)
       }
-    } catch (error) {
-      console.error('Error loading report data:', error)
-      // Set empty report on error
+      setReportData(realReportData)
+    } else {
+      // Set empty report if no analytics data
       const emptyReport: ReportData = {
         financial: { totalRevenue: 0, monthlyRevenue: 0, averageTicket: 0, pendingPayments: 0, revenueGrowth: 0, monthlyComparison: [0, 0, 0, 0, 0, 0] },
         appointments: { totalAppointments: 0, completedAppointments: 0, cancelledAppointments: 0, noShowRate: 0, appointmentGrowth: 0, dailyAppointments: [0, 0, 0, 0, 0, 0, 0] },
@@ -205,15 +149,29 @@ export default function ReportsPage() {
         doctors: { totalDoctors: 0, averageRating: 0, mostBookedDoctor: 'Nenhum médico', doctorEfficiency: 0, doctorPerformance: [] }
       }
       setReportData(emptyReport)
-    } finally {
-      setLoading(false)
     }
-  }
+  }, [analyticsData])
+
+  useEffect(() => {
+    if (user && isAuthenticated) {
+      // Check if user has permission to access reports page
+      if (!['DOCTOR', 'ADMIN'].includes(user.role)) {
+        router.push('/dashboard')
+        return
+      }
+      loadAnalytics(selectedPeriod as 'today' | 'week' | 'month' | 'quarter' | 'year')
+    }
+  }, [user, isAuthenticated, selectedPeriod, loadAnalytics])
+
+  useEffect(() => {
+    loadReportDataFromAnalytics()
+  }, [loadReportDataFromAnalytics])
 
 
-  const refreshData = () => {
-    loadReportData()
-  }
+
+  const refreshData = useCallback(() => {
+    loadAnalytics(selectedPeriod as 'today' | 'week' | 'month' | 'quarter' | 'year')
+  }, [loadAnalytics, selectedPeriod])
 
   const exportReport = (format: 'pdf' | 'excel' | 'csv') => {
     if (!reportData) return
@@ -233,7 +191,7 @@ export default function ReportsPage() {
   }
 
   // Show loading while checking auth
-  if (isLoading || !isAuthenticated || loading) {
+  if (isLoading || !isAuthenticated || analyticsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -424,8 +382,8 @@ export default function ReportsPage() {
               <option value="year">Este Ano</option>
             </select>
             
-            <Button variant="outline" onClick={refreshData} disabled={loading}>
-              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            <Button variant="outline" onClick={refreshData} disabled={analyticsLoading}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${analyticsLoading ? 'animate-spin' : ''}`} />
               Atualizar
             </Button>
             
