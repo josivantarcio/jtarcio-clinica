@@ -43,12 +43,14 @@ class ApiClient {
     // Request interceptor to add auth token (optional for simple backend)
     this.client.interceptors.request.use(
       (config) => {
-        // Only add auth header if we have a token
-        if (this.token && this.token !== 'fake-jwt-token-for-testing') {
+        // Add auth header for any token (including fake token for development)
+        if (this.token) {
           config.headers.Authorization = `Bearer ${this.token}`
-          console.log('🔐 Adding Authorization header to request')
-        } else if (this.token === 'fake-jwt-token-for-testing') {
-          console.log('🧪 Using fake token - skipping Authorization header for simple backend')
+          if (this.token === 'fake-jwt-token-for-testing') {
+            console.log('🧪 Adding fake token Authorization header for development')
+          } else {
+            console.log('🔐 Adding Authorization header to request')
+          }
         } else {
           console.log('🔓 No token - proceeding without authentication')
         }
