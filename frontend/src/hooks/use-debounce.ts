@@ -181,4 +181,44 @@ export function useFormAutoSave<T extends Record<string, any>>(
   }
 }
 
+// Hook para debounce de chamadas de API
+export function useDebouncedApi<T extends (...args: any[]) => Promise<any>>(
+  apiCall: T,
+  delay: number = 300
+): T {
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const pendingRef = useRef<Promise<any> | null>(null)
+
+  return useCallback(
+    (async (...args: Parameters<T>) => {
+      // Se há uma chamada pendente, retorna ela
+      if (pendingRef.current) {
+        return pendingRef.current
+      }
+
+      // Limpa timeout anterior se existe
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+
+      // Cria nova Promise debounced
+      pendingRef.current = new Promise((resolve, reject) => {
+        timeoutRef.current = setTimeout(async () => {
+          try {
+            const result = await apiCall(...args)
+            pendingRef.current = null
+            resolve(result)
+          } catch (error) {
+            pendingRef.current = null
+            reject(error)
+          }
+        }, delay)
+      })
+
+      return pendingRef.current
+    }) as T,
+    [apiCall, delay]
+  )
+}
+
 export default useDebounce

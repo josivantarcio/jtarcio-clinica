@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { History, Clock, User, FileText } from 'lucide-react'
-import { useEffect } from 'react'
+import { useEffect, useCallback } from 'react'
 import { formatDateTime } from '@/lib/utils'
 import { useAppointmentsStore } from '@/store/appointments'
 import { useAuthStore } from '@/store/auth'
@@ -14,10 +14,13 @@ export function RecentAppointments() {
   const { appointments, isLoading, loadAppointments } = useAppointmentsStore()
   const { user } = useAuthStore()
   
-  useEffect(() => {
-    // Load recent completed appointments
+  const loadRecentAppointments = useCallback(() => {
     loadAppointments({ status: 'COMPLETED', limit: 5, orderBy: 'completedAt:desc' })
-  }, [])
+  }, [loadAppointments])
+  
+  useEffect(() => {
+    loadRecentAppointments()
+  }, [loadRecentAppointments])
 
   return (
     <Card>

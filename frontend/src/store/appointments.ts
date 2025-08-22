@@ -8,6 +8,20 @@ interface AppointmentsState {
   isLoading: boolean
   error: string | null
   
+  // Cache
+  cache: {
+    [key: string]: {
+      data: Appointment[]
+      timestamp: number
+      ttl: number
+    }
+  }
+  
+  // Pending requests to avoid duplicates
+  pendingRequests: {
+    [key: string]: Promise<any>
+  }
+  
   // Filters
   filters: {
     status?: string
@@ -25,6 +39,7 @@ interface AppointmentsState {
   completeAppointment: (id: string, data: any) => Promise<boolean>
   setFilters: (filters: any) => void
   clearError: () => void
+  clearCache: () => void
 }
 
 export const useAppointmentsStore = create<AppointmentsState>((set, get) => ({
@@ -32,32 +47,90 @@ export const useAppointmentsStore = create<AppointmentsState>((set, get) => ({
   currentAppointment: null,
   isLoading: false,
   error: null,
+  cache: {},
+  pendingRequests: {},
   filters: {},
 
   loadAppointments: async (params = {}) => {
+    const { filters, cache, pendingRequests } = get()
+    const queryParams = { ...filters, ...params }
+    const cacheKey = JSON.stringify(queryParams)
+    const CACHE_TTL = 2 * 60 * 1000 // 2 minutos
+    
+    // Verificar cache válido
+    const cachedData = cache[cacheKey]
+    if (cachedData && Date.now() - cachedData.timestamp < cachedData.ttl) {
+      set({
+        appointments: cachedData.data,
+        isLoading: false,
+        error: null
+      })
+      return
+    }
+    
+    // Verificar se já existe uma requisição pendente
+    if (pendingRequests[cacheKey]) {
+      return pendingRequests[cacheKey]
+    }
+    
     set({ isLoading: true, error: null })
     
-    try {
-      const { filters } = get()
-      const response = await apiClient.getAppointments({ ...filters, ...params })
-      
-      if (response.success && response.data) {
-        set({
-          appointments: response.data.appointments || response.data,
-          isLoading: false
-        })
-      } else {
-        set({
-          error: response.error?.message || 'Failed to load appointments',
-          isLoading: false
-        })
+    // Criar e armazenar a Promise pendente
+    const requestPromise = (async () => {
+      try {
+        const response = await apiClient.getAppointments(queryParams)
+        
+        if (response.success && response.data) {
+          const appointments = response.data.appointments || response.data
+          
+          // Atualizar cache
+          set(state => ({
+            appointments,
+            isLoading: false,
+            cache: {
+              ...state.cache,
+              [cacheKey]: {
+                data: appointments,
+                timestamp: Date.now(),
+                ttl: CACHE_TTL
+              }
+            },
+            pendingRequests: {
+              ...state.pendingRequests,
+              [cacheKey]: undefined // Remove da lista de pendentes
+            }
+          }))
+          
+          return appointments
+        } else {
+          set({
+            error: response.error?.message || 'Failed to load appointments',
+            isLoading: false
+          })
+          throw new Error(response.error?.message || 'Failed to load appointments')
+        }
+      } catch (error) {
+        set(state => ({
+          error: 'Network error',
+          isLoading: false,
+          pendingRequests: {
+            ...state.pendingRequests,
+            [cacheKey]: undefined // Remove da lista de pendentes
+          }
+        }))
+        throw error
       }
-    } catch (_error) {
-      set({
-        error: 'Network error',
-        isLoading: false
-      })
-    }
+    })()
+    
+    // Armazenar requisição pendente
+    set(state => ({
+      pendingRequests: {
+        ...state.pendingRequests,
+        [cacheKey]: requestPromise
+      }
+    }))
+    
+    return requestPromise
   },
 
   createAppointment: async (data: AppointmentBooking) => {
@@ -67,7 +140,8 @@ export const useAppointmentsStore = create<AppointmentsState>((set, get) => ({
       const response = await apiClient.createAppointment(data)
       
       if (response.success && response.data) {
-        // Reload appointments to get updated list
+        // Invalidar cache e recarregar
+        get().clearCache()
         get().loadAppointments()
         set({ isLoading: false })
         return true
@@ -125,7 +199,8 @@ export const useAppointmentsStore = create<AppointmentsState>((set, get) => ({
           set({ currentAppointment: response.data })
         }
         
-        // Reload appointments
+        // Invalidar cache e recarregar
+        get().clearCache()
         get().loadAppointments()
         set({ isLoading: false })
         return true
@@ -152,7 +227,8 @@ export const useAppointmentsStore = create<AppointmentsState>((set, get) => ({
       const response = await apiClient.cancelAppointment(id, { reason })
       
       if (response.success) {
-        // Reload appointments
+        // Invalidar cache e recarregar
+        get().clearCache()
         get().loadAppointments()
         set({ isLoading: false })
         return true
@@ -185,7 +261,8 @@ export const useAppointmentsStore = create<AppointmentsState>((set, get) => ({
           set({ currentAppointment: response.data })
         }
         
-        // Reload appointments
+        // Invalidar cache e recarregar
+        get().clearCache()
         get().loadAppointments()
         set({ isLoading: false })
         return true
@@ -213,5 +290,9 @@ export const useAppointmentsStore = create<AppointmentsState>((set, get) => ({
 
   clearError: () => {
     set({ error: null })
+  },
+
+  clearCache: () => {
+    set({ cache: {} })
   }
 }))

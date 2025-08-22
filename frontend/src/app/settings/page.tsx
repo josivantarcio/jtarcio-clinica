@@ -126,13 +126,16 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [activeTab, setActiveTab] = useState('profile')
+  const [loadingTimeout, setLoadingTimeout] = useState(false)
   
   // Theme provider hook
   const { theme, setTheme } = useTheme()
 
   useEffect(() => {
     // Hydrate the persisted store
-    useAuthStore.persist.rehydrate()
+    if (typeof window !== 'undefined') {
+      useAuthStore.persist.rehydrate()
+    }
   }, [])
 
   useEffect(() => {
@@ -142,68 +145,73 @@ export default function SettingsPage() {
   }, [isAuthenticated, isLoading, router])
 
   useEffect(() => {
-    if (user && isAuthenticated) {
+    if (user && isAuthenticated && !loading) {
       loadUserSettings()
     }
   }, [user, isAuthenticated])
 
+  // Safety timeout to prevent infinite loading
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (loading) {
+        console.warn('⚠️ Settings loading timeout - forcing load with fallback data')
+        setLoadingTimeout(true)
+        setLoading(false)
+      }
+    }, 10000) // 10 second timeout
+
+    return () => clearTimeout(timeout)
+  }, [loading])
+
   // Sync theme from ThemeProvider to local settings
   useEffect(() => {
-    setSettings(prev => ({
-      ...prev,
-      appearance: {
-        ...prev.appearance,
-        theme: theme
-      }
-    }))
-  }, [theme])
+    if (theme && settings.appearance.theme !== theme) {
+      setSettings(prev => ({
+        ...prev,
+        appearance: {
+          ...prev.appearance,
+          theme: theme
+        }
+      }))
+    }
+  }, [theme, settings.appearance.theme])
 
   const loadUserSettings = async () => {
+    if (!user) {
+      setLoading(false)
+      return
+    }
+
     setLoading(true)
     try {
-      if (user) {
-        // Load user profile from API using apiClient
-        const response = await apiClient.get('/auth/me')
+      console.log('🔄 Loading user settings for:', user.email)
+      
+      // Load user profile from API using apiClient
+      const response = await apiClient.get('/auth/me')
+      
+      if (response.success && response.data) {
+        const userData = response.data
+        console.log('✅ User data loaded successfully:', userData)
         
-        if (response.success && response.data) {
-          const userData = response.data
-          
-          setSettings(prev => ({
-            ...prev,
-            profile: {
-              firstName: userData.firstName || '',
-              lastName: userData.lastName || '',
-              email: userData.email || '',
-              phone: userData.phone || '',
-              timezone: userData.timezone || 'America/Sao_Paulo',
-              language: userData.language || 'pt-BR',
-              bio: userData.bio || ''
-            },
-            notifications: userData.settings?.notifications || prev.notifications,
-            privacy: userData.settings?.privacy || prev.privacy,
-            appearance: userData.settings?.appearance || prev.appearance,
-            security: userData.settings?.security || prev.security
-          }))
-        } else {
-          // Fallback to basic user data
-          setSettings(prev => ({
-            ...prev,
-            profile: {
-              firstName: user.firstName || user.name?.split(' ')[0] || '',
-              lastName: user.lastName || user.name?.split(' ').slice(1).join(' ') || '',
-              email: user.email,
-              phone: '',
-              timezone: 'America/Sao_Paulo',
-              language: 'pt-BR',
-              bio: ''
-            }
-          }))
-        }
-      }
-    } catch (error) {
-      console.error('Error loading settings:', error)
-      // Fallback to basic user data on error
-      if (user) {
+        setSettings(prev => ({
+          ...prev,
+          profile: {
+            firstName: userData.firstName || '',
+            lastName: userData.lastName || '',
+            email: userData.email || '',
+            phone: userData.phone || '',
+            timezone: userData.timezone || 'America/Sao_Paulo',
+            language: userData.language || 'pt-BR',
+            bio: userData.bio || ''
+          },
+          notifications: userData.settings?.notifications || prev.notifications,
+          privacy: userData.settings?.privacy || prev.privacy,
+          appearance: userData.settings?.appearance || prev.appearance,
+          security: userData.settings?.security || prev.security
+        }))
+      } else {
+        console.warn('⚠️ API response was not successful, using fallback data')
+        // Fallback to basic user data
         setSettings(prev => ({
           ...prev,
           profile: {
@@ -217,7 +225,23 @@ export default function SettingsPage() {
           }
         }))
       }
+    } catch (error) {
+      console.error('❌ Error loading settings:', error)
+      // Fallback to basic user data on error
+      setSettings(prev => ({
+        ...prev,
+        profile: {
+          firstName: user.firstName || user.name?.split(' ')[0] || '',
+          lastName: user.lastName || user.name?.split(' ').slice(1).join(' ') || '',
+          email: user.email,
+          phone: '',
+          timezone: 'America/Sao_Paulo',
+          language: 'pt-BR',
+          bio: ''
+        }
+      }))
     } finally {
+      console.log('✅ Settings loading completed')
       setLoading(false)
     }
   }
@@ -225,6 +249,8 @@ export default function SettingsPage() {
   const saveSettings = async (section?: string) => {
     setSaving(true)
     try {
+      console.log('💾 Saving settings:', section || 'all', settings)
+      
       const response = await apiClient.patch('/users/profile', {
         firstName: settings.profile.firstName,
         lastName: settings.profile.lastName,
@@ -244,13 +270,14 @@ export default function SettingsPage() {
       })
       
       if (response.success) {
-        console.log('Settings saved successfully:', section || 'all')
+        console.log('✅ Settings saved successfully:', section || 'all')
         // TODO: Show success toast notification
       } else {
-        throw new Error('Failed to save settings')
+        console.error('❌ Save failed:', response.error)
+        throw new Error(response.error?.message || 'Failed to save settings')
       }
     } catch (error) {
-      console.error('Error saving settings:', error)
+      console.error('❌ Error saving settings:', error)
       // TODO: Show error toast notification
     } finally {
       setSaving(false)
@@ -273,7 +300,28 @@ export default function SettingsPage() {
   }
 
   // Show loading while checking auth
-  if (isLoading || !isAuthenticated || loading) {
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-2 text-muted-foreground">Verificando autenticação...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-muted-foreground">Redirecionando para login...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -296,6 +344,11 @@ export default function SettingsPage() {
             <p className="text-muted-foreground">
               Gerencie suas preferências e configurações de conta
             </p>
+            {loadingTimeout && (
+              <div className="mt-2 p-2 bg-yellow-100 border border-yellow-300 rounded-md text-sm text-yellow-800">
+                ⚠️ Algumas configurações podem não ter sido carregadas completamente.
+              </div>
+            )}
           </div>
           <Button onClick={() => saveSettings()} disabled={saving}>
             {saving ? (

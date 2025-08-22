@@ -14,8 +14,13 @@ export default function DashboardPage() {
   const router = useRouter()
 
   useEffect(() => {
-    // Hydrate the persisted store
-    useAuthStore.persist.rehydrate()
+    // Hydrate the persisted store only once
+    const unsubscribe = useAuthStore.persist.rehydrate()
+    return () => {
+      if (typeof unsubscribe === 'function') {
+        unsubscribe()
+      }
+    }
   }, [])
 
   useEffect(() => {

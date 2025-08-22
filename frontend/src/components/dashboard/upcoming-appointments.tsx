@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Calendar, Clock, User } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Appointment } from '@/types'
 import { formatDateTime, formatTime } from '@/lib/utils'
@@ -17,10 +17,13 @@ export function UpcomingAppointments() {
   const { user } = useAuthStore()
   const router = useRouter()
   
-  useEffect(() => {
-    // Load upcoming appointments
+  const loadUpcomingAppointments = useCallback(() => {
     loadAppointments({ status: 'SCHEDULED,CONFIRMED', limit: 5 })
-  }, [])
+  }, [loadAppointments])
+  
+  useEffect(() => {
+    loadUpcomingAppointments()
+  }, [loadUpcomingAppointments])
 
   const getStatusColor = (status: string) => {
     switch (status) {

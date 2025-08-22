@@ -2,71 +2,49 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Calendar, Users, DollarSign, TrendingUp } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { apiClient } from '@/lib/api'
+import { useEffect, useState, useCallback } from 'react'
+import { useAnalyticsStore } from '@/store/analytics'
 import { DashboardStats as StatsType } from '@/types'
 import { formatCurrency } from '@/lib/utils'
 
 export function DashboardStats() {
+  const { data: analyticsData, isLoading, loadAnalytics, error } = useAnalyticsStore()
   const [stats, setStats] = useState<StatsType | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    loadStats()
-  }, [])
+    loadAnalytics()
+  }, [loadAnalytics])
 
-  const loadStats = async () => {
-    try {
-      const response = await apiClient.getAnalytics()
-      
-      if (response.success && response.data) {
-        const analyticsData = response.data
-        
-        // Helper function to safely get numeric values
-        const safeNumber = (value: any): number => {
-          if (value === null || value === undefined || isNaN(value)) {
-            return 0
-          }
-          return Number(value) || 0
+  useEffect(() => {
+    if (analyticsData) {
+      // Helper function to safely get numeric values
+      const safeNumber = (value: any): number => {
+        if (value === null || value === undefined || isNaN(value)) {
+          return 0
         }
+        return Number(value) || 0
+      }
 
-        const totalAppts = safeNumber(analyticsData.overview?.totalAppointments)
-        const todayBookings = safeNumber(analyticsData.realTime?.todayBookings)
-        const totalRevenue = safeNumber(analyticsData.overview?.totalRevenue)
-        const patientGrowth = safeNumber(analyticsData.overview?.patientGrowth)
-        const averageRating = safeNumber(analyticsData.overview?.averageRating)
+      const totalAppts = safeNumber(analyticsData.overview?.totalAppointments)
+      const todayBookings = safeNumber(analyticsData.realTime?.todayBookings)
+      const totalRevenue = safeNumber(analyticsData.overview?.totalRevenue)
+      const patientGrowth = safeNumber(analyticsData.overview?.patientGrowth)
+      const averageRating = safeNumber(analyticsData.overview?.averageRating)
 
-        const dashboardStats: StatsType = {
-          totalAppointments: totalAppts,
-          todayAppointments: todayBookings,
-          pendingAppointments: Math.floor(totalAppts * 0.1), // Estimate 10% pending
-          completedAppointments: Math.floor(totalAppts * 0.8), // Estimate 80% completed
-          cancelledAppointments: Math.floor(totalAppts * 0.1), // Estimate 10% cancelled
-          revenue: totalRevenue,
-          patientGrowth: patientGrowth,
-          satisfactionScore: averageRating
-        }
-        
-        setStats(dashboardStats)
-      } else {
-        // No data available - show zeros instead of mock data
-        const emptyStats: StatsType = {
-          totalAppointments: 0,
-          todayAppointments: 0,
-          pendingAppointments: 0,
-          completedAppointments: 0,
-          cancelledAppointments: 0,
-          revenue: 0,
-          patientGrowth: 0,
-          satisfactionScore: 0
-        }
-        setStats(emptyStats)
+      const dashboardStats: StatsType = {
+        totalAppointments: totalAppts,
+        todayAppointments: todayBookings,
+        pendingAppointments: Math.floor(totalAppts * 0.1), // Estimate 10% pending
+        completedAppointments: Math.floor(totalAppts * 0.8), // Estimate 80% completed
+        cancelledAppointments: Math.floor(totalAppts * 0.1), // Estimate 10% cancelled
+        revenue: totalRevenue,
+        patientGrowth: patientGrowth,
+        satisfactionScore: averageRating
       }
       
-      setIsLoading(false)
-    } catch (error) {
-      console.error('Failed to load stats:', error)
-      // Set empty stats on error instead of showing mock data
+      setStats(dashboardStats)
+    } else if (error) {
+      // Set empty stats on error
       const emptyStats: StatsType = {
         totalAppointments: 0,
         todayAppointments: 0,
@@ -78,9 +56,8 @@ export function DashboardStats() {
         satisfactionScore: 0
       }
       setStats(emptyStats)
-      setIsLoading(false)
     }
-  }
+  }, [analyticsData, error])
 
   if (isLoading) {
     return (
