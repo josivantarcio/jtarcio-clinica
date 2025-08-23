@@ -2,6 +2,7 @@ import { FastifyInstance } from 'fastify';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
+import multipart from '@fastify/multipart';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import { env } from '@/config/env';
@@ -63,6 +64,14 @@ export async function registerPlugins(fastify: FastifyInstance): Promise<void> {
       }),
     });
   }
+
+  // File upload support
+  await fastify.register(multipart, {
+    limits: {
+      fileSize: env.MAX_FILE_SIZE,
+      files: 1,
+    },
+  });
 
   // API Documentation
   await fastify.register(swagger, {
@@ -135,13 +144,11 @@ export async function registerPlugins(fastify: FastifyInstance): Promise<void> {
     transformStaticCSP: header => header,
   });
 
-  // Content type parser for file uploads
-  fastify.addContentTypeParser(
-    'multipart/form-data',
-    function (request, payload, done) {
-      done(null);
-    },
-  );
+  // Static file serving for uploads
+  await fastify.register(require('@fastify/static'), {
+    root: require('path').join(process.cwd(), 'uploads'),
+    prefix: '/uploads/',
+  });
 
   // Global error handler
   fastify.setErrorHandler((error, request, reply) => {

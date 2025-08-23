@@ -388,6 +388,21 @@ O sistema utiliza **dados reais do banco PostgreSQL**. Não há dados fictícios
 - **Código Corrigido**: `frontend/src/app/financial/page.tsx` linhas 216-221
 - **Status**: ✅ **RESOLVIDO**
 
+#### **Problema 4: BarChart Component Not Found (23 Agosto 2025)**
+- **Sintoma**: `ReferenceError: BarChart is not defined` na página financeira
+- **Causa**: Componente `BarChart` não estava importado do Lucide React
+- **Erro**: `frontend/src/app/financial/page.tsx:482`
+- **Solução**: Alterado `<BarChart>` para `<BarChart3>` que estava corretamente importado
+- **Código Corrigido**: Line 482 - `<BarChart3 className="h-4 w-4 mr-2" />`
+- **Status**: ✅ **RESOLVIDO**
+
+#### **Problema 5: Missing Financial Routes (23 Agosto 2025)**
+- **Sintoma**: `Route GET:/api/v1/financial/dashboard not found`
+- **Causa**: Backend rodando `index-simple.ts` ao invés do `index.ts` principal
+- **Solução**: Iniciado servidor principal com todas as rotas registradas
+- **Comando**: `PORT=3000 npx tsx src/index.ts`
+- **Status**: ✅ **RESOLVIDO**
+
 ### **Melhorias Implementadas**
 
 1. **Fallback para Dados Mock**: Sistema usa dados mock quando API não está disponível
@@ -432,26 +447,28 @@ curl -v -H "Authorization: Bearer fake-jwt-token-for-testing" \
 - **Solução**: Já corrigido na versão atual
 - **Verificar**: Função `formatGrowth` deve ter verificações para `undefined/null`
 
-### **Status Atual dos Servidores**
+### **Status Atual dos Servidores (Atualizado 23 Agosto 2025)**
 
 | Serviço | Porta | Status | Comando de Inicialização |
 |---------|-------|--------|---------------------------|
-| Backend API | 3000 | ⚠️ Requer DB | `PORT=3000 npx tsx src/index.ts` |
-| Frontend | 3001 | ✅ Funcionando | `cd frontend && NEXT_PUBLIC_API_URL=http://localhost:3000 PORT=3001 npm run dev` |
-| PostgreSQL | 5433 | ⚠️ Verificar | `docker-compose up -d` ou serviço local |
+| Backend API | 3000 | ✅ **FUNCIONANDO** | `PORT=3000 npx tsx src/index.ts` |
+| Frontend | 3001 | ✅ **FUNCIONANDO** | `cd frontend && NEXT_PUBLIC_API_URL=http://localhost:3000 PORT=3001 npm run dev` |
+| PostgreSQL | 5433 | ✅ **CONECTADO** | Docker container ativo |
+| Redis | 6380 | ✅ **CONECTADO** | Docker container ativo |
 
 ### **Testes Rápidos**
 
 ```bash
-# 1. Testar Backend API (requer DB)
+# 1. Testar Backend API Financial Dashboard ✅ FUNCIONANDO
 curl -H "Authorization: Bearer fake-jwt-token-for-testing" \
-  http://localhost:3000/api/v1/financial/health
+  http://localhost:3000/api/v1/financial/dashboard
 
-# 2. Testar Frontend (funciona sem DB via mock)
+# 2. Testar Frontend Financial Page ✅ FUNCIONANDO  
 curl -I http://localhost:3001/financial  # Deve retornar 200
 
-# 3. Verificar logs do frontend
-# Navegar para http://localhost:3001/financial e verificar console do browser
+# 3. Verificar Status Completo
+# Navegar para http://localhost:3001/financial - página carrega sem erros
+# Console do browser limpo, sem JavaScript errors
 ```
 
 ## 🔗 Links Relacionados

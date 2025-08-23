@@ -1,8 +1,8 @@
 # 📚 EO Clínica - Índice Geral da Documentação
 
 > **Sistema completo de agendamento médico com IA integrada**  
-> **Status:** Production Ready v1.3.4  
-> **Última atualização:** 20 de Agosto de 2025
+> **Status:** Production Ready v1.3.6  
+> **Última atualização:** 23 de Agosto de 2025
 
 ---
 
@@ -93,6 +93,7 @@
 ├── 💰 FINANCIAL_MODULE.md      # Módulo financeiro
 ├── 📅 SCHEDULING_MODULE.md     # Sistema de agendamento
 ├── 👥 USER_MANAGEMENT.md       # Gestão de usuários
+├── ⚙️  SETTINGS_MODULE.md       # Sistema de configurações (100% completo)
 ├── 🤖 AI_CHAT_MODULE.md        # Chat com IA
 ├── 📊 ANALYTICS_MODULE.md      # Analytics e relatórios
 └── 🔔 NOTIFICATIONS.md         # Sistema de notificações
@@ -220,7 +221,7 @@
 - **📄 Total de Páginas:** 200+ páginas equivalentes
 - **🔍 Categorias:** 10 principais
 - **🎯 Cobertura:** 95% do sistema documentado
-- **📅 Última Revisão:** 20/08/2025
+- **📅 Última Revisão:** 23/08/2025
 - **✅ Status:** Atualizada e sincronizada
 
 ---

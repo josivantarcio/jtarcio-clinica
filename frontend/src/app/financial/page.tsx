@@ -88,22 +88,25 @@ export default function FinancialDashboard() {
       
       // Fallback to mock data
       const mockData = {
-        overview: {
-          totalRevenue: 125000,
-          totalExpenses: 45000,
-          netProfit: 80000,
-          cashBalance: 250000
-        },
-        kpis: [
-          { title: "Receita Mensal", value: "R$ 125.000", change: "+12.5%", changeType: "positive" },
-          { title: "Despesas Mensais", value: "R$ 45.000", change: "+3.2%", changeType: "negative" }
-        ],
+        totalRevenue: 125000,
+        totalExpenses: 45000,
+        netProfit: 80000,
+        cashBalance: 250000,
+        revenueGrowth: 12.5,
+        expenseGrowth: 3.2,
+        profitGrowth: 8.7,
         recentTransactions: [
-          { id: "1", description: "Consulta - Dr. João", amount: 200, type: "INCOME" }
+          { id: "1", description: "Consulta - Dr. João", amount: 200, type: "INCOME", date: new Date() }
+        ],
+        upcomingPayments: [
+          { id: "1", description: "Aluguel Clínica", amount: 5000, dueDate: new Date(), supplier: { name: "Imobiliária" } }
+        ],
+        overdueReceivables: [
+          { id: "1", description: "Consulta - Maria Silva", netAmount: 150, dueDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), patient: { firstName: "Maria", lastName: "Silva" } }
         ]
       }
       console.log('🧪 Using mock financial data')
-      setDashboardData(mockData.overview as any)
+      setDashboardData(mockData as any)
       
     } catch (err: any) {
       console.error('Error loading financial dashboard:', err)
@@ -382,7 +385,7 @@ export default function FinancialDashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {dashboardData.recentTransactions.length > 0 ? (
+                {dashboardData.recentTransactions && dashboardData.recentTransactions.length > 0 ? (
                   <div className="space-y-4">
                     {dashboardData.recentTransactions.slice(0, 5).map((transaction, index) => (
                       <div key={index} className="flex items-center justify-between py-2 border-b">
@@ -422,7 +425,7 @@ export default function FinancialDashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {dashboardData.overdueReceivables.length > 0 ? (
+                {dashboardData.overdueReceivables && dashboardData.overdueReceivables.length > 0 ? (
                   <div className="space-y-4">
                     {dashboardData.overdueReceivables.slice(0, 5).map((receivable, index) => (
                       <div key={index} className="flex items-center justify-between py-2 border-b">
@@ -476,7 +479,7 @@ export default function FinancialDashboard() {
                       className="w-full justify-start"
                       onClick={() => window.location.href = '/financial/reports'}
                     >
-                      <BarChart className="h-4 w-4 mr-2" />
+                      <BarChart3 className="h-4 w-4 mr-2" />
                       Relatórios Detalhados
                     </Button>
                   </div>

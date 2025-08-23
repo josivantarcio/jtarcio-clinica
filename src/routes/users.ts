@@ -3,6 +3,9 @@ import { UserService } from '@/services/user.service';
 import { prisma } from '@/config/database';
 import { verifyJWT } from '@/plugins/auth';
 import { validateCPF, checkCPFExists } from '@/utils/cpf-validation';
+import bcrypt from 'bcryptjs';
+import fs from 'fs/promises';
+import path from 'path';
 
 const userService = new UserService(prisma);
 
@@ -1068,6 +1071,286 @@ export async function userRoutes(fastify: FastifyInstance): Promise<void> {
               error instanceof Error
                 ? error.message
                 : 'Failed to update user profile',
+          },
+        });
+      }
+    },
+  );
+
+  // Upload user avatar
+  fastify.post(
+    '/avatar',
+    {
+      preHandler: [verifyJWT],
+      schema: {
+        tags: ['Users'],
+        summary: 'Upload user avatar',
+        security: [{ Bearer: [] }],
+        consumes: ['multipart/form-data'],
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean' },
+              data: {
+                type: 'object',
+                properties: {
+                  avatarUrl: { type: 'string' },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      try {
+        const userId = (request as any).user?.userId;
+
+        if (!userId) {
+          return reply.status(401).send({
+            success: false,
+            error: {
+              code: 'UNAUTHORIZED',
+              message: 'User not authenticated',
+            },
+          });
+        }
+
+        const data = await request.file();
+
+        if (!data) {
+          return reply.status(400).send({
+            success: false,
+            error: {
+              code: 'NO_FILE',
+              message: 'Nenhum arquivo enviado',
+            },
+          });
+        }
+
+        // Check file size (5MB limit)
+        const buffer = await data.toBuffer();
+        if (buffer.length > 5 * 1024 * 1024) {
+          return reply.status(400).send({
+            success: false,
+            error: {
+              code: 'FILE_TOO_LARGE',
+              message: 'Arquivo muito grande. Limite de 5MB.',
+            },
+          });
+        }
+
+        // Check file type
+        if (!data.mimetype.startsWith('image/')) {
+          return reply.status(400).send({
+            success: false,
+            error: {
+              code: 'INVALID_FILE_TYPE',
+              message: 'Tipo de arquivo inválido. Apenas imagens são aceitas.',
+            },
+          });
+        }
+
+        // Create uploads directory if it doesn't exist
+        const uploadsDir = path.join(process.cwd(), 'uploads', 'avatars');
+        await fs.mkdir(uploadsDir, { recursive: true });
+
+        // Generate unique filename
+        const fileExtension = data.mimetype.split('/')[1];
+        const fileName = `${userId}-${Date.now()}.${fileExtension}`;
+        const filePath = path.join(uploadsDir, fileName);
+
+        // Save file
+        await fs.writeFile(filePath, buffer);
+
+        // Generate avatar URL
+        const avatarUrl = `/uploads/avatars/${fileName}`;
+
+        // Update user record
+        await userService.update(userId, { avatar: avatarUrl });
+
+        return reply.status(200).send({
+          success: true,
+          data: {
+            avatarUrl,
+          },
+        });
+      } catch (error) {
+        console.error('Error uploading avatar:', error);
+        return reply.status(500).send({
+          success: false,
+          error: {
+            code: 'INTERNAL_ERROR',
+            message: 'Erro ao fazer upload da foto',
+          },
+        });
+      }
+    },
+  );
+
+  // Delete user avatar
+  fastify.delete(
+    '/avatar',
+    {
+      preHandler: [verifyJWT],
+      schema: {
+        tags: ['Users'],
+        summary: 'Delete user avatar',
+        security: [{ Bearer: [] }],
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean' },
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      try {
+        const userId = (request as any).user?.userId;
+
+        if (!userId) {
+          return reply.status(401).send({
+            success: false,
+            error: {
+              code: 'UNAUTHORIZED',
+              message: 'User not authenticated',
+            },
+          });
+        }
+
+        // Get current user to find avatar file
+        const user = await userService.findById(userId);
+        
+        if (user.avatar) {
+          try {
+            // Delete file from filesystem
+            const filePath = path.join(process.cwd(), user.avatar.replace(/^\//, ''));
+            await fs.unlink(filePath);
+          } catch (error) {
+            // File might not exist, continue with database update
+            console.warn('Could not delete avatar file:', error);
+          }
+        }
+
+        // Update user record
+        await userService.update(userId, { avatar: null });
+
+        return reply.status(200).send({
+          success: true,
+          message: 'Avatar removido com sucesso',
+        });
+      } catch (error) {
+        console.error('Error deleting avatar:', error);
+        return reply.status(500).send({
+          success: false,
+          error: {
+            code: 'INTERNAL_ERROR',
+            message: 'Erro ao remover foto',
+          },
+        });
+      }
+    },
+  );
+
+  // Change password
+  fastify.patch(
+    '/password',
+    {
+      preHandler: [verifyJWT],
+      schema: {
+        tags: ['Users'],
+        summary: 'Change user password',
+        security: [{ Bearer: [] }],
+        body: {
+          type: 'object',
+          required: ['currentPassword', 'newPassword'],
+          properties: {
+            currentPassword: { type: 'string' },
+            newPassword: { type: 'string', minLength: 6 },
+          },
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean' },
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+    async (request: FastifyRequest<{ Body: { currentPassword: string; newPassword: string } }>, reply: FastifyReply) => {
+      try {
+        const userId = (request as any).user?.userId;
+
+        if (!userId) {
+          return reply.status(401).send({
+            success: false,
+            error: {
+              code: 'UNAUTHORIZED',
+              message: 'User not authenticated',
+            },
+          });
+        }
+
+        const { currentPassword, newPassword } = request.body;
+
+        // Get user with password
+        const user = await prisma.user.findUnique({
+          where: { id: userId },
+          select: { id: true, password: true },
+        });
+
+        if (!user) {
+          return reply.status(404).send({
+            success: false,
+            error: {
+              code: 'USER_NOT_FOUND',
+              message: 'Usuário não encontrado',
+            },
+          });
+        }
+
+        // Verify current password
+        const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
+        
+        if (!isCurrentPasswordValid) {
+          return reply.status(401).send({
+            success: false,
+            error: {
+              code: 'INVALID_CURRENT_PASSWORD',
+              message: 'Senha atual incorreta',
+            },
+          });
+        }
+
+        // Hash new password
+        const saltRounds = 12;
+        const hashedNewPassword = await bcrypt.hash(newPassword, saltRounds);
+
+        // Update password
+        await prisma.user.update({
+          where: { id: userId },
+          data: { password: hashedNewPassword },
+        });
+
+        return reply.status(200).send({
+          success: true,
+          message: 'Senha alterada com sucesso',
+        });
+      } catch (error) {
+        console.error('Error changing password:', error);
+        return reply.status(500).send({
+          success: false,
+          error: {
+            code: 'INTERNAL_ERROR',
+            message: 'Erro ao alterar senha',
           },
         });
       }

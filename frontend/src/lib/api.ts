@@ -467,11 +467,21 @@ class ApiClient {
   }
 
   async post<T = any>(url: string, data?: any): Promise<ApiResponse<T>> {
-    return this.request<T>({
+    const config: AxiosRequestConfig = {
       method: 'POST',
       url,
       data
-    })
+    }
+    
+    // For FormData, remove Content-Type to let browser set it with boundary
+    if (data instanceof FormData) {
+      config.headers = {
+        ...config.headers,
+        'Content-Type': undefined
+      }
+    }
+    
+    return this.request<T>(config)
   }
 
   async put<T = any>(url: string, data?: any): Promise<ApiResponse<T>> {

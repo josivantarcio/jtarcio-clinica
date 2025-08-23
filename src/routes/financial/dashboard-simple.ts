@@ -22,27 +22,13 @@ export default async function dashboardRoutes(fastify: FastifyInstance) {
               data: {
                 type: 'object',
                 properties: {
-                  overview: {
-                    type: 'object',
-                    properties: {
-                      totalRevenue: { type: 'number' },
-                      totalExpenses: { type: 'number' },
-                      netProfit: { type: 'number' },
-                      cashBalance: { type: 'number' },
-                    },
-                  },
-                  kpis: {
-                    type: 'array',
-                    items: {
-                      type: 'object',
-                      properties: {
-                        title: { type: 'string' },
-                        value: { type: 'string' },
-                        change: { type: 'string' },
-                        changeType: { type: 'string' },
-                      },
-                    },
-                  },
+                  totalRevenue: { type: 'number' },
+                  totalExpenses: { type: 'number' },
+                  netProfit: { type: 'number' },
+                  cashBalance: { type: 'number' },
+                  revenueGrowth: { type: 'number' },
+                  expenseGrowth: { type: 'number' },
+                  profitGrowth: { type: 'number' },
                   recentTransactions: {
                     type: 'array',
                     items: {
@@ -50,9 +36,33 @@ export default async function dashboardRoutes(fastify: FastifyInstance) {
                       properties: {
                         id: { type: 'string' },
                         description: { type: 'string' },
-                        amount: { type: 'number' },
-                        type: { type: 'string' },
+                        netAmount: { type: 'number' },
+                        transactionType: { type: 'string' },
                         date: { type: 'string' },
+                      },
+                    },
+                  },
+                  upcomingPayments: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        id: { type: 'string' },
+                        description: { type: 'string' },
+                        netAmount: { type: 'number' },
+                        dueDate: { type: 'string' },
+                      },
+                    },
+                  },
+                  overdueReceivables: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        id: { type: 'string' },
+                        description: { type: 'string' },
+                        netAmount: { type: 'number' },
+                        dueDate: { type: 'string' },
                       },
                     },
                   },
@@ -67,61 +77,38 @@ export default async function dashboardRoutes(fastify: FastifyInstance) {
       try {
         // Simple mock data for testing
         const dashboardData = {
-          overview: {
-            totalRevenue: 125000.0,
-            totalExpenses: 45000.0,
-            netProfit: 80000.0,
-            cashBalance: 250000.0,
-          },
-          kpis: [
-            {
-              title: 'Receita Mensal',
-              value: 'R$ 125.000',
-              change: '+12.5%',
-              changeType: 'positive',
-            },
-            {
-              title: 'Despesas Mensais',
-              value: 'R$ 45.000',
-              change: '+3.2%',
-              changeType: 'negative',
-            },
-            {
-              title: 'Lucro Líquido',
-              value: 'R$ 80.000',
-              change: '+18.7%',
-              changeType: 'positive',
-            },
-            {
-              title: 'Contas a Receber',
-              value: 'R$ 35.000',
-              change: '-5.1%',
-              changeType: 'negative',
-            },
-          ],
+          totalRevenue: 125000,
+          totalExpenses: 45000,
+          netProfit: 80000,
+          cashBalance: 250000,
+          revenueGrowth: 12.5,
+          expenseGrowth: 3.2,
+          profitGrowth: 8.7,
           recentTransactions: [
             {
               id: 'trans-001',
               description: 'Consulta - Dr. João Silva',
-              amount: 200.0,
-              type: 'INCOME',
+              netAmount: 200,
+              transactionType: 'RECEIPT',
               date: new Date().toISOString(),
-            },
-            {
-              id: 'trans-002',
-              description: 'Fornecedor - Material Médico',
-              amount: -1500.0,
-              type: 'EXPENSE',
-              date: new Date(Date.now() - 86400000).toISOString(),
-            },
-            {
-              id: 'trans-003',
-              description: 'Consulta - Dra. Maria Santos',
-              amount: 250.0,
-              type: 'INCOME',
-              date: new Date(Date.now() - 172800000).toISOString(),
-            },
+            }
           ],
+          upcomingPayments: [
+            {
+              id: 'pay-001',
+              description: 'Aluguel da Clínica',
+              netAmount: 5000,
+              dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
+            }
+          ],
+          overdueReceivables: [
+            {
+              id: 'rec-001',
+              description: 'Consulta - Cliente Pendente',
+              netAmount: 180,
+              dueDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+            }
+          ]
         };
 
         return {

@@ -40,6 +40,15 @@ import {
 } from 'lucide-react'
 import { apiClient } from '@/lib/api'
 import { useTheme } from '@/providers/theme-provider'
+import { useToast, toastUtils } from '@/hooks/use-toast'
+
+// Helper function to build full avatar URL
+const getFullAvatarUrl = (avatarPath: string | undefined) => {
+  if (!avatarPath) return undefined
+  if (avatarPath.startsWith('http')) return avatarPath
+  const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
+  return `${baseURL}${avatarPath}`
+}
 
 interface UserSettings {
   profile: {
@@ -127,10 +136,19 @@ export default function SettingsPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [activeTab, setActiveTab] = useState('profile')
   const [loadingTimeout, setLoadingTimeout] = useState(false)
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  })
+  const [avatarFile, setAvatarFile] = useState<File | null>(null)
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const isLoadingRef = useRef(false)
   
   // Theme provider hook
   const { theme, setTheme } = useTheme()
+  const { toast } = useToast()
 
   useEffect(() => {
     // Hydrate the persisted store
@@ -256,7 +274,7 @@ export default function SettingsPage() {
     try {
       console.log('💾 Saving settings:', section || 'all', settings)
       
-      const response = await apiClient.patch('/users/profile', {
+      const response = await apiClient.patch('/api/v1/users/profile', {
         firstName: settings.profile.firstName,
         lastName: settings.profile.lastName,
         phone: settings.profile.phone,
@@ -276,14 +294,142 @@ export default function SettingsPage() {
       
       if (response.success) {
         console.log('✅ Settings saved successfully:', section || 'all')
-        // TODO: Show success toast notification
+        toastUtils.success(
+          'Configurações salvas!', 
+          `Suas configurações de ${section === 'profile' ? 'perfil' : section === 'notifications' ? 'notificações' : section === 'privacy' ? 'privacidade' : section === 'appearance' ? 'aparência' : 'segurança'} foram atualizadas com sucesso.`
+        )
       } else {
         console.error('❌ Save failed:', response.error)
         throw new Error(response.error?.message || 'Failed to save settings')
       }
     } catch (error) {
       console.error('❌ Error saving settings:', error)
-      // TODO: Show error toast notification
+      toastUtils.error(
+        'Erro ao salvar configurações',
+        'Houve um problema ao salvar suas configurações. Tente novamente.'
+      )
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        toastUtils.error('Arquivo muito grande', 'Por favor, selecione uma imagem menor que 5MB.')
+        return
+      }
+      
+      if (!file.type.startsWith('image/')) {
+        toastUtils.error('Tipo de arquivo inválido', 'Por favor, selecione apenas arquivos de imagem.')
+        return
+      }
+      
+      setAvatarFile(file)
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        setAvatarPreview(e.target?.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleAvatarUpload = async () => {
+    if (!avatarFile) return
+    
+    const formData = new FormData()
+    formData.append('avatar', avatarFile)
+    
+    try {
+      setSaving(true)
+      toastUtils.loading('Enviando foto...', 'Aguarde enquanto sua foto é enviada.')
+      
+      const response = await apiClient.post('/api/v1/users/avatar', formData)
+      
+      if (response.success) {
+        setSettings(prev => ({
+          ...prev,
+          profile: {
+            ...prev.profile,
+            avatar: response.data.avatarUrl
+          }
+        }))
+        setAvatarFile(null)
+        setAvatarPreview(null)
+        toastUtils.success('Foto atualizada!', 'Sua foto de perfil foi atualizada com sucesso.')
+      } else {
+        throw new Error(response.error?.message || 'Failed to upload avatar')
+      }
+    } catch (error) {
+      console.error('Error uploading avatar:', error)
+      toastUtils.error('Erro ao enviar foto', 'Houve um problema ao enviar sua foto. Tente novamente.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleRemoveAvatar = async () => {
+    try {
+      setSaving(true)
+      const response = await apiClient.delete('/api/v1/users/avatar')
+      
+      if (response.success) {
+        setSettings(prev => ({
+          ...prev,
+          profile: {
+            ...prev.profile,
+            avatar: undefined
+          }
+        }))
+        toastUtils.success('Foto removida!', 'Sua foto de perfil foi removida com sucesso.')
+      } else {
+        throw new Error(response.error?.message || 'Failed to remove avatar')
+      }
+    } catch (error) {
+      console.error('Error removing avatar:', error)
+      toastUtils.error('Erro ao remover foto', 'Houve um problema ao remover sua foto. Tente novamente.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handlePasswordChange = async () => {
+    if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
+      toastUtils.warning('Campos obrigatórios', 'Por favor, preencha todos os campos de senha.')
+      return
+    }
+    
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toastUtils.error('Senhas não coincidem', 'A nova senha e a confirmação devem ser iguais.')
+      return
+    }
+    
+    if (passwordData.newPassword.length < 6) {
+      toastUtils.warning('Senha muito curta', 'A nova senha deve ter pelo menos 6 caracteres.')
+      return
+    }
+    
+    try {
+      setSaving(true)
+      const response = await apiClient.patch('/api/v1/users/password', {
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword
+      })
+      
+      if (response.success) {
+        setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' })
+        toastUtils.success('Senha alterada!', 'Sua senha foi alterada com sucesso.')
+      } else {
+        throw new Error(response.error?.message || 'Failed to change password')
+      }
+    } catch (error: any) {
+      console.error('Error changing password:', error)
+      if (error.response?.status === 401) {
+        toastUtils.error('Senha atual incorreta', 'A senha atual informada está incorreta.')
+      } else {
+        toastUtils.error('Erro ao alterar senha', 'Houve um problema ao alterar sua senha. Tente novamente.')
+      }
     } finally {
       setSaving(false)
     }
@@ -411,7 +557,7 @@ export default function SettingsPage() {
                 {/* Avatar Section */}
                 <div className="flex items-center space-x-6">
                   <Avatar className="h-24 w-24">
-                    <AvatarImage src={settings.profile.avatar} />
+                    <AvatarImage src={avatarPreview || getFullAvatarUrl(settings.profile.avatar)} />
                     <AvatarFallback className="text-lg font-semibold">
                       {settings.profile.firstName.charAt(0)}{settings.profile.lastName.charAt(0)}
                     </AvatarFallback>
@@ -424,14 +570,43 @@ export default function SettingsPage() {
                       </p>
                     </div>
                     <div className="flex space-x-2">
-                      <Button variant="outline" size="sm">
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleAvatarChange}
+                        accept="image/*"
+                        className="hidden"
+                      />
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={saving}
+                      >
                         <Camera className="h-4 w-4 mr-2" />
                         Alterar Foto
                       </Button>
-                      <Button variant="outline" size="sm">
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Remover
-                      </Button>
+                      {(avatarFile || settings.profile.avatar) && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={avatarFile ? () => { setAvatarFile(null); setAvatarPreview(null) } : handleRemoveAvatar}
+                          disabled={saving}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          {avatarFile ? 'Cancelar' : 'Remover'}
+                        </Button>
+                      )}
+                      {avatarFile && (
+                        <Button 
+                          size="sm"
+                          onClick={handleAvatarUpload}
+                          disabled={saving}
+                        >
+                          <Save className="h-4 w-4 mr-2" />
+                          Salvar Foto
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -861,6 +1036,8 @@ export default function SettingsPage() {
                         <div className="relative">
                           <input
                             type={showPassword ? "text" : "password"}
+                            value={passwordData.currentPassword}
+                            onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
                             className="w-full p-3 pr-10 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                             placeholder="Digite sua senha atual"
                           />
@@ -877,19 +1054,36 @@ export default function SettingsPage() {
                         <label className="text-sm font-medium">Nova Senha</label>
                         <input
                           type="password"
+                          value={passwordData.newPassword}
+                          onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
                           className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                          placeholder="Digite a nova senha"
+                          placeholder="Digite a nova senha (mín. 6 caracteres)"
+                          minLength={6}
                         />
                       </div>
                       <div className="space-y-2">
                         <label className="text-sm font-medium">Confirmar Nova Senha</label>
                         <input
                           type="password"
+                          value={passwordData.confirmPassword}
+                          onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
                           className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                           placeholder="Confirme a nova senha"
                         />
                       </div>
-                      <Button>Alterar Senha</Button>
+                      <Button onClick={handlePasswordChange} disabled={saving}>
+                        {saving ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                            Alterando...
+                          </>
+                        ) : (
+                          <>
+                            <Lock className="h-4 w-4 mr-2" />
+                            Alterar Senha
+                          </>
+                        )}
+                      </Button>
                     </div>
                   </div>
                 </div>
