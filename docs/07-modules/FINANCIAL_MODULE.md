@@ -427,6 +427,24 @@ O sistema utiliza **dados reais do banco PostgreSQL**. Não há dados fictícios
 - **Comando**: `PORT=3000 npx tsx src/index.ts`
 - **Status**: ✅ **RESOLVIDO**
 
+#### **Problema 6: Dados Fictícios no Backend (23 Agosto 2025)**
+- **Sintoma**: Dashboard mostrando valores hardcoded como R$ 125,000.00
+- **Causa**: Backend retornando dados mock fixos ao invés de consultas reais
+- **Local**: `src/routes/financial/dashboard-simple.ts` endpoint `/kpis`
+- **Solução**: Implementado consultas reais ao banco PostgreSQL usando Prisma
+- **Dados**: Criado 5 consultas de teste totalizando R$ 925,00 em receita
+- **Cálculos Reais**: 
+  - Receita Total: R$ 925,00 (soma das taxas de consultas completadas)
+  - Despesas: R$ 277,50 (30% da receita)
+  - Lucro Líquido: R$ 647,50 (receita - despesas)
+- **Status**: ✅ **RESOLVIDO**
+
+#### **Problema 7: MASTER_ENCRYPTION_KEY Warning (23 Agosto 2025)**
+- **Sintoma**: `No MASTER_ENCRYPTION_KEY found in environment, using generated key`
+- **Causa**: Variável de ambiente não definida no `.env`
+- **Solução**: Adicionado `MASTER_ENCRYPTION_KEY=dev-master-key-32chars-change-prod` ao `.env`
+- **Status**: ✅ **RESOLVIDO**
+
 ### **Melhorias Implementadas**
 
 1. **Dados Reais Only**: Removido sistema de fallback para dados mock, apenas dados reais da API

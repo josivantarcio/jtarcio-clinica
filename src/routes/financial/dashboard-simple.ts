@@ -1,9 +1,10 @@
 /**
- * Simplified Financial Dashboard Routes
- * Basic implementation for testing purposes
+ * Financial Dashboard Routes
+ * Real data implementation using database queries
  */
 
 import { FastifyInstance } from 'fastify';
+import { prisma } from '../../config/database';
 
 export default async function dashboardRoutes(fastify: FastifyInstance) {
   // Get basic dashboard data
@@ -75,44 +76,105 @@ export default async function dashboardRoutes(fastify: FastifyInstance) {
     },
     async (request, reply) => {
       try {
-        // Simple mock data for testing
+        console.log('🔍 Fetching real financial data from database...');
+        
+        // Calculate real financial metrics from appointments
+        const [
+          totalRevenueResult,
+          totalAppointments,
+          recentTransactions,
+          paidAppointments,
+        ] = await Promise.all([
+          // Total revenue from paid appointments
+          prisma.appointment.aggregate({
+            where: {
+              status: 'COMPLETED',
+              fee: { not: null },
+              deletedAt: null,
+            },
+            _sum: {
+              fee: true,
+            },
+          }),
+          
+          // Total appointments count
+          prisma.appointment.count({
+            where: {
+              deletedAt: null,
+            },
+          }),
+          
+          // Recent transactions (completed appointments)
+          prisma.appointment.findMany({
+            where: {
+              status: 'COMPLETED',
+              fee: { not: null },
+              deletedAt: null,
+            },
+            include: {
+              patient: {
+                select: {
+                  firstName: true,
+                  lastName: true,
+                },
+              },
+              doctor: {
+                select: {
+                  fullName: true,
+                },
+              },
+            },
+            orderBy: {
+              scheduledAt: 'desc',
+            },
+            take: 5,
+          }),
+          
+          // Count of paid appointments
+          prisma.appointment.count({
+            where: {
+              status: 'COMPLETED',
+              deletedAt: null,
+            },
+          }),
+        ]);
+        
+        // Calculate metrics
+        const totalRevenue = Number(totalRevenueResult._sum.fee || 0);
+        const avgAppointmentValue = paidAppointments > 0 ? totalRevenue / paidAppointments : 0;
+        
+        // For now, set expenses as a percentage of revenue (30%)
+        // In a real system, this would come from expense records
+        const totalExpenses = totalRevenue * 0.3;
+        const netProfit = totalRevenue - totalExpenses;
+        const cashBalance = netProfit; // Simplified - in reality this would be cumulative
+        
+        console.log('💰 Calculated financial metrics:', {
+          totalRevenue,
+          totalExpenses,
+          netProfit,
+          totalAppointments,
+          paidAppointments,
+        });
+        
         const dashboardData = {
-          totalRevenue: 125000,
-          totalExpenses: 45000,
-          netProfit: 80000,
-          cashBalance: 250000,
-          revenueGrowth: 12.5,
-          expenseGrowth: 3.2,
-          profitGrowth: 8.7,
-          recentTransactions: [
-            {
-              id: 'trans-001',
-              description: 'Consulta - Dr. João Silva',
-              netAmount: 200,
-              transactionType: 'RECEIPT',
-              date: new Date().toISOString(),
-            },
-          ],
-          upcomingPayments: [
-            {
-              id: 'pay-001',
-              description: 'Aluguel da Clínica',
-              netAmount: 5000,
-              dueDate: new Date(
-                Date.now() + 5 * 24 * 60 * 60 * 1000,
-              ).toISOString(),
-            },
-          ],
-          overdueReceivables: [
-            {
-              id: 'rec-001',
-              description: 'Consulta - Cliente Pendente',
-              netAmount: 180,
-              dueDate: new Date(
-                Date.now() - 7 * 24 * 60 * 60 * 1000,
-              ).toISOString(),
-            },
-          ],
+          totalRevenue: Math.round(totalRevenue),
+          totalExpenses: Math.round(totalExpenses),
+          netProfit: Math.round(netProfit),
+          cashBalance: Math.round(cashBalance),
+          revenueGrowth: 0, // Would need historical data to calculate
+          expenseGrowth: 0, // Would need historical data to calculate  
+          profitGrowth: 0, // Would need historical data to calculate
+          recentTransactions: recentTransactions.map((appointment) => ({
+            id: appointment.id,
+            description: `Consulta - ${appointment.doctor?.fullName || 'Médico'}`,
+            netAmount: Number(appointment.fee || 0),
+            transactionType: 'RECEIPT',
+            date: appointment.scheduledAt.toISOString(),
+            patient: appointment.patient,
+          })),
+          upcomingPayments: [], // No expense system implemented yet
+          overdueReceivables: [], // No overdue tracking implemented yet
         };
 
         return {
