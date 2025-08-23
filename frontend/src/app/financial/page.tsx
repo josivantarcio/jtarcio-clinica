@@ -1,6 +1,8 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { AppLayout } from '@/components/layout/app-layout'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -44,7 +46,8 @@ interface FinancialStats {
 }
 
 export default function FinancialDashboard() {
-  const { user } = useAuthStore()
+  const { user, isAuthenticated, isLoading } = useAuthStore()
+  const router = useRouter()
   const [dashboardData, setDashboardData] = useState<FinancialDashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -54,6 +57,34 @@ export default function FinancialDashboard() {
   const hasFinancialAccess = user?.role === 'ADMIN' || 
                              user?.role === 'FINANCIAL_MANAGER' || 
                              (process.env.NODE_ENV === 'development')
+
+  useEffect(() => {
+    // Hydrate the persisted store only once
+    const unsubscribe = useAuthStore.persist.rehydrate()
+    return () => {
+      if (typeof unsubscribe === 'function') {
+        unsubscribe()
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.push('/auth/login')
+    }
+  }, [isAuthenticated, isLoading, router])
+
+  // Show loading while checking auth
+  if (isLoading || !isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-2 text-muted-foreground">Carregando...</p>
+        </div>
+      </div>
+    )
+  }
   
   // Debug in development only
   if (process.env.NODE_ENV === 'development') {
@@ -69,44 +100,19 @@ export default function FinancialDashboard() {
       setLoading(true)
       setError(null)
       
-      // Try API first, fallback to mock data if it fails
-      try {
-        const token = localStorage.getItem('auth_token') || 'fake-jwt-token-for-testing'
-        apiClient.setToken(token)
-        
-        const response = await apiClient.get('/api/v1/financial/dashboard')
-        console.log('🔍 Financial API Response:', response)
-        
-        if (response && response.success && response.data) {
-          console.log('✅ Setting dashboard data:', response.data)
-          setDashboardData(response.data)
-          return
-        }
-      } catch (apiError) {
-        console.log('📡 API not available, using mock data for development')
-      }
+      const token = localStorage.getItem('auth_token') || 'fake-jwt-token-for-testing'
+      apiClient.setToken(token)
       
-      // Fallback to mock data
-      const mockData = {
-        totalRevenue: 125000,
-        totalExpenses: 45000,
-        netProfit: 80000,
-        cashBalance: 250000,
-        revenueGrowth: 12.5,
-        expenseGrowth: 3.2,
-        profitGrowth: 8.7,
-        recentTransactions: [
-          { id: "1", description: "Consulta - Dr. João", amount: 200, type: "INCOME", date: new Date() }
-        ],
-        upcomingPayments: [
-          { id: "1", description: "Aluguel Clínica", amount: 5000, dueDate: new Date(), supplier: { name: "Imobiliária" } }
-        ],
-        overdueReceivables: [
-          { id: "1", description: "Consulta - Maria Silva", netAmount: 150, dueDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), patient: { firstName: "Maria", lastName: "Silva" } }
-        ]
+      const response = await apiClient.get('/api/v1/financial/dashboard')
+      console.log('🔍 Financial API Response:', response)
+      
+      if (response && response.success && response.data) {
+        console.log('✅ Setting dashboard data:', response.data)
+        setDashboardData(response.data)
+        return
+      } else {
+        throw new Error('Dados financeiros inválidos recebidos da API')
       }
-      console.log('🧪 Using mock financial data')
-      setDashboardData(mockData as any)
       
     } catch (err: any) {
       console.error('Error loading financial dashboard:', err)
@@ -160,7 +166,7 @@ export default function FinancialDashboard() {
 
   if (!hasFinancialAccess && process.env.NODE_ENV !== 'development') {
     return (
-      <div className="container mx-auto p-6">
+      <AppLayout>
         <div className="text-center space-y-4">
           <h1 className="text-2xl font-bold text-gray-800 mb-4">Acesso Restrito</h1>
           <p className="text-gray-600">Você não tem permissão para acessar o módulo financeiro.</p>
@@ -182,24 +188,24 @@ export default function FinancialDashboard() {
             🧪 Ativar Modo Dev
           </Button>
         </div>
-      </div>
+      </AppLayout>
     )
   }
 
   if (loading) {
     return (
-      <div className="container mx-auto p-6">
+      <AppLayout>
         <div className="flex items-center justify-center min-h-96">
           <RefreshCw className="h-8 w-8 animate-spin text-primary" />
           <span className="ml-2">Carregando dados financeiros...</span>
         </div>
-      </div>
+      </AppLayout>
     )
   }
 
   if (error) {
     return (
-      <div className="container mx-auto p-6">
+      <AppLayout>
         <Card className="border-red-200 bg-red-50">
           <CardContent className="pt-6">
             <div className="flex items-center space-x-2">
@@ -216,69 +222,103 @@ export default function FinancialDashboard() {
             </Button>
           </CardContent>
         </Card>
-      </div>
+      </AppLayout>
     )
   }
 
   if (!dashboardData) {
     return (
-      <div className="container mx-auto p-6">
+      <AppLayout>
         <Card>
           <CardContent className="pt-6">
             <p className="text-center text-gray-500">Nenhum dado financeiro encontrado.</p>
           </CardContent>
         </Card>
-      </div>
+      </AppLayout>
     )
   }
 
-  const formatCurrency = (value: number): string => {
+  const formatCurrency = (value: number | undefined | null): string => {
+    if (value === undefined || value === null || isNaN(value)) {
+      return 'R$ 0,00'
+    }
+    
+    // Ensure value is a valid number
+    const numValue = typeof value === 'number' ? value : parseFloat(String(value))
+    if (isNaN(numValue)) {
+      return 'R$ 0,00'
+    }
+    
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL'
-    }).format(value)
+    }).format(numValue)
   }
 
   const formatGrowth = (growth: number | undefined | null): string => {
     if (growth === undefined || growth === null || isNaN(growth)) {
       return '0.0%'
     }
-    return `${growth >= 0 ? '+' : ''}${growth.toFixed(1)}%`
+    
+    // Ensure growth is a valid number
+    const numGrowth = typeof growth === 'number' ? growth : parseFloat(String(growth))
+    if (isNaN(numGrowth)) {
+      return '0.0%'
+    }
+    
+    return `${numGrowth >= 0 ? '+' : ''}${numGrowth.toFixed(1)}%`
+  }
+
+  const safeNumber = (value: any): number => {
+    if (value === undefined || value === null) {
+      return 0
+    }
+    
+    const numValue = typeof value === 'number' ? value : parseFloat(String(value))
+    return isNaN(numValue) ? 0 : numValue
+  }
+
+  const safeArray = (value: any): any[] => {
+    if (!value || !Array.isArray(value)) {
+      return []
+    }
+    return value
   }
 
   const financialStats: FinancialStats[] = [
     {
       label: 'Receita Total',
-      value: formatCurrency(dashboardData?.totalRevenue ?? 0),
-      growth: (dashboardData as any)?.revenueGrowth,
+      value: formatCurrency(safeNumber(dashboardData?.totalRevenue)),
+      growth: safeNumber((dashboardData as any)?.revenueGrowth),
       icon: DollarSign,
       color: 'text-green-600'
     },
     {
       label: 'Despesas Totais',
-      value: formatCurrency(dashboardData?.totalExpenses ?? 0),
-      growth: (dashboardData as any)?.expenseGrowth,
+      value: formatCurrency(safeNumber(dashboardData?.totalExpenses)),
+      growth: safeNumber((dashboardData as any)?.expenseGrowth),
       icon: TrendingDown,
       color: 'text-red-600'
     },
     {
       label: 'Lucro Líquido',
-      value: formatCurrency(dashboardData?.netProfit ?? 0),
-      growth: (dashboardData as any)?.profitGrowth,
+      value: formatCurrency(safeNumber(dashboardData?.netProfit)),
+      growth: safeNumber((dashboardData as any)?.profitGrowth),
       icon: TrendingUp,
       color: 'text-blue-600'
     },
     {
       label: 'Saldo em Caixa',
-      value: formatCurrency(dashboardData?.cashBalance ?? 0),
-      growth: 0, // Cash balance doesn't have growth metric
+      value: formatCurrency(safeNumber(dashboardData?.cashBalance)),
+      growth: null, // Cash balance doesn't have growth metric
       icon: Wallet,
       color: 'text-purple-600'
     }
   ]
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <AppLayout>
+      <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -385,9 +425,9 @@ export default function FinancialDashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {dashboardData.recentTransactions && dashboardData.recentTransactions.length > 0 ? (
+                {safeArray(dashboardData?.recentTransactions).length > 0 ? (
                   <div className="space-y-4">
-                    {dashboardData.recentTransactions.slice(0, 5).map((transaction, index) => (
+                    {safeArray(dashboardData?.recentTransactions).slice(0, 5).map((transaction, index) => (
                       <div key={index} className="flex items-center justify-between py-2 border-b">
                         <div>
                           <p className="font-medium">{transaction.description || 'Transação'}</p>
@@ -399,7 +439,7 @@ export default function FinancialDashboard() {
                         </div>
                         <div className="text-right">
                           <p className="font-medium">
-                            {formatCurrency(Number(transaction.netAmount))}
+                            {formatCurrency(safeNumber(transaction.netAmount))}
                           </p>
                           <Badge variant={transaction.status === 'PAID' ? 'default' : 'secondary'}>
                             {transaction.status === 'PAID' ? 'Pago' : 
@@ -425,9 +465,9 @@ export default function FinancialDashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {dashboardData.overdueReceivables && dashboardData.overdueReceivables.length > 0 ? (
+                {safeArray(dashboardData?.overdueReceivables).length > 0 ? (
                   <div className="space-y-4">
-                    {dashboardData.overdueReceivables.slice(0, 5).map((receivable, index) => (
+                    {safeArray(dashboardData?.overdueReceivables).slice(0, 5).map((receivable, index) => (
                       <div key={index} className="flex items-center justify-between py-2 border-b">
                         <div>
                           <p className="font-medium">{receivable.description || 'Recebível'}</p>
@@ -597,6 +637,7 @@ export default function FinancialDashboard() {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+      </div>
+    </AppLayout>
   )
 }

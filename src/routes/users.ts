@@ -1225,11 +1225,14 @@ export async function userRoutes(fastify: FastifyInstance): Promise<void> {
 
         // Get current user to find avatar file
         const user = await userService.findById(userId);
-        
+
         if (user.avatar) {
           try {
             // Delete file from filesystem
-            const filePath = path.join(process.cwd(), user.avatar.replace(/^\//, ''));
+            const filePath = path.join(
+              process.cwd(),
+              user.avatar.replace(/^\//, ''),
+            );
             await fs.unlink(filePath);
           } catch (error) {
             // File might not exist, continue with database update
@@ -1285,7 +1288,12 @@ export async function userRoutes(fastify: FastifyInstance): Promise<void> {
         },
       },
     },
-    async (request: FastifyRequest<{ Body: { currentPassword: string; newPassword: string } }>, reply: FastifyReply) => {
+    async (
+      request: FastifyRequest<{
+        Body: { currentPassword: string; newPassword: string };
+      }>,
+      reply: FastifyReply,
+    ) => {
       try {
         const userId = (request as any).user?.userId;
 
@@ -1318,8 +1326,11 @@ export async function userRoutes(fastify: FastifyInstance): Promise<void> {
         }
 
         // Verify current password
-        const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
-        
+        const isCurrentPasswordValid = await bcrypt.compare(
+          currentPassword,
+          user.password,
+        );
+
         if (!isCurrentPasswordValid) {
           return reply.status(401).send({
             success: false,

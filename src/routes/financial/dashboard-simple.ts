@@ -91,24 +91,28 @@ export default async function dashboardRoutes(fastify: FastifyInstance) {
               netAmount: 200,
               transactionType: 'RECEIPT',
               date: new Date().toISOString(),
-            }
+            },
           ],
           upcomingPayments: [
             {
               id: 'pay-001',
               description: 'Aluguel da Clínica',
               netAmount: 5000,
-              dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
-            }
+              dueDate: new Date(
+                Date.now() + 5 * 24 * 60 * 60 * 1000,
+              ).toISOString(),
+            },
           ],
           overdueReceivables: [
             {
               id: 'rec-001',
               description: 'Consulta - Cliente Pendente',
               netAmount: 180,
-              dueDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-            }
-          ]
+              dueDate: new Date(
+                Date.now() - 7 * 24 * 60 * 60 * 1000,
+              ).toISOString(),
+            },
+          ],
         };
 
         return {
