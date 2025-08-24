@@ -78,54 +78,6 @@ export default function Home() {
             <Button asChild>
               <Link href="/auth/register">Cadastrar</Link>
             </Button>
-            {/* Debug buttons - remove in production */}
-            {process.env.NODE_ENV === 'development' && (
-              <>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => {
-                    const { initDevelopmentMode } = useAuthStore.getState()
-                    if (typeof initDevelopmentMode === 'function') {
-                      initDevelopmentMode()
-                      router.push('/dashboard')
-                    } else {
-                      // Fallback
-                      useAuthStore.setState({
-                        token: 'fake-jwt-token-for-testing',
-                        user: {
-                          id: 'dev-user-1',
-                          firstName: 'Admin',
-                          lastName: 'Developer',
-                          email: 'admin@dev.local',
-                          role: 'ADMIN',
-                          isActive: true,
-                          createdAt: new Date().toISOString(),
-                          updatedAt: new Date().toISOString()
-                        },
-                        isAuthenticated: true
-                      })
-                      router.push('/dashboard')
-                    }
-                  }}
-                >
-                  🧪 Dev Login
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => {
-                    if (typeof window !== 'undefined') {
-                      localStorage.clear()
-                      useAuthStore.persist.clearStorage()
-                      window.location.reload()
-                    }
-                  }}
-                >
-                  🗑️ Limpar Cache
-                </Button>
-              </>
-            )}
           </div>
         </div>
       </header>
