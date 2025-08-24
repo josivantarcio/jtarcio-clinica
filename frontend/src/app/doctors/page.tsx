@@ -8,7 +8,7 @@ import { AppLayout } from '@/components/layout/app-layout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { UserAvatar } from '@/components/ui/user-avatar'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -452,18 +452,12 @@ export default function DoctorsPage() {
                     className="flex items-start justify-between p-6 border rounded-lg hover:shadow-md transition-all duration-200"
                   >
                     <div className="flex items-start space-x-4 flex-1">
-                      <Avatar className="h-16 w-16">
-                        <AvatarImage src={doctor.user.avatar} />
-                        <AvatarFallback className="text-lg font-semibold">
-                          {(() => {
-                            const names = (doctor.user.name || '').trim().split(' ').filter(n => n.length > 0)
-                            if (names.length >= 2) {
-                              return (names[0][0] + names[names.length - 1][0]).toUpperCase()
-                            }
-                            return names[0] ? names[0][0].toUpperCase() : 'DR'
-                          })()}
-                        </AvatarFallback>
-                      </Avatar>
+                      <UserAvatar 
+                        src={doctor.user.avatar} 
+                        name={doctor.user.name}
+                        className="h-16 w-16"
+                        fallbackClassName="text-lg font-semibold"
+                      />
                       
                       <div className="flex-1 space-y-3">
                         {/* Header with name and status */}

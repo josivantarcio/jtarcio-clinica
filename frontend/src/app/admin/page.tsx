@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { UserAvatar } from '@/components/ui/user-avatar'
 import { 
   Shield,
   Users,
@@ -100,7 +100,7 @@ export default function AdminPage() {
   
   // Modal states
   const [selectedUser, setSelectedUser] = useState<any>(null)
-  const [modalMode, setModalMode] = useState<'view' | 'edit' | 'suspend'>('view')
+  const [modalMode, setModalMode] = useState<'view' | 'edit' | 'suspend' | 'create'>('view')
   const [isModalOpen, setIsModalOpen] = useState(false)
   
   // Loading states
@@ -313,7 +313,7 @@ export default function AdminPage() {
         // Update local data
         if (adminData) {
           const updatedUsers = adminData.users.map(u => 
-            u.id === userId ? { ...u, status: 'suspended' } : u
+            u.id === userId ? { ...u, status: 'suspended' as 'active' | 'inactive' | 'suspended' } : u
           )
           setAdminData({ ...adminData, users: updatedUsers })
         }
@@ -334,7 +334,7 @@ export default function AdminPage() {
         // Update local data
         if (adminData) {
           const updatedUsers = adminData.users.map(u => 
-            u.id === userId ? { ...u, status: 'active' } : u
+            u.id === userId ? { ...u, status: 'active' as 'active' | 'inactive' | 'suspended' } : u
           )
           setAdminData({ ...adminData, users: updatedUsers })
         }
@@ -545,7 +545,7 @@ export default function AdminPage() {
   // Filter users - ensure adminData.users is an array
   const filteredUsers = Array.isArray(adminData.users) ? adminData.users.filter(user => {
     const matchesSearch = !searchTerm || 
-      (user.fullName || user.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase())
 
     const matchesRole = filterRole === 'all' || user.role === filterRole
@@ -726,12 +726,11 @@ export default function AdminPage() {
                     {filteredUsers.map((userData) => (
                     <div key={userData.id} className="flex items-center justify-between p-4 border rounded-lg hover:shadow-sm transition-shadow">
                       <div className="flex items-center space-x-4">
-                        <Avatar className="h-12 w-12">
-                          <AvatarImage src={userData.avatar} />
-                          <AvatarFallback className="font-semibold">
-                            {userData.name ? userData.name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
-                          </AvatarFallback>
-                        </Avatar>
+                        <UserAvatar 
+                          src={userData.avatar} 
+                          name={userData.name}
+                          size="lg"
+                        />
                         
                         <div className="space-y-1">
                           <div className="flex items-center space-x-2">

@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { UserAvatar } from '@/components/ui/user-avatar'
 import { Separator } from '@/components/ui/separator'
 import { 
   ArrowLeft,
@@ -239,12 +239,12 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center space-x-3">
-                  <Avatar className="h-16 w-16">
-                    <AvatarImage src={""} alt={patient.fullName} />
-                    <AvatarFallback className="text-lg">
-                      {patient.firstName.charAt(0)}{patient.lastName.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
+                  <UserAvatar 
+                    src={""} 
+                    name={patient.fullName}
+                    className="h-16 w-16"
+                    fallbackClassName="text-lg"
+                  />
                   <div>
                     <h3 className="font-semibold text-lg">{patient.fullName}</h3>
                     <p className="text-muted-foreground">{patient.email}</p>

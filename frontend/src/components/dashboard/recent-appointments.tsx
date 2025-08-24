@@ -69,7 +69,7 @@ export function RecentAppointments() {
                       }
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {appointment.specialty.name}
+                      {appointment.specialty?.name || 'Especialidade não informada'}
                     </p>
                     <div className="flex items-center gap-1 text-xs text-muted-foreground">
                       <Clock className="h-3 w-3" />

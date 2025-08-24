@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { UserAvatar } from '@/components/ui/user-avatar'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Send, Bot, User, Mic, MicOff, Loader2, Calendar, Phone, MapPin } from 'lucide-react'
 import { useChatStore } from '@/store/chat'
@@ -92,20 +93,20 @@ export function ChatInterface() {
         'flex gap-3 mb-4',
         isUser ? 'flex-row-reverse' : 'flex-row'
       )}>
-        <Avatar className="h-8 w-8 flex-shrink-0">
-          {isUser ? (
-            <>
-              <AvatarImage src={user?.avatar} />
-              <AvatarFallback>
-                <User className="h-4 w-4" />
-              </AvatarFallback>
-            </>
-          ) : (
+{isUser ? (
+          <UserAvatar 
+            src={user?.avatar} 
+            name={user?.fullName || user?.name}
+            size="sm"
+            className="flex-shrink-0"
+          />
+        ) : (
+          <Avatar className="h-8 w-8 flex-shrink-0">
             <AvatarFallback className="bg-primary text-primary-foreground">
               <Bot className="h-4 w-4" />
             </AvatarFallback>
-          )}
-        </Avatar>
+          </Avatar>
+        )}
         
         <div className={cn(
           'max-w-[80%] rounded-lg px-3 py-2',

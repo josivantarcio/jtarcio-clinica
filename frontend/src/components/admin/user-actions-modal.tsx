@@ -26,7 +26,7 @@ const Label = ({ children, ...props }: React.LabelHTMLAttributes<HTMLLabelElemen
   </label>
 )
 import { Badge } from '@/components/ui/badge'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { UserAvatar } from '@/components/ui/user-avatar'
 import { 
   User, 
   Mail, 
@@ -215,12 +215,12 @@ export function UserActionsModal({
           {/* User Avatar and Basic Info */}
           {mode !== 'create' && user && (
             <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg">
-              <Avatar className="h-16 w-16">
-                <AvatarImage src={user.avatar} />
-                <AvatarFallback className="text-lg font-semibold">
-                  {user.name ? user.name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
-                </AvatarFallback>
-              </Avatar>
+              <UserAvatar 
+                src={user.avatar}
+                name={user.name}
+                size="lg"
+                className="h-16 w-16"
+              />
               
               <div className="flex-1 space-y-2">
                 <div className="flex items-center gap-2">

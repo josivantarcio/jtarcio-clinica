@@ -90,7 +90,7 @@ export function UpcomingAppointments() {
                       }
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      {appointment.specialty.name}
+                      {appointment.specialty?.name || 'Especialidade não informada'}
                     </p>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Clock className="h-3 w-3" />

@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react'
 import { cn } from '@/lib/utils'
 import { Loader2, RefreshCw } from 'lucide-react'
 
@@ -219,5 +220,3 @@ export function useLoading(initialState = false) {
     withLoading
   }
 }
-
-import React from 'react'

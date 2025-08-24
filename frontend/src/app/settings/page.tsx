@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { UserAvatar } from '@/components/ui/user-avatar'
 import { Separator } from '@/components/ui/separator'
 import { 
   Settings,
@@ -42,12 +42,19 @@ import { apiClient } from '@/lib/api'
 import { useTheme } from '@/providers/theme-provider'
 import { useToast, toastUtils } from '@/hooks/use-toast'
 
-// Helper function to build full avatar URL
-const getFullAvatarUrl = (avatarPath: string | undefined) => {
-  if (!avatarPath) return undefined
-  if (avatarPath.startsWith('http')) return avatarPath
-  const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
-  return `${baseURL}${avatarPath}`
+// Helper function to build safe avatar URL - only allow external URLs
+const getSafeAvatarUrl = (avatarPath: string | undefined) => {
+  if (!avatarPath || typeof avatarPath !== 'string') return undefined
+  
+  // Only allow external URLs (http/https) or data URLs
+  if (avatarPath.startsWith('https://') || 
+      avatarPath.startsWith('http://') || 
+      avatarPath.startsWith('data:image/')) {
+    return avatarPath
+  }
+  
+  // Reject local paths to avoid 404 errors
+  return undefined
 }
 
 interface UserSettings {
@@ -202,10 +209,32 @@ export default function SettingsPage() {
 
     isLoadingRef.current = true
     setLoading(true)
+    
+    // Check if we're in development mode with fake token
+    const authStore = useAuthStore.getState()
+    const isDevelopmentMode = process.env.NODE_ENV === 'development'
+    const hasFakeToken = authStore.token === 'fake-jwt-token-for-testing'
+    
     try {
-      console.log('🔄 Loading user settings for:', user.email)
+      // Skip API call in development with fake token to avoid 401 errors
+      if (isDevelopmentMode && hasFakeToken) {
+        console.log('🧪 Development mode: Using fallback user data instead of API call')
+        setSettings(prev => ({
+          ...prev,
+          profile: {
+            firstName: user.firstName || user.name?.split(' ')[0] || '',
+            lastName: user.lastName || user.name?.split(' ').slice(1).join(' ') || '',
+            email: user.email,
+            phone: '',
+            timezone: 'America/Sao_Paulo',
+            language: 'pt-BR',
+            bio: ''
+          }
+        }))
+        return
+      }
       
-      // Load user profile from API using apiClient
+      console.log('🔄 Loading user settings for:', user.email)
       console.log('📡 Making API call to /api/v1/auth/me...')
       const response = await apiClient.get('/api/v1/auth/me')
       console.log('📡 API Response received:', response)
@@ -556,12 +585,12 @@ export default function SettingsPage() {
               <CardContent className="space-y-6">
                 {/* Avatar Section */}
                 <div className="flex items-center space-x-6">
-                  <Avatar className="h-24 w-24">
-                    <AvatarImage src={avatarPreview || getFullAvatarUrl(settings.profile.avatar)} />
-                    <AvatarFallback className="text-lg font-semibold">
-                      {settings.profile.firstName.charAt(0)}{settings.profile.lastName.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
+                  <UserAvatar 
+                    src={avatarPreview || getSafeAvatarUrl(settings.profile.avatar)}
+                    name={`${settings.profile.firstName} ${settings.profile.lastName}`}
+                    className="h-24 w-24"
+                    fallbackClassName="text-lg font-semibold"
+                  />
                   <div className="space-y-2">
                     <div>
                       <h3 className="font-semibold text-lg">Foto do Perfil</h3>

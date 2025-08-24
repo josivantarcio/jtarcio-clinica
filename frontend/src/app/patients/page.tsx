@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { UserAvatar } from '@/components/ui/user-avatar'
 import { 
   Plus, 
   Search, 
@@ -413,18 +413,11 @@ export default function PatientsPage() {
                     className="flex items-center justify-between p-4 border rounded-lg hover:shadow-sm transition-shadow"
                   >
                     <div className="flex items-center space-x-4">
-                      <Avatar className="h-12 w-12">
-                        <AvatarImage src={patient.user.avatar} />
-                        <AvatarFallback>
-                          {patient.user.name ? (() => {
-                            const names = patient.user.name.trim().split(' ').filter(n => n.length > 0)
-                            if (names.length >= 2) {
-                              return (names[0][0] + names[names.length - 1][0]).toUpperCase()
-                            }
-                            return names[0] ? names[0][0].toUpperCase() : 'PN'
-                          })() : 'PN'}
-                        </AvatarFallback>
-                      </Avatar>
+                      <UserAvatar 
+                        src={patient.user.avatar} 
+                        name={patient.user.name}
+                        size="lg"
+                      />
                       
                       <div className="flex-1">
                         <div className="flex items-center space-x-2 mb-1">

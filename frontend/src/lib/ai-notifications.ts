@@ -26,61 +26,37 @@ export interface AIBookingData {
 }
 
 /**
- * Simula um agendamento feito pela IA
- * Na próxima semana será substituído pela integração real com o chat da IA
+ * Cria um agendamento baseado em dados reais fornecidos pela IA
+ * Este método será usado quando a integração real com o chat da IA for implementada
  */
-export function simulateAIBooking(): AIBookingData {
-  const mockPatients = [
-    'Maria Santos', 'João Silva', 'Ana Costa', 'Pedro Oliveira',
-    'Carla Ferreira', 'Lucas Pereira', 'Sofia Rodrigues', 'Diego Almeida'
-  ]
+export function createAIBookingFromRealData(bookingParams: Partial<AIBookingData>): AIBookingData {
+  const now = new Date()
+  const appointmentId = `ai_apt_${now.getTime()}`
+  const chatId = bookingParams.chatId || `chat_${now.getTime()}`
   
-  const mockDoctors = [
-    { name: 'Dr. Roberto Cardoso', specialty: 'Cardiologia' },
-    { name: 'Dra. Fernanda Lima', specialty: 'Dermatologia' },
-    { name: 'Dr. Carlos Mendes', specialty: 'Clínica Geral' },
-    { name: 'Dra. Juliana Torres', specialty: 'Pediatria' }
-  ]
-  
-  const mockSymptoms = [
-    ['dor no peito', 'falta de ar'],
-    ['manchas na pele', 'coceira'],
-    ['febre', 'dor de cabeça'],
-    ['tosse persistente', 'cansaço']
-  ]
-  
-  const patient = mockPatients[Math.floor(Math.random() * mockPatients.length)]
-  const doctor = mockDoctors[Math.floor(Math.random() * mockDoctors.length)]
-  const symptoms = mockSymptoms[Math.floor(Math.random() * mockSymptoms.length)]
-  
-  // Gerar data futura aleatória (próximos 7 dias)
-  const futureDate = new Date()
-  futureDate.setDate(futureDate.getDate() + Math.floor(Math.random() * 7) + 1)
-  const hours = Math.floor(Math.random() * 10) + 8 // 8h às 17h
-  const minutes = Math.random() < 0.5 ? 0 : 30
-  futureDate.setHours(hours, minutes, 0, 0)
-  
-  const scheduledAt = futureDate.toLocaleDateString('pt-BR', {
+  // Generate scheduled time in a more realistic way
+  const scheduledDate = new Date(bookingParams.scheduledAt || now)
+  const scheduledAt = scheduledDate.toLocaleDateString('pt-BR', {
     weekday: 'long',
     day: 'numeric',
     month: 'long'
-  }) + ` às ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
+  }) + ` às ${scheduledDate.getHours().toString().padStart(2, '0')}:${scheduledDate.getMinutes().toString().padStart(2, '0')}`
   
   return {
-    patientName: patient,
-    patientEmail: `${patient.toLowerCase().replace(' ', '.')}@email.com`,
-    doctorName: doctor.name,
-    doctorId: `dr_${Math.random().toString(36).substr(2, 9)}`,
-    specialtyName: doctor.specialty,
+    patientName: bookingParams.patientName || 'Paciente',
+    patientEmail: bookingParams.patientEmail || 'paciente@email.com',
+    doctorName: bookingParams.doctorName || 'Médico',
+    doctorId: bookingParams.doctorId || `dr_${now.getTime()}`,
+    specialtyName: bookingParams.specialtyName || 'Consulta Geral',
     scheduledAt,
-    appointmentId: `ai_apt_${Date.now()}`,
-    chatId: `chat_${Math.random().toString(36).substr(2, 9)}`,
-    confidence: 0.85 + Math.random() * 0.15, // 85-100%
+    appointmentId,
+    chatId,
+    confidence: bookingParams.confidence || 0.90,
     context: {
-      symptoms,
-      urgency: Math.random() > 0.7 ? 'high' : 'medium',
-      patientPreferences: ['manhã', 'médico experiente'],
-      conversationSummary: `Paciente relata ${symptoms.join(' e ')}. Solicita consulta com ${doctor.specialty.toLowerCase()}.`
+      symptoms: bookingParams.context?.symptoms || [],
+      urgency: bookingParams.context?.urgency || 'medium',
+      patientPreferences: bookingParams.context?.patientPreferences || [],
+      conversationSummary: bookingParams.context?.conversationSummary || 'Agendamento via IA'
     }
   }
 }
@@ -120,12 +96,32 @@ export function createAIBookingNotification(bookingData: AIBookingData) {
 }
 
 /**
- * Hook para simular agendamentos da IA (para demonstração)
- * Na próxima semana será substituído pela integração real
+ * Hook para demonstração de agendamentos da IA
+ * Usa dados genéricos para demonstração até integração real ser implementada
  */
 export function useAIBookingSimulation() {
   const simulateBooking = () => {
-    const bookingData = simulateAIBooking()
+    // Generate future date for demo (next 1-3 days)
+    const futureDate = new Date()
+    futureDate.setDate(futureDate.getDate() + Math.floor(Math.random() * 3) + 1)
+    futureDate.setHours(8 + Math.floor(Math.random() * 9), Math.random() < 0.5 ? 0 : 30, 0, 0)
+    
+    const bookingData = createAIBookingFromRealData({
+      patientName: 'Usuário Demo',
+      patientEmail: 'demo@email.com',
+      doctorName: 'Dr. Sistema',
+      doctorId: 'demo_doctor',
+      specialtyName: 'Consulta Demo',
+      scheduledAt: futureDate.toISOString(),
+      confidence: 0.95,
+      context: {
+        symptoms: ['Consulta de demonstração'],
+        urgency: 'medium',
+        patientPreferences: ['Agendamento via IA'],
+        conversationSummary: 'Demonstração do sistema de agendamento automático via IA'
+      }
+    })
+    
     createAIBookingNotification(bookingData)
     return bookingData
   }

@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/providers/theme-provider";
 import { Toaster } from "@/providers/toast-provider";
 import { Toaster as SonnerToaster } from "sonner";
 import { ClientProvider } from "@/providers/client-provider";
+import { AuthProvider } from "@/components/providers/auth-provider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -34,14 +35,16 @@ export default function RootLayout({
     <html lang="pt-BR" suppressHydrationWarning>
       <body className={`${inter.className} antialiased`}>
         <ClientProvider>
-          <ThemeProvider
-            defaultTheme="light"
-            storageKey="eo-clinica-theme"
-          >
-            {children}
-            <Toaster />
-            <SonnerToaster />
-          </ThemeProvider>
+          <AuthProvider>
+            <ThemeProvider
+              defaultTheme="light"
+              storageKey="eo-clinica-theme"
+            >
+              {children}
+              <Toaster />
+              <SonnerToaster />
+            </ThemeProvider>
+          </AuthProvider>
         </ClientProvider>
       </body>
     </html>

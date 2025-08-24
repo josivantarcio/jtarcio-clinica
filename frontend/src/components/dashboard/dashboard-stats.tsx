@@ -16,15 +16,15 @@ export function DashboardStats() {
   }, [loadAnalytics])
 
   useEffect(() => {
-    if (analyticsData) {
-      // Helper function to safely get numeric values
-      const safeNumber = (value: any): number => {
-        if (value === null || value === undefined || isNaN(value)) {
-          return 0
-        }
-        return Number(value) || 0
+    // Helper function to safely get numeric values
+    const safeNumber = (value: any): number => {
+      if (value === null || value === undefined || isNaN(value)) {
+        return 0
       }
+      return Number(value) || 0
+    }
 
+    if (analyticsData) {
       const totalAppts = safeNumber(analyticsData.overview?.totalAppointments)
       const todayBookings = safeNumber(analyticsData.realTime?.todayBookings)
       const totalRevenue = safeNumber(analyticsData.overview?.totalRevenue)
@@ -43,9 +43,9 @@ export function DashboardStats() {
       }
       
       setStats(dashboardStats)
-    } else if (error) {
-      // Set empty stats on error
-      const emptyStats: StatsType = {
+    } else {
+      // Always show default stats when data is not available or on error
+      const defaultStats: StatsType = {
         totalAppointments: 0,
         todayAppointments: 0,
         pendingAppointments: 0,
@@ -55,7 +55,7 @@ export function DashboardStats() {
         patientGrowth: 0,
         satisfactionScore: 0
       }
-      setStats(emptyStats)
+      setStats(defaultStats)
     }
   }, [analyticsData, error])
 
@@ -78,7 +78,17 @@ export function DashboardStats() {
     )
   }
 
-  if (!stats) return null
+  // Ensure we always have stats to display
+  const displayStats: StatsType = stats || {
+    totalAppointments: 0,
+    todayAppointments: 0,
+    pendingAppointments: 0,
+    completedAppointments: 0,
+    cancelledAppointments: 0,
+    revenue: 0,
+    patientGrowth: 0,
+    satisfactionScore: 0
+  }
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -90,9 +100,9 @@ export function DashboardStats() {
           <Calendar className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{stats.todayAppointments}</div>
+          <div className="text-2xl font-bold">{displayStats.todayAppointments}</div>
           <p className="text-xs text-muted-foreground">
-            {stats.pendingAppointments} pendentes
+            {displayStats.pendingAppointments} pendentes
           </p>
         </CardContent>
       </Card>
@@ -105,9 +115,9 @@ export function DashboardStats() {
           <Users className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{stats.totalAppointments}</div>
+          <div className="text-2xl font-bold">{displayStats.totalAppointments}</div>
           <p className="text-xs text-muted-foreground">
-            +{stats.patientGrowth}% este mês
+            +{displayStats.patientGrowth}% este mês
           </p>
         </CardContent>
       </Card>
@@ -120,9 +130,9 @@ export function DashboardStats() {
           <DollarSign className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{formatCurrency(stats.revenue)}</div>
+          <div className="text-2xl font-bold">{formatCurrency(displayStats.revenue)}</div>
           <p className="text-xs text-muted-foreground">
-            {stats.completedAppointments} consultas realizadas
+            {displayStats.completedAppointments} consultas realizadas
           </p>
         </CardContent>
       </Card>
@@ -135,9 +145,9 @@ export function DashboardStats() {
           <TrendingUp className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{stats.satisfactionScore}/5</div>
+          <div className="text-2xl font-bold">{displayStats.satisfactionScore}/5</div>
           <p className="text-xs text-muted-foreground">
-            Base: {stats.completedAppointments} avaliações
+            Base: {displayStats.completedAppointments} avaliações
           </p>
         </CardContent>
       </Card>

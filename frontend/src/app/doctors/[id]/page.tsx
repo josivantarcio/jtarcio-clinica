@@ -7,7 +7,7 @@ import { AppLayout } from '@/components/layout/app-layout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { UserAvatar } from '@/components/ui/user-avatar'
 import { 
   ArrowLeft,
   Mail, 
@@ -222,18 +222,12 @@ export default function DoctorProfilePage() {
             <Card>
               <CardHeader>
                 <div className="flex items-start space-x-4">
-                  <Avatar className="h-20 w-20">
-                    <AvatarImage src={doctor.user.avatar} />
-                    <AvatarFallback className="text-2xl font-semibold">
-                      {(() => {
-                        const names = (doctor.user.name || '').trim().split(' ').filter(n => n.length > 0)
-                        if (names.length >= 2) {
-                          return (names[0][0] + names[names.length - 1][0]).toUpperCase()
-                        }
-                        return names[0] ? names[0][0].toUpperCase() : 'DR'
-                      })()}
-                    </AvatarFallback>
-                  </Avatar>
+                  <UserAvatar 
+                    src={doctor.user.avatar} 
+                    name={doctor.user.name}
+                    className="h-20 w-20"
+                    fallbackClassName="text-2xl font-semibold"
+                  />
                   
                   <div className="flex-1 space-y-2">
                     <div className="flex items-center justify-between">
