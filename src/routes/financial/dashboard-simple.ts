@@ -77,7 +77,7 @@ export default async function dashboardRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       try {
         console.log('🔍 Fetching real financial data from database...');
-        
+
         // Calculate real financial metrics from appointments
         const [
           totalRevenueResult,
@@ -96,14 +96,14 @@ export default async function dashboardRoutes(fastify: FastifyInstance) {
               fee: true,
             },
           }),
-          
+
           // Total appointments count
           prisma.appointment.count({
             where: {
               deletedAt: null,
             },
           }),
-          
+
           // Recent transactions (completed appointments)
           prisma.appointment.findMany({
             where: {
@@ -129,7 +129,7 @@ export default async function dashboardRoutes(fastify: FastifyInstance) {
             },
             take: 5,
           }),
-          
+
           // Count of paid appointments
           prisma.appointment.count({
             where: {
@@ -138,17 +138,18 @@ export default async function dashboardRoutes(fastify: FastifyInstance) {
             },
           }),
         ]);
-        
+
         // Calculate metrics
         const totalRevenue = Number(totalRevenueResult._sum.fee || 0);
-        const avgAppointmentValue = paidAppointments > 0 ? totalRevenue / paidAppointments : 0;
-        
+        const avgAppointmentValue =
+          paidAppointments > 0 ? totalRevenue / paidAppointments : 0;
+
         // For now, set expenses as a percentage of revenue (30%)
         // In a real system, this would come from expense records
         const totalExpenses = totalRevenue * 0.3;
         const netProfit = totalRevenue - totalExpenses;
         const cashBalance = netProfit; // Simplified - in reality this would be cumulative
-        
+
         console.log('💰 Calculated financial metrics:', {
           totalRevenue,
           totalExpenses,
@@ -156,16 +157,16 @@ export default async function dashboardRoutes(fastify: FastifyInstance) {
           totalAppointments,
           paidAppointments,
         });
-        
+
         const dashboardData = {
           totalRevenue: Math.round(totalRevenue),
           totalExpenses: Math.round(totalExpenses),
           netProfit: Math.round(netProfit),
           cashBalance: Math.round(cashBalance),
           revenueGrowth: 0, // Would need historical data to calculate
-          expenseGrowth: 0, // Would need historical data to calculate  
+          expenseGrowth: 0, // Would need historical data to calculate
           profitGrowth: 0, // Would need historical data to calculate
-          recentTransactions: recentTransactions.map((appointment) => ({
+          recentTransactions: recentTransactions.map(appointment => ({
             id: appointment.id,
             description: `Consulta - ${appointment.doctor?.fullName || 'Médico'}`,
             netAmount: Number(appointment.fee || 0),
