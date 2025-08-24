@@ -511,6 +511,9 @@ class ApiClient {
 // Singleton instance
 export const apiClient = new ApiClient()
 
+// Export as 'api' for compatibility
+export const api = apiClient
+
 // Initialize token from localStorage on client side
 if (typeof window !== 'undefined') {
   const token = localStorage.getItem('auth_token')
