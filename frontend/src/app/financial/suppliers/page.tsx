@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import { AppLayout } from '@/components/layout/app-layout'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -19,7 +20,8 @@ import {
   DollarSign,
   AlertCircle,
   Building,
-  Calendar
+  Calendar,
+  ArrowLeft
 } from "lucide-react"
 import { useAuthStore } from "@/store/auth"
 import { api } from "@/lib/api"
@@ -106,14 +108,14 @@ export default function SuppliersPage() {
         queryParams.append('search', searchTerm)
       }
 
-      const response = await api.get(`/financial/suppliers?${queryParams.toString()}`)
+      const response = await api.get(`/api/v1/financial/suppliers?${queryParams.toString()}`)
       
-      if (response.data.success) {
-        setSuppliers(response.data.data)
-        setTotalPages(response.data.pagination?.totalPages || 1)
-        setTotalRecords(response.data.pagination?.total || 0)
+      if (response && response.success === true) {
+        setSuppliers(response.data || [])
+        setTotalPages(response.pagination?.totalPages || 1)
+        setTotalRecords(response.pagination?.total || 0)
       } else {
-        throw new Error('Failed to load suppliers')
+        throw new Error(response.error || 'Failed to load suppliers')
       }
     } catch (err: any) {
       console.error('Error loading suppliers:', err)
@@ -179,12 +181,14 @@ export default function SuppliersPage() {
 
   if (!hasFinancialAccess) {
     return (
-      <div className="container mx-auto p-6">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-800 mb-4">Acesso Restrito</h1>
-          <p className="text-gray-600">Você não tem permissão para acessar os fornecedores.</p>
+      <AppLayout>
+        <div className="container mx-auto p-6">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-800 mb-4">Acesso Restrito</h1>
+            <p className="text-gray-600">Você não tem permissão para acessar os fornecedores.</p>
+          </div>
         </div>
-      </div>
+      </AppLayout>
     )
   }
 
@@ -194,12 +198,23 @@ export default function SuppliersPage() {
   const totalPayables = suppliers.reduce((sum, s) => sum + (s._count?.accountsPayable || 0), 0)
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <AppLayout>
+      <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Fornecedores</h1>
-          <p className="text-gray-600">Gerencie fornecedores e prestadores de serviços</p>
+        <div className="flex items-center space-x-4">
+          <Button 
+            variant="outline" 
+            onClick={() => window.location.href = '/financial'}
+            className="flex items-center"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Voltar para Financeiro
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Fornecedores</h1>
+            <p className="text-gray-600">Gerencie fornecedores e prestadores de serviços</p>
+          </div>
         </div>
         <div className="flex space-x-2">
           <Button variant="outline">
@@ -492,6 +507,7 @@ export default function SuppliersPage() {
           </Button>
         </div>
       )}
-    </div>
+      </div>
+    </AppLayout>
   )
 }

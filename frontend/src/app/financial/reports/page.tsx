@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import { AppLayout } from '@/components/layout/app-layout'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -17,7 +18,8 @@ import {
   RefreshCw,
   PieChart,
   FileSpreadsheet,
-  Eye
+  Eye,
+  ArrowLeft
 } from "lucide-react"
 import { useAuthStore } from "@/store/auth"
 import { api } from "@/lib/api"
@@ -123,12 +125,12 @@ export default function ReportsPage() {
         }
       })
 
-      const response = await api.get(`/financial/reports?${queryParams.toString()}`)
+      const response = await api.get(`/api/v1/financial/reports?${queryParams.toString()}`)
       
-      if (response.data.success) {
-        setReportData(response.data.data)
+      if (response && response.success === true) {
+        setReportData(response.data || {})
       } else {
-        throw new Error('Failed to load reports')
+        throw new Error(response.error || 'Failed to load reports')
       }
     } catch (err: any) {
       console.error('Error loading reports:', err)
@@ -157,7 +159,7 @@ export default function ReportsPage() {
 
   const exportReport = async (reportType: string, format: 'pdf' | 'excel') => {
     try {
-      const response = await api.get(`/financial/reports/export/${reportType}?format=${format}&${new URLSearchParams(filters as any).toString()}`, {
+      const response = await api.get(`/api/v1/financial/reports/export/${reportType}?format=${format}&${new URLSearchParams(filters as any).toString()}`, {
         responseType: 'blob'
       })
       
@@ -176,22 +178,35 @@ export default function ReportsPage() {
 
   if (!hasFinancialAccess) {
     return (
-      <div className="container mx-auto p-6">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-800 mb-4">Acesso Restrito</h1>
-          <p className="text-gray-600">Você não tem permissão para acessar os relatórios financeiros.</p>
+      <AppLayout>
+        <div className="container mx-auto p-6">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-800 mb-4">Acesso Restrito</h1>
+            <p className="text-gray-600">Você não tem permissão para acessar os relatórios financeiros.</p>
+          </div>
         </div>
-      </div>
+      </AppLayout>
     )
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <AppLayout>
+      <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Relatórios Financeiros</h1>
-          <p className="text-gray-600">Análises avançadas e relatórios gerenciais</p>
+        <div className="flex items-center space-x-4">
+          <Button 
+            variant="outline" 
+            onClick={() => window.location.href = '/financial'}
+            className="flex items-center"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Voltar para Financeiro
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Relatórios Financeiros</h1>
+            <p className="text-gray-600">Análises avançadas e relatórios gerenciais</p>
+          </div>
         </div>
         <div className="flex space-x-2">
           <Button variant="outline" onClick={fetchReports} disabled={loading}>
@@ -751,6 +766,7 @@ export default function ReportsPage() {
           )}
         </TabsContent>
       </Tabs>
-    </div>
+      </div>
+    </AppLayout>
   )
 }

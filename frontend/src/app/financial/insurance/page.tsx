@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import { AppLayout } from '@/components/layout/app-layout'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -24,7 +25,8 @@ import {
   Building2,
   CheckCircle2,
   XCircle,
-  AlertTriangle
+  AlertTriangle,
+  ArrowLeft
 } from "lucide-react"
 import { useAuthStore } from "@/store/auth"
 import { api } from "@/lib/api"
@@ -114,14 +116,14 @@ export default function InsurancePage() {
         queryParams.append('search', searchTerm)
       }
 
-      const response = await api.get(`/financial/insurance?${queryParams.toString()}`)
+      const response = await api.get(`/api/v1/financial/insurance?${queryParams.toString()}`)
       
-      if (response.data.success) {
-        setInsurancePlans(response.data.data)
-        setTotalPages(response.data.pagination?.totalPages || 1)
-        setTotalRecords(response.data.pagination?.total || 0)
+      if (response && response.success === true) {
+        setInsurancePlans(response.data || [])
+        setTotalPages(response.pagination?.totalPages || 1)
+        setTotalRecords(response.pagination?.total || 0)
       } else {
-        throw new Error('Failed to load insurance plans')
+        throw new Error(response.error || 'Failed to load insurance plans')
       }
     } catch (err: any) {
       console.error('Error loading insurance plans:', err)
@@ -187,12 +189,14 @@ export default function InsurancePage() {
 
   if (!hasFinancialAccess) {
     return (
-      <div className="container mx-auto p-6">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-800 mb-4">Acesso Restrito</h1>
-          <p className="text-gray-600">Você não tem permissão para acessar os planos de convênio.</p>
+      <AppLayout>
+        <div className="container mx-auto p-6">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-800 mb-4">Acesso Restrito</h1>
+            <p className="text-gray-600">Você não tem permissão para acessar os planos de convênio.</p>
+          </div>
         </div>
-      </div>
+      </AppLayout>
     )
   }
 
@@ -205,12 +209,23 @@ export default function InsurancePage() {
     : 0
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <AppLayout>
+      <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Planos de Convênio</h1>
-          <p className="text-gray-600">Gerencie planos de saúde e convênios médicos</p>
+        <div className="flex items-center space-x-4">
+          <Button 
+            variant="outline" 
+            onClick={() => window.location.href = '/financial'}
+            className="flex items-center"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Voltar para Financeiro
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Planos de Convênio</h1>
+            <p className="text-gray-600">Gerencie planos de saúde e convênios médicos</p>
+          </div>
         </div>
         <div className="flex space-x-2">
           <Button variant="outline">
@@ -523,6 +538,7 @@ export default function InsurancePage() {
           </Button>
         </div>
       )}
-    </div>
+      </div>
+    </AppLayout>
   )
 }

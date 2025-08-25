@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import { AppLayout } from '@/components/layout/app-layout'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -17,7 +18,8 @@ import {
   Calendar,
   DollarSign,
   AlertTriangle,
-  CheckCircle
+  CheckCircle,
+  ArrowLeft
 } from "lucide-react"
 import { useAuthStore } from "@/store/auth"
 import { api } from "@/lib/api"
@@ -90,18 +92,26 @@ export default function PayablesPage() {
         }
       })
 
-      const response = await api.get(`/financial/payables?${queryParams.toString()}`)
+      const response = await api.get(`/api/v1/financial/payables?${queryParams.toString()}`)
       
-      if (response.data.success) {
-        setPayables(response.data.data)
-        setTotalPages(response.data.pagination?.totalPages || 1)
-        setTotalRecords(response.data.pagination?.total || 0)
+      if (response) {
+        // API client returns response.data directly, so we check response.success
+        if (response.success === true) {
+          setPayables(response.data || [])
+          setTotalPages(response.pagination?.totalPages || 1)
+          setTotalRecords(response.pagination?.total || 0)
+        } else {
+          throw new Error(response.error || 'Failed to load payables')
+        }
       } else {
-        throw new Error('Failed to load payables')
+        throw new Error('No data received from server')
       }
     } catch (err: any) {
       console.error('Error loading payables:', err)
-      setError(err.response?.data?.error || 'Erro ao carregar contas a pagar')
+      const errorMessage = err.response?.data?.error || 
+                          err.message || 
+                          'Erro ao carregar contas a pagar'
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -164,12 +174,14 @@ export default function PayablesPage() {
 
   if (!hasFinancialAccess) {
     return (
-      <div className="container mx-auto p-6">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-800 mb-4">Acesso Restrito</h1>
-          <p className="text-gray-600">Você não tem permissão para acessar as contas a pagar.</p>
+      <AppLayout>
+        <div className="container mx-auto p-6">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-800 mb-4">Acesso Restrito</h1>
+            <p className="text-gray-600">Você não tem permissão para acessar as contas a pagar.</p>
+          </div>
         </div>
-      </div>
+      </AppLayout>
     )
   }
 
@@ -187,12 +199,23 @@ export default function PayablesPage() {
     .reduce((sum, p) => sum + p.netAmount, 0)
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <AppLayout>
+      <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Contas a Pagar</h1>
-          <p className="text-gray-600">Gerencie pagamentos e fornecedores da clínica</p>
+        <div className="flex items-center space-x-4">
+          <Button 
+            variant="outline" 
+            onClick={() => window.location.href = '/financial'}
+            className="flex items-center"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Voltar para Financeiro
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Contas a Pagar</h1>
+            <p className="text-gray-600">Gerencie pagamentos e fornecedores da clínica</p>
+          </div>
         </div>
         <div className="flex space-x-2">
           <Button variant="outline">
@@ -356,8 +379,10 @@ export default function PayablesPage() {
                       >
                         <td className="py-3 px-4">
                           <div>
-                            <p className="font-medium">{payable.supplier.name}</p>
-                            {payable.supplier.cnpj && (
+                            <p className="font-medium">
+                              {payable.supplier?.name || 'Fornecedor não informado'}
+                            </p>
+                            {payable.supplier?.cnpj && (
                               <p className="text-sm text-gray-500">{payable.supplier.cnpj}</p>
                             )}
                           </div>
@@ -476,6 +501,7 @@ export default function PayablesPage() {
           </Button>
         </div>
       )}
-    </div>
+      </div>
+    </AppLayout>
   )
 }
