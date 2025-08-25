@@ -1,6 +1,80 @@
-# Correções do Módulo Financeiro - v1.4.1
+# Correções do Módulo Financeiro - v1.4.2
 
 ## 🚨 **Problemas Identificados e Soluções**
+
+### **Problema 3: Erro 404 no endpoint /api/v1/financial/reports**
+
+#### **Descrição**
+Página de relatórios financeiros apresentava erro 404 ao tentar carregar dados.
+
+#### **Causa Raiz**
+- **Problema**: Faltava rota GET básica no endpoint `/api/v1/financial/reports`
+- **Localização**: `src/routes/financial/reports.ts`
+- **Sintoma**: Backend tinha apenas rotas específicas (cash-flow, profitability) mas não a rota principal
+
+#### **Análise Técnica**
+```bash
+# ❌ ERRO ANTES
+curl /api/v1/financial/reports
+# Response: {"message":"Route not found","statusCode":404}
+
+# ✅ FUNCIONANDO APÓS CORREÇÃO  
+curl /api/v1/financial/reports
+# Response: {"success":true,"data":{...}}
+```
+
+**Log de Erro Original:**
+```
+❌ API request failed: GET /api/v1/financial/reports?period=month&startDate=2025-08-01&endDate=2025-08-25
+📄 Response Error: {}
+Error loading reports: Error: Not Found
+```
+
+#### **Solução Implementada**
+```typescript
+// Adicionada rota GET principal em reports.ts
+fastify.get('/', {
+  preHandler: checkFinancialPermission('financial.reports.view'),
+  schema: {
+    tags: ['Financial Reports'],
+    summary: 'Get all financial reports summary'
+  }
+}, async (request, reply) => {
+  // Retorna métricas consolidadas:
+  // - Revenue/Expenses summary
+  // - Pending receivables/payables  
+  // - Available reports list
+  return {
+    success: true,
+    data: {
+      summary: { revenue, expenses, profit },
+      receivables: { pending, count },
+      payables: { pending, count },
+      availableReports: [
+        { name: 'Cash Flow', endpoint: '/cash-flow' },
+        { name: 'Profitability', endpoint: '/profitability' },
+        // etc...
+      ]
+    }
+  }
+})
+```
+
+#### **Validação**
+```bash
+# ✅ Backend API
+curl -H "Authorization: Bearer fake-jwt-token" \
+  "http://localhost:3000/api/v1/financial/reports?period=month"
+# Status: 200 OK - JSON válido retornado
+
+# ✅ Frontend Page  
+curl -I "http://localhost:3001/financial/reports"
+# Status: 200 OK - Página carrega sem erros
+
+# ✅ Console logs limpos - 0 erros JavaScript
+```
+
+---
 
 ### **Problema 1: "Failed to load payables"**
 

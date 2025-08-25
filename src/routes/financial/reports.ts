@@ -10,6 +10,159 @@ import {
 } from '@/middleware/financial-auth.middleware';
 
 export default async function reportRoutes(fastify: FastifyInstance) {
+  // Get all reports (combined summary)
+  fastify.get(
+    '/',
+    {
+      preHandler: checkFinancialPermission('financial.reports.view'),
+      schema: {
+        tags: ['Financial Reports'],
+        summary: 'Get all financial reports summary',
+        querystring: {
+          type: 'object',
+          properties: {
+            startDate: { type: 'string', format: 'date' },
+            endDate: { type: 'string', format: 'date' },
+            period: {
+              type: 'string',
+              enum: ['month', 'quarter', 'year'],
+              default: 'month',
+            },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      try {
+        const { startDate, endDate, period = 'month' } = request.query as any;
+
+        // Default to current period if no dates provided
+        const now = new Date();
+        let start: Date, end: Date;
+
+        if (startDate && endDate) {
+          start = new Date(startDate);
+          end = new Date(endDate);
+        } else {
+          switch (period) {
+            case 'quarter':
+              const quarterStart = Math.floor(now.getMonth() / 3) * 3;
+              start = new Date(now.getFullYear(), quarterStart, 1);
+              end = new Date(now.getFullYear(), quarterStart + 3, 0);
+              break;
+            case 'year':
+              start = new Date(now.getFullYear(), 0, 1);
+              end = new Date(now.getFullYear(), 11, 31);
+              break;
+            default: // month
+              start = new Date(now.getFullYear(), now.getMonth(), 1);
+              end = now;
+          }
+        }
+
+        // Apply role-based filtering
+        const filters = applyFinancialDataFilter(request, {});
+
+        // Get summary data for all reports
+        const [revenue, expenses, receivables, payables] = await Promise.all([
+          // Revenue summary
+          fastify.prisma.financialTransaction.aggregate({
+            _sum: { netAmount: true },
+            _count: true,
+            where: {
+              transactionType: 'RECEIPT',
+              status: { in: ['PAID', 'CONFIRMED'] },
+              createdAt: { gte: start, lte: end },
+              ...filters,
+            },
+          }),
+
+          // Expenses summary  
+          fastify.prisma.accountsPayable.aggregate({
+            _sum: { netAmount: true },
+            _count: true,
+            where: {
+              status: 'PAID',
+              paymentDate: { gte: start, lte: end },
+            },
+          }),
+
+          // Pending receivables
+          fastify.prisma.financialTransaction.aggregate({
+            _sum: { netAmount: true },
+            _count: true,
+            where: {
+              transactionType: 'RECEIPT',
+              status: { in: ['PENDING', 'CONFIRMED'] },
+              ...filters,
+            },
+          }),
+
+          // Pending payables
+          fastify.prisma.accountsPayable.aggregate({
+            _sum: { netAmount: true },
+            _count: true,
+            where: {
+              status: { in: ['PENDING', 'APPROVED'] },
+            },
+          }),
+        ]);
+
+        const totalRevenue = Number(revenue._sum.netAmount || 0);
+        const totalExpenses = Number(expenses._sum.netAmount || 0);
+        const netProfit = totalRevenue - totalExpenses;
+        const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
+
+        return {
+          success: true,
+          data: {
+            period: {
+              startDate: start,
+              endDate: end,
+              periodType: period,
+            },
+            summary: {
+              revenue: {
+                total: totalRevenue,
+                count: revenue._count,
+              },
+              expenses: {
+                total: totalExpenses,
+                count: expenses._count,
+              },
+              profit: {
+                net: netProfit,
+                margin: profitMargin,
+              },
+            },
+            receivables: {
+              pending: Number(receivables._sum.netAmount || 0),
+              count: receivables._count,
+            },
+            payables: {
+              pending: Number(payables._sum.netAmount || 0),
+              count: payables._count,
+            },
+            availableReports: [
+              { name: 'Cash Flow', endpoint: '/cash-flow' },
+              { name: 'Profitability', endpoint: '/profitability' },
+              { name: 'Receivables Aging', endpoint: '/receivables-aging' },
+              { name: 'Financial Summary', endpoint: '/summary' },
+            ],
+          },
+        };
+      } catch (error) {
+        request.log.error(error, 'Error generating reports summary');
+
+        return reply.status(500).send({
+          success: false,
+          error: 'Failed to generate reports summary',
+          code: 'REPORTS_SUMMARY_ERROR',
+        });
+      }
+    },
+  );
+
   // Get cash flow report
   fastify.get(
     '/cash-flow',
