@@ -1,0 +1,102 @@
+﻿2025-08-26T13:05:09.4151888Z ##[group]Run npm audit --audit-level moderate
+2025-08-26T13:05:09.4152311Z [36;1mnpm audit --audit-level moderate[0m
+2025-08-26T13:05:09.4225429Z shell: /usr/bin/bash -e {0}
+2025-08-26T13:05:09.4225744Z ##[endgroup]
+2025-08-26T13:05:11.7911443Z npm warn audit 403 Forbidden - POST https://registry.npmjs.org/-/npm/v1/security/audits/quick
+2025-08-26T13:05:11.7912476Z <!DOCTYPE html>
+2025-08-26T13:05:11.7913190Z <!--[if lt IE 7]> <html class="no-js ie6 oldie" lang="en-US"> <![endif]-->
+2025-08-26T13:05:11.7914064Z <!--[if IE 7]>    <html class="no-js ie7 oldie" lang="en-US"> <![endif]-->
+2025-08-26T13:05:11.7914931Z <!--[if IE 8]>    <html class="no-js ie8 oldie" lang="en-US"> <![endif]-->
+2025-08-26T13:05:11.7915791Z <!--[if gt IE 8]><!--> <html class="no-js" lang="en-US"> <!--<![endif]-->
+2025-08-26T13:05:11.7916416Z <head>
+2025-08-26T13:05:11.7916964Z <title>Attention Required! | Cloudflare</title>
+2025-08-26T13:05:11.7917573Z <meta charset="UTF-8" />
+2025-08-26T13:05:11.7922350Z <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+2025-08-26T13:05:11.7925758Z <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+2025-08-26T13:05:11.7926604Z <meta name="robots" content="noindex, nofollow" />
+2025-08-26T13:05:11.7927500Z <meta name="viewport" content="width=device-width,initial-scale=1" />
+2025-08-26T13:05:11.7928786Z <link rel="stylesheet" id="cf_styles-css" href="/cdn-cgi/styles/cf.errors.css" />
+2025-08-26T13:05:11.7930135Z <!--[if lt IE 9]><link rel="stylesheet" id='cf_styles-ie-css' href="/cdn-cgi/styles/cf.errors.ie.css" /><![endif]-->
+2025-08-26T13:05:11.7931109Z <style>body{margin:0;padding:0}</style>
+2025-08-26T13:05:11.7931485Z 
+2025-08-26T13:05:11.7931508Z 
+2025-08-26T13:05:11.7931767Z <!--[if gte IE 10]><!-->
+2025-08-26T13:05:11.7932224Z <script>
+2025-08-26T13:05:11.7932687Z   if (!navigator.cookieEnabled) {
+2025-08-26T13:05:11.7933443Z     window.addEventListener('DOMContentLoaded', function () {
+2025-08-26T13:05:11.7934295Z       var cookieEl = document.getElementById('cookie-alert');
+2025-08-26T13:05:11.7938565Z       cookieEl.style.display = 'block';
+2025-08-26T13:05:11.7939085Z     })
+2025-08-26T13:05:11.7939400Z   }
+2025-08-26T13:05:11.7939692Z </script>
+2025-08-26T13:05:11.7940011Z <!--<![endif]-->
+2025-08-26T13:05:11.7940232Z 
+2025-08-26T13:05:11.7940249Z 
+2025-08-26T13:05:11.7940431Z </head>
+2025-08-26T13:05:11.7940735Z <body>
+2025-08-26T13:05:11.7941995Z   <div id="cf-wrapper">
+2025-08-26T13:05:11.7943018Z     <div class="cf-alert cf-alert-error cf-cookie-error" id="cookie-alert" data-translate="enable_cookies">Please enable cookies.</div>
+2025-08-26T13:05:11.7944052Z     <div id="cf-error-details" class="cf-error-details-wrapper">
+2025-08-26T13:05:11.7944759Z       <div class="cf-wrapper cf-header cf-error-overview">
+2025-08-26T13:05:11.7945493Z         <h1 data-translate="block_headline">Sorry, you have been blocked</h1>
+2025-08-26T13:05:11.7946394Z npm error audit endpoint returned an error
+2025-08-26T13:05:11.7947317Z npm error A complete log of this run can be found in: /home/runner/.npm/_logs/2025-08-26T13_05_09_492Z-debug-0.log
+2025-08-26T13:05:11.7948760Z         <h2 class="cf-subheadline"><span data-translate="unable_to_access">You are unable to access</span> npmjs.org</h2>
+2025-08-26T13:05:11.7949499Z       </div><!-- /.header -->
+2025-08-26T13:05:11.7949743Z 
+2025-08-26T13:05:11.7949971Z       <div class="cf-section cf-highlight">
+2025-08-26T13:05:11.7950730Z         <div class="cf-wrapper">
+2025-08-26T13:05:11.7951321Z           <div class="cf-screenshot-container cf-screenshot-full">
+2025-08-26T13:05:11.7951828Z             
+2025-08-26T13:05:11.7952245Z               <span class="cf-no-screenshot error"></span>
+2025-08-26T13:05:11.7952698Z             
+2025-08-26T13:05:11.7952989Z           </div>
+2025-08-26T13:05:11.7953295Z         </div>
+2025-08-26T13:05:11.7953683Z       </div><!-- /.captcha-container -->
+2025-08-26T13:05:11.7953987Z 
+2025-08-26T13:05:11.7954204Z       <div class="cf-section cf-wrapper">
+2025-08-26T13:05:11.7954697Z         <div class="cf-columns two">
+2025-08-26T13:05:11.7955426Z           <div class="cf-column">
+2025-08-26T13:05:11.7956081Z             <h2 data-translate="blocked_why_headline">Why have I been blocked?</h2>
+2025-08-26T13:05:11.7956626Z 
+2025-08-26T13:05:11.7958716Z             <p data-translate="blocked_why_detail">This website is using a security service to protect itself from online attacks. The action you just performed triggered the security solution. There are several actions that could trigger this block including submitting a certain word or phrase, a SQL command or malformed data.</p>
+2025-08-26T13:05:11.7960586Z           </div>
+2025-08-26T13:05:11.7960790Z 
+2025-08-26T13:05:11.7960978Z           <div class="cf-column">
+2025-08-26T13:05:11.7961692Z             <h2 data-translate="blocked_resolve_headline">What can I do to resolve this?</h2>
+2025-08-26T13:05:11.7962199Z 
+2025-08-26T13:05:11.7963475Z             <p data-translate="blocked_resolve_detail">You can email the site owner to let them know you were blocked. Please include what you were doing when this page came up and the Cloudflare Ray ID found at the bottom of this page.</p>
+2025-08-26T13:05:11.7964816Z           </div>
+2025-08-26T13:05:11.7965126Z         </div>
+2025-08-26T13:05:11.7965492Z       </div><!-- /.section -->
+2025-08-26T13:05:11.7965752Z 
+2025-08-26T13:05:11.7966608Z       <div class="cf-error-footer cf-wrapper w-240 lg:w-full py-10 sm:py-4 sm:px-8 mx-auto text-center sm:text-left border-solid border-0 border-t border-gray-300">
+2025-08-26T13:05:11.7967582Z   <p class="text-13">
+2025-08-26T13:05:11.7968711Z     <span class="cf-footer-item sm:block sm:mb-1">Cloudflare Ray ID: <strong class="font-semibold">97538a10ac98c94e</strong></span>
+2025-08-26T13:05:11.7969696Z     <span class="cf-footer-separator sm:hidden">&bull;</span>
+2025-08-26T13:05:11.7970443Z     <span id="cf-footer-item-ip" class="cf-footer-item hidden sm:block sm:mb-1">
+2025-08-26T13:05:11.7971006Z       Your IP:
+2025-08-26T13:05:11.7971706Z       <button type="button" id="cf-footer-ip-reveal" class="cf-footer-ip-reveal-btn">Click to reveal</button>
+2025-08-26T13:05:11.7972606Z       <span class="hidden" id="cf-footer-ip">20.55.126.241</span>
+2025-08-26T13:05:11.7973323Z       <span class="cf-footer-separator sm:hidden">&bull;</span>
+2025-08-26T13:05:11.7973818Z     </span>
+2025-08-26T13:05:11.7975219Z     <span class="cf-footer-item sm:block sm:mb-1"><span>Performance &amp; security by</span> <a rel="noopener noreferrer" href="https://www.cloudflare.com/5xx-error-landing" id="brand_link" target="_blank">Cloudflare</a></span>
+2025-08-26T13:05:11.7976490Z     
+2025-08-26T13:05:11.7976763Z   </p>
+2025-08-26T13:05:11.7979739Z   <script>(function(){function d(){var b=a.getElementById("cf-footer-item-ip"),c=a.getElementById("cf-footer-ip-reveal");b&&"classList"in b&&(b.classList.remove("hidden"),c.addEventListener("click",function(){c.classList.add("hidden");a.getElementById("cf-footer-ip").classList.remove("hidden")}))}var a=document;document.addEventListener&&a.addEventListener("DOMContentLoaded",d)})();</script>
+2025-08-26T13:05:11.7981931Z </div><!-- /.error-footer -->
+2025-08-26T13:05:11.7982195Z 
+2025-08-26T13:05:11.7982212Z 
+2025-08-26T13:05:11.7982424Z     </div><!-- /#cf-error-details -->
+2025-08-26T13:05:11.7982838Z   </div><!-- /#cf-wrapper -->
+2025-08-26T13:05:11.7983089Z 
+2025-08-26T13:05:11.7983223Z   <script>
+2025-08-26T13:05:11.7983576Z   window._cf_translation = {};
+2025-08-26T13:05:11.7984181Z   
+2025-08-26T13:05:11.7984442Z   
+2025-08-26T13:05:11.7984705Z </script>
+2025-08-26T13:05:11.7984876Z 
+2025-08-26T13:05:11.7985015Z </body>
+2025-08-26T13:05:11.7985299Z </html>
+2025-08-26T13:05:11.7985453Z 
+2025-08-26T13:05:11.8042263Z ##[error]Process completed with exit code 1.

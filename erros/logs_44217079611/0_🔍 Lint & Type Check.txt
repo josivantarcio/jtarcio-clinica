@@ -1,0 +1,681 @@
+﻿2025-08-26T13:05:06.5749129Z Current runner version: '2.328.0'
+2025-08-26T13:05:06.5782131Z ##[group]Runner Image Provisioner
+2025-08-26T13:05:06.5783447Z Hosted Compute Agent
+2025-08-26T13:05:06.5784295Z Version: 20250825.382
+2025-08-26T13:05:06.5785364Z Commit: 7109f2abf901479dac39397456e363ac0cca0730
+2025-08-26T13:05:06.5786521Z Build Date: 2025-08-25T22:55:50Z
+2025-08-26T13:05:06.5787739Z ##[endgroup]
+2025-08-26T13:05:06.5788840Z ##[group]Operating System
+2025-08-26T13:05:06.5789791Z Ubuntu
+2025-08-26T13:05:06.5790625Z 24.04.2
+2025-08-26T13:05:06.5791432Z LTS
+2025-08-26T13:05:06.5792207Z ##[endgroup]
+2025-08-26T13:05:06.5792956Z ##[group]Runner Image
+2025-08-26T13:05:06.5794038Z Image: ubuntu-24.04
+2025-08-26T13:05:06.5794954Z Version: 20250818.1.0
+2025-08-26T13:05:06.5796716Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20250818.1/images/ubuntu/Ubuntu2404-Readme.md
+2025-08-26T13:05:06.5799840Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20250818.1
+2025-08-26T13:05:06.5801538Z ##[endgroup]
+2025-08-26T13:05:06.5803684Z ##[group]GITHUB_TOKEN Permissions
+2025-08-26T13:05:06.5806222Z Contents: read
+2025-08-26T13:05:06.5807008Z Metadata: read
+2025-08-26T13:05:06.5808312Z Packages: read
+2025-08-26T13:05:06.5809144Z ##[endgroup]
+2025-08-26T13:05:06.5812062Z Secret source: Actions
+2025-08-26T13:05:06.5813204Z Prepare workflow directory
+2025-08-26T13:05:06.6349647Z Prepare all required actions
+2025-08-26T13:05:06.6472417Z Getting action download info
+2025-08-26T13:05:07.2035625Z Download action repository 'actions/checkout@v4' (SHA:08eba0b27e820071cde6df949e0beb9ba4906955)
+2025-08-26T13:05:07.2778199Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2025-08-26T13:05:07.4508091Z Complete job name: 🔍 Lint & Type Check
+2025-08-26T13:05:07.5286717Z ##[group]Run actions/checkout@v4
+2025-08-26T13:05:07.5287925Z with:
+2025-08-26T13:05:07.5288426Z   repository: josivantarcio/jtarcio-clinica
+2025-08-26T13:05:07.5289227Z   token: ***
+2025-08-26T13:05:07.5289739Z   ssh-strict: true
+2025-08-26T13:05:07.5290183Z   ssh-user: git
+2025-08-26T13:05:07.5290640Z   persist-credentials: true
+2025-08-26T13:05:07.5291153Z   clean: true
+2025-08-26T13:05:07.5291601Z   sparse-checkout-cone-mode: true
+2025-08-26T13:05:07.5292146Z   fetch-depth: 1
+2025-08-26T13:05:07.5292603Z   fetch-tags: false
+2025-08-26T13:05:07.5293056Z   show-progress: true
+2025-08-26T13:05:07.5293517Z   lfs: false
+2025-08-26T13:05:07.5293920Z   submodules: false
+2025-08-26T13:05:07.5294374Z   set-safe-directory: true
+2025-08-26T13:05:07.5295097Z ##[endgroup]
+2025-08-26T13:05:07.6586793Z Syncing repository: josivantarcio/jtarcio-clinica
+2025-08-26T13:05:07.6590261Z ##[group]Getting Git version info
+2025-08-26T13:05:07.6591803Z Working directory is '/home/runner/work/jtarcio-clinica/jtarcio-clinica'
+2025-08-26T13:05:07.6594378Z [command]/usr/bin/git version
+2025-08-26T13:05:07.6595416Z git version 2.51.0
+2025-08-26T13:05:07.6599031Z ##[endgroup]
+2025-08-26T13:05:07.6605862Z Temporarily overriding HOME='/home/runner/work/_temp/7ebd642f-e0ff-4dfa-843b-7397824c2ccf' before making global git config changes
+2025-08-26T13:05:07.6609110Z Adding repository directory to the temporary git global config as a safe directory
+2025-08-26T13:05:07.6611773Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/jtarcio-clinica/jtarcio-clinica
+2025-08-26T13:05:07.6616511Z Deleting the contents of '/home/runner/work/jtarcio-clinica/jtarcio-clinica'
+2025-08-26T13:05:07.6619191Z ##[group]Initializing the repository
+2025-08-26T13:05:07.6621622Z [command]/usr/bin/git init /home/runner/work/jtarcio-clinica/jtarcio-clinica
+2025-08-26T13:05:07.6678654Z hint: Using 'master' as the name for the initial branch. This default branch name
+2025-08-26T13:05:07.6682202Z hint: is subject to change. To configure the initial branch name to use in all
+2025-08-26T13:05:07.6684193Z hint: of your new repositories, which will suppress this warning, call:
+2025-08-26T13:05:07.6685654Z hint:
+2025-08-26T13:05:07.6686694Z hint: 	git config --global init.defaultBranch <name>
+2025-08-26T13:05:07.6688758Z hint:
+2025-08-26T13:05:07.6689875Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2025-08-26T13:05:07.6691813Z hint: 'development'. The just-created branch can be renamed via this command:
+2025-08-26T13:05:07.6693379Z hint:
+2025-08-26T13:05:07.6694237Z hint: 	git branch -m <name>
+2025-08-26T13:05:07.6695173Z hint:
+2025-08-26T13:05:07.6696392Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2025-08-26T13:05:07.6698702Z Initialized empty Git repository in /home/runner/work/jtarcio-clinica/jtarcio-clinica/.git/
+2025-08-26T13:05:07.6702840Z [command]/usr/bin/git remote add origin https://github.com/josivantarcio/jtarcio-clinica
+2025-08-26T13:05:07.6732066Z ##[endgroup]
+2025-08-26T13:05:07.6733495Z ##[group]Disabling automatic garbage collection
+2025-08-26T13:05:07.6738042Z [command]/usr/bin/git config --local gc.auto 0
+2025-08-26T13:05:07.6771249Z ##[endgroup]
+2025-08-26T13:05:07.6772627Z ##[group]Setting up auth
+2025-08-26T13:05:07.6777066Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-08-26T13:05:07.6811730Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-08-26T13:05:07.7075659Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-08-26T13:05:07.7889393Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-08-26T13:05:07.7892554Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2025-08-26T13:05:07.7894357Z ##[endgroup]
+2025-08-26T13:05:07.7895088Z ##[group]Fetching the repository
+2025-08-26T13:05:07.7896505Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +187fe7217a2a5e8c4439c3ccf02a3ff508fe5a2c:refs/remotes/origin/main
+2025-08-26T13:05:08.9129117Z From https://github.com/josivantarcio/jtarcio-clinica
+2025-08-26T13:05:08.9148688Z  * [new ref]         187fe7217a2a5e8c4439c3ccf02a3ff508fe5a2c -> origin/main
+2025-08-26T13:05:08.9182940Z ##[endgroup]
+2025-08-26T13:05:08.9184885Z ##[group]Determining the checkout info
+2025-08-26T13:05:08.9188967Z ##[endgroup]
+2025-08-26T13:05:08.9189683Z [command]/usr/bin/git sparse-checkout disable
+2025-08-26T13:05:08.9232954Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2025-08-26T13:05:08.9269142Z ##[group]Checking out the ref
+2025-08-26T13:05:08.9272946Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2025-08-26T13:05:08.9655678Z Switched to a new branch 'main'
+2025-08-26T13:05:08.9661506Z branch 'main' set up to track 'origin/main'.
+2025-08-26T13:05:08.9670613Z ##[endgroup]
+2025-08-26T13:05:08.9716373Z [command]/usr/bin/git log -1 --format=%H
+2025-08-26T13:05:08.9735623Z 187fe7217a2a5e8c4439c3ccf02a3ff508fe5a2c
+2025-08-26T13:05:09.0049134Z ##[group]Run actions/setup-node@v4
+2025-08-26T13:05:09.0050245Z with:
+2025-08-26T13:05:09.0050996Z   node-version: 20
+2025-08-26T13:05:09.0051807Z   cache: npm
+2025-08-26T13:05:09.0052581Z   always-auth: false
+2025-08-26T13:05:09.0053442Z   check-latest: false
+2025-08-26T13:05:09.0054628Z   token: ***
+2025-08-26T13:05:09.0055395Z ##[endgroup]
+2025-08-26T13:05:09.2279210Z Found in cache @ /opt/hostedtoolcache/node/20.19.4/x64
+2025-08-26T13:05:09.2283316Z ##[group]Environment details
+2025-08-26T13:05:09.7470062Z node: v20.19.4
+2025-08-26T13:05:09.7518872Z npm: 10.8.2
+2025-08-26T13:05:09.7519206Z yarn: 1.22.22
+2025-08-26T13:05:09.7520091Z ##[endgroup]
+2025-08-26T13:05:09.7520608Z [command]/opt/hostedtoolcache/node/20.19.4/x64/bin/npm config get cache
+2025-08-26T13:05:09.8593329Z /home/runner/.npm
+2025-08-26T13:05:10.1392098Z Cache hit for: node-cache-Linux-x64-npm-162972607ed50d86ec18ea0f06d9fa4e6ad58d20657df796894dd3e9007e9a6e
+2025-08-26T13:05:10.5146590Z Received 14416 of 14416 (100.0%), 0.2 MBs/sec
+2025-08-26T13:05:10.5148495Z Cache Size: ~0 MB (14416 B)
+2025-08-26T13:05:10.5176174Z [command]/usr/bin/tar -xf /home/runner/work/_temp/1fd12666-ce36-4d51-8f51-74da033cbd91/cache.tzst -P -C /home/runner/work/jtarcio-clinica/jtarcio-clinica --use-compress-program unzstd
+2025-08-26T13:05:10.5231890Z Cache restored successfully
+2025-08-26T13:05:10.5237471Z Cache restored from key: node-cache-Linux-x64-npm-162972607ed50d86ec18ea0f06d9fa4e6ad58d20657df796894dd3e9007e9a6e
+2025-08-26T13:05:10.5359092Z ##[group]Run # Configure npm for better reliability
+2025-08-26T13:05:10.5359562Z [36;1m# Configure npm for better reliability[0m
+2025-08-26T13:05:10.5359973Z [36;1mnpm config set registry https://registry.npmjs.org/[0m
+2025-08-26T13:05:10.5360321Z [36;1mnpm config set fetch-retries 5[0m
+2025-08-26T13:05:10.5360628Z [36;1mnpm config set fetch-retry-factor 2[0m
+2025-08-26T13:05:10.5360966Z [36;1mnpm config set fetch-retry-mintimeout 10000[0m
+2025-08-26T13:05:10.5361302Z [36;1mnpm config set fetch-retry-maxtimeout 60000[0m
+2025-08-26T13:05:10.5361578Z [36;1m[0m
+2025-08-26T13:05:10.5361769Z [36;1m# Install with retry logic[0m
+2025-08-26T13:05:10.5362206Z [36;1mnpm ci --ignore-scripts --prefer-offline --no-audit || npm ci --ignore-scripts --no-audit[0m
+2025-08-26T13:05:10.5362873Z [36;1mcd frontend && (npm ci --ignore-scripts --prefer-offline --no-audit || npm ci --ignore-scripts --no-audit)[0m
+2025-08-26T13:05:10.5433030Z shell: /usr/bin/bash -e {0}
+2025-08-26T13:05:10.5433337Z ##[endgroup]
+2025-08-26T13:05:15.1949221Z npm warn deprecated supertest@6.3.4: Please upgrade to supertest v7.1.3+, see release notes at https://github.com/forwardemail/supertest/releases/tag/v7.1.3 - maintenance is supported by Forward Email @ https://forwardemail.net
+2025-08-26T13:05:15.6008229Z npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+2025-08-26T13:05:17.1529534Z npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+2025-08-26T13:05:17.2894772Z npm warn deprecated superagent@8.1.2: Please upgrade to superagent v10.2.2+, see release notes at https://github.com/forwardemail/superagent/releases/tag/v10.2.2 - maintenance is supported by Forward Email @ https://forwardemail.net
+2025-08-26T13:05:17.2933391Z npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead
+2025-08-26T13:05:20.1722348Z npm warn deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead
+2025-08-26T13:05:20.1730539Z npm warn deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead
+2025-08-26T13:05:21.3980885Z npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+2025-08-26T13:05:21.5969749Z npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+2025-08-26T13:05:21.8632818Z npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+2025-08-26T13:05:21.8644412Z npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+2025-08-26T13:05:22.1279920Z npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+2025-08-26T13:05:27.1585727Z npm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+2025-08-26T13:05:41.1358499Z 
+2025-08-26T13:05:41.1363879Z added 1162 packages in 30s
+2025-08-26T13:05:41.1364272Z 
+2025-08-26T13:05:41.1364580Z 278 packages are looking for funding
+2025-08-26T13:05:41.1365053Z   run `npm fund` for details
+2025-08-26T13:05:49.8757649Z npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+2025-08-26T13:05:50.0280300Z npm warn deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead
+2025-08-26T13:05:50.0388548Z npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+2025-08-26T13:05:50.1447370Z npm warn deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead
+2025-08-26T13:05:50.1454800Z npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+2025-08-26T13:05:52.3705294Z npm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+2025-08-26T13:05:58.5538392Z 
+2025-08-26T13:05:58.5540464Z added 551 packages in 17s
+2025-08-26T13:05:58.5542239Z 
+2025-08-26T13:05:58.5542821Z 167 packages are looking for funding
+2025-08-26T13:05:58.5545581Z   run `npm fund` for details
+2025-08-26T13:05:58.6541838Z ##[group]Run npm run lint || echo "⚠️ Lint warnings found - continuing"
+2025-08-26T13:05:58.6542356Z [36;1mnpm run lint || echo "⚠️ Lint warnings found - continuing"[0m
+2025-08-26T13:05:58.6542752Z [36;1mecho "Type checking disabled temporarily for workflow"[0m
+2025-08-26T13:05:58.6592791Z shell: /usr/bin/bash -e {0}
+2025-08-26T13:05:58.6593040Z ##[endgroup]
+2025-08-26T13:05:58.7765873Z 
+2025-08-26T13:05:58.7766909Z > eo-clinica-system@1.3.4 lint
+2025-08-26T13:05:58.7769790Z > eslint src/**/*.ts
+2025-08-26T13:05:58.7772208Z 
+2025-08-26T13:06:01.5892632Z 
+2025-08-26T13:06:01.5910576Z /home/runner/work/jtarcio-clinica/jtarcio-clinica/src/config/logger.ts
+2025-08-26T13:06:01.5943228Z ##[warning]  123:43  warning  Unexpected any. Specify a different type                                          @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.5953427Z ##[warning]  123:48  warning  'reply' is defined but never used. Allowed unused args must match /^_/u           @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6060539Z ##[warning]  123:55  warning  Unexpected any. Specify a different type                                          @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6063458Z ##[warning]  124:9   warning  'start' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6066068Z ##[warning]  134:25  warning  Unexpected any. Specify a different type                                          @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6068805Z ##[warning]  139:65  warning  Unexpected any. Specify a different type                                          @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6071322Z ##[warning]  154:28  warning  Unexpected any. Specify a different type                                          @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6073834Z ##[warning]  167:27  warning  Unexpected any. Specify a different type                                          @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6075341Z 
+2025-08-26T13:06:01.6075828Z /home/runner/work/jtarcio-clinica/jtarcio-clinica/src/config/redis.ts
+2025-08-26T13:06:01.6076921Z ##[warning]  16:3  warning  Unexpected console statement  no-console
+2025-08-26T13:06:01.6079042Z ##[warning]  24:3  warning  Unexpected console statement  no-console
+2025-08-26T13:06:01.6080759Z ##[warning]  40:5  warning  Unexpected console statement  no-console
+2025-08-26T13:06:01.6081881Z 
+2025-08-26T13:06:01.6082420Z /home/runner/work/jtarcio-clinica/jtarcio-clinica/src/controllers/ai-chat.ts
+2025-08-26T13:06:01.6083985Z ##[warning]  475:43  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6086193Z ##[warning]  478:44  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6087764Z 
+2025-08-26T13:06:01.6088486Z /home/runner/work/jtarcio-clinica/jtarcio-clinica/src/middleware/financial-auth.middleware.ts
+2025-08-26T13:06:01.6090206Z ##[warning]  193:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6092766Z ##[warning]  194:4   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6095007Z ##[warning]  234:48  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6096316Z 
+2025-08-26T13:06:01.6096883Z /home/runner/work/jtarcio-clinica/jtarcio-clinica/src/middleware/rateLimiting.ts
+2025-08-26T13:06:01.6098888Z ##[warning]    2:8   warning  'Redis' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6101478Z ##[warning]  204:39  warning  'reply' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6102875Z 
+2025-08-26T13:06:01.6103354Z /home/runner/work/jtarcio-clinica/jtarcio-clinica/src/plugins/auth.ts
+2025-08-26T13:06:01.6105136Z ##[warning]   59:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6107614Z ##[warning]   85:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6109969Z ##[warning]  135:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6112126Z ##[warning]  149:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6114207Z ##[warning]  164:30  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6115460Z 
+2025-08-26T13:06:01.6116154Z /home/runner/work/jtarcio-clinica/jtarcio-clinica/src/repositories/scheduling.repository.ts
+2025-08-26T13:06:01.6118004Z ##[warning]  379:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6120290Z ##[warning]  450:52  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6122446Z ##[warning]  458:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6124593Z ##[warning]  522:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6126694Z ##[warning]  813:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6128258Z 
+2025-08-26T13:06:01.6128764Z /home/runner/work/jtarcio-clinica/jtarcio-clinica/src/routes/ai-chat.ts
+2025-08-26T13:06:01.6130302Z ##[warning]  427:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6132438Z ##[warning]  434:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6133720Z 
+2025-08-26T13:06:01.6134221Z /home/runner/work/jtarcio-clinica/jtarcio-clinica/src/routes/analytics.ts
+2025-08-26T13:06:01.6135379Z ##[warning]   56:5   warning  Unexpected console statement              no-console
+2025-08-26T13:06:01.6137305Z ##[warning]   78:5   warning  Unexpected console statement              no-console
+2025-08-26T13:06:01.6139142Z ##[warning]  128:5   warning  Unexpected console statement              no-console
+2025-08-26T13:06:01.6140999Z ##[warning]  165:5   warning  Unexpected console statement              no-console
+2025-08-26T13:06:01.6142730Z ##[warning]  194:5   warning  Unexpected console statement              no-console
+2025-08-26T13:06:01.6144478Z ##[warning]  245:3   warning  Unexpected console statement              no-console
+2025-08-26T13:06:01.6146197Z ##[warning]  287:9   warning  Unexpected console statement              no-console
+2025-08-26T13:06:01.6148460Z ##[warning]  288:75  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6150415Z ##[warning]  352:15  warning  Unexpected console statement              no-console
+2025-08-26T13:06:01.6152390Z ##[warning]  610:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6153908Z 
+2025-08-26T13:06:01.6154443Z /home/runner/work/jtarcio-clinica/jtarcio-clinica/src/routes/appointments.ts
+2025-08-26T13:06:01.6155850Z ##[warning]  214:46  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6158206Z ##[warning]  425:63  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6160380Z ##[warning]  675:63  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6161657Z 
+2025-08-26T13:06:01.6162122Z /home/runner/work/jtarcio-clinica/jtarcio-clinica/src/routes/auth.ts
+2025-08-26T13:06:01.6163418Z ##[warning]   44:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6165717Z ##[warning]  117:44  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6168048Z ##[warning]  201:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6170163Z ##[warning]  265:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6172300Z ##[warning]  294:44  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6174511Z ##[warning]  353:44  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6176711Z ##[warning]  378:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6178256Z 
+2025-08-26T13:06:01.6178827Z /home/runner/work/jtarcio-clinica/jtarcio-clinica/src/routes/availability.ts
+2025-08-26T13:06:01.6180294Z ##[warning]   67:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6182543Z ##[warning]  154:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6184880Z ##[warning]  234:69  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6187358Z ##[warning]  363:63  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6188707Z 
+2025-08-26T13:06:01.6189237Z /home/runner/work/jtarcio-clinica/jtarcio-clinica/src/routes/index.ts
+2025-08-26T13:06:01.6190935Z ##[warning]  10:8   warning  'aiChatRoutes' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6193605Z ##[warning]  11:10  warning  'auditRoutes' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6195231Z 
+2025-08-26T13:06:01.6195814Z /home/runner/work/jtarcio-clinica/jtarcio-clinica/src/routes/specialties.ts
+2025-08-26T13:06:01.6197584Z ##[warning]   55:46  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6199892Z ##[warning]   71:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6202086Z ##[warning]  241:44  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6204295Z ##[warning]  300:63  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6206478Z ##[warning]  411:70  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6207939Z 
+2025-08-26T13:06:01.6208423Z /home/runner/work/jtarcio-clinica/jtarcio-clinica/src/routes/users.ts
+2025-08-26T13:06:01.6209761Z ##[warning]    85:46  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6211874Z ##[warning]   270:63  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6213912Z ##[warning]   383:70  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6216262Z ##[warning]   447:63  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6218623Z ##[warning]   550:44  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6220650Z ##[warning]   692:44  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6222683Z ##[warning]   797:36  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6224712Z ##[warning]   989:44  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6226754Z ##[warning]   992:36  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6229251Z ##[warning]  1008:31  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6231491Z ##[warning]  1110:36  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6233623Z ##[warning]  1216:36  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6235642Z ##[warning]  1300:36  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6236953Z 
+2025-08-26T13:06:01.6237862Z /home/runner/work/jtarcio-clinica/jtarcio-clinica/src/services/advanced-scheduling.algorithms.ts
+2025-08-26T13:06:01.6239864Z ##[warning]   12:3   warning  'BusinessRules' is defined but never used. Allowed unused vars must match /^_/u      @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6242599Z ##[warning]   13:3   warning  'QUEUE_CONFIG' is defined but never used. Allowed unused vars must match /^_/u       @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6245313Z ##[warning]   14:3   warning  'EMERGENCY_RULES' is defined but never used. Allowed unused vars must match /^_/u    @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6248056Z ##[warning]   23:3   warning  'parseISO' is defined but never used. Allowed unused vars must match /^_/u           @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6250788Z ##[warning]   24:3   warning  'isSameDay' is defined but never used. Allowed unused vars must match /^_/u          @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6253344Z ##[warning]   80:13  warning  'prisma' is assigned a value but never used. Allowed unused vars must match /^_/u    @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6256013Z ##[warning]   80:21  warning  'redis' is assigned a value but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6258841Z ##[warning]  153:13  warning  'prisma' is assigned a value but never used. Allowed unused vars must match /^_/u    @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6261451Z ##[warning]  202:13  warning  'prisma' is assigned a value but never used. Allowed unused vars must match /^_/u    @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6264154Z ##[warning]  260:13  warning  'prisma' is assigned a value but never used. Allowed unused vars must match /^_/u    @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6267403Z ##[warning]  298:5   warning  'reason' is defined but never used. Allowed unused args must match /^_/u             @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6270165Z ##[warning]  314:24  warning  Unexpected any. Specify a different type                                             @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6272888Z ##[warning]  315:30  warning  Unexpected any. Specify a different type                                             @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6275825Z ##[warning]  423:13  warning  Unexpected any. Specify a different type                                             @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6279256Z ##[warning]  444:13  warning  Unexpected any. Specify a different type                                             @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6282147Z ##[warning]  451:11  warning  Unexpected any. Specify a different type                                             @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6285154Z ##[warning]  528:5   warning  'options' is defined but never used. Allowed unused args must match /^_/u            @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6288381Z ##[warning]  612:17  warning  'doctorId' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6291588Z ##[warning]  821:5   warning  'entry' is defined but never used. Allowed unused args must match /^_/u              @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6294919Z ##[warning]  836:38  warning  'entries' is defined but never used. Allowed unused args must match /^_/u            @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6298323Z ##[warning]  842:5   warning  'resolution' is defined but never used. Allowed unused args must match /^_/u         @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6301546Z ##[warning]  855:5   warning  'conflict' is defined but never used. Allowed unused args must match /^_/u           @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6304623Z ##[warning]  856:5   warning  'options' is defined but never used. Allowed unused args must match /^_/u            @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6308169Z ##[warning]  862:5   warning  'conflict' is defined but never used. Allowed unused args must match /^_/u           @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6310936Z ##[warning]  863:5   warning  'options' is defined but never used. Allowed unused args must match /^_/u            @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6313530Z ##[warning]  869:5   warning  'conflict' is defined but never used. Allowed unused args must match /^_/u           @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6316373Z ##[warning]  870:5   warning  'options' is defined but never used. Allowed unused args must match /^_/u            @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6319439Z ##[warning]  877:5   warning  'criteria' is defined but never used. Allowed unused args must match /^_/u           @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6322172Z ##[warning]  883:5   warning  'criteria' is defined but never used. Allowed unused args must match /^_/u           @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6324888Z ##[warning]  909:5   warning  'doctorId' is defined but never used. Allowed unused args must match /^_/u           @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6327739Z ##[warning]  910:5   warning  'days' is defined but never used. Allowed unused args must match /^_/u               @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6330429Z ##[warning]  911:14  warning  Unexpected any. Specify a different type                                             @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6333054Z ##[warning]  915:33  warning  'historicalData' is defined but never used. Allowed unused args must match /^_/u     @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6335541Z ##[warning]  915:49  warning  Unexpected any. Specify a different type                                             @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6338258Z ##[warning]  915:54  warning  'dateRange' is defined but never used. Allowed unused args must match /^_/u          @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6340887Z ##[warning]  915:65  warning  Unexpected any. Specify a different type                                             @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6343384Z ##[warning]  915:71  warning  Unexpected any. Specify a different type                                             @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6346301Z ##[warning]  919:43  warning  'predictedDemand' is defined but never used. Allowed unused args must match /^_/u    @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6349194Z ##[warning]  919:60  warning  Unexpected any. Specify a different type                                             @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6351719Z ##[warning]  919:68  warning  Unexpected any. Specify a different type                                             @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6354456Z ##[warning]  923:30  warning  'historicalData' is defined but never used. Allowed unused args must match /^_/u     @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6357410Z ##[warning]  923:46  warning  Unexpected any. Specify a different type                                             @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6360386Z ##[warning]  923:52  warning  Unexpected any. Specify a different type                                             @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6363233Z ##[warning]  928:5   warning  'appointment' is defined but never used. Allowed unused args must match /^_/u        @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6366199Z ##[warning]  928:18  warning  Unexpected any. Specify a different type                                             @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6369552Z ##[warning]  934:5   warning  'rescheduled' is defined but never used. Allowed unused args must match /^_/u        @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6372611Z ##[warning]  934:18  warning  Unexpected any. Specify a different type                                             @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6375561Z ##[warning]  935:5   warning  'unrescheduled' is defined but never used. Allowed unused args must match /^_/u      @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6377715Z ##[warning]  935:20  warning  Unexpected any. Specify a different type                                             @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6378609Z 
+2025-08-26T13:06:01.6378952Z /home/runner/work/jtarcio-clinica/jtarcio-clinica/src/services/ai-service.ts
+2025-08-26T13:06:01.6379854Z ##[warning]   39:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6381148Z ##[warning]   53:31  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6382423Z ##[warning]  480:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6383675Z ##[warning]  625:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6384424Z 
+2025-08-26T13:06:01.6384784Z /home/runner/work/jtarcio-clinica/jtarcio-clinica/src/services/appointment.service.ts
+2025-08-26T13:06:01.6385920Z ##[warning]    7:3   warning  'QueueEntry' is defined but never used. Allowed unused vars must match /^_/u                      @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6388202Z ##[warning]   10:3   warning  'CreateAppointmentDto' is defined but never used. Allowed unused vars must match /^_/u            @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6390121Z ##[warning]   11:3   warning  'UpdateAppointmentDto' is defined but never used. Allowed unused vars must match /^_/u            @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6391801Z ##[warning]   15:3   warning  'AppointmentStatus' is defined but never used. Allowed unused vars must match /^_/u               @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6393456Z ##[warning]   16:3   warning  'AppointmentType' is defined but never used. Allowed unused vars must match /^_/u                 @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6395123Z ##[warning]   27:3   warning  'CANCELLATION_POLICY' is defined but never used. Allowed unused vars must match /^_/u             @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6397017Z ##[warning]   41:3   warning  'differenceInMinutes' is defined but never used. Allowed unused vars must match /^_/u             @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6399078Z ##[warning]   85:13  warning  'prisma' is assigned a value but never used. Allowed unused vars must match /^_/u                 @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6400760Z ##[warning]  203:50  warning  'coreSchedulingService' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6402401Z ##[warning]  298:5   warning  'userId' is defined but never used. Allowed unused args must match /^_/u                          @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6404050Z ##[warning]  543:14  warning  Unexpected any. Specify a different type                                                          @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6405646Z ##[warning]  645:5   warning  'validation' is defined but never used. Allowed unused args must match /^_/u                      @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6407358Z ##[warning]  682:20  warning  Unexpected any. Specify a different type                                                          @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6409007Z ##[warning]  719:5   warning  'newScheduledAt' is defined but never used. Allowed unused args must match /^_/u                  @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6410537Z ##[warning]  773:14  warning  Unexpected any. Specify a different type                                                          @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6411982Z ##[warning]  776:6   warning  Unexpected any. Specify a different type                                                          @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6413419Z ##[warning]  777:18  warning  Unexpected any. Specify a different type                                                          @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6414203Z 
+2025-08-26T13:06:01.6414518Z /home/runner/work/jtarcio-clinica/jtarcio-clinica/src/services/auth.service.ts
+2025-08-26T13:06:01.6415328Z ##[warning]  124:45  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6416569Z ##[warning]  136:68  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6417628Z 
+2025-08-26T13:06:01.6418064Z /home/runner/work/jtarcio-clinica/jtarcio-clinica/src/services/availability-management.service.ts
+2025-08-26T13:06:01.6419251Z ##[warning]   10:3   warning  'RESOURCE_CONFIG' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6420925Z ##[warning]   11:3   warning  'TIME_CONSTRAINTS' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6422504Z ##[warning]   20:3   warning  'parseISO' is defined but never used. Allowed unused vars must match /^_/u          @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6424072Z ##[warning]   22:3   warning  'isWithinInterval' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6425606Z ##[warning]   24:3   warning  'subDays' is defined but never used. Allowed unused vars must match /^_/u           @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6427367Z ##[warning]  106:13  warning  'prisma' is assigned a value but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6429034Z ##[warning]  106:21  warning  'redis' is assigned a value but never used. Allowed unused vars must match /^_/u    @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6430601Z ##[warning]  279:13  warning  'prisma' is assigned a value but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6432337Z ##[warning]  528:13  warning  Unexpected any. Specify a different type                                            @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6433796Z ##[warning]  542:13  warning  Unexpected any. Specify a different type                                            @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6435263Z ##[warning]  584:13  warning  Unexpected any. Specify a different type                                            @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6436698Z ##[warning]  586:19  warning  Unexpected any. Specify a different type                                            @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6438430Z ##[warning]  587:27  warning  Unexpected any. Specify a different type                                            @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6440074Z ##[warning]  589:5   warning  'context' is defined but never used. Allowed unused args must match /^_/u           @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6441601Z ##[warning]  686:22  warning  Unexpected any. Specify a different type                                            @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6443106Z ##[warning]  716:5   warning  'requirements' is defined but never used. Allowed unused args must match /^_/u      @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6444653Z ##[warning]  717:5   warning  'context' is defined but never used. Allowed unused args must match /^_/u           @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6446201Z ##[warning]  737:5   warning  'criteria' is defined but never used. Allowed unused args must match /^_/u          @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6447873Z ##[warning]  745:5   warning  'context' is defined but never used. Allowed unused args must match /^_/u           @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6449440Z ##[warning]  753:5   warning  'timeSlot' is defined but never used. Allowed unused args must match /^_/u          @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6451004Z ##[warning]  754:5   warning  'context' is defined but never used. Allowed unused args must match /^_/u           @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6452538Z ##[warning]  766:5   warning  'requirements' is defined but never used. Allowed unused args must match /^_/u      @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6454079Z ##[warning]  767:5   warning  'timeSlot' is defined but never used. Allowed unused args must match /^_/u          @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6455649Z ##[warning]  768:5   warning  'context' is defined but never used. Allowed unused args must match /^_/u           @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6457237Z ##[warning]  780:13  warning  Unexpected any. Specify a different type                                            @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6458709Z ##[warning]  790:13  warning  Unexpected any. Specify a different type                                            @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6460144Z ##[warning]  815:19  warning  Unexpected any. Specify a different type                                            @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6461572Z ##[warning]  831:64  warning  Unexpected any. Specify a different type                                            @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6463074Z ##[warning]  857:5   warning  'doctorId' is defined but never used. Allowed unused args must match /^_/u          @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6464625Z ##[warning]  858:5   warning  'dateRange' is defined but never used. Allowed unused args must match /^_/u         @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6466174Z ##[warning]  917:5   warning  'context' is defined but never used. Allowed unused args must match /^_/u           @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6468009Z ##[warning]  933:5   warning  'criteria' is defined but never used. Allowed unused args must match /^_/u          @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6469539Z ##[warning]  934:5   warning  'slots' is defined but never used. Allowed unused args must match /^_/u             @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6470375Z 
+2025-08-26T13:06:01.6470736Z /home/runner/work/jtarcio-clinica/jtarcio-clinica/src/services/business-rules.engine.ts
+2025-08-26T13:06:01.6471874Z ##[warning]    6:3   warning  'PATIENT_CLASSIFICATION' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6473528Z ##[warning]    8:3   warning  'PatientClassification' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6475292Z ##[warning]   11:3   warning  'AppointmentType' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6476954Z ##[warning]   19:3   warning  'differenceInMinutes' is defined but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6478697Z ##[warning]   21:3   warning  'isBefore' is defined but never used. Allowed unused vars must match /^_/u                @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6480270Z ##[warning]   22:3   warning  'isAfter' is defined but never used. Allowed unused vars must match /^_/u                 @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6481844Z ##[warning]   23:3   warning  'startOfDay' is defined but never used. Allowed unused vars must match /^_/u              @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6483392Z ##[warning]   24:3   warning  'endOfDay' is defined but never used. Allowed unused vars must match /^_/u                @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6484886Z ##[warning]   40:13  warning  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6486336Z ##[warning]   52:18  warning  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6487882Z ##[warning]   53:19  warning  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6489354Z ##[warning]   59:17  warning  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6490786Z ##[warning]   60:13  warning  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6492218Z ##[warning]   61:12  warning  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6493646Z ##[warning]   62:15  warning  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6495067Z ##[warning]   63:18  warning  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6496488Z ##[warning]   79:15  warning  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6498135Z ##[warning]  168:5   warning  'context' is assigned a value but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6499658Z ##[warning]  269:14  warning  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6501193Z ##[warning]  385:5   warning  'context' is defined but never used. Allowed unused args must match /^_/u                 @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6502922Z ##[warning]  439:5   warning  'context' is defined but never used. Allowed unused args must match /^_/u                 @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6504428Z ##[warning]  524:15  warning  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6505939Z ##[warning]  525:5   warning  'context' is defined but never used. Allowed unused args must match /^_/u                 @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6507536Z ##[warning]  578:15  warning  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6509206Z ##[warning]  632:5   warning  'context' is defined but never used. Allowed unused args must match /^_/u                 @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6510812Z ##[warning]  682:5   warning  'context' is defined but never used. Allowed unused args must match /^_/u                 @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6512367Z ##[warning]  720:5   warning  'criteria' is defined but never used. Allowed unused args must match /^_/u                @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6513958Z ##[warning]  721:5   warning  'slotData' is defined but never used. Allowed unused args must match /^_/u                @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6515463Z ##[warning]  721:15  warning  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6516957Z ##[warning]  722:5   warning  'context' is defined but never used. Allowed unused args must match /^_/u                 @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6518665Z ##[warning]  737:5   warning  'insurance' is defined but never used. Allowed unused args must match /^_/u               @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6520176Z ##[warning]  737:16  warning  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6521673Z ##[warning]  738:5   warning  'criteria' is defined but never used. Allowed unused args must match /^_/u                @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6522512Z 
+2025-08-26T13:06:01.6522877Z /home/runner/work/jtarcio-clinica/jtarcio-clinica/src/services/core-scheduling.service.ts
+2025-08-26T13:06:01.6524000Z ##[warning]   13:10  warning  'AppointmentType' is defined but never used. Allowed unused vars must match /^_/u          @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6525641Z ##[warning]   16:3   warning  'SPECIALTY_CONFIG' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6527392Z ##[warning]   17:3   warning  'APPOINTMENT_TYPE_CONFIG' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6529076Z ##[warning]   22:3   warning  'isWithinInterval' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6530685Z ##[warning]   23:3   warning  'parseISO' is defined but never used. Allowed unused vars must match /^_/u                 @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6532273Z ##[warning]   25:3   warning  'isSameDay' is defined but never used. Allowed unused vars must match /^_/u                @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6533849Z ##[warning]   46:21  warning  'redis' is assigned a value but never used. Allowed unused vars must match /^_/u           @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6535373Z ##[warning]  124:41  warning  Unexpected any. Specify a different type                                                   @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6537009Z ##[warning]  308:13  warning  Unexpected any. Specify a different type                                                   @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6538628Z ##[warning]  311:22  warning  Unexpected any. Specify a different type                                                   @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6540182Z ##[warning]  314:13  warning  'prisma' is assigned a value but never used. Allowed unused vars must match /^_/u          @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6541698Z ##[warning]  323:13  warning  Unexpected any. Specify a different type                                                   @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6543150Z ##[warning]  346:19  warning  Unexpected any. Specify a different type                                                   @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6544847Z ##[warning]  348:5   warning  'specialtyConfig' is defined but never used. Allowed unused args must match /^_/u          @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6546424Z ##[warning]  348:22  warning  Unexpected any. Specify a different type                                                   @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6548082Z ##[warning]  392:5   warning  'criteria' is defined but never used. Allowed unused args must match /^_/u                 @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6549707Z ##[warning]  429:5   warning  'specialtyConfig' is defined but never used. Allowed unused args must match /^_/u          @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6551246Z ##[warning]  429:22  warning  Unexpected any. Specify a different type                                                   @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6552707Z ##[warning]  481:22  warning  Unexpected any. Specify a different type                                                   @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6554208Z ##[warning]  560:37  warning  'slot' is defined but never used. Allowed unused args must match /^_/u                     @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6555696Z ##[warning]  566:45  warning  Unexpected any. Specify a different type                                                   @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6557319Z ##[warning]  584:5   warning  'doctorId' is defined but never used. Allowed unused args must match /^_/u                 @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6558896Z ##[warning]  585:5   warning  'date' is defined but never used. Allowed unused args must match /^_/u                     @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6560452Z ##[warning]  627:5   warning  'original' is defined but never used. Allowed unused args must match /^_/u                 @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6562034Z ##[warning]  628:5   warning  'optimized' is defined but never used. Allowed unused args must match /^_/u                @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6563602Z ##[warning]  639:5   warning  'original' is defined but never used. Allowed unused args must match /^_/u                 @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6565175Z ##[warning]  640:5   warning  'optimized' is defined but never used. Allowed unused args must match /^_/u                @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6566022Z 
+2025-08-26T13:06:01.6566402Z /home/runner/work/jtarcio-clinica/jtarcio-clinica/src/services/emergency-handler.service.ts
+2025-08-26T13:06:01.6567662Z ##[warning]    5:3   warning  'ConflictResolution' is defined but never used. Allowed unused vars must match /^_/u       @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6569326Z ##[warning]    6:3   warning  'ConflictAction' is defined but never used. Allowed unused vars must match /^_/u           @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6570965Z ##[warning]    7:3   warning  'ResolutionStrategy' is defined but never used. Allowed unused vars must match /^_/u       @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6572776Z ##[warning]    8:3   warning  'AppointmentBooking' is defined but never used. Allowed unused vars must match /^_/u       @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6574392Z ##[warning]    9:3   warning  'ConflictType' is defined but never used. Allowed unused vars must match /^_/u             @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6576016Z ##[warning]   10:3   warning  'ConflictSeverity' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6577742Z ##[warning]   16:3   warning  'SPECIALTY_CONFIG' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6579541Z ##[warning]   17:3   warning  'TIME_CONSTRAINTS' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6581362Z ##[warning]   18:3   warning  'PatientClassification' is defined but never used. Allowed unused vars must match /^_/u    @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6582961Z ##[warning]   23:3   warning  'addHours' is defined but never used. Allowed unused vars must match /^_/u                 @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6584513Z ##[warning]   28:3   warning  'isAfter' is defined but never used. Allowed unused vars must match /^_/u                  @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6586093Z ##[warning]   31:3   warning  'isWithinInterval' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6587740Z ##[warning]   95:20  warning  Unexpected any. Specify a different type                                                   @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6589253Z ##[warning]   96:24  warning  Unexpected any. Specify a different type                                                   @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6590814Z ##[warning]  107:13  warning  'prisma' is assigned a value but never used. Allowed unused vars must match /^_/u          @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6592418Z ##[warning]  107:21  warning  'redis' is assigned a value but never used. Allowed unused vars must match /^_/u           @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6594036Z ##[warning]  120:13  warning  'capacityStatus' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6595639Z ##[warning]  212:21  warning  'redis' is assigned a value but never used. Allowed unused vars must match /^_/u           @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6597267Z ##[warning]  279:18  warning  Unexpected any. Specify a different type                                                   @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6598785Z ##[warning]  280:22  warning  Unexpected any. Specify a different type                                                   @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6600315Z ##[warning]  395:21  warning  'redis' is assigned a value but never used. Allowed unused vars must match /^_/u           @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6601908Z ##[warning]  493:5   warning  'options' is defined but never used. Allowed unused args must match /^_/u                  @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6603406Z ##[warning]  530:13  warning  Unexpected any. Specify a different type                                                   @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6604938Z ##[warning]  532:5   warning  'assessment' is defined but never used. Allowed unused args must match /^_/u               @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6606516Z ##[warning]  673:5   warning  'criteria' is defined but never used. Allowed unused args must match /^_/u                 @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6608416Z ##[warning]  674:5   warning  'assessment' is defined but never used. Allowed unused args must match /^_/u               @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6610004Z ##[warning]  717:5   warning  'criteria' is defined but never used. Allowed unused args must match /^_/u                 @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6611584Z ##[warning]  718:5   warning  'assessment' is defined but never used. Allowed unused args must match /^_/u               @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6613094Z ##[warning]  757:21  warning  Unexpected any. Specify a different type                                                   @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6614752Z ##[warning]  830:5   warning  'specialtyId' is defined but never used. Allowed unused args must match /^_/u              @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6616321Z ##[warning]  859:44  warning  Unexpected any. Specify a different type                                                   @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6617908Z ##[warning]  870:49  warning  Unexpected any. Specify a different type                                                   @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6619448Z ##[warning]  889:5   warning  'vitalSigns' is defined but never used. Allowed unused args must match /^_/u               @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6620957Z ##[warning]  889:18  warning  Unexpected any. Specify a different type                                                   @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6622453Z ##[warning]  905:5   warning  'slot' is defined but never used. Allowed unused args must match /^_/u                     @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6623950Z ##[warning]  928:55  warning  Unexpected any. Specify a different type                                                   @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6625400Z ##[warning]  939:18  warning  Unexpected any. Specify a different type                                                   @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6626937Z ##[warning]  956:5   warning  'appointmentId' is defined but never used. Allowed unused args must match /^_/u            @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6628589Z ##[warning]  962:55  warning  Unexpected any. Specify a different type                                                   @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6630129Z ##[warning]  975:5   warning  'appointment' is defined but never used. Allowed unused args must match /^_/u              @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6631644Z ##[warning]  975:18  warning  Unexpected any. Specify a different type                                                   @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6632436Z 
+2025-08-26T13:06:01.6632785Z /home/runner/work/jtarcio-clinica/jtarcio-clinica/src/services/financial.service.ts
+2025-08-26T13:06:01.6633908Z ##[warning]    8:3   warning  'FinancialTransaction' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6635548Z ##[warning]   16:3   warning  'CashFlowReport' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6637282Z ##[warning]   17:3   warning  'ProfitabilityAnalysis' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6638941Z ##[warning]   18:3   warning  'TransactionType' is defined but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6640548Z ##[warning]   19:3   warning  'FinancialStatus' is defined but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6642309Z ##[warning]   20:3   warning  'PayableStatus' is defined but never used. Allowed unused vars must match /^_/u          @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6643873Z ##[warning]   35:5   warning  'userId' is defined but never used. Allowed unused args must match /^_/u                 @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6645413Z ##[warning]   36:5   warning  'userRole' is defined but never used. Allowed unused args must match /^_/u               @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6646901Z ##[warning]  186:49  warning  Unexpected any. Specify a different type                                                 @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6648497Z ##[warning]  187:45  warning  Unexpected any. Specify a different type                                                 @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6650057Z ##[warning]  188:49  warning  Unexpected any. Specify a different type                                                 @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6651525Z ##[warning]  207:18  warning  Unexpected any. Specify a different type                                                 @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6652958Z ##[warning]  316:53  warning  Unexpected any. Specify a different type                                                 @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6654388Z ##[warning]  335:18  warning  Unexpected any. Specify a different type                                                 @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6655888Z ##[warning]  441:33  warning  'startDate' is defined but never used. Allowed unused args must match /^_/u              @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6657567Z ##[warning]  441:50  warning  'endDate' is defined but never used. Allowed unused args must match /^_/u                @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6659157Z ##[warning]  447:36  warning  'startDate' is defined but never used. Allowed unused args must match /^_/u              @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6660719Z ##[warning]  447:53  warning  'endDate' is defined but never used. Allowed unused args must match /^_/u                @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6698999Z 
+2025-08-26T13:06:01.6699431Z /home/runner/work/jtarcio-clinica/jtarcio-clinica/src/services/queue-management.service.ts
+2025-08-26T13:06:01.6700727Z ##[warning]    7:10  warning  'AppointmentType' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6702452Z ##[warning]   11:3   warning  'PATIENT_CLASSIFICATION' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6704132Z ##[warning]   19:3   warning  'differenceInDays' is defined but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6705752Z ##[warning]   21:3   warning  'isBefore' is defined but never used. Allowed unused vars must match /^_/u                @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6707605Z ##[warning]   89:13  warning  'prisma' is assigned a value but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6709324Z ##[warning]  227:13  warning  'redis' is assigned a value but never used. Allowed unused vars must match /^_/u          @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6710926Z ##[warning]  391:20  warning  'prisma' is assigned a value but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6712539Z ##[warning]  653:13  warning  'bookingData' is assigned a value but never used. Allowed unused vars must match /^_/u    @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6714158Z ##[warning]  732:5   warning  'specialtyName' is defined but never used. Allowed unused args must match /^_/u           @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6715975Z ##[warning]  739:5   warning  'specialtyId' is defined but never used. Allowed unused args must match /^_/u             @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6717706Z ##[warning]  740:5   warning  'doctorId' is defined but never used. Allowed unused args must match /^_/u                @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6719293Z ##[warning]  754:31  warning  'entryId' is defined but never used. Allowed unused args must match /^_/u                 @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6720133Z 
+2025-08-26T13:06:01.6720534Z /home/runner/work/jtarcio-clinica/jtarcio-clinica/src/services/resource-management.service.ts
+2025-08-26T13:06:01.6721661Z ##[warning]    4:3   warning  'ConflictType' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6723372Z ##[warning]    5:3   warning  'ConflictSeverity' is defined but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6725008Z ##[warning]    8:27  warning  'AppointmentStatus' is defined but never used. Allowed unused vars must match /^_/u    @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6726588Z ##[warning]   10:3   warning  'BusinessRules' is defined but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6728841Z ##[warning]   12:3   warning  'TIME_CONSTRAINTS' is defined but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6730549Z ##[warning]   18:3   warning  'differenceInMinutes' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6732162Z ##[warning]   21:3   warning  'startOfDay' is defined but never used. Allowed unused vars must match /^_/u           @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6733726Z ##[warning]   22:3   warning  'endOfDay' is defined but never used. Allowed unused vars must match /^_/u             @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6735297Z ##[warning]  121:13  warning  'prisma' is assigned a value but never used. Allowed unused vars must match /^_/u      @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6736845Z ##[warning]  175:13  warning  'prisma' is assigned a value but never used. Allowed unused vars must match /^_/u      @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6738610Z ##[warning]  278:13  warning  'prisma' is assigned a value but never used. Allowed unused vars must match /^_/u      @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6740189Z ##[warning]  523:22  warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6741694Z ##[warning]  563:5   warning  'doctorId' is defined but never used. Allowed unused args must match /^_/u             @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6743221Z ##[warning]  708:5   warning  'roomId' is defined but never used. Allowed unused args must match /^_/u               @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6744725Z ##[warning]  709:5   warning  'slot' is defined but never used. Allowed unused args must match /^_/u                 @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6746277Z ##[warning]  717:5   warning  'equipmentId' is defined but never used. Allowed unused args must match /^_/u          @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6747946Z ##[warning]  718:5   warning  'slot' is defined but never used. Allowed unused args must match /^_/u                 @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6749490Z ##[warning]  724:34  warning  'roomId' is defined but never used. Allowed unused args must match /^_/u               @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6751029Z ##[warning]  730:5   warning  'roomId' is defined but never used. Allowed unused args must match /^_/u               @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6752759Z ##[warning]  731:5   warning  'slot' is defined but never used. Allowed unused args must match /^_/u                 @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6754288Z ##[warning]  810:5   warning  'bookingId' is defined but never used. Allowed unused args must match /^_/u            @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6755847Z ##[warning]  825:5   warning  'equipmentIds' is defined but never used. Allowed unused args must match /^_/u         @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6757925Z ##[warning]  840:5   warning  'booking' is defined but never used. Allowed unused args must match /^_/u              @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6759682Z ##[warning]  847:5   warning  'resourceId' is defined but never used. Allowed unused args must match /^_/u           @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6761378Z ##[warning]  848:5   warning  'resourceType' is defined but never used. Allowed unused args must match /^_/u         @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6762932Z ##[warning]  849:5   warning  'window' is defined but never used. Allowed unused args must match /^_/u               @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6763765Z 
+2025-08-26T13:06:01.6764186Z /home/runner/work/jtarcio-clinica/jtarcio-clinica/src/services/scheduling-intelligence.service.ts
+2025-08-26T13:06:01.6765355Z ##[warning]     5:3   warning  'OptimizationResult' is defined but never used. Allowed unused vars must match /^_/u      @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6766971Z ##[warning]     9:10  warning  'AppointmentType' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6768721Z ##[warning]    10:10  warning  'BusinessRules' is defined but never used. Allowed unused vars must match /^_/u           @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6770338Z ##[warning]    10:25  warning  'SCHEDULING_PREFERENCES' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6771922Z ##[warning]    17:3   warning  'startOfWeek' is defined but never used. Allowed unused vars must match /^_/u             @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6773456Z ##[warning]    18:3   warning  'endOfWeek' is defined but never used. Allowed unused vars must match /^_/u               @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6776488Z ##[warning]    19:3   warning  'eachDayOfInterval' is defined but never used. Allowed unused vars must match /^_/u       @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6779551Z ##[warning]    22:3   warning  'isWeekend' is defined but never used. Allowed unused vars must match /^_/u               @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6782492Z ##[warning]    89:15  warning  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6785450Z ##[warning]   134:13  warning  'prisma' is assigned a value but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6788634Z ##[warning]   300:13  warning  'prisma' is assigned a value but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6791353Z ##[warning]   455:14  warning  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6793878Z ##[warning]   590:48  warning  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6796369Z ##[warning]   595:32  warning  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6799309Z ##[warning]   607:32  warning  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6800842Z ##[warning]   619:13  warning  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6802295Z ##[warning]   622:13  warning  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6803738Z ##[warning]   632:13  warning  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6805162Z ##[warning]   703:40  warning  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6806732Z ##[warning]   772:22  warning  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6808676Z ##[warning]   773:5   warning  'doctorPattern' is defined but never used. Allowed unused args must match /^_/u           @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6810282Z ##[warning]   774:5   warning  'goals' is defined but never used. Allowed unused args must match /^_/u                   @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6811797Z ##[warning]   780:50  warning  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6813239Z ##[warning]   840:22  warning  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6814806Z ##[warning]   841:5   warning  'patientBehaviors' is defined but never used. Allowed unused args must match /^_/u        @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6816389Z ##[warning]   842:5   warning  'goals' is defined but never used. Allowed unused args must match /^_/u                   @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6818804Z ##[warning]   877:5   warning  'doctorId' is defined but never used. Allowed unused args must match /^_/u                @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6820962Z ##[warning]   878:5   warning  'currentSchedule' is defined but never used. Allowed unused args must match /^_/u         @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6822610Z ##[warning]   878:22  warning  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6824177Z ##[warning]   879:5   warning  'dateRange' is defined but never used. Allowed unused args must match /^_/u               @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6825777Z ##[warning]   880:5   warning  'goals' is defined but never used. Allowed unused args must match /^_/u                   @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6827550Z ##[warning]   888:5   warning  'currentSchedule' is defined but never used. Allowed unused args must match /^_/u         @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6829149Z ##[warning]   888:22  warning  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6830677Z ##[warning]   889:5   warning  'goals' is defined but never used. Allowed unused args must match /^_/u                   @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6832257Z ##[warning]   928:5   warning  'goals' is defined but never used. Allowed unused args must match /^_/u                   @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6833827Z ##[warning]   944:52  warning  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6835306Z ##[warning]   944:60  warning  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6837023Z ##[warning]   964:45  warning  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6838621Z ##[warning]   964:53  warning  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6840091Z ##[warning]   996:45  warning  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6841545Z ##[warning]   996:53  warning  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6843135Z ##[warning]  1011:45  warning  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6844644Z ##[warning]  1019:19  warning  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6846180Z ##[warning]  1039:5   warning  'doctorId' is defined but never used. Allowed unused args must match /^_/u                @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6847859Z ##[warning]  1040:5   warning  'timeframe' is defined but never used. Allowed unused args must match /^_/u               @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6849413Z ##[warning]  1047:5   warning  'doctorId' is defined but never used. Allowed unused args must match /^_/u                @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6850968Z ##[warning]  1048:5   warning  'timeframe' is defined but never used. Allowed unused args must match /^_/u               @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6852512Z ##[warning]  1055:5   warning  'doctorId' is defined but never used. Allowed unused args must match /^_/u                @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6854058Z ##[warning]  1056:5   warning  'timeframe' is defined but never used. Allowed unused args must match /^_/u               @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6855601Z ##[warning]  1063:5   warning  'doctorId' is defined but never used. Allowed unused args must match /^_/u                @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6857258Z ##[warning]  1064:5   warning  'timeframe' is defined but never used. Allowed unused args must match /^_/u               @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6858797Z ##[warning]  1104:44  warning  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6860244Z ##[warning]  1104:52  warning  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6861751Z ##[warning]  1126:5   warning  'conflict' is defined but never used. Allowed unused args must match /^_/u                @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6863356Z ##[warning]  1127:5   warning  'availableAlternatives' is defined but never used. Allowed unused args must match /^_/u   @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6864227Z 
+2025-08-26T13:06:01.6864554Z /home/runner/work/jtarcio-clinica/jtarcio-clinica/src/services/user.service.ts
+2025-08-26T13:06:01.6865370Z ##[warning]  257:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6866608Z ##[warning]  411:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6867460Z 
+2025-08-26T13:06:01.6867756Z /home/runner/work/jtarcio-clinica/jtarcio-clinica/src/types/financial.ts
+2025-08-26T13:06:01.6868683Z ##[warning]  245:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6869606Z 
+2025-08-26T13:06:01.6869897Z /home/runner/work/jtarcio-clinica/jtarcio-clinica/src/types/scheduling.ts
+2025-08-26T13:06:01.6870958Z ##[warning]    2:10  warning  'AppointmentStatus' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6872460Z ##[warning]  106:14  warning  Unexpected any. Specify a different type                                             @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6873242Z 
+2025-08-26T13:06:01.6873542Z /home/runner/work/jtarcio-clinica/jtarcio-clinica/src/utils/cpf-validation.ts
+2025-08-26T13:06:01.6874415Z ##[warning]  92:11  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6875628Z ##[warning]  94:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6876528Z 
+2025-08-26T13:06:01.6876869Z /home/runner/work/jtarcio-clinica/jtarcio-clinica/src/utils/data-sanitization.ts
+2025-08-26T13:06:01.6878036Z ##[warning]    6:33  warning  'formatCPF' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6879518Z ##[warning]  157:10  warning  Unexpected any. Specify a different type                                     @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6880925Z ##[warning]  159:4   warning  Unexpected any. Specify a different type                                     @typescript-eslint/no-explicit-any
+2025-08-26T13:06:01.6881705Z 
+2025-08-26T13:06:01.6881993Z /home/runner/work/jtarcio-clinica/jtarcio-clinica/src/utils/validators.ts
+2025-08-26T13:06:01.6883012Z ##[warning]  124:9  warning  'windowMs' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+2025-08-26T13:06:01.6883845Z 
+2025-08-26T13:06:01.6884228Z ✖ 402 problems (0 errors, 402 warnings)
+2025-08-26T13:06:01.6884418Z 
+2025-08-26T13:06:01.6884627Z Type checking disabled temporarily for workflow
+2025-08-26T13:06:01.6918114Z ##[group]Run cd frontend
+2025-08-26T13:06:01.6918398Z [36;1mcd frontend[0m
+2025-08-26T13:06:01.6918725Z [36;1mnpm run lint || echo "⚠️ Frontend lint warnings found - continuing"[0m
+2025-08-26T13:06:01.6919180Z [36;1mecho "Frontend type checking disabled temporarily for workflow"[0m
+2025-08-26T13:06:01.6958561Z shell: /usr/bin/bash -e {0}
+2025-08-26T13:06:01.6958809Z ##[endgroup]
+2025-08-26T13:06:01.8361469Z 
+2025-08-26T13:06:01.8362772Z > frontend@1.2.9 lint
+2025-08-26T13:06:01.8364185Z > next lint
+2025-08-26T13:06:01.8364406Z 
+2025-08-26T13:06:04.2142570Z context.getScope is not a function
+2025-08-26T13:06:04.2143852Z Occurred while linting /home/runner/work/jtarcio-clinica/jtarcio-clinica/frontend/src/app/admin/page.tsx:51
+2025-08-26T13:06:04.2145068Z Rule: "@typescript-eslint/no-unsafe-declaration-merging"
+2025-08-26T13:06:04.2375397Z npm error Lifecycle script `lint` failed with error:
+2025-08-26T13:06:04.2380671Z npm error code 1
+2025-08-26T13:06:04.2383574Z npm error path /home/runner/work/jtarcio-clinica/jtarcio-clinica/frontend
+2025-08-26T13:06:04.2384779Z npm error workspace frontend@1.2.9
+2025-08-26T13:06:04.2388526Z npm error location /home/runner/work/jtarcio-clinica/jtarcio-clinica/frontend
+2025-08-26T13:06:04.2389204Z npm error command failed
+2025-08-26T13:06:04.2390796Z npm error command sh -c next lint
+2025-08-26T13:06:04.2450172Z ⚠️ Frontend lint warnings found - continuing
+2025-08-26T13:06:04.2451755Z Frontend type checking disabled temporarily for workflow
+2025-08-26T13:06:04.2527821Z Post job cleanup.
+2025-08-26T13:06:04.4417545Z Cache hit occurred on the primary key node-cache-Linux-x64-npm-162972607ed50d86ec18ea0f06d9fa4e6ad58d20657df796894dd3e9007e9a6e, not saving cache.
+2025-08-26T13:06:04.4554746Z Post job cleanup.
+2025-08-26T13:06:04.5539070Z [command]/usr/bin/git version
+2025-08-26T13:06:04.5579207Z git version 2.51.0
+2025-08-26T13:06:04.5624714Z Temporarily overriding HOME='/home/runner/work/_temp/b3b7af98-363b-4631-86ef-64500ba3b87a' before making global git config changes
+2025-08-26T13:06:04.5628710Z Adding repository directory to the temporary git global config as a safe directory
+2025-08-26T13:06:04.5632737Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/jtarcio-clinica/jtarcio-clinica
+2025-08-26T13:06:04.5679015Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-08-26T13:06:04.5714960Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-08-26T13:06:04.5954569Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-08-26T13:06:04.5979639Z http.https://github.com/.extraheader
+2025-08-26T13:06:04.5994153Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2025-08-26T13:06:04.6029579Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-08-26T13:06:04.6388480Z Cleaning up orphan processes

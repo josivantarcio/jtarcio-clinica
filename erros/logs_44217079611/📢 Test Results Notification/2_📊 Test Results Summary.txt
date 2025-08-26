@@ -1,0 +1,30 @@
+﻿2025-08-26T13:06:36.6239163Z ##[group]Run echo "🧪 TEST EXECUTION COMPLETED"
+2025-08-26T13:06:36.6240602Z [36;1mecho "🧪 TEST EXECUTION COMPLETED"[0m
+2025-08-26T13:06:36.6241929Z [36;1mecho "==============================="[0m
+2025-08-26T13:06:36.6243249Z [36;1mecho "Security Tests: failure"[0m
+2025-08-26T13:06:36.6244363Z [36;1mecho "Accessibility Tests: failure"[0m
+2025-08-26T13:06:36.6245477Z [36;1mecho "Mobile Tests: failure"[0m
+2025-08-26T13:06:36.6246626Z [36;1mecho "Lint & Type Check: success"[0m
+2025-08-26T13:06:36.6247695Z [36;1mecho "Build: skipped"[0m
+2025-08-26T13:06:36.6248824Z [36;1mecho "Security Audit: failure"[0m
+2025-08-26T13:06:36.6249968Z [36;1mecho "==============================="[0m
+2025-08-26T13:06:36.6251003Z [36;1m[0m
+2025-08-26T13:06:36.6272933Z [36;1mif [ "failure" = "success" ] && [ "success" = "success" ] && [ "skipped" = "success" ] && [ "failure" = "success" ]; then[0m
+2025-08-26T13:06:36.6274824Z [36;1m  echo "🎉 ALL CHECKS PASSED - PRODUCTION READY!"[0m
+2025-08-26T13:06:36.6276244Z [36;1melse[0m
+2025-08-26T13:06:36.6277144Z [36;1m  echo "❌ Some checks failed - Review required"[0m
+2025-08-26T13:06:36.6278256Z [36;1m  exit 1[0m
+2025-08-26T13:06:36.6279105Z [36;1mfi[0m
+2025-08-26T13:06:36.9645386Z shell: /usr/bin/bash -e {0}
+2025-08-26T13:06:36.9646460Z ##[endgroup]
+2025-08-26T13:06:37.0028525Z 🧪 TEST EXECUTION COMPLETED
+2025-08-26T13:06:37.0029181Z ===============================
+2025-08-26T13:06:37.0029699Z Security Tests: failure
+2025-08-26T13:06:37.0030351Z Accessibility Tests: failure
+2025-08-26T13:06:37.0030856Z Mobile Tests: failure
+2025-08-26T13:06:37.0031363Z Lint & Type Check: success
+2025-08-26T13:06:37.0031926Z Build: skipped
+2025-08-26T13:06:37.0032779Z Security Audit: failure
+2025-08-26T13:06:37.0033257Z ===============================
+2025-08-26T13:06:37.0033944Z ❌ Some checks failed - Review required
+2025-08-26T13:06:37.0050837Z ##[error]Process completed with exit code 1.

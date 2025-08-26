@@ -1,0 +1,22 @@
+﻿2025-08-26T13:06:01.6918106Z ##[group]Run cd frontend
+2025-08-26T13:06:01.6918395Z [36;1mcd frontend[0m
+2025-08-26T13:06:01.6918722Z [36;1mnpm run lint || echo "⚠️ Frontend lint warnings found - continuing"[0m
+2025-08-26T13:06:01.6919177Z [36;1mecho "Frontend type checking disabled temporarily for workflow"[0m
+2025-08-26T13:06:01.6958553Z shell: /usr/bin/bash -e {0}
+2025-08-26T13:06:01.6958807Z ##[endgroup]
+2025-08-26T13:06:01.8361421Z 
+2025-08-26T13:06:01.8362760Z > frontend@1.2.9 lint
+2025-08-26T13:06:01.8364174Z > next lint
+2025-08-26T13:06:01.8364401Z 
+2025-08-26T13:06:04.2142526Z context.getScope is not a function
+2025-08-26T13:06:04.2143841Z Occurred while linting /home/runner/work/jtarcio-clinica/jtarcio-clinica/frontend/src/app/admin/page.tsx:51
+2025-08-26T13:06:04.2145057Z Rule: "@typescript-eslint/no-unsafe-declaration-merging"
+2025-08-26T13:06:04.2375373Z npm error Lifecycle script `lint` failed with error:
+2025-08-26T13:06:04.2380660Z npm error code 1
+2025-08-26T13:06:04.2383398Z npm error path /home/runner/work/jtarcio-clinica/jtarcio-clinica/frontend
+2025-08-26T13:06:04.2384773Z npm error workspace frontend@1.2.9
+2025-08-26T13:06:04.2388516Z npm error location /home/runner/work/jtarcio-clinica/jtarcio-clinica/frontend
+2025-08-26T13:06:04.2389200Z npm error command failed
+2025-08-26T13:06:04.2390790Z npm error command sh -c next lint
+2025-08-26T13:06:04.2450158Z ⚠️ Frontend lint warnings found - continuing
+2025-08-26T13:06:04.2451747Z Frontend type checking disabled temporarily for workflow

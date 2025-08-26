@@ -1,0 +1,236 @@
+﻿2025-08-26T13:05:06.1667059Z Current runner version: '2.328.0'
+2025-08-26T13:05:06.1699543Z ##[group]Runner Image Provisioner
+2025-08-26T13:05:06.1700717Z Hosted Compute Agent
+2025-08-26T13:05:06.1701500Z Version: 20250818.377
+2025-08-26T13:05:06.1702618Z Commit: 3c593e9f75fe0b87e893bca80d6e12ba089c61fc
+2025-08-26T13:05:06.1703663Z Build Date: 2025-08-18T14:52:18Z
+2025-08-26T13:05:06.1704559Z ##[endgroup]
+2025-08-26T13:05:06.1705429Z ##[group]Operating System
+2025-08-26T13:05:06.1706315Z Ubuntu
+2025-08-26T13:05:06.1707088Z 24.04.2
+2025-08-26T13:05:06.1708129Z LTS
+2025-08-26T13:05:06.1708943Z ##[endgroup]
+2025-08-26T13:05:06.1709667Z ##[group]Runner Image
+2025-08-26T13:05:06.1710658Z Image: ubuntu-24.04
+2025-08-26T13:05:06.1711420Z Version: 20250818.1.0
+2025-08-26T13:05:06.1713084Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20250818.1/images/ubuntu/Ubuntu2404-Readme.md
+2025-08-26T13:05:06.1715701Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20250818.1
+2025-08-26T13:05:06.1717419Z ##[endgroup]
+2025-08-26T13:05:06.1719439Z ##[group]GITHUB_TOKEN Permissions
+2025-08-26T13:05:06.1721928Z Contents: read
+2025-08-26T13:05:06.1722788Z Metadata: read
+2025-08-26T13:05:06.1723524Z Packages: read
+2025-08-26T13:05:06.1724340Z ##[endgroup]
+2025-08-26T13:05:06.1727644Z Secret source: Actions
+2025-08-26T13:05:06.1729117Z Prepare workflow directory
+2025-08-26T13:05:06.3495749Z Prepare all required actions
+2025-08-26T13:05:06.3539942Z Getting action download info
+2025-08-26T13:05:06.6218054Z Download action repository 'actions/checkout@v4' (SHA:08eba0b27e820071cde6df949e0beb9ba4906955)
+2025-08-26T13:05:07.0499164Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2025-08-26T13:05:07.2420422Z Complete job name: 🔒 Security Audit
+2025-08-26T13:05:07.3205065Z ##[group]Run actions/checkout@v4
+2025-08-26T13:05:07.3206421Z with:
+2025-08-26T13:05:07.3207279Z   repository: josivantarcio/jtarcio-clinica
+2025-08-26T13:05:07.3209035Z   token: ***
+2025-08-26T13:05:07.3209864Z   ssh-strict: true
+2025-08-26T13:05:07.3210669Z   ssh-user: git
+2025-08-26T13:05:07.3211510Z   persist-credentials: true
+2025-08-26T13:05:07.3212418Z   clean: true
+2025-08-26T13:05:07.3213272Z   sparse-checkout-cone-mode: true
+2025-08-26T13:05:07.3214371Z   fetch-depth: 1
+2025-08-26T13:05:07.3215232Z   fetch-tags: false
+2025-08-26T13:05:07.3216055Z   show-progress: true
+2025-08-26T13:05:07.3216895Z   lfs: false
+2025-08-26T13:05:07.3217656Z   submodules: false
+2025-08-26T13:05:07.3218688Z   set-safe-directory: true
+2025-08-26T13:05:07.3219915Z ##[endgroup]
+2025-08-26T13:05:07.4380474Z Syncing repository: josivantarcio/jtarcio-clinica
+2025-08-26T13:05:07.4383961Z ##[group]Getting Git version info
+2025-08-26T13:05:07.4385884Z Working directory is '/home/runner/work/jtarcio-clinica/jtarcio-clinica'
+2025-08-26T13:05:07.4389116Z [command]/usr/bin/git version
+2025-08-26T13:05:07.4411759Z git version 2.51.0
+2025-08-26T13:05:07.4442415Z ##[endgroup]
+2025-08-26T13:05:07.4470390Z Temporarily overriding HOME='/home/runner/work/_temp/a60fa848-5a92-4066-bef4-fd0f9f5c5b04' before making global git config changes
+2025-08-26T13:05:07.4475329Z Adding repository directory to the temporary git global config as a safe directory
+2025-08-26T13:05:07.4479725Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/jtarcio-clinica/jtarcio-clinica
+2025-08-26T13:05:07.4519339Z Deleting the contents of '/home/runner/work/jtarcio-clinica/jtarcio-clinica'
+2025-08-26T13:05:07.4523881Z ##[group]Initializing the repository
+2025-08-26T13:05:07.4528893Z [command]/usr/bin/git init /home/runner/work/jtarcio-clinica/jtarcio-clinica
+2025-08-26T13:05:07.4601046Z hint: Using 'master' as the name for the initial branch. This default branch name
+2025-08-26T13:05:07.4604437Z hint: is subject to change. To configure the initial branch name to use in all
+2025-08-26T13:05:07.4607617Z hint: of your new repositories, which will suppress this warning, call:
+2025-08-26T13:05:07.4610252Z hint:
+2025-08-26T13:05:07.4611843Z hint: 	git config --global init.defaultBranch <name>
+2025-08-26T13:05:07.4614572Z hint:
+2025-08-26T13:05:07.4616519Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2025-08-26T13:05:07.4620276Z hint: 'development'. The just-created branch can be renamed via this command:
+2025-08-26T13:05:07.4622748Z hint:
+2025-08-26T13:05:07.4624032Z hint: 	git branch -m <name>
+2025-08-26T13:05:07.4625518Z hint:
+2025-08-26T13:05:07.4627434Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2025-08-26T13:05:07.4631465Z Initialized empty Git repository in /home/runner/work/jtarcio-clinica/jtarcio-clinica/.git/
+2025-08-26T13:05:07.4637159Z [command]/usr/bin/git remote add origin https://github.com/josivantarcio/jtarcio-clinica
+2025-08-26T13:05:07.4662501Z ##[endgroup]
+2025-08-26T13:05:07.4664978Z ##[group]Disabling automatic garbage collection
+2025-08-26T13:05:07.4667290Z [command]/usr/bin/git config --local gc.auto 0
+2025-08-26T13:05:07.4703219Z ##[endgroup]
+2025-08-26T13:05:07.4705611Z ##[group]Setting up auth
+2025-08-26T13:05:07.4708612Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-08-26T13:05:07.4748229Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-08-26T13:05:07.5036096Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-08-26T13:05:07.5071596Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-08-26T13:05:07.5301604Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2025-08-26T13:05:07.5338347Z ##[endgroup]
+2025-08-26T13:05:07.5341963Z ##[group]Fetching the repository
+2025-08-26T13:05:07.5361006Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +187fe7217a2a5e8c4439c3ccf02a3ff508fe5a2c:refs/remotes/origin/main
+2025-08-26T13:05:08.0492398Z From https://github.com/josivantarcio/jtarcio-clinica
+2025-08-26T13:05:08.0495173Z  * [new ref]         187fe7217a2a5e8c4439c3ccf02a3ff508fe5a2c -> origin/main
+2025-08-26T13:05:08.0529828Z ##[endgroup]
+2025-08-26T13:05:08.0531719Z ##[group]Determining the checkout info
+2025-08-26T13:05:08.0532530Z ##[endgroup]
+2025-08-26T13:05:08.0537311Z [command]/usr/bin/git sparse-checkout disable
+2025-08-26T13:05:08.0576764Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2025-08-26T13:05:08.0610623Z ##[group]Checking out the ref
+2025-08-26T13:05:08.0612696Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2025-08-26T13:05:08.0993047Z Switched to a new branch 'main'
+2025-08-26T13:05:08.0996814Z branch 'main' set up to track 'origin/main'.
+2025-08-26T13:05:08.1008903Z ##[endgroup]
+2025-08-26T13:05:08.1045212Z [command]/usr/bin/git log -1 --format=%H
+2025-08-26T13:05:08.1069785Z 187fe7217a2a5e8c4439c3ccf02a3ff508fe5a2c
+2025-08-26T13:05:08.1353360Z ##[group]Run actions/setup-node@v4
+2025-08-26T13:05:08.1353683Z with:
+2025-08-26T13:05:08.1353905Z   node-version: 20
+2025-08-26T13:05:08.1354119Z   cache: npm
+2025-08-26T13:05:08.1354332Z   always-auth: false
+2025-08-26T13:05:08.1354555Z   check-latest: false
+2025-08-26T13:05:08.1354926Z   token: ***
+2025-08-26T13:05:08.1355137Z ##[endgroup]
+2025-08-26T13:05:08.3666937Z Found in cache @ /opt/hostedtoolcache/node/20.19.4/x64
+2025-08-26T13:05:08.3673116Z ##[group]Environment details
+2025-08-26T13:05:08.9179262Z node: v20.19.4
+2025-08-26T13:05:08.9189547Z npm: 10.8.2
+2025-08-26T13:05:08.9190483Z yarn: 1.22.22
+2025-08-26T13:05:08.9191618Z ##[endgroup]
+2025-08-26T13:05:08.9213060Z [command]/opt/hostedtoolcache/node/20.19.4/x64/bin/npm config get cache
+2025-08-26T13:05:09.1604611Z /home/runner/.npm
+2025-08-26T13:05:09.3261557Z Cache hit for: node-cache-Linux-x64-npm-162972607ed50d86ec18ea0f06d9fa4e6ad58d20657df796894dd3e9007e9a6e
+2025-08-26T13:05:09.3916461Z Received 14416 of 14416 (100.0%), 0.9 MBs/sec
+2025-08-26T13:05:09.3917533Z Cache Size: ~0 MB (14416 B)
+2025-08-26T13:05:09.3945156Z [command]/usr/bin/tar -xf /home/runner/work/_temp/8d762fab-26ea-483b-8c9e-7cc2a65bc632/cache.tzst -P -C /home/runner/work/jtarcio-clinica/jtarcio-clinica --use-compress-program unzstd
+2025-08-26T13:05:09.4016951Z Cache restored successfully
+2025-08-26T13:05:09.4024529Z Cache restored from key: node-cache-Linux-x64-npm-162972607ed50d86ec18ea0f06d9fa4e6ad58d20657df796894dd3e9007e9a6e
+2025-08-26T13:05:09.4151904Z ##[group]Run npm audit --audit-level moderate
+2025-08-26T13:05:09.4152317Z [36;1mnpm audit --audit-level moderate[0m
+2025-08-26T13:05:09.4225453Z shell: /usr/bin/bash -e {0}
+2025-08-26T13:05:09.4225749Z ##[endgroup]
+2025-08-26T13:05:11.7911487Z npm warn audit 403 Forbidden - POST https://registry.npmjs.org/-/npm/v1/security/audits/quick
+2025-08-26T13:05:11.7912483Z <!DOCTYPE html>
+2025-08-26T13:05:11.7913197Z <!--[if lt IE 7]> <html class="no-js ie6 oldie" lang="en-US"> <![endif]-->
+2025-08-26T13:05:11.7914070Z <!--[if IE 7]>    <html class="no-js ie7 oldie" lang="en-US"> <![endif]-->
+2025-08-26T13:05:11.7914941Z <!--[if IE 8]>    <html class="no-js ie8 oldie" lang="en-US"> <![endif]-->
+2025-08-26T13:05:11.7915799Z <!--[if gt IE 8]><!--> <html class="no-js" lang="en-US"> <!--<![endif]-->
+2025-08-26T13:05:11.7916425Z <head>
+2025-08-26T13:05:11.7916972Z <title>Attention Required! | Cloudflare</title>
+2025-08-26T13:05:11.7917580Z <meta charset="UTF-8" />
+2025-08-26T13:05:11.7922460Z <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+2025-08-26T13:05:11.7925773Z <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+2025-08-26T13:05:11.7926613Z <meta name="robots" content="noindex, nofollow" />
+2025-08-26T13:05:11.7927513Z <meta name="viewport" content="width=device-width,initial-scale=1" />
+2025-08-26T13:05:11.7928800Z <link rel="stylesheet" id="cf_styles-css" href="/cdn-cgi/styles/cf.errors.css" />
+2025-08-26T13:05:11.7930147Z <!--[if lt IE 9]><link rel="stylesheet" id='cf_styles-ie-css' href="/cdn-cgi/styles/cf.errors.ie.css" /><![endif]-->
+2025-08-26T13:05:11.7931120Z <style>body{margin:0;padding:0}</style>
+2025-08-26T13:05:11.7931492Z 
+2025-08-26T13:05:11.7931511Z 
+2025-08-26T13:05:11.7931774Z <!--[if gte IE 10]><!-->
+2025-08-26T13:05:11.7932234Z <script>
+2025-08-26T13:05:11.7932695Z   if (!navigator.cookieEnabled) {
+2025-08-26T13:05:11.7933452Z     window.addEventListener('DOMContentLoaded', function () {
+2025-08-26T13:05:11.7934321Z       var cookieEl = document.getElementById('cookie-alert');
+2025-08-26T13:05:11.7938579Z       cookieEl.style.display = 'block';
+2025-08-26T13:05:11.7939091Z     })
+2025-08-26T13:05:11.7939405Z   }
+2025-08-26T13:05:11.7939699Z </script>
+2025-08-26T13:05:11.7940016Z <!--<![endif]-->
+2025-08-26T13:05:11.7940237Z 
+2025-08-26T13:05:11.7940252Z 
+2025-08-26T13:05:11.7940435Z </head>
+2025-08-26T13:05:11.7940740Z <body>
+2025-08-26T13:05:11.7942008Z   <div id="cf-wrapper">
+2025-08-26T13:05:11.7943027Z     <div class="cf-alert cf-alert-error cf-cookie-error" id="cookie-alert" data-translate="enable_cookies">Please enable cookies.</div>
+2025-08-26T13:05:11.7944058Z     <div id="cf-error-details" class="cf-error-details-wrapper">
+2025-08-26T13:05:11.7944765Z       <div class="cf-wrapper cf-header cf-error-overview">
+2025-08-26T13:05:11.7945498Z         <h1 data-translate="block_headline">Sorry, you have been blocked</h1>
+2025-08-26T13:05:11.7946399Z npm error audit endpoint returned an error
+2025-08-26T13:05:11.7947334Z npm error A complete log of this run can be found in: /home/runner/.npm/_logs/2025-08-26T13_05_09_492Z-debug-0.log
+2025-08-26T13:05:11.7948768Z         <h2 class="cf-subheadline"><span data-translate="unable_to_access">You are unable to access</span> npmjs.org</h2>
+2025-08-26T13:05:11.7949503Z       </div><!-- /.header -->
+2025-08-26T13:05:11.7949747Z 
+2025-08-26T13:05:11.7949975Z       <div class="cf-section cf-highlight">
+2025-08-26T13:05:11.7950735Z         <div class="cf-wrapper">
+2025-08-26T13:05:11.7951325Z           <div class="cf-screenshot-container cf-screenshot-full">
+2025-08-26T13:05:11.7951832Z             
+2025-08-26T13:05:11.7952248Z               <span class="cf-no-screenshot error"></span>
+2025-08-26T13:05:11.7952702Z             
+2025-08-26T13:05:11.7952993Z           </div>
+2025-08-26T13:05:11.7953307Z         </div>
+2025-08-26T13:05:11.7953687Z       </div><!-- /.captcha-container -->
+2025-08-26T13:05:11.7953990Z 
+2025-08-26T13:05:11.7954208Z       <div class="cf-section cf-wrapper">
+2025-08-26T13:05:11.7954955Z         <div class="cf-columns two">
+2025-08-26T13:05:11.7955430Z           <div class="cf-column">
+2025-08-26T13:05:11.7956085Z             <h2 data-translate="blocked_why_headline">Why have I been blocked?</h2>
+2025-08-26T13:05:11.7956631Z 
+2025-08-26T13:05:11.7958723Z             <p data-translate="blocked_why_detail">This website is using a security service to protect itself from online attacks. The action you just performed triggered the security solution. There are several actions that could trigger this block including submitting a certain word or phrase, a SQL command or malformed data.</p>
+2025-08-26T13:05:11.7960589Z           </div>
+2025-08-26T13:05:11.7960793Z 
+2025-08-26T13:05:11.7960982Z           <div class="cf-column">
+2025-08-26T13:05:11.7961696Z             <h2 data-translate="blocked_resolve_headline">What can I do to resolve this?</h2>
+2025-08-26T13:05:11.7962202Z 
+2025-08-26T13:05:11.7963510Z             <p data-translate="blocked_resolve_detail">You can email the site owner to let them know you were blocked. Please include what you were doing when this page came up and the Cloudflare Ray ID found at the bottom of this page.</p>
+2025-08-26T13:05:11.7964819Z           </div>
+2025-08-26T13:05:11.7965129Z         </div>
+2025-08-26T13:05:11.7965496Z       </div><!-- /.section -->
+2025-08-26T13:05:11.7965755Z 
+2025-08-26T13:05:11.7966612Z       <div class="cf-error-footer cf-wrapper w-240 lg:w-full py-10 sm:py-4 sm:px-8 mx-auto text-center sm:text-left border-solid border-0 border-t border-gray-300">
+2025-08-26T13:05:11.7967587Z   <p class="text-13">
+2025-08-26T13:05:11.7968718Z     <span class="cf-footer-item sm:block sm:mb-1">Cloudflare Ray ID: <strong class="font-semibold">97538a10ac98c94e</strong></span>
+2025-08-26T13:05:11.7969700Z     <span class="cf-footer-separator sm:hidden">&bull;</span>
+2025-08-26T13:05:11.7970447Z     <span id="cf-footer-item-ip" class="cf-footer-item hidden sm:block sm:mb-1">
+2025-08-26T13:05:11.7971009Z       Your IP:
+2025-08-26T13:05:11.7971717Z       <button type="button" id="cf-footer-ip-reveal" class="cf-footer-ip-reveal-btn">Click to reveal</button>
+2025-08-26T13:05:11.7972610Z       <span class="hidden" id="cf-footer-ip">20.55.126.241</span>
+2025-08-26T13:05:11.7973327Z       <span class="cf-footer-separator sm:hidden">&bull;</span>
+2025-08-26T13:05:11.7973822Z     </span>
+2025-08-26T13:05:11.7975223Z     <span class="cf-footer-item sm:block sm:mb-1"><span>Performance &amp; security by</span> <a rel="noopener noreferrer" href="https://www.cloudflare.com/5xx-error-landing" id="brand_link" target="_blank">Cloudflare</a></span>
+2025-08-26T13:05:11.7976494Z     
+2025-08-26T13:05:11.7976766Z   </p>
+2025-08-26T13:05:11.7979757Z   <script>(function(){function d(){var b=a.getElementById("cf-footer-item-ip"),c=a.getElementById("cf-footer-ip-reveal");b&&"classList"in b&&(b.classList.remove("hidden"),c.addEventListener("click",function(){c.classList.add("hidden");a.getElementById("cf-footer-ip").classList.remove("hidden")}))}var a=document;document.addEventListener&&a.addEventListener("DOMContentLoaded",d)})();</script>
+2025-08-26T13:05:11.7981936Z </div><!-- /.error-footer -->
+2025-08-26T13:05:11.7982199Z 
+2025-08-26T13:05:11.7982215Z 
+2025-08-26T13:05:11.7982428Z     </div><!-- /#cf-error-details -->
+2025-08-26T13:05:11.7982841Z   </div><!-- /#cf-wrapper -->
+2025-08-26T13:05:11.7983093Z 
+2025-08-26T13:05:11.7983227Z   <script>
+2025-08-26T13:05:11.7983579Z   window._cf_translation = {};
+2025-08-26T13:05:11.7984186Z   
+2025-08-26T13:05:11.7984445Z   
+2025-08-26T13:05:11.7984709Z </script>
+2025-08-26T13:05:11.7984887Z 
+2025-08-26T13:05:11.7985018Z </body>
+2025-08-26T13:05:11.7985302Z </html>
+2025-08-26T13:05:11.7985456Z 
+2025-08-26T13:05:11.8042277Z ##[error]Process completed with exit code 1.
+2025-08-26T13:05:11.8210944Z Post job cleanup.
+2025-08-26T13:05:11.9183008Z [command]/usr/bin/git version
+2025-08-26T13:05:11.9223656Z git version 2.51.0
+2025-08-26T13:05:11.9269428Z Temporarily overriding HOME='/home/runner/work/_temp/38d1afef-2b17-4889-9de1-2ff6ed984c86' before making global git config changes
+2025-08-26T13:05:11.9271012Z Adding repository directory to the temporary git global config as a safe directory
+2025-08-26T13:05:11.9276296Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/jtarcio-clinica/jtarcio-clinica
+2025-08-26T13:05:11.9319334Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-08-26T13:05:11.9354647Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-08-26T13:05:11.9591804Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-08-26T13:05:11.9617058Z http.https://github.com/.extraheader
+2025-08-26T13:05:11.9629745Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2025-08-26T13:05:11.9662141Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-08-26T13:05:12.0002176Z Cleaning up orphan processes

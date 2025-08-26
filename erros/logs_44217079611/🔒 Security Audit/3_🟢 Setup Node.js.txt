@@ -1,0 +1,22 @@
+﻿2025-08-26T13:05:08.1353331Z ##[group]Run actions/setup-node@v4
+2025-08-26T13:05:08.1353679Z with:
+2025-08-26T13:05:08.1353901Z   node-version: 20
+2025-08-26T13:05:08.1354116Z   cache: npm
+2025-08-26T13:05:08.1354328Z   always-auth: false
+2025-08-26T13:05:08.1354552Z   check-latest: false
+2025-08-26T13:05:08.1354923Z   token: ***
+2025-08-26T13:05:08.1355133Z ##[endgroup]
+2025-08-26T13:05:08.3666879Z Found in cache @ /opt/hostedtoolcache/node/20.19.4/x64
+2025-08-26T13:05:08.3673087Z ##[group]Environment details
+2025-08-26T13:05:08.9179213Z node: v20.19.4
+2025-08-26T13:05:08.9189528Z npm: 10.8.2
+2025-08-26T13:05:08.9190467Z yarn: 1.22.22
+2025-08-26T13:05:08.9191608Z ##[endgroup]
+2025-08-26T13:05:08.9213030Z [command]/opt/hostedtoolcache/node/20.19.4/x64/bin/npm config get cache
+2025-08-26T13:05:09.1604570Z /home/runner/.npm
+2025-08-26T13:05:09.3261522Z Cache hit for: node-cache-Linux-x64-npm-162972607ed50d86ec18ea0f06d9fa4e6ad58d20657df796894dd3e9007e9a6e
+2025-08-26T13:05:09.3916362Z Received 14416 of 14416 (100.0%), 0.9 MBs/sec
+2025-08-26T13:05:09.3917506Z Cache Size: ~0 MB (14416 B)
+2025-08-26T13:05:09.3945136Z [command]/usr/bin/tar -xf /home/runner/work/_temp/8d762fab-26ea-483b-8c9e-7cc2a65bc632/cache.tzst -P -C /home/runner/work/jtarcio-clinica/jtarcio-clinica --use-compress-program unzstd
+2025-08-26T13:05:09.4016936Z Cache restored successfully
+2025-08-26T13:05:09.4024509Z Cache restored from key: node-cache-Linux-x64-npm-162972607ed50d86ec18ea0f06d9fa4e6ad58d20657df796894dd3e9007e9a6e

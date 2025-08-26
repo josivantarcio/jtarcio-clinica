@@ -1,0 +1,58 @@
+﻿2025-08-26T13:06:36.3687933Z Current runner version: '2.328.0'
+2025-08-26T13:06:36.3721350Z ##[group]Runner Image Provisioner
+2025-08-26T13:06:36.3722793Z Hosted Compute Agent
+2025-08-26T13:06:36.3723663Z Version: 20250825.382
+2025-08-26T13:06:36.3724739Z Commit: 7109f2abf901479dac39397456e363ac0cca0730
+2025-08-26T13:06:36.3725945Z Build Date: 2025-08-25T22:55:50Z
+2025-08-26T13:06:36.3726865Z ##[endgroup]
+2025-08-26T13:06:36.3727896Z ##[group]Operating System
+2025-08-26T13:06:36.3728762Z Ubuntu
+2025-08-26T13:06:36.3729509Z 24.04.2
+2025-08-26T13:06:36.3730415Z LTS
+2025-08-26T13:06:36.3731097Z ##[endgroup]
+2025-08-26T13:06:36.3731901Z ##[group]Runner Image
+2025-08-26T13:06:36.3733200Z Image: ubuntu-24.04
+2025-08-26T13:06:36.3734122Z Version: 20250818.1.0
+2025-08-26T13:06:36.3735892Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20250818.1/images/ubuntu/Ubuntu2404-Readme.md
+2025-08-26T13:06:36.3739045Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20250818.1
+2025-08-26T13:06:36.3740870Z ##[endgroup]
+2025-08-26T13:06:36.3743184Z ##[group]GITHUB_TOKEN Permissions
+2025-08-26T13:06:36.3745893Z Contents: read
+2025-08-26T13:06:36.3746642Z Metadata: read
+2025-08-26T13:06:36.3747587Z Packages: read
+2025-08-26T13:06:36.3748326Z ##[endgroup]
+2025-08-26T13:06:36.3751026Z Secret source: Actions
+2025-08-26T13:06:36.3752568Z Prepare workflow directory
+2025-08-26T13:06:36.4322501Z Prepare all required actions
+2025-08-26T13:06:36.4460326Z Complete job name: 📢 Test Results Notification
+2025-08-26T13:06:36.6239200Z ##[group]Run echo "🧪 TEST EXECUTION COMPLETED"
+2025-08-26T13:06:36.6240622Z [36;1mecho "🧪 TEST EXECUTION COMPLETED"[0m
+2025-08-26T13:06:36.6241946Z [36;1mecho "==============================="[0m
+2025-08-26T13:06:36.6243263Z [36;1mecho "Security Tests: failure"[0m
+2025-08-26T13:06:36.6244374Z [36;1mecho "Accessibility Tests: failure"[0m
+2025-08-26T13:06:36.6245487Z [36;1mecho "Mobile Tests: failure"[0m
+2025-08-26T13:06:36.6246635Z [36;1mecho "Lint & Type Check: success"[0m
+2025-08-26T13:06:36.6247709Z [36;1mecho "Build: skipped"[0m
+2025-08-26T13:06:36.6248839Z [36;1mecho "Security Audit: failure"[0m
+2025-08-26T13:06:36.6249980Z [36;1mecho "==============================="[0m
+2025-08-26T13:06:36.6251021Z [36;1m[0m
+2025-08-26T13:06:36.6272963Z [36;1mif [ "failure" = "success" ] && [ "success" = "success" ] && [ "skipped" = "success" ] && [ "failure" = "success" ]; then[0m
+2025-08-26T13:06:36.6274977Z [36;1m  echo "🎉 ALL CHECKS PASSED - PRODUCTION READY!"[0m
+2025-08-26T13:06:36.6276258Z [36;1melse[0m
+2025-08-26T13:06:36.6277153Z [36;1m  echo "❌ Some checks failed - Review required"[0m
+2025-08-26T13:06:36.6278263Z [36;1m  exit 1[0m
+2025-08-26T13:06:36.6279113Z [36;1mfi[0m
+2025-08-26T13:06:36.9645423Z shell: /usr/bin/bash -e {0}
+2025-08-26T13:06:36.9646470Z ##[endgroup]
+2025-08-26T13:06:37.0028565Z 🧪 TEST EXECUTION COMPLETED
+2025-08-26T13:06:37.0029186Z ===============================
+2025-08-26T13:06:37.0029703Z Security Tests: failure
+2025-08-26T13:06:37.0030356Z Accessibility Tests: failure
+2025-08-26T13:06:37.0030860Z Mobile Tests: failure
+2025-08-26T13:06:37.0031366Z Lint & Type Check: success
+2025-08-26T13:06:37.0031930Z Build: skipped
+2025-08-26T13:06:37.0032789Z Security Audit: failure
+2025-08-26T13:06:37.0033295Z ===============================
+2025-08-26T13:06:37.0033951Z ❌ Some checks failed - Review required
+2025-08-26T13:06:37.0050860Z ##[error]Process completed with exit code 1.
+2025-08-26T13:06:37.0154542Z Cleaning up orphan processes

@@ -1,0 +1,128 @@
+﻿2025-08-26T13:06:18.7498964Z ##[group]Run export NODE_ENV=test
+2025-08-26T13:06:18.7499469Z [36;1mexport NODE_ENV=test[0m
+2025-08-26T13:06:18.7500624Z [36;1mexport DATABASE_URL="***localhost:5433/eo_clinica_db"[0m
+2025-08-26T13:06:18.7502118Z [36;1mexport DATABASE_URL_TEST="***localhost:5433/eo_clinica_db"[0m
+2025-08-26T13:06:18.7503031Z [36;1mnpm test -- tests/security/basic-security.test.ts --testTimeout=30000 --maxWorkers=1[0m
+2025-08-26T13:06:18.7562428Z shell: /usr/bin/bash -e {0}
+2025-08-26T13:06:18.7562883Z ##[endgroup]
+2025-08-26T13:06:18.8982435Z 
+2025-08-26T13:06:18.8983056Z > eo-clinica-system@1.3.4 test
+2025-08-26T13:06:18.8983997Z > jest tests/security/basic-security.test.ts --testTimeout=30000 --maxWorkers=1
+2025-08-26T13:06:18.8984563Z 
+2025-08-26T13:06:25.0761134Z   console.log
+2025-08-26T13:06:25.0763103Z     ✅ Criptografia: bcrypt com salt 12 funcionando
+2025-08-26T13:06:25.0763538Z 
+2025-08-26T13:06:25.0763977Z       at Object.<anonymous> (tests/security/basic-security.test.ts:37:21)
+2025-08-26T13:06:25.0764501Z 
+2025-08-26T13:06:25.0822081Z   console.log
+2025-08-26T13:06:25.0822985Z     ✅ Criptografia: AES-256 implementado
+2025-08-26T13:06:25.0823345Z 
+2025-08-26T13:06:25.0823788Z       at Object.<anonymous> (tests/security/basic-security.test.ts:55:21)
+2025-08-26T13:06:25.0824292Z 
+2025-08-26T13:06:25.0842507Z   console.log
+2025-08-26T13:06:25.0844948Z     ✅ Criptografia: Tokens seguros gerados
+2025-08-26T13:06:25.0845827Z 
+2025-08-26T13:06:25.0846509Z       at Object.<anonymous> (tests/security/basic-security.test.ts:68:21)
+2025-08-26T13:06:25.0847300Z 
+2025-08-26T13:06:25.0863917Z   console.log
+2025-08-26T13:06:25.0865059Z     ✅ Validação: Formato de email validado
+2025-08-26T13:06:25.0865815Z 
+2025-08-26T13:06:25.0867408Z       at Object.<anonymous> (tests/security/basic-security.test.ts:92:21)
+2025-08-26T13:06:25.0868242Z 
+2025-08-26T13:06:25.0911799Z   console.log
+2025-08-26T13:06:25.0914606Z     ✅ Validação: CPF brasileiro validado
+2025-08-26T13:06:25.0914993Z 
+2025-08-26T13:06:25.0915413Z       at Object.<anonymous> (tests/security/basic-security.test.ts:135:21)
+2025-08-26T13:06:25.0915949Z 
+2025-08-26T13:06:25.0950437Z   console.log
+2025-08-26T13:06:25.0951864Z     ✅ Validação: XSS sanitização implementada
+2025-08-26T13:06:25.0952554Z 
+2025-08-26T13:06:25.0953201Z       at Object.<anonymous> (tests/security/basic-security.test.ts:161:21)
+2025-08-26T13:06:25.0953929Z 
+2025-08-26T13:06:25.1050732Z   console.log
+2025-08-26T13:06:25.1055915Z     ✅ Rate Limiting: Delay exponencial implementado
+2025-08-26T13:06:25.1060167Z 
+2025-08-26T13:06:25.1062211Z       at Object.<anonymous> (tests/security/basic-security.test.ts:176:21)
+2025-08-26T13:06:25.1063051Z 
+2025-08-26T13:06:25.1071752Z   console.log
+2025-08-26T13:06:25.1072740Z     ✅ Rate Limiting: Detecção força bruta funcionando
+2025-08-26T13:06:25.1076065Z 
+2025-08-26T13:06:25.1076547Z       at Object.<anonymous> (tests/security/basic-security.test.ts:194:21)
+2025-08-26T13:06:25.1077053Z 
+2025-08-26T13:06:25.1953668Z   console.log
+2025-08-26T13:06:25.1955559Z     ⚠️ API Security: Não foi possível testar headers (servidor pode estar offline)
+2025-08-26T13:06:25.1956417Z 
+2025-08-26T13:06:25.1956998Z       at Object.<anonymous> (tests/security/basic-security.test.ts:233:25)
+2025-08-26T13:06:25.1957764Z 
+2025-08-26T13:06:25.1997883Z   console.log
+2025-08-26T13:06:25.2002867Z     ⚠️ API Security: Teste CORS pode falhar se API offline
+2025-08-26T13:06:25.2006883Z 
+2025-08-26T13:06:25.2011326Z       at Object.<anonymous> (tests/security/basic-security.test.ts:252:25)
+2025-08-26T13:06:25.2014970Z 
+2025-08-26T13:06:25.2023090Z   console.log
+2025-08-26T13:06:25.2025685Z     ✅ Mobile: Validações de campo adequadas
+2025-08-26T13:06:25.2031086Z 
+2025-08-26T13:06:25.2031559Z       at Object.<anonymous> (tests/security/basic-security.test.ts:274:21)
+2025-08-26T13:06:25.2032100Z 
+2025-08-26T13:06:25.2042115Z   console.log
+2025-08-26T13:06:25.2043326Z     ✅ Mobile: Critérios senha forte implementados
+2025-08-26T13:06:25.2044775Z 
+2025-08-26T13:06:25.2045410Z       at Object.<anonymous> (tests/security/basic-security.test.ts:307:21)
+2025-08-26T13:06:25.2046843Z 
+2025-08-26T13:06:25.2061489Z   console.log
+2025-08-26T13:06:25.2062440Z     ✅ Utilitários: IDs únicos seguros gerados
+2025-08-26T13:06:25.2063034Z 
+2025-08-26T13:06:25.2063653Z       at Object.<anonymous> (tests/security/basic-security.test.ts:325:17)
+2025-08-26T13:06:25.2064383Z 
+2025-08-26T13:06:26.7091127Z   console.log
+2025-08-26T13:06:26.7092603Z     ✅ Utilitários: Timeout para operações implementado
+2025-08-26T13:06:26.7095432Z 
+2025-08-26T13:06:26.7097017Z       at Object.<anonymous> (tests/security/basic-security.test.ts:350:17)
+2025-08-26T13:06:26.7097783Z 
+2025-08-26T13:06:26.7378481Z FAIL tests/security/basic-security.test.ts (7.068 s)
+2025-08-26T13:06:26.7383664Z   🔒 Segurança Básica - Validações Fundamentais
+2025-08-26T13:06:26.7384835Z     🔐 Criptografia e Hashing
+2025-08-26T13:06:26.7386150Z       ✓ deve usar bcrypt para hash de senhas com salt adequado (723 ms)
+2025-08-26T13:06:26.7387326Z       ✓ deve implementar criptografia AES-256 para dados sensíveis (5 ms)
+2025-08-26T13:06:26.7388548Z       ✓ deve gerar tokens seguros para sessões (2 ms)
+2025-08-26T13:06:26.7393035Z     🛡️ Validação de Dados e Sanitização
+2025-08-26T13:06:26.7393784Z       ✓ deve validar formatos de email seguros (2 ms)
+2025-08-26T13:06:26.7394491Z       ✓ deve validar CPF brasileiro (4 ms)
+2025-08-26T13:06:26.7395134Z       ✓ deve sanitizar entrada XSS (5 ms)
+2025-08-26T13:06:26.7395750Z     🚦 Rate Limiting e Proteção
+2025-08-26T13:06:26.7396578Z       ✓ deve implementar delay exponencial para tentativas de login (10 ms)
+2025-08-26T13:06:26.7397569Z       ✓ deve detectar padrões de ataque por força bruta (2 ms)
+2025-08-26T13:06:26.7398197Z     🌐 Testes de API Security
+2025-08-26T13:06:26.7398901Z       ✕ deve retornar status 404 para rotas inexistentes (83 ms)
+2025-08-26T13:06:26.7399743Z       ✓ deve ter headers de segurança básicos (4 ms)
+2025-08-26T13:06:26.7400440Z       ✓ deve implementar CORS adequadamente (4 ms)
+2025-08-26T13:06:26.7401336Z     📱 Validações Mobile
+2025-08-26T13:06:26.7402038Z       ✓ deve validar tamanhos de campo adequados para mobile (2 ms)
+2025-08-26T13:06:26.7402811Z       ✓ deve ter critérios de senha forte (2 ms)
+2025-08-26T13:06:26.7403439Z   🔧 Utilitários de Segurança
+2025-08-26T13:06:26.7409817Z     ✓ deve gerar IDs únicos seguros (2 ms)
+2025-08-26T13:06:26.7411668Z     ✓ deve implementar timeout para operações críticas (1503 ms)
+2025-08-26T13:06:26.7412089Z 
+2025-08-26T13:06:26.7413051Z   ● 🔒 Segurança Básica - Validações Fundamentais › 🌐 Testes de API Security › deve retornar status 404 para rotas inexistentes
+2025-08-26T13:06:26.7413937Z 
+2025-08-26T13:06:26.7414239Z     expect(received).toBe(expected) // Object.is equality
+2025-08-26T13:06:26.7414620Z 
+2025-08-26T13:06:26.7414766Z     Expected: 404
+2025-08-26T13:06:26.7415591Z     Received: undefined
+2025-08-26T13:06:26.7415820Z 
+2025-08-26T13:06:26.7416153Z     [0m [90m 206 |[39m       }[33m;[39m
+2025-08-26T13:06:26.7416680Z      [90m 207 |[39m
+2025-08-26T13:06:26.7417714Z     [31m[1m>[22m[39m[90m 208 |[39m       [36mconst[39m delays [33m=[39m attempts[33m.[39mmap(calculateDelay)[33m;[39m
+2025-08-26T13:06:26.7418866Z      [90m     |[39m                                                               [31m[1m^[22m[39m
+2025-08-26T13:06:26.7419471Z      [90m 209 |[39m       
+2025-08-26T13:06:26.7420533Z      [90m 210 |[39m       expect(delays[[35m0[39m])[33m.[39mtoBe([35m2000[39m)[33m;[39m   [90m// 2s na primeira tentativa[39m
+2025-08-26T13:06:26.7422191Z      [90m 211 |[39m       expect(delays[[35m1[39m])[33m.[39mtoBe([35m4000[39m)[33m;[39m   [90m// 4s na segunda[39m[0m
+2025-08-26T13:06:26.7422776Z 
+2025-08-26T13:06:26.7423201Z       at Object.<anonymous> (tests/security/basic-security.test.ts:208:63)
+2025-08-26T13:06:26.7423720Z 
+2025-08-26T13:06:26.7434996Z Test Suites: 1 failed, 1 total
+2025-08-26T13:06:26.7439752Z Tests:       1 failed, 14 passed, 15 total
+2025-08-26T13:06:26.7440284Z Snapshots:   0 total
+2025-08-26T13:06:26.7443478Z Time:        7.297 s
+2025-08-26T13:06:26.7444077Z Ran all test suites matching /tests\/security\/basic-security.test.ts/i.
+2025-08-26T13:06:27.2679986Z ##[error]Process completed with exit code 1.

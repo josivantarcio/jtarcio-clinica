@@ -1,0 +1,629 @@
+﻿2025-08-26T13:05:06.7560015Z Current runner version: '2.328.0'
+2025-08-26T13:05:06.7595531Z ##[group]Runner Image Provisioner
+2025-08-26T13:05:06.7596919Z Hosted Compute Agent
+2025-08-26T13:05:06.7597709Z Version: 20250825.382
+2025-08-26T13:05:06.7598599Z Commit: 7109f2abf901479dac39397456e363ac0cca0730
+2025-08-26T13:05:06.7599907Z Build Date: 2025-08-25T22:55:50Z
+2025-08-26T13:05:06.7600766Z ##[endgroup]
+2025-08-26T13:05:06.7601814Z ##[group]Operating System
+2025-08-26T13:05:06.7602765Z Ubuntu
+2025-08-26T13:05:06.7603506Z 24.04.2
+2025-08-26T13:05:06.7604158Z LTS
+2025-08-26T13:05:06.7605000Z ##[endgroup]
+2025-08-26T13:05:06.7605725Z ##[group]Runner Image
+2025-08-26T13:05:06.7606581Z Image: ubuntu-24.04
+2025-08-26T13:05:06.7607455Z Version: 20250818.1.0
+2025-08-26T13:05:06.7609046Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20250818.1/images/ubuntu/Ubuntu2404-Readme.md
+2025-08-26T13:05:06.7611736Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20250818.1
+2025-08-26T13:05:06.7613474Z ##[endgroup]
+2025-08-26T13:05:06.7615469Z ##[group]GITHUB_TOKEN Permissions
+2025-08-26T13:05:06.7618225Z Contents: read
+2025-08-26T13:05:06.7618994Z Metadata: read
+2025-08-26T13:05:06.7620508Z Packages: read
+2025-08-26T13:05:06.7621643Z ##[endgroup]
+2025-08-26T13:05:06.7624881Z Secret source: Actions
+2025-08-26T13:05:06.7625929Z Prepare workflow directory
+2025-08-26T13:05:07.0480633Z Prepare all required actions
+2025-08-26T13:05:07.0544295Z Getting action download info
+2025-08-26T13:05:07.5345948Z Download action repository 'actions/checkout@v4' (SHA:08eba0b27e820071cde6df949e0beb9ba4906955)
+2025-08-26T13:05:08.0038179Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2025-08-26T13:05:08.1009678Z Download action repository 'actions/cache@v4' (SHA:0400d5f644dc74513175e3cd8d07132dd4860809)
+2025-08-26T13:05:08.2092634Z Download action repository 'codecov/codecov-action@v3' (SHA:ab904c41d6ece82784817410c45d8b8c02684457)
+2025-08-26T13:05:09.2949789Z Complete job name: 🧪 Tests - Segurança, Acessibilidade e Mobile
+2025-08-26T13:05:09.3541901Z ##[group]Checking docker version
+2025-08-26T13:05:09.3555943Z ##[command]/usr/bin/docker version --format '{{.Server.APIVersion}}'
+2025-08-26T13:05:09.3974334Z '1.48'
+2025-08-26T13:05:09.3998964Z Docker daemon API version: '1.48'
+2025-08-26T13:05:09.4000417Z ##[command]/usr/bin/docker version --format '{{.Client.APIVersion}}'
+2025-08-26T13:05:09.4199305Z '1.48'
+2025-08-26T13:05:09.4215570Z Docker client API version: '1.48'
+2025-08-26T13:05:09.4223358Z ##[endgroup]
+2025-08-26T13:05:09.4226687Z ##[group]Clean up resources from previous jobs
+2025-08-26T13:05:09.4233801Z ##[command]/usr/bin/docker ps --all --quiet --no-trunc --filter "label=58ef5d"
+2025-08-26T13:05:09.4405893Z ##[command]/usr/bin/docker network prune --force --filter "label=58ef5d"
+2025-08-26T13:05:09.4565532Z ##[endgroup]
+2025-08-26T13:05:09.4566466Z ##[group]Create local container network
+2025-08-26T13:05:09.4578834Z ##[command]/usr/bin/docker network create --label 58ef5d github_network_f4cc403802f34d9ea36cd6f0fa41d02f
+2025-08-26T13:05:09.5409471Z b82a9686a21bdf5142855131ca5e721b15566d51c6883d241ae7f29d702e62ad
+2025-08-26T13:05:09.5429627Z ##[endgroup]
+2025-08-26T13:05:09.5456745Z ##[group]Starting postgres service container
+2025-08-26T13:05:09.5477765Z ##[command]/usr/bin/docker pull postgres:15
+2025-08-26T13:05:10.5975792Z 15: Pulling from library/postgres
+2025-08-26T13:05:10.8443271Z 396b1da7636e: Pulling fs layer
+2025-08-26T13:05:10.8447445Z fca2566eba32: Pulling fs layer
+2025-08-26T13:05:10.8448467Z 631fe8c6d606: Pulling fs layer
+2025-08-26T13:05:10.8449264Z 77c7671c4414: Pulling fs layer
+2025-08-26T13:05:10.8450056Z 2d9e29180a27: Pulling fs layer
+2025-08-26T13:05:10.8451029Z c6bcc2c9a041: Pulling fs layer
+2025-08-26T13:05:10.8451888Z ac4b721eb66f: Pulling fs layer
+2025-08-26T13:05:10.8452626Z 606bd164980e: Pulling fs layer
+2025-08-26T13:05:10.8453517Z f5dfd246bc6e: Pulling fs layer
+2025-08-26T13:05:10.8454287Z ba7036bb0a60: Pulling fs layer
+2025-08-26T13:05:10.8455226Z 799f859abbbd: Pulling fs layer
+2025-08-26T13:05:10.8456152Z d903e777080c: Pulling fs layer
+2025-08-26T13:05:10.8457032Z 04adcb462801: Pulling fs layer
+2025-08-26T13:05:10.8457614Z 5c10925b29ff: Pulling fs layer
+2025-08-26T13:05:10.8458406Z 77c7671c4414: Waiting
+2025-08-26T13:05:10.8458820Z 2d9e29180a27: Waiting
+2025-08-26T13:05:10.8459510Z c6bcc2c9a041: Waiting
+2025-08-26T13:05:10.8460351Z ac4b721eb66f: Waiting
+2025-08-26T13:05:10.8461405Z 606bd164980e: Waiting
+2025-08-26T13:05:10.8462414Z f5dfd246bc6e: Waiting
+2025-08-26T13:05:10.8463123Z ba7036bb0a60: Waiting
+2025-08-26T13:05:10.8463951Z 04adcb462801: Waiting
+2025-08-26T13:05:10.8464783Z 799f859abbbd: Waiting
+2025-08-26T13:05:10.8465673Z 5c10925b29ff: Waiting
+2025-08-26T13:05:10.8466538Z d903e777080c: Waiting
+2025-08-26T13:05:11.1129078Z fca2566eba32: Verifying Checksum
+2025-08-26T13:05:11.1133698Z fca2566eba32: Download complete
+2025-08-26T13:05:11.1600093Z 631fe8c6d606: Verifying Checksum
+2025-08-26T13:05:11.1621975Z 631fe8c6d606: Download complete
+2025-08-26T13:05:11.3022138Z 396b1da7636e: Verifying Checksum
+2025-08-26T13:05:11.3026629Z 396b1da7636e: Download complete
+2025-08-26T13:05:11.4016355Z 77c7671c4414: Verifying Checksum
+2025-08-26T13:05:11.4018289Z 77c7671c4414: Download complete
+2025-08-26T13:05:11.4865490Z 2d9e29180a27: Verifying Checksum
+2025-08-26T13:05:11.4870615Z 2d9e29180a27: Download complete
+2025-08-26T13:05:11.5603497Z c6bcc2c9a041: Verifying Checksum
+2025-08-26T13:05:11.5609279Z c6bcc2c9a041: Download complete
+2025-08-26T13:05:11.6774970Z ac4b721eb66f: Verifying Checksum
+2025-08-26T13:05:11.6782843Z ac4b721eb66f: Download complete
+2025-08-26T13:05:11.7437490Z 606bd164980e: Verifying Checksum
+2025-08-26T13:05:11.7440085Z 606bd164980e: Download complete
+2025-08-26T13:05:11.9217114Z ba7036bb0a60: Verifying Checksum
+2025-08-26T13:05:11.9221523Z ba7036bb0a60: Download complete
+2025-08-26T13:05:12.0058765Z 799f859abbbd: Verifying Checksum
+2025-08-26T13:05:12.0064658Z 799f859abbbd: Download complete
+2025-08-26T13:05:12.1771819Z d903e777080c: Verifying Checksum
+2025-08-26T13:05:12.1774230Z d903e777080c: Download complete
+2025-08-26T13:05:12.2848436Z 04adcb462801: Verifying Checksum
+2025-08-26T13:05:12.2849030Z 04adcb462801: Download complete
+2025-08-26T13:05:12.4617439Z 5c10925b29ff: Verifying Checksum
+2025-08-26T13:05:12.4624450Z 5c10925b29ff: Download complete
+2025-08-26T13:05:12.4892569Z 396b1da7636e: Pull complete
+2025-08-26T13:05:13.9686880Z f5dfd246bc6e: Verifying Checksum
+2025-08-26T13:05:13.9687515Z f5dfd246bc6e: Download complete
+2025-08-26T13:05:14.2333012Z fca2566eba32: Pull complete
+2025-08-26T13:05:14.4455592Z 631fe8c6d606: Pull complete
+2025-08-26T13:05:14.4991256Z 77c7671c4414: Pull complete
+2025-08-26T13:05:14.8470578Z 2d9e29180a27: Pull complete
+2025-08-26T13:05:14.9422022Z c6bcc2c9a041: Pull complete
+2025-08-26T13:05:14.9541007Z ac4b721eb66f: Pull complete
+2025-08-26T13:05:14.9703386Z 606bd164980e: Pull complete
+2025-08-26T13:05:19.1349603Z f5dfd246bc6e: Pull complete
+2025-08-26T13:05:19.1548255Z ba7036bb0a60: Pull complete
+2025-08-26T13:05:19.1708238Z 799f859abbbd: Pull complete
+2025-08-26T13:05:19.1904989Z d903e777080c: Pull complete
+2025-08-26T13:05:19.2051909Z 04adcb462801: Pull complete
+2025-08-26T13:05:19.2166880Z 5c10925b29ff: Pull complete
+2025-08-26T13:05:19.2221706Z Digest: sha256:bc51cf4f1fe02cce7ed2370b20128a9b00b4eb804573a77d2a0d877aaa9c82b1
+2025-08-26T13:05:19.2235416Z Status: Downloaded newer image for postgres:15
+2025-08-26T13:05:19.2246785Z docker.io/library/postgres:15
+2025-08-26T13:05:19.2313771Z ##[command]/usr/bin/docker create --name ef29288c3412469abefd62d42b56e818_postgres15_91aa82 --label 58ef5d --network github_network_f4cc403802f34d9ea36cd6f0fa41d02f --network-alias postgres -p 5433:5432 --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5 -e "POSTGRES_PASSWORD=clinic_password" -e "POSTGRES_USER=clinic_user" -e "POSTGRES_DB=eo_clinica_db" -e GITHUB_ACTIONS=true -e CI=true postgres:15
+2025-08-26T13:05:19.2621584Z 07d4fa13f9b4663c49391a3c0166cfb97fcc7ad67a09f21549244f339cbf5e4c
+2025-08-26T13:05:19.2648429Z ##[command]/usr/bin/docker start 07d4fa13f9b4663c49391a3c0166cfb97fcc7ad67a09f21549244f339cbf5e4c
+2025-08-26T13:05:19.4929221Z 07d4fa13f9b4663c49391a3c0166cfb97fcc7ad67a09f21549244f339cbf5e4c
+2025-08-26T13:05:19.4960470Z ##[command]/usr/bin/docker ps --all --filter id=07d4fa13f9b4663c49391a3c0166cfb97fcc7ad67a09f21549244f339cbf5e4c --filter status=running --no-trunc --format "{{.ID}} {{.Status}}"
+2025-08-26T13:05:19.5161595Z 07d4fa13f9b4663c49391a3c0166cfb97fcc7ad67a09f21549244f339cbf5e4c Up Less than a second (health: starting)
+2025-08-26T13:05:19.5202536Z ##[command]/usr/bin/docker port 07d4fa13f9b4663c49391a3c0166cfb97fcc7ad67a09f21549244f339cbf5e4c
+2025-08-26T13:05:19.5403240Z 5432/tcp -> 0.0.0.0:5433
+2025-08-26T13:05:19.5412408Z 5432/tcp -> [::]:5433
+2025-08-26T13:05:19.5464288Z ##[endgroup]
+2025-08-26T13:05:19.5466011Z ##[group]Starting redis service container
+2025-08-26T13:05:19.5467471Z ##[command]/usr/bin/docker pull redis:7
+2025-08-26T13:05:20.5551794Z 7: Pulling from library/redis
+2025-08-26T13:05:20.8328753Z b1badc6e5066: Pulling fs layer
+2025-08-26T13:05:20.8329287Z 746f3da5d8fb: Pulling fs layer
+2025-08-26T13:05:20.8329666Z 1d58eaac926a: Pulling fs layer
+2025-08-26T13:05:20.8330010Z 5c06f884d8fa: Pulling fs layer
+2025-08-26T13:05:20.8330364Z 5ce544915f10: Pulling fs layer
+2025-08-26T13:05:20.8330739Z b547341e3d62: Pulling fs layer
+2025-08-26T13:05:20.8331298Z 4f4fb700ef54: Pulling fs layer
+2025-08-26T13:05:20.8331646Z b5cf1c58df65: Pulling fs layer
+2025-08-26T13:05:20.8331966Z b547341e3d62: Waiting
+2025-08-26T13:05:20.8332263Z 4f4fb700ef54: Waiting
+2025-08-26T13:05:20.8332549Z b5cf1c58df65: Waiting
+2025-08-26T13:05:20.8332836Z 5c06f884d8fa: Waiting
+2025-08-26T13:05:20.8333121Z 5ce544915f10: Waiting
+2025-08-26T13:05:21.1018881Z 746f3da5d8fb: Verifying Checksum
+2025-08-26T13:05:21.1021717Z 746f3da5d8fb: Download complete
+2025-08-26T13:05:21.1032502Z 1d58eaac926a: Verifying Checksum
+2025-08-26T13:05:21.1033645Z 1d58eaac926a: Download complete
+2025-08-26T13:05:21.3759448Z 5c06f884d8fa: Verifying Checksum
+2025-08-26T13:05:21.3790043Z 5c06f884d8fa: Download complete
+2025-08-26T13:05:21.5224207Z b1badc6e5066: Verifying Checksum
+2025-08-26T13:05:21.5225831Z b1badc6e5066: Download complete
+2025-08-26T13:05:21.5264527Z 5ce544915f10: Verifying Checksum
+2025-08-26T13:05:21.5274248Z 5ce544915f10: Download complete
+2025-08-26T13:05:21.6338773Z b547341e3d62: Verifying Checksum
+2025-08-26T13:05:21.6339702Z b547341e3d62: Download complete
+2025-08-26T13:05:21.7787450Z 4f4fb700ef54: Verifying Checksum
+2025-08-26T13:05:21.7790775Z 4f4fb700ef54: Download complete
+2025-08-26T13:05:21.8169014Z b5cf1c58df65: Verifying Checksum
+2025-08-26T13:05:21.8169803Z b5cf1c58df65: Download complete
+2025-08-26T13:05:22.7365924Z b1badc6e5066: Pull complete
+2025-08-26T13:05:22.9890770Z 746f3da5d8fb: Pull complete
+2025-08-26T13:05:23.0080723Z 1d58eaac926a: Pull complete
+2025-08-26T13:05:23.0692724Z 5c06f884d8fa: Pull complete
+2025-08-26T13:05:23.3272313Z 5ce544915f10: Pull complete
+2025-08-26T13:05:23.3379262Z b547341e3d62: Pull complete
+2025-08-26T13:05:23.3486582Z 4f4fb700ef54: Pull complete
+2025-08-26T13:05:23.3599480Z b5cf1c58df65: Pull complete
+2025-08-26T13:05:23.3646436Z Digest: sha256:4421962706d7a901cbd435282515704040203d67c653160e3a46a27b79c40e19
+2025-08-26T13:05:23.3657079Z Status: Downloaded newer image for redis:7
+2025-08-26T13:05:23.3665606Z docker.io/library/redis:7
+2025-08-26T13:05:23.3684179Z ##[command]/usr/bin/docker create --name e858138fb795498784cb21d0dfe48da5_redis7_7131b3 --label 58ef5d --network github_network_f4cc403802f34d9ea36cd6f0fa41d02f --network-alias redis -p 6380:6379 --health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 5 -e GITHUB_ACTIONS=true -e CI=true redis:7
+2025-08-26T13:05:23.3928915Z 65a02b2cd948973d45349ccecfab195f0c3e1e38b4667968bea8b2e6141eef44
+2025-08-26T13:05:23.3943551Z ##[command]/usr/bin/docker start 65a02b2cd948973d45349ccecfab195f0c3e1e38b4667968bea8b2e6141eef44
+2025-08-26T13:05:23.5652118Z 65a02b2cd948973d45349ccecfab195f0c3e1e38b4667968bea8b2e6141eef44
+2025-08-26T13:05:23.5672330Z ##[command]/usr/bin/docker ps --all --filter id=65a02b2cd948973d45349ccecfab195f0c3e1e38b4667968bea8b2e6141eef44 --filter status=running --no-trunc --format "{{.ID}} {{.Status}}"
+2025-08-26T13:05:23.5879534Z 65a02b2cd948973d45349ccecfab195f0c3e1e38b4667968bea8b2e6141eef44 Up Less than a second (health: starting)
+2025-08-26T13:05:23.5894958Z ##[command]/usr/bin/docker port 65a02b2cd948973d45349ccecfab195f0c3e1e38b4667968bea8b2e6141eef44
+2025-08-26T13:05:23.6031499Z 6379/tcp -> 0.0.0.0:6380
+2025-08-26T13:05:23.6032969Z 6379/tcp -> [::]:6380
+2025-08-26T13:05:23.6045585Z ##[endgroup]
+2025-08-26T13:05:23.6057503Z ##[group]Waiting for all services to be ready
+2025-08-26T13:05:23.6072689Z ##[command]/usr/bin/docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" 07d4fa13f9b4663c49391a3c0166cfb97fcc7ad67a09f21549244f339cbf5e4c
+2025-08-26T13:05:23.6211796Z starting
+2025-08-26T13:05:23.6235205Z postgres service is starting, waiting 2 seconds before checking again.
+2025-08-26T13:05:25.6229737Z ##[command]/usr/bin/docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" 07d4fa13f9b4663c49391a3c0166cfb97fcc7ad67a09f21549244f339cbf5e4c
+2025-08-26T13:05:25.6364967Z starting
+2025-08-26T13:05:25.6381013Z postgres service is starting, waiting 3 seconds before checking again.
+2025-08-26T13:05:29.3287108Z ##[command]/usr/bin/docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" 07d4fa13f9b4663c49391a3c0166cfb97fcc7ad67a09f21549244f339cbf5e4c
+2025-08-26T13:05:29.3501050Z starting
+2025-08-26T13:05:29.3511338Z postgres service is starting, waiting 7 seconds before checking again.
+2025-08-26T13:05:36.7372091Z ##[command]/usr/bin/docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" 07d4fa13f9b4663c49391a3c0166cfb97fcc7ad67a09f21549244f339cbf5e4c
+2025-08-26T13:05:36.7531116Z healthy
+2025-08-26T13:05:36.7541544Z postgres service is healthy.
+2025-08-26T13:05:36.7543151Z ##[command]/usr/bin/docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" 65a02b2cd948973d45349ccecfab195f0c3e1e38b4667968bea8b2e6141eef44
+2025-08-26T13:05:36.7675493Z healthy
+2025-08-26T13:05:36.7690538Z redis service is healthy.
+2025-08-26T13:05:36.7691463Z ##[endgroup]
+2025-08-26T13:05:36.7958432Z ##[group]Run actions/checkout@v4
+2025-08-26T13:05:36.7958991Z with:
+2025-08-26T13:05:36.7959222Z   repository: josivantarcio/jtarcio-clinica
+2025-08-26T13:05:36.7959757Z   token: ***
+2025-08-26T13:05:36.7959936Z   ssh-strict: true
+2025-08-26T13:05:36.7960126Z   ssh-user: git
+2025-08-26T13:05:36.7960311Z   persist-credentials: true
+2025-08-26T13:05:36.7960528Z   clean: true
+2025-08-26T13:05:36.7960716Z   sparse-checkout-cone-mode: true
+2025-08-26T13:05:36.7961333Z   fetch-depth: 1
+2025-08-26T13:05:36.7961537Z   fetch-tags: false
+2025-08-26T13:05:36.7961733Z   show-progress: true
+2025-08-26T13:05:36.7961920Z   lfs: false
+2025-08-26T13:05:36.7962109Z   submodules: false
+2025-08-26T13:05:36.7962297Z   set-safe-directory: true
+2025-08-26T13:05:36.7962808Z ##[endgroup]
+2025-08-26T13:05:36.9172327Z Syncing repository: josivantarcio/jtarcio-clinica
+2025-08-26T13:05:36.9174976Z ##[group]Getting Git version info
+2025-08-26T13:05:36.9175972Z Working directory is '/home/runner/work/jtarcio-clinica/jtarcio-clinica'
+2025-08-26T13:05:36.9179328Z [command]/usr/bin/git version
+2025-08-26T13:05:36.9244448Z git version 2.51.0
+2025-08-26T13:05:36.9273340Z ##[endgroup]
+2025-08-26T13:05:36.9306877Z Temporarily overriding HOME='/home/runner/work/_temp/5bb8d324-5e72-4ba9-9fb8-f97c57ff9e2a' before making global git config changes
+2025-08-26T13:05:36.9309447Z Adding repository directory to the temporary git global config as a safe directory
+2025-08-26T13:05:36.9314051Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/jtarcio-clinica/jtarcio-clinica
+2025-08-26T13:05:36.9358055Z Deleting the contents of '/home/runner/work/jtarcio-clinica/jtarcio-clinica'
+2025-08-26T13:05:36.9362952Z ##[group]Initializing the repository
+2025-08-26T13:05:36.9368247Z [command]/usr/bin/git init /home/runner/work/jtarcio-clinica/jtarcio-clinica
+2025-08-26T13:05:36.9432603Z hint: Using 'master' as the name for the initial branch. This default branch name
+2025-08-26T13:05:36.9435046Z hint: is subject to change. To configure the initial branch name to use in all
+2025-08-26T13:05:36.9435884Z hint: of your new repositories, which will suppress this warning, call:
+2025-08-26T13:05:36.9436563Z hint:
+2025-08-26T13:05:36.9437034Z hint: 	git config --global init.defaultBranch <name>
+2025-08-26T13:05:36.9437580Z hint:
+2025-08-26T13:05:36.9438071Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2025-08-26T13:05:36.9438904Z hint: 'development'. The just-created branch can be renamed via this command:
+2025-08-26T13:05:36.9439464Z hint:
+2025-08-26T13:05:36.9439802Z hint: 	git branch -m <name>
+2025-08-26T13:05:36.9440424Z hint:
+2025-08-26T13:05:36.9441219Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2025-08-26T13:05:36.9443569Z Initialized empty Git repository in /home/runner/work/jtarcio-clinica/jtarcio-clinica/.git/
+2025-08-26T13:05:36.9454337Z [command]/usr/bin/git remote add origin https://github.com/josivantarcio/jtarcio-clinica
+2025-08-26T13:05:36.9498113Z ##[endgroup]
+2025-08-26T13:05:36.9499605Z ##[group]Disabling automatic garbage collection
+2025-08-26T13:05:36.9503382Z [command]/usr/bin/git config --local gc.auto 0
+2025-08-26T13:05:36.9539627Z ##[endgroup]
+2025-08-26T13:05:36.9541866Z ##[group]Setting up auth
+2025-08-26T13:05:36.9548019Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-08-26T13:05:36.9585604Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-08-26T13:05:36.9963911Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-08-26T13:05:36.9999904Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-08-26T13:05:37.0248814Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2025-08-26T13:05:37.0291879Z ##[endgroup]
+2025-08-26T13:05:37.0294242Z ##[group]Fetching the repository
+2025-08-26T13:05:37.0313048Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +187fe7217a2a5e8c4439c3ccf02a3ff508fe5a2c:refs/remotes/origin/main
+2025-08-26T13:05:38.0839539Z From https://github.com/josivantarcio/jtarcio-clinica
+2025-08-26T13:05:38.0840652Z  * [new ref]         187fe7217a2a5e8c4439c3ccf02a3ff508fe5a2c -> origin/main
+2025-08-26T13:05:38.0873879Z ##[endgroup]
+2025-08-26T13:05:38.0874479Z ##[group]Determining the checkout info
+2025-08-26T13:05:38.0875752Z ##[endgroup]
+2025-08-26T13:05:38.0882630Z [command]/usr/bin/git sparse-checkout disable
+2025-08-26T13:05:38.0929021Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2025-08-26T13:05:38.0963254Z ##[group]Checking out the ref
+2025-08-26T13:05:38.0969138Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2025-08-26T13:05:38.1357697Z Switched to a new branch 'main'
+2025-08-26T13:05:38.1361963Z branch 'main' set up to track 'origin/main'.
+2025-08-26T13:05:38.1369763Z ##[endgroup]
+2025-08-26T13:05:38.1415409Z [command]/usr/bin/git log -1 --format=%H
+2025-08-26T13:05:38.1441762Z 187fe7217a2a5e8c4439c3ccf02a3ff508fe5a2c
+2025-08-26T13:05:38.1661337Z ##[group]Run actions/setup-node@v4
+2025-08-26T13:05:38.1661604Z with:
+2025-08-26T13:05:38.1661776Z   node-version: 20
+2025-08-26T13:05:38.1661971Z   cache: npm
+2025-08-26T13:05:38.1662139Z   always-auth: false
+2025-08-26T13:05:38.1662319Z   check-latest: false
+2025-08-26T13:05:38.1662621Z   token: ***
+2025-08-26T13:05:38.1662961Z ##[endgroup]
+2025-08-26T13:05:38.3575825Z Found in cache @ /opt/hostedtoolcache/node/20.19.4/x64
+2025-08-26T13:05:38.3586459Z ##[group]Environment details
+2025-08-26T13:05:38.7995201Z node: v20.19.4
+2025-08-26T13:05:38.7997205Z npm: 10.8.2
+2025-08-26T13:05:38.7998107Z yarn: 1.22.22
+2025-08-26T13:05:38.7999097Z ##[endgroup]
+2025-08-26T13:05:38.8026730Z [command]/opt/hostedtoolcache/node/20.19.4/x64/bin/npm config get cache
+2025-08-26T13:05:38.9554862Z /home/runner/.npm
+2025-08-26T13:05:39.2502089Z Cache hit for: node-cache-Linux-x64-npm-162972607ed50d86ec18ea0f06d9fa4e6ad58d20657df796894dd3e9007e9a6e
+2025-08-26T13:05:39.6651513Z Received 14416 of 14416 (100.0%), 0.2 MBs/sec
+2025-08-26T13:05:39.6654036Z Cache Size: ~0 MB (14416 B)
+2025-08-26T13:05:39.6681718Z [command]/usr/bin/tar -xf /home/runner/work/_temp/d48c2adb-fe08-42d3-8251-d5f096a7867a/cache.tzst -P -C /home/runner/work/jtarcio-clinica/jtarcio-clinica --use-compress-program unzstd
+2025-08-26T13:05:39.6745146Z Cache restored successfully
+2025-08-26T13:05:39.6755002Z Cache restored from key: node-cache-Linux-x64-npm-162972607ed50d86ec18ea0f06d9fa4e6ad58d20657df796894dd3e9007e9a6e
+2025-08-26T13:05:39.8159839Z ##[group]Run actions/cache@v4
+2025-08-26T13:05:39.8160109Z with:
+2025-08-26T13:05:39.8160332Z   path: ~/.npm
+node_modules
+frontend/node_modules
+
+2025-08-26T13:05:39.8160783Z   key: Linux-node-20-162972607ed50d86ec18ea0f06d9fa4e6ad58d20657df796894dd3e9007e9a6e
+2025-08-26T13:05:39.8161588Z   restore-keys: Linux-node-20-
+Linux-node-
+
+2025-08-26T13:05:39.8161873Z   enableCrossOsArchive: false
+2025-08-26T13:05:39.8162112Z   fail-on-cache-miss: false
+2025-08-26T13:05:39.8162332Z   lookup-only: false
+2025-08-26T13:05:39.8162528Z   save-always: false
+2025-08-26T13:05:39.8162716Z ##[endgroup]
+2025-08-26T13:05:40.2635038Z Cache not found for input keys: Linux-node-20-162972607ed50d86ec18ea0f06d9fa4e6ad58d20657df796894dd3e9007e9a6e, Linux-node-20-, Linux-node-
+2025-08-26T13:05:40.2719421Z ##[group]Run # Configure npm for better reliability
+2025-08-26T13:05:40.2719890Z [36;1m# Configure npm for better reliability[0m
+2025-08-26T13:05:40.2720300Z [36;1mnpm config set registry https://registry.npmjs.org/[0m
+2025-08-26T13:05:40.2720668Z [36;1mnpm config set fetch-retries 5[0m
+2025-08-26T13:05:40.2722031Z [36;1mnpm config set fetch-retry-factor 2[0m
+2025-08-26T13:05:40.2722376Z [36;1mnpm config set fetch-retry-mintimeout 10000[0m
+2025-08-26T13:05:40.2722729Z [36;1mnpm config set fetch-retry-maxtimeout 60000[0m
+2025-08-26T13:05:40.2723027Z [36;1m[0m
+2025-08-26T13:05:40.2723245Z [36;1m# Skip husky in CI and use cache with retry[0m
+2025-08-26T13:05:40.2723542Z [36;1mif [ ! -d "node_modules" ]; then[0m
+2025-08-26T13:05:40.2724009Z [36;1m  npm ci --ignore-scripts --prefer-offline --no-audit || npm ci --ignore-scripts --no-audit[0m
+2025-08-26T13:05:40.2724450Z [36;1mfi[0m
+2025-08-26T13:05:40.2724665Z [36;1mif [ ! -d "frontend/node_modules" ]; then[0m
+2025-08-26T13:05:40.2725196Z [36;1m  cd frontend && (npm ci --ignore-scripts --prefer-offline --no-audit || npm ci --ignore-scripts --no-audit)[0m
+2025-08-26T13:05:40.2725660Z [36;1mfi[0m
+2025-08-26T13:05:40.2772395Z shell: /usr/bin/bash -e {0}
+2025-08-26T13:05:40.2772669Z ##[endgroup]
+2025-08-26T13:05:47.7194967Z npm warn deprecated supertest@6.3.4: Please upgrade to supertest v7.1.3+, see release notes at https://github.com/forwardemail/supertest/releases/tag/v7.1.3 - maintenance is supported by Forward Email @ https://forwardemail.net
+2025-08-26T13:05:48.1768557Z npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+2025-08-26T13:05:49.7823636Z npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+2025-08-26T13:05:50.0022743Z npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead
+2025-08-26T13:05:50.0316942Z npm warn deprecated superagent@8.1.2: Please upgrade to superagent v10.2.2+, see release notes at https://github.com/forwardemail/superagent/releases/tag/v10.2.2 - maintenance is supported by Forward Email @ https://forwardemail.net
+2025-08-26T13:05:53.1576744Z npm warn deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead
+2025-08-26T13:05:53.1578040Z npm warn deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead
+2025-08-26T13:05:54.2573023Z npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+2025-08-26T13:05:54.4066855Z npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+2025-08-26T13:05:54.6512366Z npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+2025-08-26T13:05:54.6516509Z npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+2025-08-26T13:05:54.8360627Z npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+2025-08-26T13:05:59.3418319Z npm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+2025-08-26T13:06:13.9669627Z 
+2025-08-26T13:06:13.9671602Z added 1162 packages in 33s
+2025-08-26T13:06:13.9673173Z 
+2025-08-26T13:06:13.9676660Z 278 packages are looking for funding
+2025-08-26T13:06:13.9692027Z   run `npm fund` for details
+2025-08-26T13:06:14.0233545Z ##[group]Run cp .env.example .env.test
+2025-08-26T13:06:14.0233923Z [36;1mcp .env.example .env.test[0m
+2025-08-26T13:06:14.0234676Z [36;1mecho "DATABASE_URL=***localhost:5433/eo_clinica_db" >> .env.test[0m
+2025-08-26T13:06:14.0235113Z [36;1mecho "REDIS_URL=redis://localhost:6380" >> .env.test[0m
+2025-08-26T13:06:14.0235501Z [36;1mecho "JWT_SECRET=test_jwt_secret_key_for_ci" >> .env.test[0m
+2025-08-26T13:06:14.0235834Z [36;1mecho "NODE_ENV=test" >> .env.test[0m
+2025-08-26T13:06:14.0236093Z [36;1mecho "CI=true" >> .env.test[0m
+2025-08-26T13:06:14.0236415Z [36;1mecho "GEMINI_API_KEY=fake-key-for-testing" >> .env.test[0m
+2025-08-26T13:06:14.0236871Z [36;1mecho "ENCRYPTION_KEY=test-encryption-key-32-characters" >> .env.test[0m
+2025-08-26T13:06:14.0277551Z shell: /usr/bin/bash -e {0}
+2025-08-26T13:06:14.0277817Z ##[endgroup]
+2025-08-26T13:06:14.0386200Z ##[group]Run export NODE_ENV=test
+2025-08-26T13:06:14.0386513Z [36;1mexport NODE_ENV=test[0m
+2025-08-26T13:06:14.0387185Z [36;1mexport DATABASE_URL="***localhost:5433/eo_clinica_db"[0m
+2025-08-26T13:06:14.0387556Z [36;1mnpm run prisma:generate[0m
+2025-08-26T13:06:14.0387827Z [36;1m# Test database connection[0m
+2025-08-26T13:06:14.0388217Z [36;1mnpx prisma db push --force-reset --skip-seed || echo "Database push skipped for CI"[0m
+2025-08-26T13:06:14.0388622Z [36;1mecho "Database setup completed"[0m
+2025-08-26T13:06:14.0429910Z shell: /usr/bin/bash -e {0}
+2025-08-26T13:06:14.0430168Z ##[endgroup]
+2025-08-26T13:06:14.1670688Z 
+2025-08-26T13:06:14.1675563Z > eo-clinica-system@1.3.4 prisma:generate
+2025-08-26T13:06:14.1680265Z > prisma generate --schema=src/database/schema.prisma
+2025-08-26T13:06:14.1684527Z 
+2025-08-26T13:06:16.4352349Z Prisma schema loaded from src/database/schema.prisma
+2025-08-26T13:06:17.7367864Z 
+2025-08-26T13:06:17.7370288Z ✔ Generated Prisma Client (v5.22.0) to ./src/database/generated/client in 559ms
+2025-08-26T13:06:17.7372063Z 
+2025-08-26T13:06:17.7373597Z Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+2025-08-26T13:06:17.7375100Z 
+2025-08-26T13:06:17.7376924Z Tip: Need your database queries to be 1000x faster? Accelerate offers you that and more: https://pris.ly/tip-2-accelerate
+2025-08-26T13:06:17.7378626Z 
+2025-08-26T13:06:18.7256583Z 
+2025-08-26T13:06:18.7257634Z ! unknown or unexpected option: --skip-seed
+2025-08-26T13:06:18.7258396Z 
+2025-08-26T13:06:18.7267957Z 🙌  Push the state from your Prisma schema to your database
+2025-08-26T13:06:18.7268338Z 
+2025-08-26T13:06:18.7268465Z Usage
+2025-08-26T13:06:18.7268622Z 
+2025-08-26T13:06:18.7268781Z   $ prisma db push [options]
+2025-08-26T13:06:18.7269493Z 
+2025-08-26T13:06:18.7269614Z Options
+2025-08-26T13:06:18.7269770Z 
+2025-08-26T13:06:18.7270001Z            -h, --help   Display this help message
+2025-08-26T13:06:18.7270564Z              --schema   Custom path to your Prisma schema
+2025-08-26T13:06:18.7271342Z    --accept-data-loss   Ignore data loss warnings
+2025-08-26T13:06:18.7271941Z         --force-reset   Force a reset of the database before push 
+2025-08-26T13:06:18.7272667Z       --skip-generate   Skip triggering generators (e.g. Prisma Client)
+2025-08-26T13:06:18.7273097Z 
+2025-08-26T13:06:18.7273235Z Examples
+2025-08-26T13:06:18.7273402Z 
+2025-08-26T13:06:18.7273641Z   Push the Prisma schema state to the database
+2025-08-26T13:06:18.7274116Z   $ prisma db push
+2025-08-26T13:06:18.7274321Z 
+2025-08-26T13:06:18.7274454Z   Specify a schema
+2025-08-26T13:06:18.7274887Z   $ prisma db push --schema=./schema.prisma
+2025-08-26T13:06:18.7275230Z 
+2025-08-26T13:06:18.7275419Z   Ignore data loss warnings
+2025-08-26T13:06:18.7275904Z   $ prisma db push --accept-data-loss
+2025-08-26T13:06:18.7276223Z 
+2025-08-26T13:06:18.7457822Z Database push skipped for CI
+2025-08-26T13:06:18.7458579Z Database setup completed
+2025-08-26T13:06:18.7498984Z ##[group]Run export NODE_ENV=test
+2025-08-26T13:06:18.7499473Z [36;1mexport NODE_ENV=test[0m
+2025-08-26T13:06:18.7500629Z [36;1mexport DATABASE_URL="***localhost:5433/eo_clinica_db"[0m
+2025-08-26T13:06:18.7502125Z [36;1mexport DATABASE_URL_TEST="***localhost:5433/eo_clinica_db"[0m
+2025-08-26T13:06:18.7503036Z [36;1mnpm test -- tests/security/basic-security.test.ts --testTimeout=30000 --maxWorkers=1[0m
+2025-08-26T13:06:18.7562452Z shell: /usr/bin/bash -e {0}
+2025-08-26T13:06:18.7562888Z ##[endgroup]
+2025-08-26T13:06:18.8982490Z 
+2025-08-26T13:06:18.8983064Z > eo-clinica-system@1.3.4 test
+2025-08-26T13:06:18.8984004Z > jest tests/security/basic-security.test.ts --testTimeout=30000 --maxWorkers=1
+2025-08-26T13:06:18.8984570Z 
+2025-08-26T13:06:25.0761176Z   console.log
+2025-08-26T13:06:25.0763117Z     ✅ Criptografia: bcrypt com salt 12 funcionando
+2025-08-26T13:06:25.0763546Z 
+2025-08-26T13:06:25.0764051Z       at Object.<anonymous> (tests/security/basic-security.test.ts:37:21)
+2025-08-26T13:06:25.0764506Z 
+2025-08-26T13:06:25.0822122Z   console.log
+2025-08-26T13:06:25.0822996Z     ✅ Criptografia: AES-256 implementado
+2025-08-26T13:06:25.0823366Z 
+2025-08-26T13:06:25.0823794Z       at Object.<anonymous> (tests/security/basic-security.test.ts:55:21)
+2025-08-26T13:06:25.0824299Z 
+2025-08-26T13:06:25.0842521Z   console.log
+2025-08-26T13:06:25.0844963Z     ✅ Criptografia: Tokens seguros gerados
+2025-08-26T13:06:25.0845838Z 
+2025-08-26T13:06:25.0846517Z       at Object.<anonymous> (tests/security/basic-security.test.ts:68:21)
+2025-08-26T13:06:25.0847309Z 
+2025-08-26T13:06:25.0863930Z   console.log
+2025-08-26T13:06:25.0865077Z     ✅ Validação: Formato de email validado
+2025-08-26T13:06:25.0865826Z 
+2025-08-26T13:06:25.0867420Z       at Object.<anonymous> (tests/security/basic-security.test.ts:92:21)
+2025-08-26T13:06:25.0868251Z 
+2025-08-26T13:06:25.0911848Z   console.log
+2025-08-26T13:06:25.0914618Z     ✅ Validação: CPF brasileiro validado
+2025-08-26T13:06:25.0915001Z 
+2025-08-26T13:06:25.0915457Z       at Object.<anonymous> (tests/security/basic-security.test.ts:135:21)
+2025-08-26T13:06:25.0915956Z 
+2025-08-26T13:06:25.0950465Z   console.log
+2025-08-26T13:06:25.0951879Z     ✅ Validação: XSS sanitização implementada
+2025-08-26T13:06:25.0952564Z 
+2025-08-26T13:06:25.0953209Z       at Object.<anonymous> (tests/security/basic-security.test.ts:161:21)
+2025-08-26T13:06:25.0953936Z 
+2025-08-26T13:06:25.1050784Z   console.log
+2025-08-26T13:06:25.1055933Z     ✅ Rate Limiting: Delay exponencial implementado
+2025-08-26T13:06:25.1060190Z 
+2025-08-26T13:06:25.1062224Z       at Object.<anonymous> (tests/security/basic-security.test.ts:176:21)
+2025-08-26T13:06:25.1063059Z 
+2025-08-26T13:06:25.1071766Z   console.log
+2025-08-26T13:06:25.1072750Z     ✅ Rate Limiting: Detecção força bruta funcionando
+2025-08-26T13:06:25.1076077Z 
+2025-08-26T13:06:25.1076558Z       at Object.<anonymous> (tests/security/basic-security.test.ts:194:21)
+2025-08-26T13:06:25.1077058Z 
+2025-08-26T13:06:25.1953714Z   console.log
+2025-08-26T13:06:25.1955619Z     ⚠️ API Security: Não foi possível testar headers (servidor pode estar offline)
+2025-08-26T13:06:25.1956426Z 
+2025-08-26T13:06:25.1957006Z       at Object.<anonymous> (tests/security/basic-security.test.ts:233:25)
+2025-08-26T13:06:25.1957771Z 
+2025-08-26T13:06:25.1997922Z   console.log
+2025-08-26T13:06:25.2002882Z     ⚠️ API Security: Teste CORS pode falhar se API offline
+2025-08-26T13:06:25.2006897Z 
+2025-08-26T13:06:25.2011339Z       at Object.<anonymous> (tests/security/basic-security.test.ts:252:25)
+2025-08-26T13:06:25.2014982Z 
+2025-08-26T13:06:25.2023103Z   console.log
+2025-08-26T13:06:25.2025698Z     ✅ Mobile: Validações de campo adequadas
+2025-08-26T13:06:25.2031101Z 
+2025-08-26T13:06:25.2031564Z       at Object.<anonymous> (tests/security/basic-security.test.ts:274:21)
+2025-08-26T13:06:25.2032105Z 
+2025-08-26T13:06:25.2042129Z   console.log
+2025-08-26T13:06:25.2043336Z     ✅ Mobile: Critérios senha forte implementados
+2025-08-26T13:06:25.2044787Z 
+2025-08-26T13:06:25.2045998Z       at Object.<anonymous> (tests/security/basic-security.test.ts:307:21)
+2025-08-26T13:06:25.2046852Z 
+2025-08-26T13:06:25.2061502Z   console.log
+2025-08-26T13:06:25.2062449Z     ✅ Utilitários: IDs únicos seguros gerados
+2025-08-26T13:06:25.2063042Z 
+2025-08-26T13:06:25.2063661Z       at Object.<anonymous> (tests/security/basic-security.test.ts:325:17)
+2025-08-26T13:06:25.2064391Z 
+2025-08-26T13:06:26.7091173Z   console.log
+2025-08-26T13:06:26.7092614Z     ✅ Utilitários: Timeout para operações implementado
+2025-08-26T13:06:26.7095449Z 
+2025-08-26T13:06:26.7097029Z       at Object.<anonymous> (tests/security/basic-security.test.ts:350:17)
+2025-08-26T13:06:26.7097794Z 
+2025-08-26T13:06:26.7378523Z FAIL tests/security/basic-security.test.ts (7.068 s)
+2025-08-26T13:06:26.7383678Z   🔒 Segurança Básica - Validações Fundamentais
+2025-08-26T13:06:26.7384852Z     🔐 Criptografia e Hashing
+2025-08-26T13:06:26.7386158Z       ✓ deve usar bcrypt para hash de senhas com salt adequado (723 ms)
+2025-08-26T13:06:26.7387365Z       ✓ deve implementar criptografia AES-256 para dados sensíveis (5 ms)
+2025-08-26T13:06:26.7388559Z       ✓ deve gerar tokens seguros para sessões (2 ms)
+2025-08-26T13:06:26.7393048Z     🛡️ Validação de Dados e Sanitização
+2025-08-26T13:06:26.7393793Z       ✓ deve validar formatos de email seguros (2 ms)
+2025-08-26T13:06:26.7394499Z       ✓ deve validar CPF brasileiro (4 ms)
+2025-08-26T13:06:26.7395141Z       ✓ deve sanitizar entrada XSS (5 ms)
+2025-08-26T13:06:26.7395757Z     🚦 Rate Limiting e Proteção
+2025-08-26T13:06:26.7396587Z       ✓ deve implementar delay exponencial para tentativas de login (10 ms)
+2025-08-26T13:06:26.7397578Z       ✓ deve detectar padrões de ataque por força bruta (2 ms)
+2025-08-26T13:06:26.7398215Z     🌐 Testes de API Security
+2025-08-26T13:06:26.7398911Z       ✕ deve retornar status 404 para rotas inexistentes (83 ms)
+2025-08-26T13:06:26.7399753Z       ✓ deve ter headers de segurança básicos (4 ms)
+2025-08-26T13:06:26.7400470Z       ✓ deve implementar CORS adequadamente (4 ms)
+2025-08-26T13:06:26.7401344Z     📱 Validações Mobile
+2025-08-26T13:06:26.7402046Z       ✓ deve validar tamanhos de campo adequados para mobile (2 ms)
+2025-08-26T13:06:26.7402818Z       ✓ deve ter critérios de senha forte (2 ms)
+2025-08-26T13:06:26.7403447Z   🔧 Utilitários de Segurança
+2025-08-26T13:06:26.7409828Z     ✓ deve gerar IDs únicos seguros (2 ms)
+2025-08-26T13:06:26.7411675Z     ✓ deve implementar timeout para operações críticas (1503 ms)
+2025-08-26T13:06:26.7412095Z 
+2025-08-26T13:06:26.7413070Z   ● 🔒 Segurança Básica - Validações Fundamentais › 🌐 Testes de API Security › deve retornar status 404 para rotas inexistentes
+2025-08-26T13:06:26.7413946Z 
+2025-08-26T13:06:26.7414244Z     expect(received).toBe(expected) // Object.is equality
+2025-08-26T13:06:26.7414626Z 
+2025-08-26T13:06:26.7414770Z     Expected: 404
+2025-08-26T13:06:26.7415595Z     Received: undefined
+2025-08-26T13:06:26.7415823Z 
+2025-08-26T13:06:26.7416159Z     [0m [90m 206 |[39m       }[33m;[39m
+2025-08-26T13:06:26.7416711Z      [90m 207 |[39m
+2025-08-26T13:06:26.7417723Z     [31m[1m>[22m[39m[90m 208 |[39m       [36mconst[39m delays [33m=[39m attempts[33m.[39mmap(calculateDelay)[33m;[39m
+2025-08-26T13:06:26.7418873Z      [90m     |[39m                                                               [31m[1m^[22m[39m
+2025-08-26T13:06:26.7419477Z      [90m 209 |[39m       
+2025-08-26T13:06:26.7420539Z      [90m 210 |[39m       expect(delays[[35m0[39m])[33m.[39mtoBe([35m2000[39m)[33m;[39m   [90m// 2s na primeira tentativa[39m
+2025-08-26T13:06:26.7422201Z      [90m 211 |[39m       expect(delays[[35m1[39m])[33m.[39mtoBe([35m4000[39m)[33m;[39m   [90m// 4s na segunda[39m[0m
+2025-08-26T13:06:26.7422783Z 
+2025-08-26T13:06:26.7423207Z       at Object.<anonymous> (tests/security/basic-security.test.ts:208:63)
+2025-08-26T13:06:26.7423725Z 
+2025-08-26T13:06:26.7435018Z Test Suites: 1 failed, 1 total
+2025-08-26T13:06:26.7439765Z Tests:       1 failed, 14 passed, 15 total
+2025-08-26T13:06:26.7443020Z Snapshots:   0 total
+2025-08-26T13:06:26.7443483Z Time:        7.297 s
+2025-08-26T13:06:26.7444081Z Ran all test suites matching /tests\/security\/basic-security.test.ts/i.
+2025-08-26T13:06:27.2680012Z ##[error]Process completed with exit code 1.
+2025-08-26T13:06:27.2764510Z Post job cleanup.
+2025-08-26T13:06:27.3772121Z [command]/usr/bin/git version
+2025-08-26T13:06:27.3815285Z git version 2.51.0
+2025-08-26T13:06:27.3864527Z Temporarily overriding HOME='/home/runner/work/_temp/f52a3ce7-37c8-44a8-8824-96f8a689eb16' before making global git config changes
+2025-08-26T13:06:27.3866684Z Adding repository directory to the temporary git global config as a safe directory
+2025-08-26T13:06:27.3872175Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/jtarcio-clinica/jtarcio-clinica
+2025-08-26T13:06:27.3927652Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-08-26T13:06:27.3970475Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-08-26T13:06:27.4233842Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-08-26T13:06:27.4261717Z http.https://github.com/.extraheader
+2025-08-26T13:06:27.4277226Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2025-08-26T13:06:27.4316111Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-08-26T13:06:27.4669628Z Print service container logs: ef29288c3412469abefd62d42b56e818_postgres15_91aa82
+2025-08-26T13:06:27.4674794Z ##[command]/usr/bin/docker logs --details 07d4fa13f9b4663c49391a3c0166cfb97fcc7ad67a09f21549244f339cbf5e4c
+2025-08-26T13:06:27.4817521Z  The files belonging to this database system will be owned by user "postgres".
+2025-08-26T13:06:27.4818596Z  This user must also own the server process.
+2025-08-26T13:06:27.4819433Z  
+2025-08-26T13:06:27.4820148Z  The database cluster will be initialized with locale "en_US.utf8".
+2025-08-26T13:06:27.4821063Z  The default database encoding has accordingly been set to "UTF8".
+2025-08-26T13:06:27.4821736Z  The default text search configuration will be set to "english".
+2025-08-26T13:06:27.4822250Z  
+2025-08-26T13:06:27.4824690Z  Data page checksums are disabled.
+2025-08-26T13:06:27.4835034Z  initdb: warning: enabling "trust" authentication for local connections
+2025-08-26T13:06:27.4836141Z  initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+2025-08-26T13:06:27.4837415Z  2025-08-26 13:05:20.542 UTC [1] LOG:  starting PostgreSQL 15.14 (Debian 15.14-1.pgdg13+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+2025-08-26T13:06:27.4838886Z  2025-08-26 13:05:20.542 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+2025-08-26T13:06:27.4839584Z  2025-08-26 13:05:20.542 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+2025-08-26T13:06:27.4840357Z  2025-08-26 13:05:20.543 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2025-08-26T13:06:27.4841406Z  2025-08-26 13:05:20.546 UTC [63] LOG:  database system was shut down at 2025-08-26 13:05:20 UTC
+2025-08-26T13:06:27.4842208Z  2025-08-26 13:05:20.551 UTC [1] LOG:  database system is ready to accept connections
+2025-08-26T13:06:27.4842812Z  2025-08-26 13:05:29.565 UTC [74] FATAL:  role "root" does not exist
+2025-08-26T13:06:27.4843381Z  2025-08-26 13:05:39.658 UTC [82] FATAL:  role "root" does not exist
+2025-08-26T13:06:27.4843936Z  2025-08-26 13:05:49.768 UTC [90] FATAL:  role "root" does not exist
+2025-08-26T13:06:27.4844514Z  2025-08-26 13:05:59.908 UTC [99] FATAL:  role "root" does not exist
+2025-08-26T13:06:27.4845073Z  2025-08-26 13:06:10.020 UTC [107] FATAL:  role "root" does not exist
+2025-08-26T13:06:27.4845626Z  2025-08-26 13:06:20.225 UTC [115] FATAL:  role "root" does not exist
+2025-08-26T13:06:27.4846080Z  
+2025-08-26T13:06:27.4846530Z  fixing permissions on existing directory /var/lib/postgresql/data ... ok
+2025-08-26T13:06:27.4847113Z  creating subdirectories ... ok
+2025-08-26T13:06:27.4847596Z  selecting dynamic shared memory implementation ... posix
+2025-08-26T13:06:27.4848145Z  selecting default max_connections ... 100
+2025-08-26T13:06:27.4848600Z  selecting default shared_buffers ... 128MB
+2025-08-26T13:06:27.4849005Z  selecting default time zone ... Etc/UTC
+2025-08-26T13:06:27.4849395Z  creating configuration files ... ok
+2025-08-26T13:06:27.4849778Z  running bootstrap script ... ok
+2025-08-26T13:06:27.4850213Z  performing post-bootstrap initialization ... ok
+2025-08-26T13:06:27.4850693Z  syncing data to disk ... ok
+2025-08-26T13:06:27.4851216Z  
+2025-08-26T13:06:27.4851466Z  
+2025-08-26T13:06:27.4851807Z  Success. You can now start the database server using:
+2025-08-26T13:06:27.4852256Z  
+2025-08-26T13:06:27.4852592Z      pg_ctl -D /var/lib/postgresql/data -l logfile start
+2025-08-26T13:06:27.4853034Z  
+2025-08-26T13:06:27.4853940Z  waiting for server to start....2025-08-26 13:05:20.231 UTC [47] LOG:  starting PostgreSQL 15.14 (Debian 15.14-1.pgdg13+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+2025-08-26T13:06:27.4855213Z  2025-08-26 13:05:20.232 UTC [47] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2025-08-26T13:06:27.4856007Z  2025-08-26 13:05:20.235 UTC [50] LOG:  database system was shut down at 2025-08-26 13:05:20 UTC
+2025-08-26T13:06:27.4857661Z  2025-08-26 13:05:20.239 UTC [47] LOG:  database system is ready to accept connections
+2025-08-26T13:06:27.4858214Z   done
+2025-08-26T13:06:27.4858483Z  server started
+2025-08-26T13:06:27.4858789Z  CREATE DATABASE
+2025-08-26T13:06:27.4859076Z  
+2025-08-26T13:06:27.4859316Z  
+2025-08-26T13:06:27.4859792Z  /usr/local/bin/docker-entrypoint.sh: ignoring /docker-entrypoint-initdb.d/*
+2025-08-26T13:06:27.4860354Z  
+2025-08-26T13:06:27.4861383Z  waiting for server to shut down...2025-08-26 13:05:20.422 UTC [47] LOG:  received fast shutdown request
+2025-08-26T13:06:27.4862223Z  .2025-08-26 13:05:20.423 UTC [47] LOG:  aborting any active transactions
+2025-08-26T13:06:27.4863092Z  2025-08-26 13:05:20.426 UTC [47] LOG:  background worker "logical replication launcher" (PID 53) exited with exit code 1
+2025-08-26T13:06:27.4863898Z  2025-08-26 13:05:20.426 UTC [48] LOG:  shutting down
+2025-08-26T13:06:27.4864489Z  2025-08-26 13:05:20.427 UTC [48] LOG:  checkpoint starting: shutdown immediate
+2025-08-26T13:06:27.4865944Z  2025-08-26 13:05:20.447 UTC [48] LOG:  checkpoint complete: wrote 922 buffers (5.6%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.016 s, sync=0.003 s, total=0.021 s; sync files=301, longest=0.002 s, average=0.001 s; distance=4239 kB, estimate=4239 kB
+2025-08-26T13:06:27.4867631Z  2025-08-26 13:05:20.453 UTC [47] LOG:  database system is shut down
+2025-08-26T13:06:27.4868151Z   done
+2025-08-26T13:06:27.4868434Z  server stopped
+2025-08-26T13:06:27.4868740Z  
+2025-08-26T13:06:27.4869133Z  PostgreSQL init process complete; ready for start up.
+2025-08-26T13:06:27.4869647Z  
+2025-08-26T13:06:27.4877448Z Stop and remove container: ef29288c3412469abefd62d42b56e818_postgres15_91aa82
+2025-08-26T13:06:27.4882966Z ##[command]/usr/bin/docker rm --force 07d4fa13f9b4663c49391a3c0166cfb97fcc7ad67a09f21549244f339cbf5e4c
+2025-08-26T13:06:28.8457579Z 07d4fa13f9b4663c49391a3c0166cfb97fcc7ad67a09f21549244f339cbf5e4c
+2025-08-26T13:06:28.8482415Z Print service container logs: e858138fb795498784cb21d0dfe48da5_redis7_7131b3
+2025-08-26T13:06:28.8483731Z ##[command]/usr/bin/docker logs --details 65a02b2cd948973d45349ccecfab195f0c3e1e38b4667968bea8b2e6141eef44
+2025-08-26T13:06:28.8626244Z  1:C 26 Aug 2025 13:05:23.576 # WARNING Memory overcommit must be enabled! Without it, a background save or replication may fail under low memory condition. Being disabled, it can also cause failures without low memory condition, see https://github.com/jemalloc/jemalloc/issues/1328. To fix this issue add 'vm.overcommit_memory = 1' to /etc/sysctl.conf and then reboot or run the command 'sysctl vm.overcommit_memory=1' for this to take effect.
+2025-08-26T13:06:28.8629340Z  1:C 26 Aug 2025 13:05:23.576 * oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+2025-08-26T13:06:28.8630299Z  1:C 26 Aug 2025 13:05:23.576 * Redis version=7.4.5, bits=64, commit=00000000, modified=0, pid=1, just started
+2025-08-26T13:06:28.8631855Z  1:C 26 Aug 2025 13:05:23.576 # Warning: no config file specified, using the default config. In order to specify a config file use redis-server /path/to/redis.conf
+2025-08-26T13:06:28.8633030Z  1:M 26 Aug 2025 13:05:23.577 * monotonic clock: POSIX clock_gettime
+2025-08-26T13:06:28.8633693Z  1:M 26 Aug 2025 13:05:23.578 * Running mode=standalone, port=6379.
+2025-08-26T13:06:28.8634374Z  1:M 26 Aug 2025 13:05:23.578 * Server initialized
+2025-08-26T13:06:28.8635007Z  1:M 26 Aug 2025 13:05:23.578 * Ready to accept connections tcp
+2025-08-26T13:06:28.8642053Z Stop and remove container: e858138fb795498784cb21d0dfe48da5_redis7_7131b3
+2025-08-26T13:06:28.8642825Z ##[command]/usr/bin/docker rm --force 65a02b2cd948973d45349ccecfab195f0c3e1e38b4667968bea8b2e6141eef44
+2025-08-26T13:06:28.9902205Z 65a02b2cd948973d45349ccecfab195f0c3e1e38b4667968bea8b2e6141eef44
+2025-08-26T13:06:28.9938559Z Remove container network: github_network_f4cc403802f34d9ea36cd6f0fa41d02f
+2025-08-26T13:06:28.9944484Z ##[command]/usr/bin/docker network rm github_network_f4cc403802f34d9ea36cd6f0fa41d02f
+2025-08-26T13:06:29.0822755Z github_network_f4cc403802f34d9ea36cd6f0fa41d02f
+2025-08-26T13:06:29.0882034Z Cleaning up orphan processes
