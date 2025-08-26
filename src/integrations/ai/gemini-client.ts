@@ -1,4 +1,11 @@
-import { GoogleGenerativeAI, GenerativeModel, GenerationConfig, SafetySetting, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
+import {
+  GoogleGenerativeAI,
+  GenerativeModel,
+  GenerationConfig,
+  SafetySetting,
+  HarmCategory,
+  HarmBlockThreshold,
+} from '@google/generative-ai';
 import { env } from '../../config/env.js';
 import { logger } from '../../config/logger.js';
 import Redis from 'ioredis';
@@ -48,7 +55,7 @@ export class GeminiClient {
     };
 
     this.genAI = new GoogleGenerativeAI(this.config.apiKey);
-    
+
     // Configure model with safety settings
     const generationConfig: GenerationConfig = {
       temperature: 0.7,
@@ -89,7 +96,7 @@ export class GeminiClient {
   async generateResponse(
     message: string,
     conversationHistory?: ConversationMessage[],
-    userId?: string
+    userId?: string,
   ): Promise<string> {
     try {
       // Check rate limit if user provided
@@ -101,7 +108,10 @@ export class GeminiClient {
       let prompt = message;
       if (conversationHistory && conversationHistory.length > 0) {
         const context = conversationHistory
-          .map(msg => `${msg.role === 'user' ? 'Usuário' : 'Assistente'}: ${msg.parts}`)
+          .map(
+            msg =>
+              `${msg.role === 'user' ? 'Usuário' : 'Assistente'}: ${msg.parts}`,
+          )
           .join('\n');
         prompt = `Contexto da conversa:\n${context}\n\nUsuário: ${message}`;
       }
@@ -136,7 +146,7 @@ ${prompt}`;
   async generateStreamingResponse(
     message: string,
     conversationHistory?: ConversationMessage[],
-    userId?: string
+    userId?: string,
   ): Promise<AsyncGenerator<StreamingResponse>> {
     if (userId) {
       await this.checkRateLimit(userId);
@@ -146,7 +156,10 @@ ${prompt}`;
     let prompt = message;
     if (conversationHistory && conversationHistory.length > 0) {
       const context = conversationHistory
-        .map(msg => `${msg.role === 'user' ? 'Usuário' : 'Assistente'}: ${msg.parts}`)
+        .map(
+          msg =>
+            `${msg.role === 'user' ? 'Usuário' : 'Assistente'}: ${msg.parts}`,
+        )
         .join('\n');
       prompt = `Contexto da conversa:\n${context}\n\nUsuário: ${message}`;
     }
@@ -161,11 +174,11 @@ ${prompt}`;
 
     async function* streamGenerator(): AsyncGenerator<StreamingResponse> {
       let fullContent = '';
-      
+
       for await (const chunk of result.stream) {
         const chunkText = chunk.text();
         fullContent += chunkText;
-        
+
         yield {
           content: chunkText,
           isComplete: false,
@@ -229,11 +242,11 @@ Responda APENAS em formato JSON:
   private async checkRateLimit(userId: string): Promise<void> {
     const key = `gemini_rate_limit:${userId}`;
     const current = await this.redis.get(key);
-    
+
     if (current && parseInt(current) >= this.config.rateLimitMax) {
       throw new Error('Rate limit exceeded. Please try again later.');
     }
-    
+
     const pipeline = this.redis.pipeline();
     pipeline.incr(key);
     pipeline.expire(key, Math.ceil(this.config.rateLimitWindow / 1000));
@@ -242,10 +255,12 @@ Responda APENAS em formato JSON:
 
   async healthCheck(): Promise<{ status: string; model: string }> {
     try {
-      const result = await this.model.generateContent('Hello, please respond with "OK" if you can hear me.');
+      const result = await this.model.generateContent(
+        'Hello, please respond with "OK" if you can hear me.',
+      );
       const response = await result.response;
       const text = response.text();
-      
+
       return {
         status: text.toLowerCase().includes('ok') ? 'healthy' : 'degraded',
         model: this.config.model,

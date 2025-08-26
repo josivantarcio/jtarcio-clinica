@@ -10,7 +10,7 @@ const envSchema = z.object({
   NODE_ENV: z
     .enum(['development', 'production', 'test'])
     .default('development'),
-  PORT: z.string().transform(Number).default(3000),
+  PORT: z.string().transform(Number).default('3000'),
   API_VERSION: z.string().default('v1'),
 
   // Database
@@ -32,15 +32,18 @@ const envSchema = z.object({
   ENCRYPTION_KEY: z
     .string()
     .min(32, 'ENCRYPTION_KEY must be at least 32 characters'),
-  SALT_ROUNDS: z.string().transform(Number).default(12),
+  SALT_ROUNDS: z.string().transform(Number).default('12'),
+  BCRYPT_SALT_ROUNDS: z.string().transform(Number).default('12'),
 
   // AI Integration
   GEMINI_API_KEY: z.string().min(1, 'GEMINI_API_KEY is required'),
   GEMINI_MODEL: z.string().default('gemini-pro'),
+  ANTHROPIC_API_KEY: z.string().optional(),
+  ANTHROPIC_API_VERSION: z.string().default('2023-06-01'),
 
   // ChromaDB
   CHROMA_HOST: z.string().default('localhost'),
-  CHROMA_PORT: z.string().transform(Number).default(8000),
+  CHROMA_PORT: z.string().transform(Number).default('8000'),
   CHROMA_COLLECTION_NAME: z.string().default('clinic_conversations'),
 
   // Email
@@ -49,7 +52,7 @@ const envSchema = z.object({
   SMTP_SECURE: z
     .string()
     .transform(val => val === 'true')
-    .default(false),
+    .default('false'),
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
 
@@ -68,44 +71,44 @@ const envSchema = z.object({
   N8N_API_KEY: z.string().optional(),
 
   // Rate Limiting
-  RATE_LIMIT_WINDOW_MS: z.string().transform(Number).default(900000),
-  RATE_LIMIT_MAX_REQUESTS: z.string().transform(Number).default(100),
+  RATE_LIMIT_WINDOW_MS: z.string().transform(Number).default('900000'),
+  RATE_LIMIT_MAX_REQUESTS: z.string().transform(Number).default('100'),
 
   // Logging
   LOG_LEVEL: z.enum(['error', 'warn', 'info', 'debug']).default('info'),
   LOG_FORMAT: z.enum(['json', 'simple']).default('json'),
 
   // LGPD
-  DATA_RETENTION_DAYS: z.string().transform(Number).default(2555),
-  AUDIT_LOG_RETENTION_DAYS: z.string().transform(Number).default(3650),
+  DATA_RETENTION_DAYS: z.string().transform(Number).default('2555'),
+  AUDIT_LOG_RETENTION_DAYS: z.string().transform(Number).default('3650'),
 
   // Timezone
   TIMEZONE: z.string().default('America/Sao_Paulo'),
 
   // File Upload
-  MAX_FILE_SIZE: z.string().transform(Number).default(10485760),
+  MAX_FILE_SIZE: z.string().transform(Number).default('10485760'),
   ALLOWED_FILE_TYPES: z.string().default('jpg,jpeg,png,pdf,doc,docx'),
 
   // Health Check
-  HEALTH_CHECK_TIMEOUT: z.string().transform(Number).default(5000),
+  HEALTH_CHECK_TIMEOUT: z.string().transform(Number).default('5000'),
 
   // Feature Flags
   ENABLE_AI_INTEGRATION: z
     .string()
     .transform(val => val === 'true')
-    .default(true),
+    .default('true'),
   ENABLE_WHATSAPP_INTEGRATION: z
     .string()
     .transform(val => val === 'true')
-    .default(false),
+    .default('false'),
   ENABLE_GOOGLE_CALENDAR: z
     .string()
     .transform(val => val === 'true')
-    .default(false),
+    .default('false'),
   ENABLE_AUDIT_LOGS: z
     .string()
     .transform(val => val === 'true')
-    .default(true),
+    .default('true'),
 });
 
 // Validate and export environment variables

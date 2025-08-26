@@ -574,7 +574,9 @@ AREAS: especialidades, horários, convênios, localização, procedimentos`,
     overall: boolean;
   }> {
     const [geminiHealth, chromaHealth] = await Promise.all([
-      this.geminiClient.healthCheck().then(result => result.status === 'healthy'),
+      this.geminiClient
+        .healthCheck()
+        .then(result => result.status === 'healthy'),
       this.chromaClient.healthCheck(),
     ]);
 

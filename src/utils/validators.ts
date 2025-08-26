@@ -1,6 +1,6 @@
 /**
  * 🔒 VALIDADORES DE SEGURANÇA - EO CLÍNICA
- * 
+ *
  * Funções de validação implementadas baseadas nos testes de segurança
  */
 
@@ -9,10 +9,10 @@
  */
 export function isValidCPF(cpf: string): boolean {
   const cleaned = cpf.replace(/[^\d]/g, '');
-  
+
   if (cleaned.length !== 11) return false;
   if (/^(\d)\1{10}$/.test(cleaned)) return false; // Todos iguais
-  
+
   // Calcular primeiro dígito verificador
   let sum = 0;
   for (let i = 0; i < 9; i++) {
@@ -20,7 +20,7 @@ export function isValidCPF(cpf: string): boolean {
   }
   let firstDigit = (sum * 10) % 11;
   if (firstDigit >= 10) firstDigit = 0;
-  
+
   // Calcular segundo dígito verificador
   sum = 0;
   for (let i = 0; i < 10; i++) {
@@ -28,8 +28,10 @@ export function isValidCPF(cpf: string): boolean {
   }
   let secondDigit = (sum * 10) % 11;
   if (secondDigit >= 10) secondDigit = 0;
-  
-  return firstDigit === parseInt(cleaned[9]) && secondDigit === parseInt(cleaned[10]);
+
+  return (
+    firstDigit === parseInt(cleaned[9]) && secondDigit === parseInt(cleaned[10])
+  );
 }
 
 /**
@@ -45,9 +47,9 @@ export function isValidEmail(email: string): boolean {
  */
 export function isStrongPassword(password: string): boolean {
   if (password.length < 8) return false;
-  if (!/[A-Z]/.test(password)) return false;  // Maiúscula
-  if (!/[a-z]/.test(password)) return false;  // Minúscula
-  if (!/\d/.test(password)) return false;     // Número
+  if (!/[A-Z]/.test(password)) return false; // Maiúscula
+  if (!/[a-z]/.test(password)) return false; // Minúscula
+  if (!/\d/.test(password)) return false; // Número
   if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) return false; // Caractere especial
   return true;
 }
@@ -76,15 +78,14 @@ export function calculateExponentialDelay(attemptNumber: number): number {
  * Detecta padrões de força bruta
  */
 export function detectBruteForce(
-  attempts: Array<{ timestamp: number; success: boolean }>, 
-  threshold: number = 5, 
-  timeWindow: number = 60000
+  attempts: Array<{ timestamp: number; success: boolean }>,
+  threshold: number = 5,
+  timeWindow: number = 60000,
 ): boolean {
   const now = Date.now();
-  const recentFailedAttempts = attempts.filter(attempt => 
-    !attempt.success && 
-    (now - attempt.timestamp) < timeWindow
+  const recentFailedAttempts = attempts.filter(
+    attempt => !attempt.success && now - attempt.timestamp < timeWindow,
   );
-  
+
   return recentFailedAttempts.length >= threshold;
 }
