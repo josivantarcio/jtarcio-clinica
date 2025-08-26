@@ -1,0 +1,206 @@
+﻿2025-08-26T12:39:50.5865017Z Current runner version: '2.328.0'
+2025-08-26T12:39:50.5901600Z ##[group]Runner Image Provisioner
+2025-08-26T12:39:50.5902989Z Hosted Compute Agent
+2025-08-26T12:39:50.5903970Z Version: 20250818.377
+2025-08-26T12:39:50.5905055Z Commit: 3c593e9f75fe0b87e893bca80d6e12ba089c61fc
+2025-08-26T12:39:50.5906219Z Build Date: 2025-08-18T14:52:18Z
+2025-08-26T12:39:50.5907342Z ##[endgroup]
+2025-08-26T12:39:50.5908262Z ##[group]Operating System
+2025-08-26T12:39:50.5909200Z Ubuntu
+2025-08-26T12:39:50.5909901Z 24.04.2
+2025-08-26T12:39:50.5911075Z LTS
+2025-08-26T12:39:50.5911757Z ##[endgroup]
+2025-08-26T12:39:50.5912533Z ##[group]Runner Image
+2025-08-26T12:39:50.5913817Z Image: ubuntu-24.04
+2025-08-26T12:39:50.5914653Z Version: 20250818.1.0
+2025-08-26T12:39:50.5916401Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20250818.1/images/ubuntu/Ubuntu2404-Readme.md
+2025-08-26T12:39:50.5919280Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20250818.1
+2025-08-26T12:39:50.5921294Z ##[endgroup]
+2025-08-26T12:39:50.5923384Z ##[group]GITHUB_TOKEN Permissions
+2025-08-26T12:39:50.5926389Z Contents: read
+2025-08-26T12:39:50.5927354Z Metadata: read
+2025-08-26T12:39:50.5928140Z Packages: read
+2025-08-26T12:39:50.5928970Z ##[endgroup]
+2025-08-26T12:39:50.5932407Z Secret source: Actions
+2025-08-26T12:39:50.5933561Z Prepare workflow directory
+2025-08-26T12:39:50.6857123Z Prepare all required actions
+2025-08-26T12:39:50.7001262Z Getting action download info
+2025-08-26T12:39:51.0922908Z Download action repository 'actions/checkout@v4' (SHA:08eba0b27e820071cde6df949e0beb9ba4906955)
+2025-08-26T12:39:51.1718192Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2025-08-26T12:39:51.3497551Z Complete job name: 🔍 Lint & Type Check
+2025-08-26T12:39:51.4287064Z ##[group]Run actions/checkout@v4
+2025-08-26T12:39:51.4287916Z with:
+2025-08-26T12:39:51.4288352Z   repository: josivantarcio/jtarcio-clinica
+2025-08-26T12:39:51.4289125Z   token: ***
+2025-08-26T12:39:51.4289544Z   ssh-strict: true
+2025-08-26T12:39:51.4289953Z   ssh-user: git
+2025-08-26T12:39:51.4290562Z   persist-credentials: true
+2025-08-26T12:39:51.4291013Z   clean: true
+2025-08-26T12:39:51.4291424Z   sparse-checkout-cone-mode: true
+2025-08-26T12:39:51.4291900Z   fetch-depth: 1
+2025-08-26T12:39:51.4292295Z   fetch-tags: false
+2025-08-26T12:39:51.4292699Z   show-progress: true
+2025-08-26T12:39:51.4293101Z   lfs: false
+2025-08-26T12:39:51.4293467Z   submodules: false
+2025-08-26T12:39:51.4293875Z   set-safe-directory: true
+2025-08-26T12:39:51.4294587Z ##[endgroup]
+2025-08-26T12:39:51.5660796Z Syncing repository: josivantarcio/jtarcio-clinica
+2025-08-26T12:39:51.5664053Z ##[group]Getting Git version info
+2025-08-26T12:39:51.5665769Z Working directory is '/home/runner/work/jtarcio-clinica/jtarcio-clinica'
+2025-08-26T12:39:51.5667899Z [command]/usr/bin/git version
+2025-08-26T12:39:51.5668875Z git version 2.51.0
+2025-08-26T12:39:51.5676193Z ##[endgroup]
+2025-08-26T12:39:51.5682588Z Temporarily overriding HOME='/home/runner/work/_temp/90c17a75-fc79-45f9-aa41-f1241e3531e2' before making global git config changes
+2025-08-26T12:39:51.5684963Z Adding repository directory to the temporary git global config as a safe directory
+2025-08-26T12:39:51.5687011Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/jtarcio-clinica/jtarcio-clinica
+2025-08-26T12:39:51.5702955Z Deleting the contents of '/home/runner/work/jtarcio-clinica/jtarcio-clinica'
+2025-08-26T12:39:51.5708101Z ##[group]Initializing the repository
+2025-08-26T12:39:51.5714096Z [command]/usr/bin/git init /home/runner/work/jtarcio-clinica/jtarcio-clinica
+2025-08-26T12:39:51.6684590Z hint: Using 'master' as the name for the initial branch. This default branch name
+2025-08-26T12:39:51.6686227Z hint: is subject to change. To configure the initial branch name to use in all
+2025-08-26T12:39:51.6687821Z hint: of your new repositories, which will suppress this warning, call:
+2025-08-26T12:39:51.6688946Z hint:
+2025-08-26T12:39:51.6689704Z hint: 	git config --global init.defaultBranch <name>
+2025-08-26T12:39:51.6691988Z hint:
+2025-08-26T12:39:51.6693102Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2025-08-26T12:39:51.6694588Z hint: 'development'. The just-created branch can be renamed via this command:
+2025-08-26T12:39:51.6695864Z hint:
+2025-08-26T12:39:51.6696473Z hint: 	git branch -m <name>
+2025-08-26T12:39:51.6697208Z hint:
+2025-08-26T12:39:51.6698167Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2025-08-26T12:39:51.6699888Z Initialized empty Git repository in /home/runner/work/jtarcio-clinica/jtarcio-clinica/.git/
+2025-08-26T12:39:51.6702972Z [command]/usr/bin/git remote add origin https://github.com/josivantarcio/jtarcio-clinica
+2025-08-26T12:39:51.6705644Z ##[endgroup]
+2025-08-26T12:39:51.6706851Z ##[group]Disabling automatic garbage collection
+2025-08-26T12:39:51.6707889Z [command]/usr/bin/git config --local gc.auto 0
+2025-08-26T12:39:51.6709950Z ##[endgroup]
+2025-08-26T12:39:51.6711890Z ##[group]Setting up auth
+2025-08-26T12:39:51.6713001Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-08-26T12:39:51.6716327Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-08-26T12:39:51.6720926Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-08-26T12:39:51.6724729Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-08-26T12:39:51.6866142Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2025-08-26T12:39:51.6909178Z ##[endgroup]
+2025-08-26T12:39:51.6911874Z ##[group]Fetching the repository
+2025-08-26T12:39:51.6932219Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +2a875eefdb97b79aa7694e958373fa1d8137b5e6:refs/remotes/origin/main
+2025-08-26T12:39:52.3134498Z From https://github.com/josivantarcio/jtarcio-clinica
+2025-08-26T12:39:52.3136423Z  * [new ref]         2a875eefdb97b79aa7694e958373fa1d8137b5e6 -> origin/main
+2025-08-26T12:39:52.3215363Z ##[endgroup]
+2025-08-26T12:39:52.3216513Z ##[group]Determining the checkout info
+2025-08-26T12:39:52.3217752Z ##[endgroup]
+2025-08-26T12:39:52.3218519Z [command]/usr/bin/git sparse-checkout disable
+2025-08-26T12:39:52.3327065Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2025-08-26T12:39:52.3490234Z ##[group]Checking out the ref
+2025-08-26T12:39:52.3510853Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2025-08-26T12:39:52.4207018Z Switched to a new branch 'main'
+2025-08-26T12:39:52.4211849Z branch 'main' set up to track 'origin/main'.
+2025-08-26T12:39:52.4215397Z ##[endgroup]
+2025-08-26T12:39:52.4260889Z [command]/usr/bin/git log -1 --format=%H
+2025-08-26T12:39:52.4289046Z 2a875eefdb97b79aa7694e958373fa1d8137b5e6
+2025-08-26T12:39:52.4610816Z ##[group]Run actions/setup-node@v4
+2025-08-26T12:39:52.4611964Z with:
+2025-08-26T12:39:52.4612757Z   node-version: 18
+2025-08-26T12:39:52.4613586Z   cache: npm
+2025-08-26T12:39:52.4614397Z   always-auth: false
+2025-08-26T12:39:52.4615294Z   check-latest: false
+2025-08-26T12:39:52.4616497Z   token: ***
+2025-08-26T12:39:52.4617299Z ##[endgroup]
+2025-08-26T12:39:52.8304694Z Found in cache @ /opt/hostedtoolcache/node/18.20.8/x64
+2025-08-26T12:39:52.8307853Z ##[group]Environment details
+2025-08-26T12:39:54.6599582Z node: v18.20.8
+2025-08-26T12:39:54.6600511Z npm: 10.8.2
+2025-08-26T12:39:54.6603930Z yarn: 1.22.22
+2025-08-26T12:39:54.6605516Z ##[endgroup]
+2025-08-26T12:39:54.6651830Z [command]/opt/hostedtoolcache/node/18.20.8/x64/bin/npm config get cache
+2025-08-26T12:39:54.8046366Z /home/runner/.npm
+2025-08-26T12:39:54.9932648Z Cache hit for: node-cache-Linux-x64-npm-162972607ed50d86ec18ea0f06d9fa4e6ad58d20657df796894dd3e9007e9a6e
+2025-08-26T12:39:55.2013237Z Received 14416 of 14416 (100.0%), 0.3 MBs/sec
+2025-08-26T12:39:55.2019200Z Cache Size: ~0 MB (14416 B)
+2025-08-26T12:39:55.2056063Z [command]/usr/bin/tar -xf /home/runner/work/_temp/2742c108-ad6a-4eef-be15-ed5088a43c38/cache.tzst -P -C /home/runner/work/jtarcio-clinica/jtarcio-clinica --use-compress-program unzstd
+2025-08-26T12:39:55.2146701Z Cache restored successfully
+2025-08-26T12:39:55.2154039Z Cache restored from key: node-cache-Linux-x64-npm-162972607ed50d86ec18ea0f06d9fa4e6ad58d20657df796894dd3e9007e9a6e
+2025-08-26T12:39:55.2298103Z ##[group]Run npm ci --ignore-scripts
+2025-08-26T12:39:55.2298497Z [36;1mnpm ci --ignore-scripts[0m
+2025-08-26T12:39:55.2298812Z [36;1mcd frontend && npm ci --ignore-scripts[0m
+2025-08-26T12:39:55.2372807Z shell: /usr/bin/bash -e {0}
+2025-08-26T12:39:55.2373187Z ##[endgroup]
+2025-08-26T12:39:56.5580591Z npm warn EBADENGINE Unsupported engine {
+2025-08-26T12:39:56.5583372Z npm warn EBADENGINE   package: '@isaacs/balanced-match@4.0.1',
+2025-08-26T12:39:56.5588189Z npm warn EBADENGINE   required: { node: '20 || >=22' },
+2025-08-26T12:39:56.5593084Z npm warn EBADENGINE   current: { node: 'v18.20.8', npm: '10.8.2' }
+2025-08-26T12:39:56.5598176Z npm warn EBADENGINE }
+2025-08-26T12:39:56.5601247Z npm warn EBADENGINE Unsupported engine {
+2025-08-26T12:39:56.5602379Z npm warn EBADENGINE   package: '@isaacs/brace-expansion@5.0.0',
+2025-08-26T12:39:56.5604882Z npm warn EBADENGINE   required: { node: '20 || >=22' },
+2025-08-26T12:39:56.5607871Z npm warn EBADENGINE   current: { node: 'v18.20.8', npm: '10.8.2' }
+2025-08-26T12:39:56.5608532Z npm warn EBADENGINE }
+2025-08-26T12:39:56.5624488Z npm warn EBADENGINE Unsupported engine {
+2025-08-26T12:39:56.5641141Z npm warn EBADENGINE   package: 'find-my-way@9.3.0',
+2025-08-26T12:39:56.5642173Z npm warn EBADENGINE   required: { node: '>=20' },
+2025-08-26T12:39:56.5643275Z npm warn EBADENGINE   current: { node: 'v18.20.8', npm: '10.8.2' }
+2025-08-26T12:39:56.5644199Z npm warn EBADENGINE }
+2025-08-26T12:39:56.5644997Z npm warn EBADENGINE Unsupported engine {
+2025-08-26T12:39:56.5645828Z npm warn EBADENGINE   package: 'glob@11.0.3',
+2025-08-26T12:39:56.5646812Z npm warn EBADENGINE   required: { node: '20 || >=22' },
+2025-08-26T12:39:56.5647839Z npm warn EBADENGINE   current: { node: 'v18.20.8', npm: '10.8.2' }
+2025-08-26T12:39:56.5648446Z npm warn EBADENGINE }
+2025-08-26T12:39:56.5648917Z npm warn EBADENGINE Unsupported engine {
+2025-08-26T12:39:56.5649525Z npm warn EBADENGINE   package: 'minimatch@10.0.3',
+2025-08-26T12:39:56.5650373Z npm warn EBADENGINE   required: { node: '20 || >=22' },
+2025-08-26T12:39:56.5651130Z npm warn EBADENGINE   current: { node: 'v18.20.8', npm: '10.8.2' }
+2025-08-26T12:39:56.5651687Z npm warn EBADENGINE }
+2025-08-26T12:39:56.5657507Z npm warn EBADENGINE Unsupported engine {
+2025-08-26T12:39:56.5658566Z npm warn EBADENGINE   package: 'jackspeak@4.1.1',
+2025-08-26T12:39:56.5659598Z npm warn EBADENGINE   required: { node: '20 || >=22' },
+2025-08-26T12:39:56.5660981Z npm warn EBADENGINE   current: { node: 'v18.20.8', npm: '10.8.2' }
+2025-08-26T12:39:56.5661875Z npm warn EBADENGINE }
+2025-08-26T12:39:56.5669785Z npm warn EBADENGINE Unsupported engine {
+2025-08-26T12:39:56.5674618Z npm warn EBADENGINE   package: 'json-schema-resolver@3.0.0',
+2025-08-26T12:39:56.5676689Z npm warn EBADENGINE   required: { node: '>=20' },
+2025-08-26T12:39:56.5690988Z npm warn EBADENGINE   current: { node: 'v18.20.8', npm: '10.8.2' }
+2025-08-26T12:39:56.5692057Z npm warn EBADENGINE }
+2025-08-26T12:39:56.5693122Z npm warn EBADENGINE Unsupported engine {
+2025-08-26T12:39:56.5694157Z npm warn EBADENGINE   package: 'path-scurry@2.0.0',
+2025-08-26T12:39:56.5695194Z npm warn EBADENGINE   required: { node: '20 || >=22' },
+2025-08-26T12:39:56.5696235Z npm warn EBADENGINE   current: { node: 'v18.20.8', npm: '10.8.2' }
+2025-08-26T12:39:56.5697100Z npm warn EBADENGINE }
+2025-08-26T12:39:56.5697888Z npm warn EBADENGINE Unsupported engine {
+2025-08-26T12:39:56.5699209Z npm warn EBADENGINE   package: 'lru-cache@11.1.0',
+2025-08-26T12:39:56.5700311Z npm warn EBADENGINE   required: { node: '20 || >=22' },
+2025-08-26T12:39:56.5701764Z npm warn EBADENGINE   current: { node: 'v18.20.8', npm: '10.8.2' }
+2025-08-26T12:39:56.5705570Z npm warn EBADENGINE }
+2025-08-26T12:40:01.2532894Z npm warn deprecated supertest@6.3.4: Please upgrade to supertest v7.1.3+, see release notes at https://github.com/forwardemail/supertest/releases/tag/v7.1.3 - maintenance is supported by Forward Email @ https://forwardemail.net
+2025-08-26T12:40:01.9978833Z npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+2025-08-26T12:40:03.5511099Z npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+2025-08-26T12:40:04.0550486Z npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead
+2025-08-26T12:40:04.2335512Z npm warn deprecated superagent@8.1.2: Please upgrade to superagent v10.2.2+, see release notes at https://github.com/forwardemail/superagent/releases/tag/v10.2.2 - maintenance is supported by Forward Email @ https://forwardemail.net
+2025-08-26T12:40:07.0281916Z npm warn deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead
+2025-08-26T12:40:07.0763925Z npm warn deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead
+2025-08-26T12:40:08.3484601Z npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+2025-08-26T12:40:08.5220275Z npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+2025-08-26T12:40:08.7281898Z npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+2025-08-26T12:40:08.7607871Z npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+2025-08-26T12:40:08.9354415Z npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+2025-08-26T12:40:14.1022410Z npm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+2025-08-26T12:40:32.2375843Z npm error code ECONNRESET
+2025-08-26T12:40:32.2378807Z npm error network aborted
+2025-08-26T12:40:32.2382509Z npm error network This is a problem related to network connectivity.
+2025-08-26T12:40:32.2383925Z npm error network In most cases you are behind a proxy or have bad network settings.
+2025-08-26T12:40:32.2384525Z npm error network
+2025-08-26T12:40:32.2385306Z npm error network If you are behind a proxy, please make sure that the
+2025-08-26T12:40:32.2401143Z npm error network 'proxy' config is set properly.  See: 'npm help config'
+2025-08-26T12:40:32.2407324Z npm error A complete log of this run can be found in: /home/runner/.npm/_logs/2025-08-26T12_39_55_320Z-debug-0.log
+2025-08-26T12:40:32.3161511Z ##[error]Process completed with exit code 1.
+2025-08-26T12:40:32.3476103Z Post job cleanup.
+2025-08-26T12:40:32.5070701Z [command]/usr/bin/git version
+2025-08-26T12:40:32.5145043Z git version 2.51.0
+2025-08-26T12:40:32.5214639Z Temporarily overriding HOME='/home/runner/work/_temp/4c2d7e2c-36db-44d9-a8fc-4fc4dba90fd5' before making global git config changes
+2025-08-26T12:40:32.5221542Z Adding repository directory to the temporary git global config as a safe directory
+2025-08-26T12:40:32.5247909Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/jtarcio-clinica/jtarcio-clinica
+2025-08-26T12:40:32.5310613Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-08-26T12:40:32.5380804Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-08-26T12:40:32.5787818Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-08-26T12:40:32.5829440Z http.https://github.com/.extraheader
+2025-08-26T12:40:32.5859808Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2025-08-26T12:40:32.5905548Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-08-26T12:40:32.6429401Z Cleaning up orphan processes

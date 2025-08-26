@@ -1,0 +1,6 @@
+﻿2025-08-26T12:39:59.0214632Z ##[group]Run cd frontend
+2025-08-26T12:39:59.0214935Z [36;1mcd frontend[0m
+2025-08-26T12:39:59.0215182Z [36;1mnpm audit --audit-level moderate[0m
+2025-08-26T12:39:59.0260102Z shell: /usr/bin/bash -e {0}
+2025-08-26T12:39:59.0260348Z ##[endgroup]
+2025-08-26T12:39:59.9966523Z found 0 vulnerabilities

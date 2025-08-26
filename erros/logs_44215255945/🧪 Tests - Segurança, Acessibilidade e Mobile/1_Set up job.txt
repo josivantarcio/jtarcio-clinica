@@ -1,0 +1,32 @@
+﻿2025-08-26T12:39:54.4051050Z Current runner version: '2.328.0'
+2025-08-26T12:39:54.4084443Z ##[group]Runner Image Provisioner
+2025-08-26T12:39:54.4085778Z Hosted Compute Agent
+2025-08-26T12:39:54.4086786Z Version: 20250825.382
+2025-08-26T12:39:54.4087770Z Commit: 7109f2abf901479dac39397456e363ac0cca0730
+2025-08-26T12:39:54.4089067Z Build Date: 2025-08-25T22:55:50Z
+2025-08-26T12:39:54.4090320Z ##[endgroup]
+2025-08-26T12:39:54.4091158Z ##[group]Operating System
+2025-08-26T12:39:54.4092257Z Ubuntu
+2025-08-26T12:39:54.4093066Z 24.04.2
+2025-08-26T12:39:54.4093886Z LTS
+2025-08-26T12:39:54.4094649Z ##[endgroup]
+2025-08-26T12:39:54.4095658Z ##[group]Runner Image
+2025-08-26T12:39:54.4096696Z Image: ubuntu-24.04
+2025-08-26T12:39:54.4097558Z Version: 20250818.1.0
+2025-08-26T12:39:54.4099489Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20250818.1/images/ubuntu/Ubuntu2404-Readme.md
+2025-08-26T12:39:54.4102316Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20250818.1
+2025-08-26T12:39:54.4104476Z ##[endgroup]
+2025-08-26T12:39:54.4106325Z ##[group]GITHUB_TOKEN Permissions
+2025-08-26T12:39:54.4109015Z Contents: read
+2025-08-26T12:39:54.4110182Z Metadata: read
+2025-08-26T12:39:54.4111098Z Packages: read
+2025-08-26T12:39:54.4112050Z ##[endgroup]
+2025-08-26T12:39:54.4114900Z Secret source: Actions
+2025-08-26T12:39:54.4115994Z Prepare workflow directory
+2025-08-26T12:39:54.4969183Z Prepare all required actions
+2025-08-26T12:39:54.5026159Z Getting action download info
+2025-08-26T12:39:54.9756623Z Download action repository 'actions/checkout@v4' (SHA:08eba0b27e820071cde6df949e0beb9ba4906955)
+2025-08-26T12:39:55.6203328Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2025-08-26T12:39:56.0160924Z Download action repository 'actions/cache@v3' (SHA:2f8e54208210a422b2efd51efaa6bd6d7ca8920f)
+2025-08-26T12:39:56.6114236Z Download action repository 'codecov/codecov-action@v3' (SHA:ab904c41d6ece82784817410c45d8b8c02684457)
+2025-08-26T12:39:57.5851899Z Complete job name: 🧪 Tests - Segurança, Acessibilidade e Mobile

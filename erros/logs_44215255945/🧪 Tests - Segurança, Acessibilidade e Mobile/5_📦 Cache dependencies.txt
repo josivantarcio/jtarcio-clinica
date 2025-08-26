@@ -1,0 +1,14 @@
+﻿2025-08-26T12:40:28.3304509Z ##[group]Run actions/cache@v3
+2025-08-26T12:40:28.3304770Z with:
+2025-08-26T12:40:28.3304978Z   path: ~/.npm
+node_modules
+frontend/node_modules
+
+2025-08-26T12:40:28.3305393Z   key: Linux-node-162972607ed50d86ec18ea0f06d9fa4e6ad58d20657df796894dd3e9007e9a6e
+2025-08-26T12:40:28.3305792Z   restore-keys: Linux-node-
+
+2025-08-26T12:40:28.3306031Z   enableCrossOsArchive: false
+2025-08-26T12:40:28.3306253Z   fail-on-cache-miss: false
+2025-08-26T12:40:28.3306456Z   lookup-only: false
+2025-08-26T12:40:28.3306644Z ##[endgroup]
+2025-08-26T12:40:28.7707517Z Cache not found for input keys: Linux-node-162972607ed50d86ec18ea0f06d9fa4e6ad58d20657df796894dd3e9007e9a6e, Linux-node-

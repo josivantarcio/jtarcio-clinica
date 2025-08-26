@@ -43,28 +43,36 @@ jobs:
     - name: 🟢 Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '20'
         cache: 'npm'
 
-    - name: 📦 Cache dependencies
-      uses: actions/cache@v3
+    - name: 📦 Cache dependencies  
+      uses: actions/cache@v4
       with:
         path: |
           ~/.npm
           node_modules
           frontend/node_modules
-        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+        key: ${{ runner.os }}-node-20-${{ hashFiles('**/package-lock.json') }}
         restore-keys: |
+          ${{ runner.os }}-node-20-
           ${{ runner.os }}-node-
 
     - name: 📦 Install dependencies
       run: |
-        # Skip husky in CI and use cache
+        # Configure npm for better reliability
+        npm config set registry https://registry.npmjs.org/
+        npm config set fetch-retries 5
+        npm config set fetch-retry-factor 2
+        npm config set fetch-retry-mintimeout 10000
+        npm config set fetch-retry-maxtimeout 60000
+        
+        # Skip husky in CI and use cache with retry
         if [ ! -d "node_modules" ]; then
-          npm ci --ignore-scripts
+          npm ci --ignore-scripts --prefer-offline --no-audit || npm ci --ignore-scripts --no-audit
         fi
         if [ ! -d "frontend/node_modules" ]; then
-          cd frontend && npm ci --ignore-scripts
+          cd frontend && (npm ci --ignore-scripts --prefer-offline --no-audit || npm ci --ignore-scripts --no-audit)
         fi
 
     - name: 🏗️ Setup environment
@@ -116,13 +124,21 @@ jobs:
     - name: 🟢 Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '20'
         cache: 'npm'
 
     - name: 📦 Install dependencies
       run: |
-        npm ci --ignore-scripts
-        cd frontend && npm ci --ignore-scripts
+        # Configure npm for better reliability
+        npm config set registry https://registry.npmjs.org/
+        npm config set fetch-retries 5
+        npm config set fetch-retry-factor 2
+        npm config set fetch-retry-mintimeout 10000
+        npm config set fetch-retry-maxtimeout 60000
+        
+        # Install with retry logic
+        npm ci --ignore-scripts --prefer-offline --no-audit || npm ci --ignore-scripts --no-audit
+        cd frontend && (npm ci --ignore-scripts --prefer-offline --no-audit || npm ci --ignore-scripts --no-audit)
 
     - name: 🔍 Backend Linting & Type Check
       run: |
@@ -147,13 +163,21 @@ jobs:
     - name: 🟢 Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '20'
         cache: 'npm'
 
     - name: 📦 Install dependencies
       run: |
-        npm ci --ignore-scripts
-        cd frontend && npm ci --ignore-scripts
+        # Configure npm for better reliability
+        npm config set registry https://registry.npmjs.org/
+        npm config set fetch-retries 5
+        npm config set fetch-retry-factor 2
+        npm config set fetch-retry-mintimeout 10000
+        npm config set fetch-retry-maxtimeout 60000
+        
+        # Install with retry logic
+        npm ci --ignore-scripts --prefer-offline --no-audit || npm ci --ignore-scripts --no-audit
+        cd frontend && (npm ci --ignore-scripts --prefer-offline --no-audit || npm ci --ignore-scripts --no-audit)
 
     - name: 🏗️ Build Backend
       run: npm run build
@@ -179,7 +203,7 @@ jobs:
     - name: 🟢 Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '20'
         cache: 'npm'
 
     - name: 🔒 Run npm audit (Backend)
