@@ -46,7 +46,28 @@ export async function verifyJWT(request: FastifyRequest, reply: FastifyReply) {
       });
     }
 
-    // Verify the JWT token
+    // Handle fake token in development mode
+    if (
+      process.env.NODE_ENV === 'development' &&
+      token === 'fake-jwt-token-for-testing'
+    ) {
+      request.log.debug(
+        'Development mode: Using fake token for authentication',
+      );
+
+      // Attach fake user info for development
+      (request as any).user = {
+        userId: 'dev-user-1',
+        role: 'ADMIN',
+        email: 'admin@eoclinica.com.br',
+        firstName: 'Admin',
+        lastName: 'Developer',
+      };
+
+      return; // Continue to route handler
+    }
+
+    // Verify the JWT token for production
     const decoded = jwt.verify(token, env.JWT_SECRET) as JWTPayload;
 
     // Check token type
@@ -105,6 +126,21 @@ export function optionalAuth(
 
   if (authHeader && authHeader.startsWith('Bearer ')) {
     const token = authHeader.substring(7);
+
+    // Handle fake token in development mode
+    if (
+      process.env.NODE_ENV === 'development' &&
+      token === 'fake-jwt-token-for-testing'
+    ) {
+      (request as any).user = {
+        userId: 'dev-user-1',
+        role: 'ADMIN',
+        email: 'admin@eoclinica.com.br',
+        firstName: 'Admin',
+        lastName: 'Developer',
+      };
+      return next();
+    }
 
     try {
       const decoded = jwt.verify(token, env.JWT_SECRET) as JWTPayload;

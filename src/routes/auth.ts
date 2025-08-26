@@ -375,9 +375,9 @@ export async function authRoutes(fastify: FastifyInstance): Promise<void> {
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       try {
-        const userId = (request as any).user?.userId;
+        const user = (request as any).user;
 
-        if (!userId) {
+        if (!user?.userId) {
           return reply.status(401).send({
             success: false,
             error: {
@@ -387,16 +387,72 @@ export async function authRoutes(fastify: FastifyInstance): Promise<void> {
           });
         }
 
-        const user = await userService.findById(userId);
+        // Handle fake token in development mode
+        if (
+          process.env.NODE_ENV === 'development' &&
+          user.userId === 'dev-user-1'
+        ) {
+          request.log.debug('Development mode: Returning mock user data');
+
+          return reply.send({
+            success: true,
+            data: {
+              id: 'dev-user-1',
+              email: 'admin@eoclinica.com.br',
+              name: 'Admin Developer',
+              firstName: 'Admin',
+              lastName: 'Developer',
+              role: 'ADMIN',
+              status: 'ACTIVE',
+              phone: '(11) 99999-9999',
+              timezone: 'America/Sao_Paulo',
+              avatar: null,
+              settings: {
+                notifications: {
+                  email: true,
+                  sms: true,
+                  push: true,
+                  appointmentReminders: true,
+                  cancellationAlerts: true,
+                  promotionalEmails: false,
+                  systemUpdates: true,
+                  reminderTiming: 24,
+                },
+                privacy: {
+                  profileVisibility: 'contacts',
+                  shareActivityStatus: true,
+                  allowDirectMessages: true,
+                  showOnlineStatus: true,
+                },
+                appearance: {
+                  theme: 'light',
+                  fontSize: 'medium',
+                  reducedMotion: false,
+                  highContrast: false,
+                },
+                security: {
+                  twoFactorEnabled: false,
+                  loginNotifications: true,
+                  sessionTimeout: 60,
+                },
+              },
+              bio: 'Usuário de desenvolvimento para testes',
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            },
+          });
+        }
+
+        const dbUser = await userService.findById(user.userId);
 
         // Parse settings from encryptedData if exists
         let settings = null;
-        if (user.encryptedData) {
+        if (dbUser.encryptedData) {
           try {
             settings =
-              typeof user.encryptedData === 'string'
-                ? JSON.parse(user.encryptedData)
-                : user.encryptedData;
+              typeof dbUser.encryptedData === 'string'
+                ? JSON.parse(dbUser.encryptedData)
+                : dbUser.encryptedData;
           } catch (error) {
             console.error('Error parsing user settings:', error);
           }
@@ -405,20 +461,20 @@ export async function authRoutes(fastify: FastifyInstance): Promise<void> {
         return reply.send({
           success: true,
           data: {
-            id: user.id,
-            email: user.email,
-            name: user.fullName,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            role: user.role,
-            status: user.status,
-            phone: user.phone,
-            timezone: user.timezone,
-            avatar: user.avatar,
+            id: dbUser.id,
+            email: dbUser.email,
+            name: dbUser.fullName,
+            firstName: dbUser.firstName,
+            lastName: dbUser.lastName,
+            role: dbUser.role,
+            status: dbUser.status,
+            phone: dbUser.phone,
+            timezone: dbUser.timezone,
+            avatar: dbUser.avatar,
             settings,
-            bio: user.doctorProfile?.biography || '',
-            createdAt: user.createdAt,
-            updatedAt: user.updatedAt,
+            bio: dbUser.doctorProfile?.biography || '',
+            createdAt: dbUser.createdAt,
+            updatedAt: dbUser.updatedAt,
           },
         });
       } catch (error) {

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach } from '@jest/glo
 import axios from 'axios';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
-import { PrismaClient } from '../src/database/generated/client/index';
+import { PrismaClient } from '../../src/database/generated/client/index';
 import Redis from 'ioredis';
 
 /**

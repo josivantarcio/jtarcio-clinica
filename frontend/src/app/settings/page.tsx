@@ -605,14 +605,16 @@ export default function SettingsPage() {
                         onChange={handleAvatarChange}
                         accept="image/*"
                         className="hidden"
+                        aria-label="Selecionar nova foto de perfil"
                       />
                       <Button 
                         variant="outline" 
                         size="sm"
                         onClick={() => fileInputRef.current?.click()}
                         disabled={saving}
+                        aria-label="Alterar foto de perfil"
                       >
-                        <Camera className="h-4 w-4 mr-2" />
+                        <Camera className="h-4 w-4 mr-2" aria-hidden="true" />
                         Alterar Foto
                       </Button>
                       {(avatarFile || settings.profile.avatar) && (
@@ -645,8 +647,9 @@ export default function SettingsPage() {
                 {/* Personal Information */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Nome</label>
+                    <label htmlFor="firstName" className="text-sm font-medium">Nome</label>
                     <input
+                      id="firstName"
                       type="text"
                       value={settings.profile.firstName}
                       onChange={(e) => updateSetting('profile', 'firstName', e.target.value)}

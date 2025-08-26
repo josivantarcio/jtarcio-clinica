@@ -43,19 +43,7 @@ export function isValidEmail(email: string): boolean {
 }
 
 /**
- * Valida senha forte (8+ caracteres, maiúscula, minúscula, número, especial)
- */
-export function isStrongPassword(password: string): boolean {
-  if (password.length < 8) return false;
-  if (!/[A-Z]/.test(password)) return false; // Maiúscula
-  if (!/[a-z]/.test(password)) return false; // Minúscula
-  if (!/\d/.test(password)) return false; // Número
-  if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) return false; // Caractere especial
-  return true;
-}
-
-/**
- * Sanitiza entrada contra XSS
+ * Sanitiza entrada para prevenir XSS
  */
 export function sanitizeInput(input: string): string {
   return input
@@ -64,7 +52,78 @@ export function sanitizeInput(input: string): string {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#x27;')
     .replace(/javascript:/gi, '')
-    .replace(/on\w+=/gi, '');
+    .replace(/on\w+=/gi, '')
+    .replace(/data:/gi, '')
+    .replace(/vbscript:/gi, '');
+}
+
+/**
+ * Valida se string contém apenas caracteres seguros para SQL
+ */
+export function isSQLSafe(input: string): boolean {
+  // Rejeita caracteres perigosos para SQL injection
+  const dangerousChars = /['"\\;--\/*]/;
+  return !dangerousChars.test(input);
+}
+
+/**
+ * Valida senha forte (8+ caracteres, maiúscula, minúscula, número, especial)
+ */
+export function isStrongPassword(password: string): boolean {
+  if (password.length < 8) return false;
+  if (password.length > 128) return false; // Previne DoS com senhas muito longas
+  if (!/[A-Z]/.test(password)) return false; // Maiúscula
+  if (!/[a-z]/.test(password)) return false; // Minúscula
+  if (!/\d/.test(password)) return false; // Número
+  if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) return false; // Caractere especial
+  
+  // Verifica se não é uma senha comum
+  const commonPasswords = [
+    'password', '123456789', 'qwerty', 'abc123', 'password123',
+    'admin', 'letmein', 'welcome', 'monkey', '1234567890'
+  ];
+  if (commonPasswords.some(common => password.toLowerCase().includes(common))) {
+    return false;
+  }
+  
+  return true;
+}
+
+/**
+ * Valida se um IP está em uma lista de IPs suspeitos
+ */
+export function isSuspiciousIP(ip: string): boolean {
+  // IPs privados/locais são sempre permitidos
+  const privateRanges = [
+    /^10\./,
+    /^192\.168\./,
+    /^172\.(1[6-9]|2[0-9]|3[01])\./,
+    /^127\./,
+    /^::1$/,
+    /^localhost$/
+  ];
+  
+  if (privateRanges.some(range => range.test(ip))) {
+    return false;
+  }
+  
+  // Lista básica de IPs/ranges suspeitos conhecidos
+  const suspiciousRanges = [
+    /^0\.0\.0\.0$/,
+    /^255\.255\.255\.255$/
+  ];
+  
+  return suspiciousRanges.some(range => range.test(ip));
+}
+
+/**
+ * Valida limite de tentativas de login por IP
+ */
+export function validateLoginAttempts(attempts: number, timeWindow: number): boolean {
+  const maxAttempts = process.env.NODE_ENV === 'production' ? 5 : 50;
+  const windowMs = process.env.NODE_ENV === 'production' ? 15 * 60 * 1000 : timeWindow; // 15 min em produção
+  
+  return attempts < maxAttempts;
 }
 
 /**

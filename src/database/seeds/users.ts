@@ -25,7 +25,9 @@ export async function seedUsers(prisma: PrismaClient): Promise<void> {
       throw new Error('No specialties found. Please seed specialties first.');
     }
 
-    const defaultPassword = await bcrypt.hash('Admin123!', env.SALT_ROUNDS);
+    // Use environment variable for default password in production
+    const defaultPasswordPlain = process.env.SEED_DEFAULT_PASSWORD || 'TempPass123!';
+    const defaultPassword = await bcrypt.hash(defaultPasswordPlain, env.SALT_ROUNDS);
 
     // Admin user
     const adminUser = await prisma.user.upsert({

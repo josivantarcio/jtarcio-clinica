@@ -16,6 +16,14 @@ export const metadata: Metadata = {
   icons: {
     icon: "/favicon.ico",
     apple: "/icon-192.png"
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "EO Clínica"
+  },
+  formatDetection: {
+    telephone: false
   }
 };
 

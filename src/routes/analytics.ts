@@ -25,7 +25,10 @@ async function getActiveUsersCount(
     // Simulate realistic active users based on recent activity
     return Math.max(recentActivity, Math.floor(Math.random() * 10) + 5);
   } catch (error) {
-    console.log('Error calculating active users:', error);
+    // Log error securely without exposing sensitive data
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Analytics: Error calculating active users - check database connection');
+    }
     return Math.floor(Math.random() * 10) + 5;
   }
 }
