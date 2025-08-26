@@ -27,7 +27,9 @@ async function getActiveUsersCount(
   } catch (error) {
     // Log error securely without exposing sensitive data
     if (process.env.NODE_ENV === 'development') {
-      console.error('Analytics: Error calculating active users - check database connection');
+      console.error(
+        'Analytics: Error calculating active users - check database connection',
+      );
     }
     return Math.floor(Math.random() * 10) + 5;
   }

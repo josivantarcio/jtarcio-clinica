@@ -1,5 +1,5 @@
 # Build stage
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 
 # Install required dependencies for Prisma
 RUN apk add --no-cache openssl libc6-compat
@@ -23,7 +23,7 @@ RUN npx prisma generate
 RUN echo "Using tsx for production"
 
 # Production stage
-FROM node:18-alpine AS production
+FROM node:20-alpine AS production
 
 # Install required dependencies for Prisma and dumb-init
 RUN apk add --no-cache dumb-init openssl libc6-compat

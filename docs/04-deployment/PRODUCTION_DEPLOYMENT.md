@@ -56,7 +56,7 @@ Create `/opt/eo-clinica/docker-compose.prod.yml`:
 version: '3.8'
 
 services:
-  # Main Application
+  # Main Application (Node.js 20)
   app:
     image: eo-clinica/backend:latest
     container_name: eo-clinica-app
@@ -172,7 +172,7 @@ services:
     networks:
       - eo-clinica-network
 
-  # Frontend (Next.js)
+  # Frontend (Next.js with Node.js 20)
   frontend:
     image: eo-clinica/frontend:latest
     container_name: eo-clinica-frontend
@@ -298,9 +298,15 @@ sudo usermod -aG docker $USER
 sudo curl -L "https://github.com/docker/compose/releases/download/v2.24.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 sudo chmod +x /usr/local/bin/docker-compose
 
+# Install Node.js 20 (for local development and testing)
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
 # Verify installation
 docker --version
 docker-compose --version
+node --version  # Should be 20.x
+npm --version
 ```
 
 #### Setup Project Directory

@@ -1,6 +1,0 @@
-﻿2025-08-26T16:41:05.7572982Z ##[group]Run cd frontend
-2025-08-26T16:41:05.7573289Z [36;1mcd frontend[0m
-2025-08-26T16:41:05.7573783Z [36;1mnpm audit --audit-level moderate || echo "⚠️ Frontend npm audit failed - likely due to registry connectivity issues"[0m
-2025-08-26T16:41:05.7616670Z shell: /usr/bin/bash -e {0}
-2025-08-26T16:41:05.7616922Z ##[endgroup]
-2025-08-26T16:41:06.6776939Z found 0 vulnerabilities

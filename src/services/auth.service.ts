@@ -22,12 +22,14 @@ export interface AuthResponse {
 }
 
 export class AuthService {
-  private readonly JWT_SECRET = process.env.JWT_SECRET || (() => {
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error('JWT_SECRET must be set in production');
-    }
-    return 'dev-secret-key-not-for-production-' + Date.now();
-  })();
+  private readonly JWT_SECRET =
+    process.env.JWT_SECRET ||
+    (() => {
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error('JWT_SECRET must be set in production');
+      }
+      return 'dev-secret-key-not-for-production-' + Date.now();
+    })();
   private readonly JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
   private readonly REFRESH_TOKEN_EXPIRES_IN =
     process.env.REFRESH_TOKEN_EXPIRES_IN || '30d';

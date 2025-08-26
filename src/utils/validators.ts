@@ -76,16 +76,24 @@ export function isStrongPassword(password: string): boolean {
   if (!/[a-z]/.test(password)) return false; // Minúscula
   if (!/\d/.test(password)) return false; // Número
   if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) return false; // Caractere especial
-  
+
   // Verifica se não é uma senha comum
   const commonPasswords = [
-    'password', '123456789', 'qwerty', 'abc123', 'password123',
-    'admin', 'letmein', 'welcome', 'monkey', '1234567890'
+    'password',
+    '123456789',
+    'qwerty',
+    'abc123',
+    'password123',
+    'admin',
+    'letmein',
+    'welcome',
+    'monkey',
+    '1234567890',
   ];
   if (commonPasswords.some(common => password.toLowerCase().includes(common))) {
     return false;
   }
-  
+
   return true;
 }
 
@@ -100,29 +108,30 @@ export function isSuspiciousIP(ip: string): boolean {
     /^172\.(1[6-9]|2[0-9]|3[01])\./,
     /^127\./,
     /^::1$/,
-    /^localhost$/
+    /^localhost$/,
   ];
-  
+
   if (privateRanges.some(range => range.test(ip))) {
     return false;
   }
-  
+
   // Lista básica de IPs/ranges suspeitos conhecidos
-  const suspiciousRanges = [
-    /^0\.0\.0\.0$/,
-    /^255\.255\.255\.255$/
-  ];
-  
+  const suspiciousRanges = [/^0\.0\.0\.0$/, /^255\.255\.255\.255$/];
+
   return suspiciousRanges.some(range => range.test(ip));
 }
 
 /**
  * Valida limite de tentativas de login por IP
  */
-export function validateLoginAttempts(attempts: number, timeWindow: number): boolean {
+export function validateLoginAttempts(
+  attempts: number,
+  timeWindow: number,
+): boolean {
   const maxAttempts = process.env.NODE_ENV === 'production' ? 5 : 50;
-  const windowMs = process.env.NODE_ENV === 'production' ? 15 * 60 * 1000 : timeWindow; // 15 min em produção
-  
+  const windowMs =
+    process.env.NODE_ENV === 'production' ? 15 * 60 * 1000 : timeWindow; // 15 min em produção
+
   return attempts < maxAttempts;
 }
 

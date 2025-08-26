@@ -116,7 +116,9 @@ fastify.post('/api/v1/auth/login', async (request, reply) => {
     const allowedPassword = process.env.SEED_DEFAULT_PASSWORD || 'TempPass123!';
     if (
       email === 'admin@eoclinica.com.br' &&
-      (password === allowedPassword || password === 'Admin123' || password === 'Admin123!')
+      (password === allowedPassword ||
+        password === 'Admin123' ||
+        password === 'Admin123!')
     ) {
       // Create audit log for successful login
       await createAuditLog({
