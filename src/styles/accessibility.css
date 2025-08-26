@@ -1,0 +1,428 @@
+/**
+ * ♿ ESTILOS DE ACESSIBILIDADE - EO CLÍNICA
+ * 
+ * Estilos baseados nos testes de acessibilidade WCAG 2.1
+ */
+
+/* Screen Reader Only - Oculta visualmente mas mantém para leitores de tela */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Skip Links - Links para pular conteúdo */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: #000;
+  color: #fff;
+  padding: 8px;
+  text-decoration: none;
+  z-index: 9999;
+  font-size: 14px;
+  border-radius: 4px;
+  transition: top 0.2s;
+}
+
+.skip-link:focus {
+  top: 6px;
+}
+
+/* Indicadores de Foco - WCAG 2.1 AA compliant */
+*:focus {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}
+
+/* Foco para elementos específicos */
+button:focus,
+input:focus,
+select:focus,
+textarea:focus,
+a:focus {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+/* Foco para botões primários */
+.accessible-button--primary:focus {
+  outline: 2px solid #fff;
+  box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.5);
+}
+
+/* Remover outline padrão apenas quando substituído */
+.accessible-button:focus,
+.accessible-input:focus,
+.accessible-select:focus {
+  outline: none; /* Removido porque temos custom focus */
+}
+
+/* Tamanhos Touch-Friendly - Mínimo 44x44px */
+.accessible-button,
+.accessible-input,
+.accessible-select {
+  min-height: 44px;
+  min-width: 44px;
+  font-size: 16px; /* Previne zoom no iOS */
+}
+
+/* Botões acessíveis */
+.accessible-button {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.accessible-button--primary {
+  background-color: #007bff;
+  color: #ffffff;
+}
+
+.accessible-button--primary:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+.accessible-button--secondary {
+  background-color: #6c757d;
+  color: #ffffff;
+}
+
+.accessible-button--danger {
+  background-color: #dc3545;
+  color: #ffffff;
+}
+
+.accessible-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Inputs acessíveis */
+.accessible-input,
+.accessible-select {
+  padding: 12px;
+  border: 2px solid #ced4da;
+  border-radius: 4px;
+  font-size: 16px;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease;
+}
+
+.accessible-input:hover,
+.accessible-select:hover {
+  border-color: #80bdff;
+}
+
+.accessible-input.error,
+.accessible-select.error {
+  border-color: #dc3545;
+  background-color: #fff5f5;
+}
+
+/* Labels acessíveis */
+.accessible-label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  font-size: 14px;
+  color: #495057;
+}
+
+.accessible-label.required {
+  font-weight: 600;
+}
+
+.required-indicator {
+  color: #dc3545;
+  font-weight: bold;
+}
+
+/* Descrições e erros de campos */
+.field-description {
+  font-size: 14px;
+  color: #6c757d;
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.field-error {
+  font-size: 14px;
+  color: #dc3545;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.field-error::before {
+  content: "⚠️";
+  font-size: 16px;
+}
+
+/* Alertas acessíveis */
+.accessible-alert {
+  padding: 16px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  border-left: 4px solid;
+}
+
+.accessible-alert--error {
+  background-color: #f8d7da;
+  border-color: #dc3545;
+  color: #721c24;
+}
+
+.accessible-alert--warning {
+  background-color: #fff3cd;
+  border-color: #ffc107;
+  color: #856404;
+}
+
+.accessible-alert--success {
+  background-color: #d1edcc;
+  border-color: #28a745;
+  color: #155724;
+}
+
+.accessible-alert--info {
+  background-color: #cce7ff;
+  border-color: #007bff;
+  color: #004085;
+}
+
+.alert-content {
+  flex: 1;
+}
+
+.alert-title {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.alert-message {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.alert-close-button {
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  min-height: 44px;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Contraste alto para modo de alto contraste */
+@media (prefers-contrast: high) {
+  .accessible-button,
+  .accessible-input,
+  .accessible-select {
+    border: 3px solid #000;
+  }
+  
+  .accessible-button--primary {
+    background-color: #000;
+    color: #fff;
+  }
+  
+  .accessible-input:focus,
+  .accessible-select:focus,
+  .accessible-button:focus {
+    outline: 3px solid #000;
+    outline-offset: 2px;
+  }
+}
+
+/* Redução de movimento para usuários sensíveis */
+@media (prefers-reduced-motion: reduce) {
+  .accessible-button,
+  .accessible-input,
+  .accessible-select,
+  .skip-link {
+    transition: none;
+  }
+  
+  .loading-spinner {
+    animation: none;
+  }
+}
+
+/* Spinner de carregamento acessível */
+.loading-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #ffffff33;
+  border-top: 2px solid #ffffff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsividade e Mobile */
+@media (max-width: 768px) {
+  .accessible-button {
+    padding: 14px 20px; /* Maior para mobile */
+    min-height: 48px; /* Mínimo maior em mobile */
+  }
+  
+  .accessible-input,
+  .accessible-select {
+    min-height: 48px;
+    font-size: 16px; /* Importante: previne zoom no iOS */
+  }
+  
+  .accessible-label {
+    font-size: 16px; /* Maior para legibilidade mobile */
+  }
+}
+
+/* Estados de validação visual */
+.accessible-input-container,
+.accessible-select-container {
+  margin-bottom: 20px;
+}
+
+.accessible-input.success,
+.accessible-select.success {
+  border-color: #28a745;
+  background-color: #f8fff8;
+}
+
+.field-success {
+  font-size: 14px;
+  color: #28a745;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.field-success::before {
+  content: "✓";
+  font-size: 16px;
+  font-weight: bold;
+}
+
+/* Layout acessível para formulários médicos */
+.medical-form {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.medical-form fieldset {
+  border: 2px solid #dee2e6;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.medical-form legend {
+  font-size: 18px;
+  font-weight: 600;
+  padding: 0 12px;
+  color: #495057;
+}
+
+/* Grid responsivo para formulários */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+@media (min-width: 768px) {
+  .form-grid.two-columns {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Indicadores de progresso acessíveis */
+.progress-indicator {
+  margin-bottom: 24px;
+}
+
+.progress-indicator[role="progressbar"] {
+  height: 8px;
+  background-color: #e9ecef;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background-color: #007bff;
+  transition: width 0.3s ease;
+}
+
+/* Mensagens de status para carregamento */
+.loading-message {
+  text-align: center;
+  padding: 20px;
+  font-size: 16px;
+  color: #6c757d;
+}
+
+/* Breadcrumbs acessíveis */
+.breadcrumb {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 20px 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.breadcrumb li::after {
+  content: ">";
+  margin-left: 8px;
+  color: #6c757d;
+}
+
+.breadcrumb li:last-child::after {
+  display: none;
+}
+
+.breadcrumb a {
+  text-decoration: none;
+  color: #007bff;
+}
+
+.breadcrumb a:hover {
+  text-decoration: underline;
+}

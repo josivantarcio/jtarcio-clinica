@@ -35,8 +35,8 @@ const envSchema = z.object({
   SALT_ROUNDS: z.string().transform(Number).default(12),
 
   // AI Integration
-  ANTHROPIC_API_KEY: z.string().optional(),
-  ANTHROPIC_API_VERSION: z.string().default('2023-06-01'),
+  GEMINI_API_KEY: z.string().min(1, 'GEMINI_API_KEY is required'),
+  GEMINI_MODEL: z.string().default('gemini-pro'),
 
   // ChromaDB
   CHROMA_HOST: z.string().default('localhost'),

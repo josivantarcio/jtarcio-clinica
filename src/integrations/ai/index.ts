@@ -7,11 +7,11 @@
  */
 
 // Core AI clients and services
-export { AnthropicClient } from './anthropic-client.js';
+export { GeminiClient } from './gemini-client.js';
 export type {
   ConversationMessage,
   StreamingResponse,
-} from './anthropic-client.js';
+} from './gemini-client.js';
 
 export { NLPPipeline, Intent } from './nlp-pipeline.js';
 export type { ExtractedEntities, NLPResult } from './nlp-pipeline.js';
@@ -144,7 +144,7 @@ export class AIServiceFactory {
 
       try {
         const health = await this.conversationManager.healthCheck();
-        result.services.anthropic = health.anthropic;
+        result.services.anthropic = health.gemini;
         result.services.chromadb = health.chroma;
       } catch (error) {
         logger.error('Health check failed', { error });

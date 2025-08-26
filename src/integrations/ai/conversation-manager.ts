@@ -1,6 +1,6 @@
 import { PrismaClient } from '../../database/generated/client';
 import { logger } from '../../config/logger.js';
-import { AnthropicClient, ConversationMessage } from './anthropic-client.js';
+import { GeminiClient, ConversationMessage } from './gemini-client.js';
 import { NLPPipeline, Intent, NLPResult } from './nlp-pipeline.js';
 import ChromaDBClient, { SearchResult } from './chromadb-client.js';
 import ConversationContextManager, {
@@ -28,15 +28,15 @@ export interface StreamingConversationResponse {
 
 export class ConversationManager {
   private prisma: PrismaClient;
-  private anthropicClient: AnthropicClient;
+  private geminiClient: GeminiClient;
   private nlpPipeline: NLPPipeline;
   private chromaClient: ChromaDBClient;
   private contextManager: ConversationContextManager;
 
   constructor(prisma: PrismaClient, redis: Redis) {
     this.prisma = prisma;
-    this.anthropicClient = new AnthropicClient(redis);
-    this.nlpPipeline = new NLPPipeline(this.anthropicClient);
+    this.geminiClient = new GeminiClient(redis);
+    this.nlpPipeline = new NLPPipeline(this.geminiClient);
     this.chromaClient = new ChromaDBClient();
     this.contextManager = new ConversationContextManager(redis);
   }
@@ -305,7 +305,7 @@ export class ConversationManager {
   ): Promise<ConversationResponse> {
     const prompt = this.buildPrompt(context, nlpResult, contextInfo);
 
-    const response = await this.anthropicClient.generateResponse(
+    const response = await this.geminiClient.generateResponse(
       [{ role: 'user', content: prompt }],
       context.userId,
       {
@@ -343,7 +343,7 @@ export class ConversationManager {
   ): AsyncGenerator<{ content: string; isComplete: boolean }, void, unknown> {
     const prompt = this.buildPrompt(context, nlpResult, contextInfo);
 
-    for await (const chunk of this.anthropicClient.generateStreamingResponse(
+    for await (const chunk of this.geminiClient.generateStreamingResponse(
       [{ role: 'user', content: prompt }],
       context.userId,
       {
@@ -569,19 +569,19 @@ AREAS: especialidades, horários, convênios, localização, procedimentos`,
    * Health check for all AI services
    */
   async healthCheck(): Promise<{
-    anthropic: boolean;
+    gemini: boolean;
     chroma: boolean;
     overall: boolean;
   }> {
-    const [anthropicHealth, chromaHealth] = await Promise.all([
-      this.anthropicClient.healthCheck(),
+    const [geminiHealth, chromaHealth] = await Promise.all([
+      this.geminiClient.healthCheck().then(result => result.status === 'healthy'),
       this.chromaClient.healthCheck(),
     ]);
 
     return {
-      anthropic: anthropicHealth,
+      gemini: geminiHealth,
       chroma: chromaHealth,
-      overall: anthropicHealth && chromaHealth,
+      overall: geminiHealth && chromaHealth,
     };
   }
 
@@ -589,13 +589,13 @@ AREAS: especialidades, horários, convênios, localização, procedimentos`,
    * Get usage statistics
    */
   async getStats(): Promise<{
-    anthropic: any;
+    gemini: any;
     chroma: any;
   }> {
     const [chromaStats] = await Promise.all([this.chromaClient.getStats()]);
 
     return {
-      anthropic: {}, // Would need to implement in AnthropicClient
+      gemini: {}, // Would need to implement in GeminiClient
       chroma: chromaStats,
     };
   }

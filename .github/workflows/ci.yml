@@ -1,0 +1,217 @@
+name: 🚀 CI/CD - EO Clínica
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    name: 🧪 Tests - Segurança, Acessibilidade e Mobile
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: clinic_password
+          POSTGRES_USER: clinic_user
+          POSTGRES_DB: eo_clinica_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5433:5432
+
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6380:6379
+
+    steps:
+    - name: 📥 Checkout repository
+      uses: actions/checkout@v4
+
+    - name: 🟢 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: 📦 Install dependencies
+      run: |
+        npm ci
+        cd frontend && npm ci
+
+    - name: 🏗️ Setup environment
+      run: |
+        cp .env.example .env.test
+        echo "DATABASE_URL=postgresql://clinic_user:clinic_password@localhost:5433/eo_clinica_db" >> .env.test
+        echo "REDIS_URL=redis://localhost:6380" >> .env.test
+        echo "JWT_SECRET=test_jwt_secret_key_for_ci" >> .env.test
+        echo "NODE_ENV=test" >> .env.test
+
+    - name: 🗄️ Setup database
+      run: |
+        npm run prisma:generate
+        npm run prisma:push
+        npm run db:seed
+
+    - name: 🛡️ Run Security Tests
+      run: npm test -- tests/security/basic-security.test.ts --verbose
+
+    - name: ♿ Run Accessibility Tests
+      run: npm test -- tests/accessibility/basic-accessibility.test.ts --verbose
+
+    - name: 📱 Run Mobile Responsiveness Tests
+      run: npm test -- tests/mobile/basic-mobile.test.ts --verbose
+
+    - name: 🧪 Run All Test Suites
+      run: |
+        npm test -- --coverage --testTimeout=30000 --verbose
+        
+    - name: 📊 Upload Coverage Reports
+      uses: codecov/codecov-action@v3
+      with:
+        fail_ci_if_error: false
+        files: ./coverage/lcov.info
+
+  lint-and-type-check:
+    name: 🔍 Lint & Type Check
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 📥 Checkout repository
+      uses: actions/checkout@v4
+
+    - name: 🟢 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: 📦 Install dependencies
+      run: |
+        npm ci
+        cd frontend && npm ci
+
+    - name: 🔍 Backend Linting & Type Check
+      run: |
+        npm run lint
+        npm run type-check
+
+    - name: 🔍 Frontend Linting & Type Check
+      run: |
+        cd frontend
+        npm run lint
+        npm run type-check
+
+  build:
+    name: 🏗️ Build Applications
+    runs-on: ubuntu-latest
+    needs: [test, lint-and-type-check]
+
+    steps:
+    - name: 📥 Checkout repository
+      uses: actions/checkout@v4
+
+    - name: 🟢 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: 📦 Install dependencies
+      run: |
+        npm ci
+        cd frontend && npm ci
+
+    - name: 🏗️ Build Backend
+      run: npm run build
+
+    - name: 🏗️ Build Frontend
+      run: |
+        cd frontend
+        npm run build
+
+    - name: 🚀 Build Docker Images
+      run: |
+        docker build -t eo-clinica-backend .
+        docker build -t eo-clinica-frontend ./frontend
+
+  security-audit:
+    name: 🔒 Security Audit
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 📥 Checkout repository
+      uses: actions/checkout@v4
+
+    - name: 🟢 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: 🔒 Run npm audit (Backend)
+      run: |
+        npm audit --audit-level moderate
+        
+    - name: 🔒 Run npm audit (Frontend)
+      run: |
+        cd frontend
+        npm audit --audit-level moderate
+
+  deploy:
+    name: 🚀 Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build, security-audit]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+    - name: 📥 Checkout repository
+      uses: actions/checkout@v4
+
+    - name: 🚀 Deploy Notice
+      run: |
+        echo "🎉 All tests passed! Ready for deployment to production."
+        echo "✅ Security tests: PASSED"
+        echo "✅ Accessibility (WCAG 2.1): PASSED" 
+        echo "✅ Mobile responsiveness: PASSED"
+        echo "✅ Lint & Type Check: PASSED"
+        echo "✅ Build: SUCCESS"
+        echo "✅ Security Audit: PASSED"
+
+  notification:
+    name: 📢 Test Results Notification
+    runs-on: ubuntu-latest
+    needs: [test, lint-and-type-check, build, security-audit]
+    if: always()
+
+    steps:
+    - name: 📊 Test Results Summary
+      run: |
+        echo "🧪 TEST EXECUTION COMPLETED"
+        echo "==============================="
+        echo "Security Tests: ${{ needs.test.result }}"
+        echo "Accessibility Tests: ${{ needs.test.result }}"
+        echo "Mobile Tests: ${{ needs.test.result }}"
+        echo "Lint & Type Check: ${{ needs.lint-and-type-check.result }}"
+        echo "Build: ${{ needs.build.result }}"
+        echo "Security Audit: ${{ needs.security-audit.result }}"
+        echo "==============================="
+        
+        if [ "${{ needs.test.result }}" = "success" ] && [ "${{ needs.lint-and-type-check.result }}" = "success" ] && [ "${{ needs.build.result }}" = "success" ] && [ "${{ needs.security-audit.result }}" = "success" ]; then
+          echo "🎉 ALL CHECKS PASSED - PRODUCTION READY!"
+        else
+          echo "❌ Some checks failed - Review required"
+          exit 1
+        fi

@@ -548,30 +548,596 @@ Get revenue analytics.
 
 ## 🔄 N8N WORKFLOW ENDPOINTS
 
-### GET `/n8n/workflows` 🔒 *Admin Only*
-List active workflows.
+### GET `/api/n8n/workflows` 🔒 *Admin Only*
+Lista workflows N8N ativos com informações detalhadas.
 
-### POST `/n8n/workflows/:id/trigger` 🔒 *Admin Only*
-Manually trigger workflow.
+**Headers:**
+```
+Authorization: Bearer [admin_token]
+```
 
-### GET `/n8n/executions` 🔒 *Admin Only*
-Get workflow execution history.
+**Query Parameters:**
+- `status` (opcional): Filtrar por status (active, inactive, error)
+- `category` (opcional): Filtrar por categoria (queue, notifications, appointments)
 
-### GET `/n8n/health`
-Check N8N system health.
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "gestao-fila-espera",
+      "name": "Gestão Fila de Espera",
+      "active": true,
+      "category": "queue",
+      "lastExecuted": "2024-12-12T10:00:00.000Z",
+      "successRate": 98.5,
+      "description": "Automatiza notificações de vagas disponíveis",
+      "triggers": ["slot_available"],
+      "nodes": 13,
+      "avgExecutionTime": 2500
+    }
+  ],
+  "stats": {
+    "total": 8,
+    "active": 6,
+    "inactive": 2
+  }
+}
+```
+
+### POST `/api/n8n/workflows/:id/trigger` 🔒 *Admin Only*
+Dispara manualmente um workflow N8N específico.
+
+**Headers:**
+```
+Authorization: Bearer [admin_token]
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "inputData": {
+    "specialtyId": "spec_101",
+    "date": "2024-12-15T14:00:00.000Z",
+    "duration": 30,
+    "reason": "manual_trigger"
+  },
+  "waitForExecution": false
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Workflow iniciado com sucesso",
+  "data": {
+    "executionId": "exec_456",
+    "workflowId": "gestao-fila-espera",
+    "status": "running",
+    "startedAt": "2024-12-12T10:00:00.000Z"
+  }
+}
+```
+
+### GET `/api/n8n/executions` 🔒 *Admin Only*
+Recupera histórico de execuções de workflows N8N.
+
+**Headers:**
+```
+Authorization: Bearer [admin_token]
+```
+
+**Query Parameters:**
+- `workflowId` (opcional): Filtrar por workflow específico
+- `status` (opcional): Filtrar por status (success, error, running, canceled)
+- `dateFrom` (opcional): Data de início (ISO 8601)
+- `dateTo` (opcional): Data de fim (ISO 8601)
+- `page` (opcional): Página (padrão: 1)
+- `limit` (opcional): Limite por página (padrão: 20, máx: 100)
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "exec_456",
+      "workflowId": "gestao-fila-espera",
+      "workflowName": "Gestão Fila de Espera",
+      "status": "success",
+      "startedAt": "2024-12-12T10:00:00.000Z",
+      "finishedAt": "2024-12-12T10:02:30.000Z",
+      "executionTime": 2500,
+      "inputData": {
+        "specialtyId": "spec_101",
+        "date": "2024-12-15T14:00:00.000Z"
+      },
+      "outputData": {
+        "notifiedPatients": 1,
+        "channelsUsed": ["email", "whatsapp"]
+      },
+      "nodeExecutions": 13,
+      "errorMessage": null
+    }
+  ],
+  "pagination": {
+    "total": 156,
+    "page": 1,
+    "limit": 20,
+    "pages": 8
+  }
+}
+```
+
+### GET `/api/n8n/executions/:id/details` 🔒 *Admin Only*
+Detalhes específicos de uma execução de workflow.
+
+**Headers:**
+```
+Authorization: Bearer [admin_token]
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "exec_456",
+    "workflowId": "gestao-fila-espera",
+    "status": "success",
+    "startedAt": "2024-12-12T10:00:00.000Z",
+    "finishedAt": "2024-12-12T10:02:30.000Z",
+    "executionTime": 2500,
+    "nodeExecutions": [
+      {
+        "nodeName": "Webhook Vaga Disponível",
+        "nodeType": "webhook",
+        "status": "success",
+        "executionTime": 45,
+        "inputData": {...},
+        "outputData": {...}
+      }
+    ],
+    "logs": [
+      {
+        "level": "info",
+        "message": "Workflow iniciado com dados válidos",
+        "timestamp": "2024-12-12T10:00:00.000Z"
+      }
+    ]
+  }
+}
+```
+
+### GET `/api/n8n/health`
+Verifica saúde do sistema N8N e conectividade.
+
+**Response:**
+```json
+{
+  "success": true,
+  "status": "healthy",
+  "data": {
+    "n8nVersion": "1.15.0",
+    "apiConnectivity": true,
+    "webhooksActive": true,
+    "lastWorkflowExecution": "2024-12-12T10:00:00.000Z",
+    "activeWorkflows": 6,
+    "queueLength": 0,
+    "credentialsValid": {
+      "whatsapp": true,
+      "twilio": true,
+      "smtp": true
+    }
+  }
+}
+```
+
+### 🔗 N8N Integration Endpoints para Fila de Espera
+
+#### POST `/api/n8n/webhooks/slot-available`
+Webhook do sistema EO Clínica para N8N quando vaga fica disponível.
+
+**Headers:**
+```
+Content-Type: application/json
+X-N8N-Webhook-Secret: [webhook_secret_from_env]
+```
+
+**Request Body:**
+```json
+{
+  "specialtyId": "spec_101",
+  "specialtyName": "Cardiologia", 
+  "doctorId": "doc_789",
+  "doctorName": "Dr. João Silva",
+  "availableDate": "2024-12-15T14:00:00.000Z",
+  "duration": 30,
+  "reason": "cancellation",
+  "urgency": "normal",
+  "metadata": {
+    "originalAppointmentId": "apt_123",
+    "cancellationTime": "2024-12-12T09:00:00.000Z"
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Workflow de fila iniciado",
+  "data": {
+    "executionId": "exec_789",
+    "queueProcessed": true,
+    "notificationsSent": 1
+  }
+}
+```
+
+#### GET `/api/n8n/queue/specialty/:specialtyId`
+Custom node endpoint para buscar fila de espera.
+
+**Headers:**
+```
+Authorization: Bearer [n8n_api_key]
+```
+
+**Query Parameters:**
+- `limit` (opcional): Máximo registros (padrão: 50)
+- `priority` (opcional): Filtro prioridade (EMERGENCY, HIGH, MEDIUM, LOW)
+- `includeNotified` (opcional): Incluir já notificados 24h (padrão: false)
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "queue_123",
+      "patientId": "pat_456", 
+      "patientName": "Maria Santos",
+      "patientEmail": "maria@email.com",
+      "patientPhone": "+5511999999999",
+      "priority": "HIGH",
+      "queuedAt": "2024-12-01T10:00:00.000Z",
+      "waitingDays": 7.5,
+      "age": 45,
+      "specialNeeds": false,
+      "previousCancellations": 0,
+      "noShowCount": 0,
+      "lastNotified": null,
+      "preferredChannels": ["email", "whatsapp"],
+      "priorityScore": 127.5
+    }
+  ],
+  "pagination": {
+    "total": 15,
+    "page": 1,
+    "limit": 50
+  },
+  "queueStats": {
+    "emergency": 2,
+    "high": 5, 
+    "medium": 6,
+    "low": 2,
+    "avgWaitingDays": 5.3
+  }
+}
+```
+
+#### PATCH `/api/n8n/queue/:patientId/notified`
+Marca paciente como notificado via N8N workflow.
+
+**Headers:**
+```
+Authorization: Bearer [n8n_api_key]
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "notificationId": "queue_123_456789",
+  "notifiedAt": "2024-12-12T10:00:00.000Z",
+  "channels": ["email", "sms", "whatsapp"],
+  "responseDeadline": "2024-12-12T12:00:00.000Z",
+  "slot": {
+    "specialtyId": "spec_101",
+    "doctorId": "doc_789", 
+    "date": "2024-12-15T14:00:00.000Z",
+    "duration": 30
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Paciente marcado como notificado",
+  "data": {
+    "patientId": "pat_456",
+    "notificationId": "queue_123_456789",
+    "followupScheduled": true,
+    "responseWindow": "2 horas"
+  }
+}
+```
+
+#### POST `/api/n8n/queue/response/:notificationId`
+Processa resposta do paciente (aceitar/recusar vaga).
+
+**Headers:**
+```
+Authorization: Bearer [n8n_api_key]
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "response": "accept",
+  "patientId": "pat_456",
+  "respondedAt": "2024-12-12T11:30:00.000Z", 
+  "channel": "whatsapp",
+  "metadata": {
+    "userAgent": "WhatsApp/2.23.20.0",
+    "source": "n8n_webhook"
+  }
+}
+```
+
+**Response (Accept):**
+```json
+{
+  "success": true,
+  "message": "Vaga aceita - Agendamento iniciado",
+  "data": {
+    "notificationId": "queue_123_456789",
+    "response": "accept", 
+    "nextStep": "schedule_appointment",
+    "appointmentWindow": "15 minutos",
+    "windowExpiresAt": "2024-12-12T13:45:00.000Z",
+    "appointmentUrl": "https://eo-clinica.com/agendar/queue_123_456789"
+  }
+}
+```
+
+**Response (Decline):**
+```json
+{
+  "success": true,
+  "message": "Vaga recusada - Próximo paciente será notificado",
+  "data": {
+    "notificationId": "queue_123_456789",
+    "response": "decline",
+    "nextStep": "notify_next_patient",
+    "nextPatient": {
+      "id": "pat_789",
+      "name": "José Santos",
+      "priority": "MEDIUM"
+    }
+  }
+}
+```
 
 ---
 
 ## ⚡ WEBHOOK ENDPOINTS
 
-### POST `/webhooks/whatsapp`
-WhatsApp Business webhook for message status.
+### 📱 WhatsApp Business Integration
 
-### POST `/webhooks/sms`
-SMS delivery webhook from Twilio.
+#### POST `/api/webhooks/whatsapp`
+Webhook do WhatsApp Business API para receber status de mensagens e respostas dos usuários.
 
-### POST `/webhooks/calendar`
-Google Calendar change notifications.
+**Headers:**
+```
+Content-Type: application/json
+X-Hub-Signature-256: [signature_from_meta]
+```
+
+**Request Body (Message Status):**
+```json
+{
+  "object": "whatsapp_business_account",
+  "entry": [
+    {
+      "id": "WHATSAPP_BUSINESS_ACCOUNT_ID",
+      "changes": [
+        {
+          "value": {
+            "messaging_product": "whatsapp",
+            "metadata": {
+              "display_phone_number": "15550123456",
+              "phone_number_id": "PHONE_NUMBER_ID"
+            },
+            "statuses": [
+              {
+                "id": "wamid.gBGGSFcCNhA3AG0iAgKYjqcHE1Y=",
+                "status": "delivered",
+                "timestamp": "1702380123",
+                "recipient_id": "5511999999999",
+                "conversation": {
+                  "id": "CONVERSATION_ID",
+                  "expiration_timestamp": "1702466523"
+                },
+                "pricing": {
+                  "billable": true,
+                  "pricing_model": "CBP",
+                  "category": "template"
+                }
+              }
+            ]
+          },
+          "field": "messages"
+        }
+      ]
+    }
+  ]
+}
+```
+
+**Request Body (Incoming Message):**
+```json
+{
+  "object": "whatsapp_business_account",
+  "entry": [
+    {
+      "id": "WHATSAPP_BUSINESS_ACCOUNT_ID",
+      "changes": [
+        {
+          "value": {
+            "messaging_product": "whatsapp",
+            "metadata": {
+              "display_phone_number": "15550123456",
+              "phone_number_id": "PHONE_NUMBER_ID"
+            },
+            "messages": [
+              {
+                "from": "5511999999999",
+                "id": "wamid.gBGGSFcCNhA3AG0iAgKYjqcHE2Y=",
+                "timestamp": "1702380123",
+                "text": {
+                  "body": "1"
+                },
+                "type": "text",
+                "context": {
+                  "from": "15550123456",
+                  "id": "wamid.gBGGSFcCNhA3AG0iAgKYjqcHE1Y="
+                }
+              }
+            ],
+            "contacts": [
+              {
+                "profile": {
+                  "name": "Maria Santos"
+                },
+                "wa_id": "5511999999999"
+              }
+            ]
+          },
+          "field": "messages"
+        }
+      ]
+    }
+  ]
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Webhook processado",
+  "data": {
+    "processedMessages": 1,
+    "processedStatuses": 0,
+    "n8nTriggered": true
+  }
+}
+```
+
+#### 🔗 WhatsApp + N8N Integration Workflows
+
+**Fluxo de Notificação de Vaga:**
+1. Sistema EO Clínica → N8N Webhook (`/api/n8n/webhooks/slot-available`)
+2. N8N processa fila e envia WhatsApp template `vaga_disponivel`
+3. Paciente responde no WhatsApp
+4. Webhook `/api/webhooks/whatsapp` recebe resposta
+5. Sistema processa resposta via `/api/n8n/queue/response/:notificationId`
+
+**Templates WhatsApp configurados:**
+- `vaga_disponivel`: Notificação de vaga com botões aceitar/recusar
+- `confirmacao_agendamento`: Confirmação após aceitar vaga
+- `lembrete_consulta`: Lembrete 24h antes da consulta
+- `cancelamento_consulta`: Notificação de cancelamento
+
+### 📟 SMS Integration (Twilio)
+
+#### POST `/api/webhooks/sms`
+Webhook do Twilio para status de entrega de SMS.
+
+**Headers:**
+```
+Content-Type: application/x-www-form-urlencoded
+X-Twilio-Signature: [signature_from_twilio]
+```
+
+**Request Body (Form Data):**
+```
+MessageSid=SMxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+MessageStatus=delivered
+To=%2B5511999999999
+From=%2B15550123456
+AccountSid=ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+ApiVersion=2010-04-01
+```
+
+**Response:**
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<Response></Response>
+```
+
+### 📅 Calendar Integration
+
+#### POST `/api/webhooks/calendar`
+Webhook do Google Calendar para notificações de mudanças.
+
+**Headers:**
+```
+Content-Type: application/json
+X-Goog-Channel-ID: [channel_id]
+X-Goog-Channel-Token: [verification_token]
+X-Goog-Resource-ID: [resource_id]
+X-Goog-Resource-URI: [resource_uri]
+X-Goog-Resource-State: [sync, exists, not_exists]
+```
+
+**Request Body:**
+```json
+{
+  "kind": "calendar#event",
+  "etag": "\"3200000000000000\"",
+  "id": "event123",
+  "status": "confirmed",
+  "htmlLink": "https://calendar.google.com/event?eid=...",
+  "created": "2024-12-12T10:00:00.000Z",
+  "updated": "2024-12-12T10:30:00.000Z",
+  "summary": "Consulta - Dr. Silva",
+  "start": {
+    "dateTime": "2024-12-15T14:00:00-03:00",
+    "timeZone": "America/Sao_Paulo"
+  },
+  "end": {
+    "dateTime": "2024-12-15T14:30:00-03:00", 
+    "timeZone": "America/Sao_Paulo"
+  },
+  "attendees": [
+    {
+      "email": "patient@email.com",
+      "responseStatus": "accepted"
+    }
+  ]
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Calendar event processed",
+  "data": {
+    "eventId": "event123",
+    "action": "updated",
+    "syncedToSystem": true
+  }
+}
+```
 
 ---
 

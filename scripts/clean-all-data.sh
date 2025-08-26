@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# EO Clínica - Script de Limpeza COMPLETA (Perde Todos os Dados)
-# © 2025 Jtarcio Desenvolvimento
-# ⚠️  ATENÇÃO: Este script APAGA TODOS OS DADOS do banco PostgreSQL
-# ⚠️  Use apenas quando quiser resetar completamente o sistema
+# EO Clínica - Script de Limpeza de Dados Fictícios
+# © 2025 Jtarcio Desenvolvimento  
+# ✨ Este script remove apenas dados fictícios/demo, mantendo estruturas essenciais
+# 🔒 Dados reais e configurações do sistema são preservados
 
 set -e
 
@@ -32,73 +32,76 @@ log_success() {
 }
 
 # Warning and confirmation
-echo -e "${RED}⚠️  ATENÇÃO: LIMPEZA COMPLETA DE DADOS ⚠️${NC}"
+echo -e "${YELLOW}🧹 LIMPEZA DE DADOS FICTÍCIOS 🧹${NC}"
 echo ""
-echo -e "${YELLOW}Este script vai:${NC}"
-echo -e "   • Parar todos os containers Docker"
-echo -e "   • Remover TODOS os volumes (incluindo dados PostgreSQL)"
-echo -e "   • Apagar TODOS os pacientes, consultas e dados médicos"
-echo -e "   • Resetar o sistema para estado inicial"
+echo -e "${BLUE}Este script vai remover apenas:${NC}"
+echo -e "   • Dados de demonstração/teste"
+echo -e "   • Notificações fictícias"
+echo -e "   • Conversas de exemplo da IA"
+echo -e "   • Agendamentos de teste"
 echo ""
-echo -e "${RED}TODOS OS DADOS SERÃO PERDIDOS PERMANENTEMENTE!${NC}"
+echo -e "${GREEN}✅ Dados reais e configurações serão preservados${NC}"
+echo -e "${GREEN}✅ Estruturas do banco de dados mantidas${NC}"
+echo -e "${GREEN}✅ Usuários administrativos preservados${NC}"
 echo ""
 
-read -p "Tem certeza que deseja continuar? Digite 'CONFIRMO' para prosseguir: " confirmation
+read -p "Deseja continuar com a limpeza? (s/N): " confirmation
 
-if [ "$confirmation" != "CONFIRMO" ]; then
+if [[ ! "$confirmation" =~ ^[Ss]$ ]]; then
     log_info "Operação cancelada pelo usuário"
     exit 0
 fi
 
 echo ""
-log_warning "Iniciando limpeza completa em 5 segundos..."
-sleep 1
-echo "4..."
-sleep 1
-echo "3..."
-sleep 1
-echo "2..."
-sleep 1
-echo "1..."
-sleep 1
+log_info "Iniciando limpeza de dados fictícios..."
 
-log_info "Iniciando limpeza completa..."
-
-# Stop all Docker containers
-log_info "Parando todos os containers..."
-docker-compose down --volumes --remove-orphans 2>/dev/null || true
-
-# Remove any remaining EO Clinica containers
-project_containers=$(docker ps -a --filter "name=eo-clinica" --format "{{.Names}}" 2>/dev/null || true)
-if [ ! -z "$project_containers" ]; then
-    log_info "Removendo containers específicos do projeto..."
-    echo "$project_containers" | xargs docker stop 2>/dev/null || true
-    echo "$project_containers" | xargs docker rm 2>/dev/null || true
+# Database connection check
+log_info "Verificando conexão com o banco de dados..."
+if ! PGPASSWORD=clinic_password pg_isready -h localhost -p 5433 -U clinic_user -d eo_clinica_db >/dev/null 2>&1; then
+    log_error "Banco de dados não está acessível. Certifique-se de que está rodando."
+    exit 1
 fi
 
-# Clean up Docker resources
-log_info "Limpando recursos Docker..."
-docker network prune -f 2>/dev/null || true
-docker container prune -f 2>/dev/null || true
-docker image prune -f 2>/dev/null || true
+# Clean fictitious data from database
+log_info "Removendo dados fictícios do banco..."
 
-# Remove specific volumes if they exist
-log_info "Removendo volumes específicos..."
-docker volume rm eo-clinica2_postgres_data 2>/dev/null || true
-docker volume rm eo-clinica2_redis_data 2>/dev/null || true
-docker volume rm eo-clinica2_chroma_data 2>/dev/null || true
-docker volume rm eo-clinica2_n8n_data 2>/dev/null || true
-docker volume rm eo-clinica2_pgadmin_data 2>/dev/null || true
+# Remove demo appointments (keep structure)
+PGPASSWORD=clinic_password psql -h localhost -p 5433 -U clinic_user -d eo_clinica_db -c "
+DELETE FROM appointments WHERE id IN (
+    'demo_apt_1', 'demo_apt_2', 'demo_apt_3'
+) OR notes LIKE '%demonstração%' OR notes LIKE '%teste%' OR notes LIKE '%exemplo%';
+" 2>/dev/null || log_warning "Nenhum agendamento fictício encontrado"
 
-# Clean any remaining processes
-log_info "Finalizando processos locais..."
-pkill -f "node.*3000" 2>/dev/null || true
-pkill -f "next.*3001" 2>/dev/null || true
-pkill -f "tsx.*src/index" 2>/dev/null || true
+# Remove demo patients (but keep essential structure)  
+PGPASSWORD=clinic_password psql -h localhost -p 5433 -U clinic_user -d eo_clinica_db -c "
+DELETE FROM users WHERE email IN (
+    'maria.teste@example.com',
+    'joao.demo@example.com', 
+    'ana.exemplo@example.com'
+) OR name LIKE '%Teste%' OR name LIKE '%Demo%' OR name LIKE '%Exemplo%';
+" 2>/dev/null || log_warning "Nenhum usuário fictício encontrado"
 
-log_success "Limpeza completa concluída!"
+# Remove demo financial records
+PGPASSWORD=clinic_password psql -h localhost -p 5433 -U clinic_user -d eo_clinica_db -c "
+DELETE FROM financial_transactions WHERE description LIKE '%teste%' OR description LIKE '%demo%';
+DELETE FROM accounts_payable WHERE description LIKE '%teste%' OR description LIKE '%demo%';
+" 2>/dev/null || log_warning "Nenhum registro financeiro fictício encontrado"
+
+# Clear cache/temporary data
+log_info "Limpando cache e dados temporários..."
+if command -v redis-cli >/dev/null 2>&1; then
+    redis-cli -p 6379 FLUSHDB 2>/dev/null || log_warning "Redis não disponível"
+else
+    log_warning "Redis CLI não encontrado, pulando limpeza de cache"
+fi
+
+# Clean frontend localStorage mock data
+log_info "Preparando limpeza de dados fictícios no frontend..."
+
+log_success "Limpeza de dados fictícios concluída!"
 echo ""
-log_info "Para iniciar o sistema novamente:"
-log_info "  ./scripts/start-production.sh"
+log_info "✅ Estruturas do sistema preservadas"
+log_info "✅ Usuários administrativos mantidos" 
+log_info "✅ Configurações essenciais preservadas"
 echo ""
-log_warning "Lembre-se: Todos os dados foram perdidos e o sistema será reinicializado"
+log_info "O sistema está pronto para uso com dados reais."

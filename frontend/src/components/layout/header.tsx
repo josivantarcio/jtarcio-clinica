@@ -17,7 +17,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useAuthStore } from "@/store/auth"
 import { NotificationsDropdown } from "./notifications-dropdown"
-import { AIDemoButton } from "./ai-demo-button"
 
 interface HeaderProps {
   onMenuClick?: () => void
@@ -80,9 +79,6 @@ export function Header({ onMenuClick, showSidebar = true }: HeaderProps) {
 
           {/* Right side */}
           <div className="flex items-center space-x-2">
-            {/* AI Demo Button (temporary) */}
-            <AIDemoButton />
-            
             {/* Notifications */}
             <NotificationsDropdown />
 

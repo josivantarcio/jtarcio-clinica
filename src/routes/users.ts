@@ -3,6 +3,7 @@ import { UserService } from '@/services/user.service';
 import { prisma } from '@/config/database';
 import { verifyJWT } from '@/plugins/auth';
 import { validateCPF, checkCPFExists } from '@/utils/cpf-validation';
+import { rateLimiters } from '@/middleware/rateLimiting';
 import bcrypt from 'bcryptjs';
 import fs from 'fs/promises';
 import path from 'path';
@@ -14,6 +15,7 @@ export async function userRoutes(fastify: FastifyInstance): Promise<void> {
   fastify.get(
     '/',
     {
+      preHandler: [rateLimiters.patientSearch],
       schema: {
         tags: ['Users'],
         summary: 'Get all users',

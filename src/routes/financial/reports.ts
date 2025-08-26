@@ -77,7 +77,7 @@ export default async function reportRoutes(fastify: FastifyInstance) {
             },
           }),
 
-          // Expenses summary  
+          // Expenses summary
           fastify.prisma.accountsPayable.aggregate({
             _sum: { netAmount: true },
             _count: true,
@@ -111,7 +111,8 @@ export default async function reportRoutes(fastify: FastifyInstance) {
         const totalRevenue = Number(revenue._sum.netAmount || 0);
         const totalExpenses = Number(expenses._sum.netAmount || 0);
         const netProfit = totalRevenue - totalExpenses;
-        const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
+        const profitMargin =
+          totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
 
         return {
           success: true,

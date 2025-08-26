@@ -57,15 +57,15 @@ export default async function financialRoutes(fastify: FastifyInstance) {
     await fastify.register(import('./dashboard-simple'), {
       prefix: '/dashboard',
     });
-    // TODO: Re-enable other routes after testing
-    // await fastify.register(import('./transactions'), {
-    //   prefix: '/transactions',
-    // });
-    // await fastify.register(import('./receivables'), { prefix: '/receivables' });
-    // await fastify.register(import('./payables'), { prefix: '/payables' });
-    // await fastify.register(import('./insurance'), { prefix: '/insurance' });
-    // await fastify.register(import('./suppliers'), { prefix: '/suppliers' });
-    // await fastify.register(import('./categories'), { prefix: '/categories' });
-    // await fastify.register(import('./reports'), { prefix: '/reports' });
+    // Register all financial sub-routes
+    await fastify.register(import('./transactions'), {
+      prefix: '/transactions',
+    });
+    await fastify.register(import('./receivables'), { prefix: '/receivables' });
+    await fastify.register(import('./payables'), { prefix: '/payables' });
+    await fastify.register(import('./insurance'), { prefix: '/insurance' });
+    await fastify.register(import('./suppliers'), { prefix: '/suppliers' });
+    await fastify.register(import('./categories'), { prefix: '/categories' });
+    await fastify.register(import('./reports'), { prefix: '/reports' });
   });
 }

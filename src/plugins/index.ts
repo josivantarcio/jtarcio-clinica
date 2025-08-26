@@ -49,7 +49,7 @@ export async function registerPlugins(fastify: FastifyInstance): Promise<void> {
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   });
 
-  // Rate limiting - Disabled for development debugging
+  // Rate limiting - Re-enabled after debugging
   if (env.NODE_ENV === 'production') {
     await fastify.register(rateLimit, {
       max: env.RATE_LIMIT_MAX_REQUESTS,

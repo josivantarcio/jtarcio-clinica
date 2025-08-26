@@ -58,19 +58,6 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* Demo Access */}
-        <Card className="border-dashed">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Acesso Demo</CardTitle>
-            <CardDescription className="text-xs">
-              Use as credenciais abaixo para testar o sistema
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-xs space-y-1">
-            <p><strong>Admin:</strong> admin@eoclinica.com.br / Admin123!</p>
-            <p className="text-muted-foreground italic">Outras contas serão criadas conforme necessário</p>
-          </CardContent>
-        </Card>
       </div>
     </div>
   )

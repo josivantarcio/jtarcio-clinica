@@ -6,6 +6,7 @@ import {
 } from '@/types/appointment';
 import { AppointmentBooking } from '@/types/scheduling';
 import { ServiceFactory } from '@/services';
+import { rateLimiters } from '@/middleware/rateLimiting';
 
 export async function appointmentRoutes(
   fastify: FastifyInstance,
@@ -14,6 +15,7 @@ export async function appointmentRoutes(
   fastify.post(
     '/',
     {
+      preHandler: [rateLimiters.createAppointment],
       schema: {
         tags: ['Appointments'],
         summary: 'Create new appointment',
@@ -143,6 +145,7 @@ export async function appointmentRoutes(
   fastify.get(
     '/',
     {
+      preHandler: [rateLimiters.general],
       schema: {
         tags: ['Appointments'],
         summary: 'Get appointments',

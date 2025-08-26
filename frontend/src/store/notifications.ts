@@ -198,33 +198,5 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
   }
 }))
 
-// Initialize with some mock notifications for demonstration
-if (typeof window !== 'undefined') {
-  const store = useNotificationsStore.getState()
-  
-  // Add some sample notifications with improved visual appeal
-  setTimeout(() => {
-    store.addAppointmentNotification({
-      patientName: 'Maria Silva',
-      doctorName: 'Dr. João Santos',
-      scheduledAt: 'segunda-feira, 20 de agosto às 14:30',
-      appointmentId: 'apt_123',
-      source: 'manual'
-    })
-    
-    store.addAIBookingNotification({
-      patientName: 'Carlos Oliveira',
-      doctorName: 'Dra. Ana Costa',
-      scheduledAt: 'terça-feira, 21 de agosto às 09:15',
-      appointmentId: 'apt_124',
-      chatId: 'chat_456'
-    })
-    
-    store.addReminderNotification({
-      patientName: 'José Ferreira',
-      scheduledAt: 'hoje às 16:00',
-      appointmentId: 'apt_125',
-      reminderType: 'today'
-    })
-  }, 1000)
-}
+// Production-ready: No mock data initialization
+// Notifications will be populated by real system events

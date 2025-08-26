@@ -54,6 +54,10 @@ const start = async (): Promise<void> => {
     // Initialize service container
     await ServiceFactory.create(prisma, redis, logger);
 
+    // Attach Prisma and Redis to Fastify instance
+    fastify.decorate('prisma', prisma);
+    fastify.decorate('redis', redis);
+
     // Register plugins
     await registerPlugins(fastify);
 

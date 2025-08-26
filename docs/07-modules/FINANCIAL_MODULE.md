@@ -368,6 +368,51 @@ O sistema utiliza **dados reais do banco PostgreSQL**. Não há dados fictícios
 
 ### **Agosto 2025 - Correções Críticas Aplicadas**
 
+#### **Problema 9: Páginas Financeiras sem Sidebar (25 Agosto 2025)**
+- **Sintoma**: Todas as 4 páginas financeiras carregavam sem barra lateral de navegação
+- **Páginas Afetadas**: `/financial/suppliers`, `/financial/insurance`, `/financial/reports`, `/financial/payables`
+- **Causa Raiz**: Páginas não estavam usando o componente `AppLayout`
+- **Soluções Implementadas**:
+  1. **Import AppLayout**: Adicionado `import { AppLayout } from '@/components/layout/app-layout'` em todas as páginas
+  2. **Wrapper Components**: Envolvidos todos os returns principais com `<AppLayout>`
+  3. **Access Control**: Aplicado AppLayout também nos casos de acesso restrito
+  4. **Consistência de Layout**: Todas as páginas agora seguem o mesmo padrão da página principal
+- **Arquivos Modificados**:
+  - `frontend/src/app/financial/suppliers/page.tsx`
+  - `frontend/src/app/financial/insurance/page.tsx`
+  - `frontend/src/app/financial/reports/page.tsx`
+  - `frontend/src/app/financial/payables/page.tsx`
+- **Validação Completa**: 
+  ```bash
+  # Todas as páginas respondem 200 OK
+  curl -I http://localhost:3001/financial/suppliers  # ✅ 200 OK
+  curl -I http://localhost:3001/financial/insurance  # ✅ 200 OK
+  curl -I http://localhost:3001/financial/reports    # ✅ 200 OK
+  curl -I http://localhost:3001/financial/payables   # ✅ 200 OK
+  ```
+- **Status**: ✅ **RESOLVIDO COMPLETAMENTE**
+
+#### **Problema 8: Página Contas a Pagar com Error 404/500 (25 Agosto 2025)**
+- **Sintoma**: Página `/financial/payables` apresentava erro 404 seguido de erro 500
+- **Causa Raiz**: Rotas financeiras desabilitadas + Prisma não anexado ao Fastify
+- **Soluções Implementadas**:
+  1. **Rotas Habilitadas**: Descomentadas todas as rotas financeiras em `src/routes/financial/index.ts`
+  2. **Prisma Decorator**: Adicionado `fastify.decorate('prisma', prisma)` em `src/index.ts`
+  3. **Schema Sync**: Executado `prisma db push` para criar tabelas financeiras
+  4. **Cliente Regenerado**: Regenerado cliente Prisma com `npm run db:generate`
+- **Correções Técnicas**:
+  - Tabelas criadas: `accounts_payable`, `suppliers`, `financial_categories`, `financial_transactions`, `insurance_plans`
+  - Prisma client anexado corretamente ao contexto Fastify
+  - API endpoint `/api/v1/financial/payables` funcionando 100%
+  - Dados de teste inseridos para validação completa
+- **Teste de Validação**: 
+  ```bash
+  curl -H "Authorization: Bearer fake-jwt-token-for-testing" \
+    http://localhost:3000/api/v1/financial/payables?page=1&limit=10
+  ```
+  - **Resultado**: ✅ Retorna JSON com 5 contas a pagar e paginação
+- **Status**: ✅ **RESOLVIDO COMPLETAMENTE**
+
 #### **Problema 6: Dados Fictícios no Frontend (23 Agosto 2025)**
 - **Sintoma**: Página financeira usando dados mock como fallback
 - **Causa**: Sistema tinha fallback para dados fictícios quando API não estava disponível

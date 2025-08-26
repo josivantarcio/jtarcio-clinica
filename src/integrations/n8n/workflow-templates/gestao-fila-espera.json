@@ -406,14 +406,10 @@
       ]
     },
     "send-sms-notification": {
-      "main": [
-        []
-      ]
+      "main": [[]]
     },
     "send-whatsapp-notification": {
-      "main": [
-        []
-      ]
+      "main": [[]]
     },
     "mark-patient-notified": {
       "main": [

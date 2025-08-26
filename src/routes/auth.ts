@@ -4,6 +4,7 @@ import { UserService } from '@/services/user.service';
 import { prisma } from '@/config/database';
 import { verifyJWT } from '@/plugins/auth';
 import { validateCPF, checkCPFExists } from '@/utils/cpf-validation';
+import { rateLimiters } from '@/middleware/rateLimiting';
 
 export async function authRoutes(fastify: FastifyInstance): Promise<void> {
   const authService = new AuthService();
@@ -13,6 +14,7 @@ export async function authRoutes(fastify: FastifyInstance): Promise<void> {
   fastify.post(
     '/login',
     {
+      preHandler: [rateLimiters.login, rateLimiters.bruteForceProtection],
       schema: {
         tags: ['Auth'],
         summary: 'User login',
@@ -65,6 +67,7 @@ export async function authRoutes(fastify: FastifyInstance): Promise<void> {
   fastify.post(
     '/register',
     {
+      preHandler: [rateLimiters.general],
       schema: {
         tags: ['Auth'],
         summary: 'User registration',
@@ -233,6 +236,7 @@ export async function authRoutes(fastify: FastifyInstance): Promise<void> {
   fastify.post(
     '/refresh',
     {
+      preHandler: [rateLimiters.general],
       schema: {
         tags: ['Auth'],
         summary: 'Refresh access token',
@@ -274,6 +278,7 @@ export async function authRoutes(fastify: FastifyInstance): Promise<void> {
   fastify.post(
     '/forgot-password',
     {
+      preHandler: [rateLimiters.login],
       schema: {
         tags: ['Auth'],
         summary: 'Request password reset',
@@ -299,6 +304,7 @@ export async function authRoutes(fastify: FastifyInstance): Promise<void> {
   fastify.post(
     '/reset-password',
     {
+      preHandler: [rateLimiters.login],
       schema: {
         tags: ['Auth'],
         summary: 'Reset password with token',
