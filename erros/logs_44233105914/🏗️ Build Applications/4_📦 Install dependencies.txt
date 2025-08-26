@@ -1,0 +1,42 @@
+﻿2025-08-26T16:43:05.8198741Z ##[group]Run # Configure npm for better reliability
+2025-08-26T16:43:05.8200301Z [36;1m# Configure npm for better reliability[0m
+2025-08-26T16:43:05.8201932Z [36;1mnpm config set registry https://registry.npmjs.org/[0m
+2025-08-26T16:43:05.8203793Z [36;1mnpm config set fetch-retries 5[0m
+2025-08-26T16:43:05.8205509Z [36;1mnpm config set fetch-retry-factor 2[0m
+2025-08-26T16:43:05.8206999Z [36;1mnpm config set fetch-retry-mintimeout 10000[0m
+2025-08-26T16:43:05.8208551Z [36;1mnpm config set fetch-retry-maxtimeout 60000[0m
+2025-08-26T16:43:05.8209860Z [36;1m[0m
+2025-08-26T16:43:05.8210759Z [36;1m# Install with retry logic[0m
+2025-08-26T16:43:05.8212747Z [36;1mnpm ci --ignore-scripts --prefer-offline --no-audit || npm ci --ignore-scripts --no-audit[0m
+2025-08-26T16:43:05.8215896Z [36;1mcd frontend && (npm ci --ignore-scripts --prefer-offline --no-audit || npm ci --ignore-scripts --no-audit)[0m
+2025-08-26T16:43:05.8298895Z shell: /usr/bin/bash -e {0}
+2025-08-26T16:43:05.8299976Z ##[endgroup]
+2025-08-26T16:43:11.1668653Z npm warn deprecated supertest@6.3.4: Please upgrade to supertest v7.1.3+, see release notes at https://github.com/forwardemail/supertest/releases/tag/v7.1.3 - maintenance is supported by Forward Email @ https://forwardemail.net
+2025-08-26T16:43:11.5715751Z npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+2025-08-26T16:43:13.8852960Z npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+2025-08-26T16:43:13.9694837Z npm warn deprecated superagent@8.1.2: Please upgrade to superagent v10.2.2+, see release notes at https://github.com/forwardemail/superagent/releases/tag/v10.2.2 - maintenance is supported by Forward Email @ https://forwardemail.net
+2025-08-26T16:43:14.2459836Z npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead
+2025-08-26T16:43:17.4001773Z npm warn deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead
+2025-08-26T16:43:17.4428040Z npm warn deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead
+2025-08-26T16:43:18.5033086Z npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+2025-08-26T16:43:18.6899814Z npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+2025-08-26T16:43:18.9305301Z npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+2025-08-26T16:43:18.9307615Z npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+2025-08-26T16:43:19.0810497Z npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+2025-08-26T16:43:22.8174374Z npm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+2025-08-26T16:43:35.8182989Z 
+2025-08-26T16:43:35.8186139Z added 1162 packages in 29s
+2025-08-26T16:43:35.8186586Z 
+2025-08-26T16:43:35.8186914Z 278 packages are looking for funding
+2025-08-26T16:43:35.8187435Z   run `npm fund` for details
+2025-08-26T16:43:45.3369511Z npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+2025-08-26T16:43:45.5047412Z npm warn deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead
+2025-08-26T16:43:45.5155144Z npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+2025-08-26T16:43:45.6271584Z npm warn deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead
+2025-08-26T16:43:45.6283287Z npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+2025-08-26T16:43:47.7909338Z npm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+2025-08-26T16:43:53.3440237Z 
+2025-08-26T16:43:53.3442098Z added 551 packages in 17s
+2025-08-26T16:43:53.3444132Z 
+2025-08-26T16:43:53.3445604Z 167 packages are looking for funding
+2025-08-26T16:43:53.3447387Z   run `npm fund` for details

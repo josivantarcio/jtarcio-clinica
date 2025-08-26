@@ -1,0 +1,69 @@
+﻿2025-08-26T16:40:58.1444683Z ##[group]Run actions/checkout@v4
+2025-08-26T16:40:58.1445541Z with:
+2025-08-26T16:40:58.1445973Z   repository: josivantarcio/jtarcio-clinica
+2025-08-26T16:40:58.1446672Z   token: ***
+2025-08-26T16:40:58.1447068Z   ssh-strict: true
+2025-08-26T16:40:58.1447448Z   ssh-user: git
+2025-08-26T16:40:58.1447855Z   persist-credentials: true
+2025-08-26T16:40:58.1448287Z   clean: true
+2025-08-26T16:40:58.1448676Z   sparse-checkout-cone-mode: true
+2025-08-26T16:40:58.1449135Z   fetch-depth: 1
+2025-08-26T16:40:58.1449516Z   fetch-tags: false
+2025-08-26T16:40:58.1449899Z   show-progress: true
+2025-08-26T16:40:58.1450290Z   lfs: false
+2025-08-26T16:40:58.1450651Z   submodules: false
+2025-08-26T16:40:58.1451050Z   set-safe-directory: true
+2025-08-26T16:40:58.1451673Z ##[endgroup]
+2025-08-26T16:40:58.2589279Z Syncing repository: josivantarcio/jtarcio-clinica
+2025-08-26T16:40:58.2592269Z ##[group]Getting Git version info
+2025-08-26T16:40:58.2593804Z Working directory is '/home/runner/work/jtarcio-clinica/jtarcio-clinica'
+2025-08-26T16:40:58.2595647Z [command]/usr/bin/git version
+2025-08-26T16:40:58.2642512Z git version 2.51.0
+2025-08-26T16:40:58.2671414Z ##[endgroup]
+2025-08-26T16:40:58.2702257Z Temporarily overriding HOME='/home/runner/work/_temp/20a059aa-9a70-42a0-bfb2-d2895695c8aa' before making global git config changes
+2025-08-26T16:40:58.2705899Z Adding repository directory to the temporary git global config as a safe directory
+2025-08-26T16:40:58.2710017Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/jtarcio-clinica/jtarcio-clinica
+2025-08-26T16:40:58.2760209Z Deleting the contents of '/home/runner/work/jtarcio-clinica/jtarcio-clinica'
+2025-08-26T16:40:58.2762139Z ##[group]Initializing the repository
+2025-08-26T16:40:58.2764332Z [command]/usr/bin/git init /home/runner/work/jtarcio-clinica/jtarcio-clinica
+2025-08-26T16:40:58.2886425Z hint: Using 'master' as the name for the initial branch. This default branch name
+2025-08-26T16:40:58.2889171Z hint: is subject to change. To configure the initial branch name to use in all
+2025-08-26T16:40:58.2890719Z hint: of your new repositories, which will suppress this warning, call:
+2025-08-26T16:40:58.2891912Z hint:
+2025-08-26T16:40:58.2892719Z hint: 	git config --global init.defaultBranch <name>
+2025-08-26T16:40:58.2894417Z hint:
+2025-08-26T16:40:58.2895399Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2025-08-26T16:40:58.2896900Z hint: 'development'. The just-created branch can be renamed via this command:
+2025-08-26T16:40:58.2898038Z hint:
+2025-08-26T16:40:58.2898635Z hint: 	git branch -m <name>
+2025-08-26T16:40:58.2899338Z hint:
+2025-08-26T16:40:58.2900248Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2025-08-26T16:40:58.2901932Z Initialized empty Git repository in /home/runner/work/jtarcio-clinica/jtarcio-clinica/.git/
+2025-08-26T16:40:58.2905821Z [command]/usr/bin/git remote add origin https://github.com/josivantarcio/jtarcio-clinica
+2025-08-26T16:40:58.2936705Z ##[endgroup]
+2025-08-26T16:40:58.2937965Z ##[group]Disabling automatic garbage collection
+2025-08-26T16:40:58.2940360Z [command]/usr/bin/git config --local gc.auto 0
+2025-08-26T16:40:58.2973362Z ##[endgroup]
+2025-08-26T16:40:58.2974922Z ##[group]Setting up auth
+2025-08-26T16:40:58.2981001Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-08-26T16:40:58.3880268Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-08-26T16:40:58.3884401Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-08-26T16:40:58.3888917Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-08-26T16:40:58.3893027Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2025-08-26T16:40:58.3913803Z ##[endgroup]
+2025-08-26T16:40:58.3914887Z ##[group]Fetching the repository
+2025-08-26T16:40:58.3925154Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +ebe8a48ae6adf1d2a70a641498055bea85379c36:refs/remotes/origin/main
+2025-08-26T16:40:58.9324156Z From https://github.com/josivantarcio/jtarcio-clinica
+2025-08-26T16:40:58.9327840Z  * [new ref]         ebe8a48ae6adf1d2a70a641498055bea85379c36 -> origin/main
+2025-08-26T16:40:58.9356891Z ##[endgroup]
+2025-08-26T16:40:58.9358589Z ##[group]Determining the checkout info
+2025-08-26T16:40:58.9362216Z ##[endgroup]
+2025-08-26T16:40:58.9364744Z [command]/usr/bin/git sparse-checkout disable
+2025-08-26T16:40:58.9412190Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2025-08-26T16:40:58.9438326Z ##[group]Checking out the ref
+2025-08-26T16:40:58.9441367Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2025-08-26T16:40:58.9834972Z Switched to a new branch 'main'
+2025-08-26T16:40:58.9839235Z branch 'main' set up to track 'origin/main'.
+2025-08-26T16:40:58.9849811Z ##[endgroup]
+2025-08-26T16:40:58.9888630Z [command]/usr/bin/git log -1 --format=%H
+2025-08-26T16:40:58.9912149Z ebe8a48ae6adf1d2a70a641498055bea85379c36

@@ -1,0 +1,5 @@
+﻿2025-08-26T16:41:01.4502770Z ##[group]Run npm audit --audit-level moderate || echo "⚠️ npm audit failed - likely due to registry connectivity issues"
+2025-08-26T16:41:01.4503603Z [36;1mnpm audit --audit-level moderate || echo "⚠️ npm audit failed - likely due to registry connectivity issues"[0m
+2025-08-26T16:41:01.4664815Z shell: /usr/bin/bash -e {0}
+2025-08-26T16:41:01.4665135Z ##[endgroup]
+2025-08-26T16:41:05.7462969Z found 0 vulnerabilities

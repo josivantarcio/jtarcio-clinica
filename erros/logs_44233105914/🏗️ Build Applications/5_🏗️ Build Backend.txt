@@ -1,0 +1,9 @@
+﻿2025-08-26T16:43:53.4408550Z ##[group]Run npm run build
+2025-08-26T16:43:53.4408887Z [36;1mnpm run build[0m
+2025-08-26T16:43:53.4450955Z shell: /usr/bin/bash -e {0}
+2025-08-26T16:43:53.4451220Z ##[endgroup]
+2025-08-26T16:43:53.5641418Z 
+2025-08-26T16:43:53.5643995Z > eo-clinica-system@1.3.4 build
+2025-08-26T16:43:53.5648091Z > echo 'Using tsx in production'
+2025-08-26T16:43:53.5648422Z 
+2025-08-26T16:43:53.5687207Z Using tsx in production

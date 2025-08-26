@@ -156,7 +156,7 @@ export default function AdminPage() {
 
       // Logs de auditoria - API não implementada ainda
       // TODO: Implementar API de auditoria /api/v1/audit/logs
-      let auditResponse = null
+      const auditResponse = null
 
       let analyticsData = null
       let usersData = null

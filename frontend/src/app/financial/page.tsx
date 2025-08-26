@@ -74,6 +74,36 @@ export default function FinancialDashboard() {
     }
   }, [isAuthenticated, isLoading, router])
 
+  useEffect(() => {
+    // Hydrate the persisted store
+    useAuthStore.persist.rehydrate()
+    
+    // Always initialize development mode for financial testing
+    if (typeof window !== 'undefined') {
+      console.log('🧪 Initializing development mode for financial testing')
+      useAuthStore.getState().initDevelopmentMode()
+      // Set token in apiClient and localStorage
+      const token = 'fake-jwt-token-for-testing'
+      localStorage.setItem('auth_token', token)
+      
+      // Force a small delay to ensure store is updated
+      setTimeout(() => {
+        setIsHydrated(true)
+      }, 100)
+    } else {
+      setIsHydrated(true)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (isHydrated && hasFinancialAccess) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('✅ Fetching financial dashboard data')
+      }
+      fetchDashboardData()
+    }
+  }, [isHydrated, hasFinancialAccess])
+
   // Show loading while checking auth
   if (isLoading || !isAuthenticated) {
     return (
@@ -121,36 +151,6 @@ export default function FinancialDashboard() {
       setLoading(false)
     }
   }
-
-  useEffect(() => {
-    // Hydrate the persisted store
-    useAuthStore.persist.rehydrate()
-    
-    // Always initialize development mode for financial testing
-    if (typeof window !== 'undefined') {
-      console.log('🧪 Initializing development mode for financial testing')
-      useAuthStore.getState().initDevelopmentMode()
-      // Set token in apiClient and localStorage
-      const token = 'fake-jwt-token-for-testing'
-      localStorage.setItem('auth_token', token)
-      
-      // Force a small delay to ensure store is updated
-      setTimeout(() => {
-        setIsHydrated(true)
-      }, 100)
-    } else {
-      setIsHydrated(true)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (isHydrated && hasFinancialAccess) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('✅ Fetching financial dashboard data')
-      }
-      fetchDashboardData()
-    }
-  }, [isHydrated, hasFinancialAccess])
 
   // Show loading while hydrating
   if (!isHydrated) {

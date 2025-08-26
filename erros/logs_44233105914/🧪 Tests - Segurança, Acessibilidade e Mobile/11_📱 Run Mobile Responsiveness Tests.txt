@@ -1,0 +1,135 @@
+﻿2025-08-26T16:42:19.7635627Z ##[group]Run export NODE_ENV=test
+2025-08-26T16:42:19.7635954Z [36;1mexport NODE_ENV=test[0m
+2025-08-26T16:42:19.7636596Z [36;1mexport DATABASE_URL="***localhost:5433/eo_clinica_db"[0m
+2025-08-26T16:42:19.7637541Z [36;1mexport DATABASE_URL_TEST="***localhost:5433/eo_clinica_db"[0m
+2025-08-26T16:42:19.7638062Z [36;1mnpm test -- tests/mobile/basic-mobile.test.ts --testTimeout=30000 --maxWorkers=1[0m
+2025-08-26T16:42:19.7678553Z shell: /usr/bin/bash -e {0}
+2025-08-26T16:42:19.7678809Z ##[endgroup]
+2025-08-26T16:42:19.8915221Z 
+2025-08-26T16:42:19.8920215Z > eo-clinica-system@1.3.4 test
+2025-08-26T16:42:19.8923575Z > jest tests/mobile/basic-mobile.test.ts --testTimeout=30000 --maxWorkers=1
+2025-08-26T16:42:19.8926276Z 
+2025-08-26T16:42:25.0298368Z   console.log
+2025-08-26T16:42:25.0303330Z     ⚠️ Mobile: Frontend pode estar offline
+2025-08-26T16:42:25.0305756Z 
+2025-08-26T16:42:25.0308313Z       at Object.<anonymous> (tests/mobile/basic-mobile.test.ts:46:25)
+2025-08-26T16:42:25.0310447Z 
+2025-08-26T16:42:25.0358094Z   console.log
+2025-08-26T16:42:25.0360131Z     ⚠️ Mobile: Frontend pode estar offline
+2025-08-26T16:42:25.0360732Z 
+2025-08-26T16:42:25.0362534Z       at Object.<anonymous> (tests/mobile/basic-mobile.test.ts:75:25)
+2025-08-26T16:42:25.0363301Z 
+2025-08-26T16:42:25.0381590Z   console.log
+2025-08-26T16:42:25.0383646Z     ✅ Tipografia: Especificações mobile adequadas
+2025-08-26T16:42:25.0384301Z 
+2025-08-26T16:42:25.0386579Z       at Object.<anonymous> (tests/mobile/basic-mobile.test.ts:102:21)
+2025-08-26T16:42:25.0387311Z 
+2025-08-26T16:42:25.0406256Z   console.log
+2025-08-26T16:42:25.0407420Z     ✅ Tipografia: Line-height adequado para mobile
+2025-08-26T16:42:25.0408719Z 
+2025-08-26T16:42:25.0409346Z       at Object.<anonymous> (tests/mobile/basic-mobile.test.ts:116:21)
+2025-08-26T16:42:25.0411328Z 
+2025-08-26T16:42:25.0467676Z   console.log
+2025-08-26T16:42:25.0468764Z     ✅ Touch: Especificações de tamanho adequadas
+2025-08-26T16:42:25.0469418Z 
+2025-08-26T16:42:25.0469979Z       at Object.<anonymous> (tests/mobile/basic-mobile.test.ts:144:21)
+2025-08-26T16:42:25.0470673Z 
+2025-08-26T16:42:25.0478031Z   console.log
+2025-08-26T16:42:25.0478959Z     ✅ Touch: Gestos básicos especificados
+2025-08-26T16:42:25.0479584Z 
+2025-08-26T16:42:25.0480247Z       at Object.<anonymous> (tests/mobile/basic-mobile.test.ts:164:21)
+2025-08-26T16:42:25.0480974Z 
+2025-08-26T16:42:25.0567782Z   console.log
+2025-08-26T16:42:25.0572719Z     ✅ Breakpoints: Definições consistentes
+2025-08-26T16:42:25.0573443Z 
+2025-08-26T16:42:25.0574136Z       at Object.<anonymous> (tests/mobile/basic-mobile.test.ts:187:21)
+2025-08-26T16:42:25.0575576Z 
+2025-08-26T16:42:25.0592579Z   console.log
+2025-08-26T16:42:25.0597036Z     ✅ Layout: Especificações adaptativas definidas
+2025-08-26T16:42:25.0600900Z 
+2025-08-26T16:42:25.0603555Z       at Object.<anonymous> (tests/mobile/basic-mobile.test.ts:219:21)
+2025-08-26T16:42:25.0605944Z 
+2025-08-26T16:42:25.0629465Z   console.log
+2025-08-26T16:42:25.0633571Z     ⚠️ Performance: Frontend pode estar offline
+2025-08-26T16:42:25.0634000Z 
+2025-08-26T16:42:25.0634930Z       at Object.<anonymous> (tests/mobile/basic-mobile.test.ts:243:25)
+2025-08-26T16:42:25.0636731Z 
+2025-08-26T16:42:25.0657754Z   console.log
+2025-08-26T16:42:25.0659793Z     ⚠️ Performance: Frontend pode estar offline
+2025-08-26T16:42:25.0660450Z 
+2025-08-26T16:42:25.0662682Z       at Object.<anonymous> (tests/mobile/basic-mobile.test.ts:271:25)
+2025-08-26T16:42:25.0663423Z 
+2025-08-26T16:42:25.0675420Z   console.log
+2025-08-26T16:42:25.0676989Z     ✅ Performance: Especificações de bateria definidas
+2025-08-26T16:42:25.0684277Z 
+2025-08-26T16:42:25.0684698Z       at Object.<anonymous> (tests/mobile/basic-mobile.test.ts:299:21)
+2025-08-26T16:42:25.0685184Z 
+2025-08-26T16:42:25.0692889Z   console.log
+2025-08-26T16:42:25.0693942Z     ✅ Orientação: Especificações portrait/landscape definidas
+2025-08-26T16:42:25.0694753Z 
+2025-08-26T16:42:25.0696969Z       at Object.<anonymous> (tests/mobile/basic-mobile.test.ts:324:21)
+2025-08-26T16:42:25.0698426Z 
+2025-08-26T16:42:25.0709602Z   console.log
+2025-08-26T16:42:25.0710537Z     ✅ Orientação: Persistência de estado definida
+2025-08-26T16:42:25.0711269Z 
+2025-08-26T16:42:25.0711966Z       at Object.<anonymous> (tests/mobile/basic-mobile.test.ts:353:21)
+2025-08-26T16:42:25.0712828Z 
+2025-08-26T16:42:25.0725554Z   console.log
+2025-08-26T16:42:25.0726509Z     ✅ Compatibilidade: 4 browsers, 81% market share
+2025-08-26T16:42:25.0727542Z 
+2025-08-26T16:42:25.0728143Z       at Object.<anonymous> (tests/mobile/basic-mobile.test.ts:372:21)
+2025-08-26T16:42:25.0729041Z 
+2025-08-26T16:42:25.0743522Z   console.log
+2025-08-26T16:42:25.0744502Z     ✅ Compatibilidade: 2 fallbacks críticos definidos
+2025-08-26T16:42:25.0745248Z 
+2025-08-26T16:42:25.0745893Z       at Object.<anonymous> (tests/mobile/basic-mobile.test.ts:389:21)
+2025-08-26T16:42:25.0746710Z 
+2025-08-26T16:42:25.0760136Z   console.log
+2025-08-26T16:42:25.0761020Z     ✅ Utilitários: Detecção mobile funcional
+2025-08-26T16:42:25.0761685Z 
+2025-08-26T16:42:25.0762423Z       at Object.<anonymous> (tests/mobile/basic-mobile.test.ts:412:17)
+2025-08-26T16:42:25.0763312Z 
+2025-08-26T16:42:25.0779180Z   console.log
+2025-08-26T16:42:25.0780078Z     ✅ Utilitários: Cálculo de DPR validado
+2025-08-26T16:42:25.0780765Z 
+2025-08-26T16:42:25.0781374Z       at Object.<anonymous> (tests/mobile/basic-mobile.test.ts:430:17)
+2025-08-26T16:42:25.0782196Z 
+2025-08-26T16:42:25.0800016Z   console.log
+2025-08-26T16:42:25.0800945Z     ✅ PWA: Especificações mobile definidas
+2025-08-26T16:42:25.0801668Z 
+2025-08-26T16:42:25.0802245Z       at Object.<anonymous> (tests/mobile/basic-mobile.test.ts:463:17)
+2025-08-26T16:42:25.0803125Z 
+2025-08-26T16:42:25.0908836Z PASS tests/mobile/basic-mobile.test.ts
+2025-08-26T16:42:25.0910171Z   📱 Mobile Básico - Validações Fundamentais
+2025-08-26T16:42:25.0911117Z     📐 Configuração Viewport
+2025-08-26T16:42:25.0912291Z       ✓ deve ter meta viewport configurado corretamente (90 ms)
+2025-08-26T16:42:25.0913619Z       ✓ deve ter configurações específicas para iOS (4 ms)
+2025-08-26T16:42:25.0914941Z     🔤 Tipografia Mobile
+2025-08-26T16:42:25.0915957Z       ✓ deve usar tamanhos de fonte adequados para mobile (2 ms)
+2025-08-26T16:42:25.0919124Z       ✓ deve ter line-height apropriado para leitura mobile (2 ms)
+2025-08-26T16:42:25.0919809Z     👆 Especificações Touch
+2025-08-26T16:42:25.0920528Z       ✓ deve ter alvos touch com tamanho mínimo adequado (4 ms)
+2025-08-26T16:42:25.0921366Z       ✓ deve ter gestos touch básicos implementados (3 ms)
+2025-08-26T16:42:25.0922035Z     📏 Breakpoints Responsivos
+2025-08-26T16:42:25.0922630Z       ✓ deve ter breakpoints bem definidos (8 ms)
+2025-08-26T16:42:25.0923434Z       ✓ deve ter layout adaptativo para diferentes telas (2 ms)
+2025-08-26T16:42:25.0924109Z     ⚡ Performance Mobile
+2025-08-26T16:42:25.0924797Z       ✓ deve carregar rapidamente em rede 3G simulada (3 ms)
+2025-08-26T16:42:25.0925621Z       ✓ deve ter recursos otimizados para mobile (2 ms)
+2025-08-26T16:42:25.0926422Z       ✓ deve ter especificações de bateria otimizadas (1 ms)
+2025-08-26T16:42:25.0927475Z     🔄 Orientação e Rotação
+2025-08-26T16:42:25.0928202Z       ✓ deve suportar orientação portrait e landscape (2 ms)
+2025-08-26T16:42:25.0928991Z       ✓ deve manter funcionalidade durante rotação (1 ms)
+2025-08-26T16:42:25.0929686Z     🌐 Compatibilidade Mobile Browser
+2025-08-26T16:42:25.0930475Z       ✓ deve ter suporte para principais browsers mobile (1 ms)
+2025-08-26T16:42:25.0931355Z       ✓ deve ter fallbacks para recursos não suportados (2 ms)
+2025-08-26T16:42:25.0932487Z   🛠️ Utilitários Mobile
+2025-08-26T16:42:25.0933093Z     ✓ deve validar User-Agent strings mobile (2 ms)
+2025-08-26T16:42:25.0933838Z     ✓ deve calcular densidade de pixels adequadamente (1 ms)
+2025-08-26T16:42:25.0934587Z     ✓ deve ter especificações PWA mobile (1 ms)
+2025-08-26T16:42:25.0934973Z 
+2025-08-26T16:42:25.0942988Z Test Suites: 1 passed, 1 total
+2025-08-26T16:42:25.0944047Z Tests:       18 passed, 18 total
+2025-08-26T16:42:25.0945044Z Snapshots:   0 total
+2025-08-26T16:42:25.0946227Z Time:        4.831 s
+2025-08-26T16:42:25.0956507Z Ran all test suites matching /tests\/mobile\/basic-mobile.test.ts/i.

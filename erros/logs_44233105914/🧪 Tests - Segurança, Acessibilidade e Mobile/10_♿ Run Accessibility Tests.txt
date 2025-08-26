@@ -1,0 +1,129 @@
+﻿2025-08-26T16:42:14.3828043Z ##[group]Run export NODE_ENV=test
+2025-08-26T16:42:14.3828618Z [36;1mexport NODE_ENV=test[0m
+2025-08-26T16:42:14.3829668Z [36;1mexport DATABASE_URL="***localhost:5433/eo_clinica_db"[0m
+2025-08-26T16:42:14.3830725Z [36;1mexport DATABASE_URL_TEST="***localhost:5433/eo_clinica_db"[0m
+2025-08-26T16:42:14.3831763Z [36;1mnpm test -- tests/accessibility/basic-accessibility.test.ts --testTimeout=30000 --maxWorkers=1[0m
+2025-08-26T16:42:14.3890245Z shell: /usr/bin/bash -e {0}
+2025-08-26T16:42:14.3890650Z ##[endgroup]
+2025-08-26T16:42:14.5273937Z 
+2025-08-26T16:42:14.5276765Z > eo-clinica-system@1.3.4 test
+2025-08-26T16:42:14.5280340Z > jest tests/accessibility/basic-accessibility.test.ts --testTimeout=30000 --maxWorkers=1
+2025-08-26T16:42:14.5283283Z 
+2025-08-26T16:42:19.5456924Z   console.log
+2025-08-26T16:42:19.5461958Z     ⚠️ Estrutura: Frontend pode estar offline
+2025-08-26T16:42:19.5466185Z 
+2025-08-26T16:42:19.5470666Z       at Object.<anonymous> (tests/accessibility/basic-accessibility.test.ts:42:25)
+2025-08-26T16:42:19.5475036Z 
+2025-08-26T16:42:19.5519392Z   console.log
+2025-08-26T16:42:19.5523863Z     ⚠️ Estrutura: Frontend pode estar offline
+2025-08-26T16:42:19.5528282Z 
+2025-08-26T16:42:19.5532503Z       at Object.<anonymous> (tests/accessibility/basic-accessibility.test.ts:61:25)
+2025-08-26T16:42:19.5538126Z 
+2025-08-26T16:42:19.5553799Z   console.log
+2025-08-26T16:42:19.5556779Z     ⚠️ Formulários: Página de login pode estar offline
+2025-08-26T16:42:19.5559739Z 
+2025-08-26T16:42:19.5562513Z       at Object.<anonymous> (tests/accessibility/basic-accessibility.test.ts:90:25)
+2025-08-26T16:42:19.5565332Z 
+2025-08-26T16:42:19.5587701Z   console.log
+2025-08-26T16:42:19.5590587Z     ✅ Formulários: Labels médicos apropriados definidos
+2025-08-26T16:42:19.5591039Z 
+2025-08-26T16:42:19.5592947Z       at Object.<anonymous> (tests/accessibility/basic-accessibility.test.ts:110:21)
+2025-08-26T16:42:19.5595865Z 
+2025-08-26T16:42:19.5616318Z   console.log
+2025-08-26T16:42:19.5617296Z     ⚠️ Mobile: Frontend pode estar offline
+2025-08-26T16:42:19.5619601Z 
+2025-08-26T16:42:19.5621292Z       at Object.<anonymous> (tests/accessibility/basic-accessibility.test.ts:139:25)
+2025-08-26T16:42:19.5622128Z 
+2025-08-26T16:42:19.5662819Z   console.log
+2025-08-26T16:42:19.5663837Z     ✅ Mobile: Especificações touch-friendly validadas
+2025-08-26T16:42:19.5664532Z 
+2025-08-26T16:42:19.5666088Z       at Object.<anonymous> (tests/accessibility/basic-accessibility.test.ts:160:21)
+2025-08-26T16:42:19.5666904Z 
+2025-08-26T16:42:19.5674487Z   console.log
+2025-08-26T16:42:19.5675450Z     ✅ Contraste: Combinações de cores atendem WCAG AA
+2025-08-26T16:42:19.5676726Z 
+2025-08-26T16:42:19.5678155Z       at Object.<anonymous> (tests/accessibility/basic-accessibility.test.ts:177:21)
+2025-08-26T16:42:19.5678784Z 
+2025-08-26T16:42:19.5692815Z   console.log
+2025-08-26T16:42:19.5694486Z     ✅ Contraste: Considerações para daltônicos implementadas
+2025-08-26T16:42:19.5694944Z 
+2025-08-26T16:42:19.5695447Z       at Object.<anonymous> (tests/accessibility/basic-accessibility.test.ts:194:21)
+2025-08-26T16:42:19.5696043Z 
+2025-08-26T16:42:19.5716841Z   console.log
+2025-08-26T16:42:19.5717982Z     ✅ Teclado: Especificações de foco adequadas
+2025-08-26T16:42:19.5719020Z 
+2025-08-26T16:42:19.5722383Z       at Object.<anonymous> (tests/accessibility/basic-accessibility.test.ts:217:21)
+2025-08-26T16:42:19.5723494Z 
+2025-08-26T16:42:19.5757422Z   console.log
+2025-08-26T16:42:19.5759409Z     ✅ Teclado: Elementos interativos acessíveis
+2025-08-26T16:42:19.5759979Z 
+2025-08-26T16:42:19.5761507Z       at Object.<anonymous> (tests/accessibility/basic-accessibility.test.ts:232:21)
+2025-08-26T16:42:19.5762172Z 
+2025-08-26T16:42:19.5835343Z   console.log
+2025-08-26T16:42:19.5836180Z     ✅ ARIA: Especificações adequadas para screen readers
+2025-08-26T16:42:19.5836592Z 
+2025-08-26T16:42:19.5837277Z       at Object.<anonymous> (tests/accessibility/basic-accessibility.test.ts:254:21)
+2025-08-26T16:42:19.5837853Z 
+2025-08-26T16:42:19.5859324Z   console.log
+2025-08-26T16:42:19.5862425Z     ✅ ARIA: Descrições médicas informativas
+2025-08-26T16:42:19.5862779Z 
+2025-08-26T16:42:19.5863280Z       at Object.<anonymous> (tests/accessibility/basic-accessibility.test.ts:269:21)
+2025-08-26T16:42:19.5863848Z 
+2025-08-26T16:42:19.5896578Z   console.log
+2025-08-26T16:42:19.5899268Z     ⚠️ Performance: Frontend pode estar offline
+2025-08-26T16:42:19.5901078Z 
+2025-08-26T16:42:19.5901607Z       at Object.<anonymous> (tests/accessibility/basic-accessibility.test.ts:301:25)
+2025-08-26T16:42:19.5902190Z 
+2025-08-26T16:42:19.5911530Z   console.log
+2025-08-26T16:42:19.5912521Z     ✅ Performance: Especificações otimizadas para acessibilidade
+2025-08-26T16:42:19.5913393Z 
+2025-08-26T16:42:19.5914175Z       at Object.<anonymous> (tests/accessibility/basic-accessibility.test.ts:320:21)
+2025-08-26T16:42:19.5914733Z 
+2025-08-26T16:42:19.5932573Z   console.log
+2025-08-26T16:42:19.5933536Z     ✅ Utilitários: Textos alternativos apropriados
+2025-08-26T16:42:19.5934712Z 
+2025-08-26T16:42:19.5935403Z       at Object.<anonymous> (tests/accessibility/basic-accessibility.test.ts:344:17)
+2025-08-26T16:42:19.5936620Z 
+2025-08-26T16:42:19.5950028Z   console.log
+2025-08-26T16:42:19.5950948Z     ✅ Utilitários: Padrões de erro acessíveis
+2025-08-26T16:42:19.5951620Z 
+2025-08-26T16:42:19.5952342Z       at Object.<anonymous> (tests/accessibility/basic-accessibility.test.ts:372:17)
+2025-08-26T16:42:19.5953193Z 
+2025-08-26T16:42:19.5968800Z   console.log
+2025-08-26T16:42:19.5969732Z     ✅ Utilitários: Feedback de sucesso acessível
+2025-08-26T16:42:19.5970712Z 
+2025-08-26T16:42:19.5971465Z       at Object.<anonymous> (tests/accessibility/basic-accessibility.test.ts:401:17)
+2025-08-26T16:42:19.5972400Z 
+2025-08-26T16:42:19.6069727Z PASS tests/accessibility/basic-accessibility.test.ts
+2025-08-26T16:42:19.6073471Z   ♿ Acessibilidade Básica - Validações Fundamentais
+2025-08-26T16:42:19.6074480Z     🏗️ Estrutura HTML Semântica
+2025-08-26T16:42:19.6077472Z       ✓ deve validar elementos semânticos essenciais (90 ms)
+2025-08-26T16:42:19.6078390Z       ✓ deve ter hierarquia de cabeçalhos adequada (5 ms)
+2025-08-26T16:42:19.6078976Z     📝 Formulários Acessíveis
+2025-08-26T16:42:19.6079626Z       ✓ deve validar padrões de formulário médico (3 ms)
+2025-08-26T16:42:19.6080463Z       ✓ deve ter campos médicos com labels apropriados (3 ms)
+2025-08-26T16:42:19.6081168Z     📱 Responsividade e Mobile
+2025-08-26T16:42:19.6081941Z       ✓ deve ter configurações básicas de responsividade (3 ms)
+2025-08-26T16:42:19.6082900Z       ✓ deve ter tamanhos touch-friendly para mobile (4 ms)
+2025-08-26T16:42:19.6084159Z     🎨 Contraste e Cores
+2025-08-26T16:42:19.6085906Z       ✓ deve validar especificações de contraste WCAG AA (2 ms)
+2025-08-26T16:42:19.6086803Z       ✓ deve ter cores que funcionem para daltônicos (2 ms)
+2025-08-26T16:42:19.6087709Z     ⌨️ Navegação por Teclado
+2025-08-26T16:42:19.6088402Z       ✓ deve ter especificações de foco adequadas (2 ms)
+2025-08-26T16:42:19.6089275Z       ✓ deve ter elementos interativos acessíveis por teclado (4 ms)
+2025-08-26T16:42:19.6089968Z     🔊 Screen Readers e ARIA
+2025-08-26T16:42:19.6090560Z       ✓ deve ter atributos ARIA adequados (8 ms)
+2025-08-26T16:42:19.6091401Z       ✓ deve ter descrições apropriadas para campos médicos (2 ms)
+2025-08-26T16:42:19.6092172Z     ⚡ Performance e Carregamento
+2025-08-26T16:42:19.6092986Z       ✓ deve carregar rapidamente para usuários com limitações (3 ms)
+2025-08-26T16:42:19.6093936Z       ✓ deve ter recursos otimizados para conexões lentas (2 ms)
+2025-08-26T16:42:19.6094658Z   🛠️ Utilitários de Acessibilidade
+2025-08-26T16:42:19.6095358Z     ✓ deve validar texto alternativo para imagens (2 ms)
+2025-08-26T16:42:19.6096517Z     ✓ deve ter padrões de erro acessíveis (2 ms)
+2025-08-26T16:42:19.6100687Z     ✓ deve ter feedback de sucesso acessível (1 ms)
+2025-08-26T16:42:19.6101095Z 
+2025-08-26T16:42:19.6110277Z Test Suites: 1 passed, 1 total
+2025-08-26T16:42:19.6118396Z Tests:       17 passed, 17 total
+2025-08-26T16:42:19.6118852Z Snapshots:   0 total
+2025-08-26T16:42:19.6119478Z Time:        4.723 s
+2025-08-26T16:42:19.6120133Z Ran all test suites matching /tests\/accessibility\/basic-accessibility.test.ts/i.

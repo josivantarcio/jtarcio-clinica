@@ -289,7 +289,7 @@ export function UserActionsModal({
                     <div>
                       <h4 className="font-semibold text-blue-800">Usuário já está suspenso</h4>
                       <p className="text-sm text-blue-700">
-                        Você pode reativar este usuário clicando no botão "Reativar Usuário".
+                        Você pode reativar este usuário clicando no botão &quot;Reativar Usuário&quot;.
                       </p>
                     </div>
                   </div>

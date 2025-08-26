@@ -883,7 +883,7 @@ export function BookingFormWithData({ initialSpecialties }: BookingFormWithDataP
                             <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 peer-checked:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
                           </div>
                         </label>
-                      ))}'
+                      ))}
                     </div>
                     
                     {selectedTime && (
