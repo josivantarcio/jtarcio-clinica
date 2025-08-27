@@ -131,9 +131,13 @@
 ### **11 - Implementação de IA**
 ```
 📂 11-ai-implementation/
-├── 🤖 AI_IMPLEMENTATION_PREP.md    # Preparação para implementação IA
-├── 💬 WHATSAPP_AI_INTEGRATION_PROMPT.md  # Prompt para integração WhatsApp + IA
-└── 📋 AI_DEVELOPMENT_ROADMAP.md    # Roadmap de desenvolvimento IA
+├── 🤖 AI_IMPLEMENTATION_PREP.md         # Preparação para implementação IA
+├── 💬 WHATSAPP_AI_INTEGRATION_PROMPT.md # Prompt para integração WhatsApp + IA
+├── 📋 AI_DEVELOPMENT_ROADMAP.md         # Roadmap de desenvolvimento IA
+├── 🏗️ WHATSAPP_AI_ARCHITECTURE.md      # Arquitetura da integração WhatsApp + IA
+├── 📚 WHATSAPP_AI_SERVICES_GUIDE.md     # Guia dos serviços de IA implementados
+├── 🐳 WHATSAPP_AI_DEPLOYMENT.md         # Guia de deploy da integração IA
+└── 🧪 WHATSAPP_AI_TESTING.md            # Guia de testes da integração IA
 ```
 
 ---

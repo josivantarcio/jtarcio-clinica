@@ -1,0 +1,250 @@
+version: '3.8'
+
+services:
+  # N8N Workflow Automation Platform
+  n8n:
+    image: n8nio/n8n:1.24.1
+    container_name: eo-clinica-n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      # Basic Authentication
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER:-admin}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD:-n8n_admin_password}
+      
+      # Database Configuration (using existing PostgreSQL)
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=${N8N_DB_HOST:-postgres}
+      - DB_POSTGRESDB_PORT=${N8N_DB_PORT:-5432}
+      - DB_POSTGRESDB_DATABASE=${N8N_DB_DATABASE:-n8n_db}
+      - DB_POSTGRESDB_USER=${N8N_DB_USER:-clinic_user}
+      - DB_POSTGRESDB_PASSWORD=${N8N_DB_PASSWORD:-clinic_password}
+      
+      # Webhook Configuration
+      - WEBHOOK_URL=${N8N_WEBHOOK_BASE_URL:-http://localhost:5678/webhook}
+      - N8N_PROTOCOL=http
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      
+      # Security & Performance
+      - N8N_SECURE_COOKIE=false
+      - N8N_LOG_LEVEL=info
+      - N8N_LOG_OUTPUT=console
+      - EXECUTIONS_DATA_PRUNE=true
+      - EXECUTIONS_DATA_MAX_AGE=168
+      
+      # WhatsApp Integration Specific
+      - N8N_CUSTOM_EXTENSIONS=/data/custom-nodes
+      - GENERIC_TIMEZONE=${TIMEZONE:-America/Sao_Paulo}
+      
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./workflows/n8n:/data/workflows:ro
+      - ./n8n/custom-nodes:/data/custom-nodes:ro
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - eo-clinica-ai
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:5678/healthz || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # WAHA WhatsApp Business API
+  waha:
+    image: devlikeapro/waha:2024.2.1
+    container_name: eo-clinica-waha
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      # API Configuration
+      - WAHA_API_KEY=${WAHA_API_KEY:-your-waha-api-key}
+      - WAHA_API_TOKEN=${WAHA_API_KEY:-your-waha-api-key}
+      
+      # WhatsApp Session Configuration
+      - WAHA_SESSION_DEFAULT=${WAHA_SESSION_NAME:-eo-clinica-session}
+      - WAHA_AUTO_START_SESSIONS=true
+      - WAHA_PRINT_QR=true
+      
+      # Webhook Configuration
+      - WEBHOOK_URL=${WAHA_WEBHOOK_URL:-http://host.docker.internal:3000/api/v1/webhooks/whatsapp}
+      - WEBHOOK_EVENTS=message,session.status,call
+      
+      # Voice & Media Configuration
+      - WAHA_VOICE_TRANSCRIPTION=${WAHA_VOICE_TRANSCRIPTION:-true}
+      - WAHA_VOICE_LANGUAGE=pt-BR
+      - WAHA_MEDIA_DOWNLOAD=true
+      
+      # Storage Configuration
+      - WAHA_SESSION_STORE_TYPE=memory
+      - WAHA_FILES_FOLDER=/app/files
+      - WAHA_LOG_LEVEL=info
+      
+    volumes:
+      - waha_sessions:/app/sessions
+      - waha_files:/app/files
+    networks:
+      - eo-clinica-ai
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ChromaDB Vector Database for AI embeddings
+  chromadb:
+    image: chromadb/chroma:0.4.18
+    container_name: eo-clinica-chromadb
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - CHROMA_SERVER_HOST=0.0.0.0
+      - CHROMA_SERVER_HTTP_PORT=8000
+      - CHROMA_DB_IMPL=clickhouse
+      - CLICKHOUSE_HOST=clickhouse
+      - CLICKHOUSE_PORT=8123
+      - ANONYMIZED_TELEMETRY=${CHROMA_ANONYMIZED_TELEMETRY:-true}
+    volumes:
+      - chromadb_data:/chroma/chroma
+    networks:
+      - eo-clinica-ai
+    depends_on:
+      - clickhouse
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/api/v1/heartbeat || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ClickHouse for ChromaDB backend
+  clickhouse:
+    image: clickhouse/clickhouse-server:23.11
+    container_name: eo-clinica-clickhouse
+    restart: unless-stopped
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    environment:
+      - CLICKHOUSE_DB=chroma
+      - CLICKHOUSE_USER=chroma
+      - CLICKHOUSE_PASSWORD=chroma_password
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+    networks:
+      - eo-clinica-ai
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8123/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis for session management and caching (reuse existing if available)
+  redis-ai:
+    image: redis:7.2-alpine
+    container_name: eo-clinica-redis-ai
+    restart: unless-stopped
+    ports:
+      - "6381:6379"
+    command: >
+      redis-server 
+      --appendonly yes
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+      --save 900 1
+      --save 300 10
+      --save 60 10000
+    volumes:
+      - redis_ai_data:/data
+    networks:
+      - eo-clinica-ai
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # PostgreSQL extension for AI (reuse existing if available)
+  postgres-ai:
+    image: postgres:15-alpine
+    container_name: eo-clinica-postgres-ai
+    restart: unless-stopped
+    ports:
+      - "5434:5432"
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-eo_clinica_db}
+      - POSTGRES_USER=${POSTGRES_USER:-clinic_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-clinic_password}
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_ai_data:/var/lib/postgresql/data
+      - ./scripts/ai-database-init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - eo-clinica-ai
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-clinic_user} -d ${POSTGRES_DB:-eo_clinica_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Nginx reverse proxy for AI services
+  nginx-ai:
+    image: nginx:1.25-alpine
+    container_name: eo-clinica-nginx-ai
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/ai-integration.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - n8n
+      - waha
+      - chromadb
+    networks:
+      - eo-clinica-ai
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+# Named volumes for data persistence
+volumes:
+  n8n_data:
+    driver: local
+    name: eo-clinica-n8n-data
+  waha_sessions:
+    driver: local
+    name: eo-clinica-waha-sessions
+  waha_files:
+    driver: local
+    name: eo-clinica-waha-files
+  chromadb_data:
+    driver: local
+    name: eo-clinica-chromadb-data
+  clickhouse_data:
+    driver: local
+    name: eo-clinica-clickhouse-data
+  redis_ai_data:
+    driver: local
+    name: eo-clinica-redis-ai-data
+  postgres_ai_data:
+    driver: local
+    name: eo-clinica-postgres-ai-data
+
+# Network for AI services
+networks:
+  eo-clinica-ai:
+    driver: bridge
+    name: eo-clinica-ai-network
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.0.0/16
+          gateway: 172.20.0.1
