@@ -31,10 +31,30 @@ export async function appointmentRoutes(
             'duration',
           ],
           properties: {
-            patientId: { type: 'string', minLength: 20, maxLength: 30, pattern: '^c[a-z0-9]+$' }, // CUID format
-            doctorId: { type: 'string', minLength: 20, maxLength: 30, pattern: '^c[a-z0-9]+$' }, // CUID format
-            specialtyId: { type: 'string', minLength: 20, maxLength: 30, pattern: '^c[a-z0-9]+$' }, // CUID format
-            slotId: { type: 'string', minLength: 20, maxLength: 30, pattern: '^c[a-z0-9]+$' }, // CUID format
+            patientId: {
+              type: 'string',
+              minLength: 20,
+              maxLength: 30,
+              pattern: '^c[a-z0-9]+$',
+            }, // CUID format
+            doctorId: {
+              type: 'string',
+              minLength: 20,
+              maxLength: 30,
+              pattern: '^c[a-z0-9]+$',
+            }, // CUID format
+            specialtyId: {
+              type: 'string',
+              minLength: 20,
+              maxLength: 30,
+              pattern: '^c[a-z0-9]+$',
+            }, // CUID format
+            slotId: {
+              type: 'string',
+              minLength: 20,
+              maxLength: 30,
+              pattern: '^c[a-z0-9]+$',
+            }, // CUID format
             appointmentType: {
               type: 'string',
               enum: [
@@ -161,9 +181,24 @@ export async function appointmentRoutes(
               enum: ['asc', 'desc'],
               default: 'desc',
             },
-            doctorId: { type: 'string', minLength: 20, maxLength: 30, pattern: '^c[a-z0-9]+$' }, // CUID format
-            patientId: { type: 'string', minLength: 20, maxLength: 30, pattern: '^c[a-z0-9]+$' }, // CUID format
-            specialtyId: { type: 'string', minLength: 20, maxLength: 30, pattern: '^c[a-z0-9]+$' }, // CUID format
+            doctorId: {
+              type: 'string',
+              minLength: 20,
+              maxLength: 30,
+              pattern: '^c[a-z0-9]+$',
+            }, // CUID format
+            patientId: {
+              type: 'string',
+              minLength: 20,
+              maxLength: 30,
+              pattern: '^c[a-z0-9]+$',
+            }, // CUID format
+            specialtyId: {
+              type: 'string',
+              minLength: 20,
+              maxLength: 30,
+              pattern: '^c[a-z0-9]+$',
+            }, // CUID format
             status: { type: 'string' },
             appointmentType: { type: 'string' },
             startDate: { type: 'string', format: 'date' },
@@ -280,7 +315,12 @@ export async function appointmentRoutes(
           type: 'object',
           required: ['id'],
           properties: {
-            id: { type: 'string', minLength: 20, maxLength: 30, pattern: '^c[a-z0-9]+$' }, // CUID format
+            id: {
+              type: 'string',
+              minLength: 20,
+              maxLength: 30,
+              pattern: '^c[a-z0-9]+$',
+            }, // CUID format
           },
         },
         response: {
@@ -368,7 +408,12 @@ export async function appointmentRoutes(
           type: 'object',
           required: ['id'],
           properties: {
-            id: { type: 'string', minLength: 20, maxLength: 30, pattern: '^c[a-z0-9]+$' }, // CUID format
+            id: {
+              type: 'string',
+              minLength: 20,
+              maxLength: 30,
+              pattern: '^c[a-z0-9]+$',
+            }, // CUID format
           },
         },
         body: {
@@ -448,7 +493,12 @@ export async function appointmentRoutes(
           type: 'object',
           required: ['id'],
           properties: {
-            id: { type: 'string', minLength: 20, maxLength: 30, pattern: '^c[a-z0-9]+$' }, // CUID format
+            id: {
+              type: 'string',
+              minLength: 20,
+              maxLength: 30,
+              pattern: '^c[a-z0-9]+$',
+            }, // CUID format
           },
         },
         body: {
@@ -546,7 +596,12 @@ export async function appointmentRoutes(
           type: 'object',
           required: ['id'],
           properties: {
-            id: { type: 'string', minLength: 20, maxLength: 30, pattern: '^c[a-z0-9]+$' }, // CUID format
+            id: {
+              type: 'string',
+              minLength: 20,
+              maxLength: 30,
+              pattern: '^c[a-z0-9]+$',
+            }, // CUID format
           },
         },
         body: {
@@ -633,7 +688,12 @@ export async function appointmentRoutes(
           type: 'object',
           required: ['id'],
           properties: {
-            id: { type: 'string', minLength: 20, maxLength: 30, pattern: '^c[a-z0-9]+$' }, // CUID format
+            id: {
+              type: 'string',
+              minLength: 20,
+              maxLength: 30,
+              pattern: '^c[a-z0-9]+$',
+            }, // CUID format
           },
         },
         body: {
@@ -698,7 +758,12 @@ export async function appointmentRoutes(
           type: 'object',
           required: ['id'],
           properties: {
-            id: { type: 'string', minLength: 20, maxLength: 30, pattern: '^c[a-z0-9]+$' }, // CUID format
+            id: {
+              type: 'string',
+              minLength: 20,
+              maxLength: 30,
+              pattern: '^c[a-z0-9]+$',
+            }, // CUID format
           },
         },
         body: {
@@ -808,7 +873,12 @@ export async function appointmentRoutes(
           type: 'object',
           required: ['patientId'],
           properties: {
-            patientId: { type: 'string', minLength: 20, maxLength: 30, pattern: '^c[a-z0-9]+$' }, // CUID format
+            patientId: {
+              type: 'string',
+              minLength: 20,
+              maxLength: 30,
+              pattern: '^c[a-z0-9]+$',
+            }, // CUID format
           },
         },
         querystring: {

@@ -18,7 +18,7 @@ export async function registerRoutes(fastify: FastifyInstance): Promise<void> {
   // Register all route modules
   await fastify.register(authRoutes, { prefix: `${apiPrefix}/auth` });
   await fastify.register(userRoutes, { prefix: `${apiPrefix}/users` });
-  // await fastify.register(userRoutes, { prefix: `${apiPrefix}` }); // For /doctors endpoint - temporarily disabled
+  await fastify.register(userRoutes, { prefix: `${apiPrefix}` }); // For /doctors endpoint - re-enabled
   await fastify.register(appointmentRoutes, {
     prefix: `${apiPrefix}/appointments`,
   });

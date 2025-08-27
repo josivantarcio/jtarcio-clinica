@@ -1,6 +1,6 @@
 /**
  * 💰 Sistema de Cálculo de Preços - EO Clínica
- * 
+ *
  * Resolve o problema de duplicação de preços entre Doctor.consultationFee e Specialty.price
  * Permite configurar qual valor usar através das configurações do sistema.
  */
@@ -31,27 +31,34 @@ export async function getPricingConfig(): Promise<PricingConfig> {
     const configs = await prisma.systemConfiguration.findMany({
       where: {
         key: {
-          in: ['CONSULTATION_PRICING_MODE', 'DEFAULT_CURRENCY', 'TAX_RATE']
-        }
-      }
+          in: ['CONSULTATION_PRICING_MODE', 'DEFAULT_CURRENCY', 'TAX_RATE'],
+        },
+      },
     });
 
-    const configMap = configs.reduce((acc, config) => {
-      acc[config.key] = config.value;
-      return acc;
-    }, {} as Record<string, string>);
+    const configMap = configs.reduce(
+      (acc, config) => {
+        acc[config.key] = config.value;
+        return acc;
+      },
+      {} as Record<string, string>,
+    );
 
     return {
-      consultationPricingMode: (configMap.CONSULTATION_PRICING_MODE as PricingMode) || 'specialty',
+      consultationPricingMode:
+        (configMap.CONSULTATION_PRICING_MODE as PricingMode) || 'specialty',
       defaultCurrency: configMap.DEFAULT_CURRENCY || 'BRL',
-      taxRate: parseFloat(configMap.TAX_RATE || '0')
+      taxRate: parseFloat(configMap.TAX_RATE || '0'),
     };
   } catch (error) {
-    console.warn('⚠️ Erro ao obter configuração de preços, usando padrões:', error);
+    console.warn(
+      '⚠️ Erro ao obter configuração de preços, usando padrões:',
+      error,
+    );
     return {
       consultationPricingMode: 'specialty',
       defaultCurrency: 'BRL',
-      taxRate: 0
+      taxRate: 0,
     };
   }
 }
@@ -61,7 +68,7 @@ export async function getPricingConfig(): Promise<PricingConfig> {
  */
 export async function calculateConsultationPrice(
   doctorId: string,
-  specialtyId: string
+  specialtyId: string,
 ): Promise<PriceCalculation> {
   const config = await getPricingConfig();
 
@@ -73,7 +80,7 @@ export async function calculateConsultationPrice(
       // Priorizar valor individual do médico
       const doctor = await prisma.doctor.findUnique({
         where: { id: doctorId },
-        select: { consultationFee: true }
+        select: { consultationFee: true },
       });
 
       if (doctor?.consultationFee) {
@@ -83,7 +90,7 @@ export async function calculateConsultationPrice(
         // Fallback para preço da especialidade
         const specialty = await prisma.specialty.findUnique({
           where: { id: specialtyId },
-          select: { price: true }
+          select: { price: true },
         });
 
         if (specialty?.price) {
@@ -95,7 +102,7 @@ export async function calculateConsultationPrice(
       // Priorizar valor da especialidade
       const specialty = await prisma.specialty.findUnique({
         where: { id: specialtyId },
-        select: { price: true }
+        select: { price: true },
       });
 
       if (specialty?.price) {
@@ -105,7 +112,7 @@ export async function calculateConsultationPrice(
         // Fallback para preço individual do médico
         const doctor = await prisma.doctor.findUnique({
           where: { id: doctorId },
-          select: { consultationFee: true }
+          select: { consultationFee: true },
         });
 
         if (doctor?.consultationFee) {
@@ -124,19 +131,18 @@ export async function calculateConsultationPrice(
       taxAmount,
       finalPrice,
       source,
-      currency: config.defaultCurrency
+      currency: config.defaultCurrency,
     };
-
   } catch (error) {
     console.error('❌ Erro ao calcular preço da consulta:', error);
-    
+
     // Retornar valores padrão em caso de erro
     return {
       basePrice: 150.0,
       taxAmount: 0,
       finalPrice: 150.0,
       source: 'default',
-      currency: 'BRL'
+      currency: 'BRL',
     };
   }
 }
@@ -144,7 +150,9 @@ export async function calculateConsultationPrice(
 /**
  * Atualiza as configurações de preços do sistema
  */
-export async function updatePricingConfig(config: Partial<PricingConfig>): Promise<boolean> {
+export async function updatePricingConfig(
+  config: Partial<PricingConfig>,
+): Promise<boolean> {
   try {
     const updates = [];
 
@@ -156,10 +164,11 @@ export async function updatePricingConfig(config: Partial<PricingConfig>): Promi
           create: {
             key: 'CONSULTATION_PRICING_MODE',
             value: config.consultationPricingMode,
-            description: 'Modo de precificação das consultas (doctor ou specialty)',
-            category: 'PRICING'
-          }
-        })
+            description:
+              'Modo de precificação das consultas (doctor ou specialty)',
+            category: 'PRICING',
+          },
+        }),
       );
     }
 
@@ -172,9 +181,9 @@ export async function updatePricingConfig(config: Partial<PricingConfig>): Promi
             key: 'DEFAULT_CURRENCY',
             value: config.defaultCurrency,
             description: 'Moeda padrão do sistema',
-            category: 'PRICING'
-          }
-        })
+            category: 'PRICING',
+          },
+        }),
       );
     }
 
@@ -187,15 +196,14 @@ export async function updatePricingConfig(config: Partial<PricingConfig>): Promi
             key: 'TAX_RATE',
             value: config.taxRate.toString(),
             description: 'Taxa de imposto em percentual',
-            category: 'PRICING'
-          }
-        })
+            category: 'PRICING',
+          },
+        }),
       );
     }
 
     await Promise.all(updates);
     return true;
-
   } catch (error) {
     console.error('❌ Erro ao atualizar configurações de preços:', error);
     return false;
@@ -205,13 +213,16 @@ export async function updatePricingConfig(config: Partial<PricingConfig>): Promi
 /**
  * Formata valor monetário de acordo com a configuração
  */
-export function formatCurrency(amount: number, currency: string = 'BRL'): string {
+export function formatCurrency(
+  amount: number,
+  currency: string = 'BRL',
+): string {
   try {
     const formatter = new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: currency,
       minimumFractionDigits: 2,
-      maximumFractionDigits: 2
+      maximumFractionDigits: 2,
     });
 
     return formatter.format(amount);

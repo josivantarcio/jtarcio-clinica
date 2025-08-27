@@ -47,7 +47,7 @@ cp .env.example .env
 ### 🏥 **Sistema Médico Completo**
 - ✅ **Agendamento Inteligente** - IA otimiza horários e recursos
 - ✅ **Gestão de Pacientes** - Prontuários digitais completos
-- ✅ **Gestão de Médicos** - Agenda, especialidades, disponibilidade
+- ✅ **Gestão de Médicos** - Cadastro completo, agenda, especialidades, disponibilidade
 - ✅ **Planos de Saúde** - Sistema completo de convênios e coberturas
 - ✅ **Sistema Financeiro** - Transações, relatórios e analytics
 - ✅ **Gestão de Consultas** - Histórico, receitas, exames

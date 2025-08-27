@@ -512,44 +512,47 @@ export async function authRoutes(fastify: FastifyInstance): Promise<void> {
             system: {
               type: 'object',
               properties: {
-                consultationPricingMode: { type: 'string', enum: ['doctor', 'specialty'] },
+                consultationPricingMode: {
+                  type: 'string',
+                  enum: ['doctor', 'specialty'],
+                },
                 defaultCurrency: { type: 'string' },
-                taxRate: { type: 'number', minimum: 0, maximum: 100 }
-              }
-            }
-          }
-        }
-      }
+                taxRate: { type: 'number', minimum: 0, maximum: 100 },
+              },
+            },
+          },
+        },
+      },
     },
     async (request: FastifyRequest<{ Body: any }>, reply: FastifyReply) => {
       try {
         const { system } = request.body;
-        
+
         if (!system) {
           return reply.status(400).send({
             success: false,
-            error: { message: 'System settings are required' }
+            error: { message: 'System settings are required' },
           });
         }
 
         // Import here to avoid circular dependencies
         const { updatePricingConfig } = await import('@/utils/pricing');
-        
+
         const success = await updatePricingConfig({
           consultationPricingMode: system.consultationPricingMode,
           defaultCurrency: system.defaultCurrency,
-          taxRate: system.taxRate
+          taxRate: system.taxRate,
         });
 
         if (success) {
           return reply.send({
             success: true,
-            message: 'System settings updated successfully'
+            message: 'System settings updated successfully',
           });
         } else {
           return reply.status(500).send({
             success: false,
-            error: { message: 'Failed to update system settings' }
+            error: { message: 'Failed to update system settings' },
           });
         }
       } catch (error: any) {
@@ -558,10 +561,13 @@ export async function authRoutes(fastify: FastifyInstance): Promise<void> {
           success: false,
           error: {
             code: 'UPDATE_FAILED',
-            message: error instanceof Error ? error.message : 'Failed to update settings'
-          }
+            message:
+              error instanceof Error
+                ? error.message
+                : 'Failed to update settings',
+          },
         });
       }
-    }
+    },
   );
 }
