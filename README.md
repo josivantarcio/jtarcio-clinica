@@ -3,8 +3,8 @@
 > **Sistema médico de próxima geração com IA integrada, compliance LGPD e arquitetura enterprise**
 
 [![Production Ready](https://img.shields.io/badge/Status-Fully%20Tested%20%26%20Validated-brightgreen)](https://github.com/josivantarcio/eo-clinica)
-[![Version](https://img.shields.io/badge/Version-1.4.0-blue)](https://github.com/josivantarcio/eo-clinica/releases)
-[![Tests Executed](https://img.shields.io/badge/Tests%20Executed-140%2F148%20(94.6%25)-brightgreen)](./tests/README.md)
+[![Version](https://img.shields.io/badge/Version-1.5.0-blue)](https://github.com/josivantarcio/eo-clinica/releases)
+[![Tests Executed](https://img.shields.io/badge/Tests%20Executed-176%2F176%20(100%25)-brightgreen)](./tests/README.md)
 [![Security Validated](https://img.shields.io/badge/Security-Banking%20Level%20✅-green)](./docs/05-security/SECURITY_OVERVIEW.md)
 [![Accessibility](https://img.shields.io/badge/Accessibility-WCAG%202.1%20AA%20✅-blue)](./src/styles/accessibility.css)
 [![Mobile Ready](https://img.shields.io/badge/Mobile-PWA%20Ready%20✅-purple)](./tests/mobile/basic-mobile.test.ts)
@@ -48,6 +48,8 @@ cp .env.example .env
 - ✅ **Agendamento Inteligente** - IA otimiza horários e recursos
 - ✅ **Gestão de Pacientes** - Prontuários digitais completos
 - ✅ **Gestão de Médicos** - Agenda, especialidades, disponibilidade
+- ✅ **Planos de Saúde** - Sistema completo de convênios e coberturas
+- ✅ **Sistema Financeiro** - Transações, relatórios e analytics
 - ✅ **Gestão de Consultas** - Histórico, receitas, exames
 - ✅ **Dashboard Analytics** - Relatórios e métricas em tempo real
 
