@@ -95,6 +95,11 @@ interface UserSettings {
     loginNotifications: boolean
     sessionTimeout: number // minutes
   }
+  system: {
+    consultationPricingMode: 'doctor' | 'specialty' // Qual valor de consulta usar
+    defaultCurrency: string
+    taxRate: number
+  }
 }
 
 export default function SettingsPage() {
@@ -135,6 +140,11 @@ export default function SettingsPage() {
       twoFactorEnabled: false,
       loginNotifications: true,
       sessionTimeout: 60
+    },
+    system: {
+      consultationPricingMode: 'specialty', // Padrão: usar preço da especialidade
+      defaultCurrency: 'BRL',
+      taxRate: 0
     }
   })
   
@@ -303,6 +313,26 @@ export default function SettingsPage() {
     try {
       console.log('💾 Saving settings:', section || 'all', settings)
       
+      // Sistema usa endpoint diferente
+      if (section === 'system') {
+        const response = await apiClient.put('/api/v1/auth/system-settings', {
+          system: settings.system
+        })
+        
+        if (response.success) {
+          console.log('✅ System settings saved successfully')
+          toastUtils.success(
+            'Configurações do Sistema salvas!', 
+            'As configurações de preços e sistema foram atualizadas com sucesso.'
+          )
+        } else {
+          console.error('❌ System save failed:', response.error)
+          throw new Error(response.error?.message || 'Failed to save system settings')
+        }
+        return
+      }
+      
+      // Outras configurações usam endpoint de perfil
       const response = await apiClient.patch('/api/v1/users/profile', {
         firstName: settings.profile.firstName,
         lastName: settings.profile.lastName,
@@ -323,9 +353,17 @@ export default function SettingsPage() {
       
       if (response.success) {
         console.log('✅ Settings saved successfully:', section || 'all')
+        const sectionNames: Record<string, string> = {
+          profile: 'perfil',
+          notifications: 'notificações', 
+          privacy: 'privacidade',
+          appearance: 'aparência',
+          security: 'segurança'
+        }
+        
         toastUtils.success(
           'Configurações salvas!', 
-          `Suas configurações de ${section === 'profile' ? 'perfil' : section === 'notifications' ? 'notificações' : section === 'privacy' ? 'privacidade' : section === 'appearance' ? 'aparência' : 'segurança'} foram atualizadas com sucesso.`
+          `Suas configurações de ${sectionNames[section || 'all'] || 'todas as seções'} foram atualizadas com sucesso.`
         )
       } else {
         console.error('❌ Save failed:', response.error)
@@ -547,7 +585,7 @@ export default function SettingsPage() {
 
         {/* Settings Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="profile" className="flex items-center">
               <User className="h-4 w-4 mr-2" />
               Perfil
@@ -567,6 +605,10 @@ export default function SettingsPage() {
             <TabsTrigger value="security" className="flex items-center">
               <Lock className="h-4 w-4 mr-2" />
               Segurança
+            </TabsTrigger>
+            <TabsTrigger value="system" className="flex items-center">
+              <Settings className="h-4 w-4 mr-2" />
+              Sistema
             </TabsTrigger>
           </TabsList>
 
@@ -1124,6 +1166,120 @@ export default function SettingsPage() {
                   <Button onClick={() => saveSettings('security')} disabled={saving}>
                     <Save className="h-4 w-4 mr-2" />
                     Salvar Segurança
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* System Tab */}
+          <TabsContent value="system" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Settings className="h-5 w-5 mr-2" />
+                  Configurações do Sistema
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Configure o comportamento geral do sistema e regras de negócio
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Pricing Configuration */}
+                <div>
+                  <Label className="text-base font-medium">💰 Configuração de Preços</Label>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Defina qual valor será usado como base para as consultas médicas
+                  </p>
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        id="pricing-specialty"
+                        name="consultationPricingMode"
+                        value="specialty"
+                        checked={settings.system.consultationPricingMode === 'specialty'}
+                        onChange={(e) => updateSetting('system', 'consultationPricingMode', e.target.value)}
+                        className="w-4 h-4 text-primary border-gray-300 focus:ring-primary"
+                      />
+                      <Label htmlFor="pricing-specialty" className="flex-1 cursor-pointer">
+                        <div>
+                          <div className="font-medium">💊 Preço da Especialidade (Recomendado)</div>
+                          <div className="text-sm text-muted-foreground">
+                            Usar o valor padrão definido para cada especialidade médica (ex: Cardiologia R$ 180,00)
+                          </div>
+                        </div>
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        id="pricing-doctor"
+                        name="consultationPricingMode"
+                        value="doctor"
+                        checked={settings.system.consultationPricingMode === 'doctor'}
+                        onChange={(e) => updateSetting('system', 'consultationPricingMode', e.target.value)}
+                        className="w-4 h-4 text-primary border-gray-300 focus:ring-primary"
+                      />
+                      <Label htmlFor="pricing-doctor" className="flex-1 cursor-pointer">
+                        <div>
+                          <div className="font-medium">👨‍⚕️ Valor Individual do Médico</div>
+                          <div className="text-sm text-muted-foreground">
+                            Usar o valor específico que cada médico define em seu perfil (permite personalização)
+                          </div>
+                        </div>
+                      </Label>
+                    </div>
+                  </div>
+                  <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                    <div className="flex">
+                      <div className="text-blue-500 mr-2">ℹ️</div>
+                      <div className="text-sm text-blue-700">
+                        <strong>Como funciona:</strong>
+                        <br />• <strong>Especialidade:</strong> Todos os cardiologistas cobram o mesmo valor (ex: R$ 180,00)
+                        <br />• <strong>Médico Individual:</strong> Cada médico pode ter seu próprio preço, mesmo na mesma especialidade
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Currency and Tax */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <Label htmlFor="defaultCurrency" className="text-base font-medium">🪙 Moeda Padrão</Label>
+                    <select
+                      id="defaultCurrency"
+                      value={settings.system.defaultCurrency}
+                      onChange={(e) => updateSetting('system', 'defaultCurrency', e.target.value)}
+                      className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                    >
+                      <option value="BRL">🇧🇷 Real Brasileiro (R$)</option>
+                      <option value="USD">🇺🇸 Dólar Americano ($)</option>
+                      <option value="EUR">🇪🇺 Euro (€)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <Label htmlFor="taxRate" className="text-base font-medium">📊 Taxa de Imposto (%)</Label>
+                    <input
+                      type="number"
+                      id="taxRate"
+                      min="0"
+                      max="100"
+                      step="0.01"
+                      value={settings.system.taxRate}
+                      onChange={(e) => updateSetting('system', 'taxRate', parseFloat(e.target.value) || 0)}
+                      className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                      placeholder="Ex: 5.5"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end">
+                  <Button onClick={() => saveSettings('system')} disabled={saving}>
+                    <Save className="h-4 w-4 mr-2" />
+                    Salvar Sistema
                   </Button>
                 </div>
               </CardContent>

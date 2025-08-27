@@ -14,7 +14,7 @@ export async function availabilityRoutes(
           type: 'object',
           required: ['doctorId'],
           properties: {
-            doctorId: { type: 'string', minLength: 20, maxLength: 30, pattern: '^c[a-z0-9]+$' // CUID format },
+            doctorId: { type: 'string', minLength: 20, maxLength: 30, pattern: '^c[a-z0-9]+$' }, // CUID format
           },
         },
         querystring: {
@@ -38,7 +38,7 @@ export async function availabilityRoutes(
               data: {
                 type: 'object',
                 properties: {
-                  doctorId: { type: 'string', minLength: 20, maxLength: 30, pattern: '^c[a-z0-9]+$' // CUID format },
+                  doctorId: { type: 'string', minLength: 20, maxLength: 30, pattern: '^c[a-z0-9]+$' }, // CUID format
                   date: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
                   timeSlots: {
                     type: 'array',
@@ -90,7 +90,7 @@ export async function availabilityRoutes(
           type: 'object',
           required: ['specialtyId'],
           properties: {
-            specialtyId: { type: 'string', minLength: 20, maxLength: 30, pattern: '^c[a-z0-9]+$' // CUID format },
+            specialtyId: { type: 'string', minLength: 20, maxLength: 30, pattern: '^c[a-z0-9]+$' }, // CUID format
           },
         },
         querystring: {
@@ -111,7 +111,7 @@ export async function availabilityRoutes(
                 items: {
                   type: 'object',
                   properties: {
-                    doctorId: { type: 'string', minLength: 20, maxLength: 30, pattern: '^c[a-z0-9]+$' // CUID format },
+                    doctorId: { type: 'string', minLength: 20, maxLength: 30, pattern: '^c[a-z0-9]+$' }, // CUID format
                     doctor: {
                       type: 'object',
                       properties: {
@@ -178,7 +178,7 @@ export async function availabilityRoutes(
           type: 'object',
           required: ['doctorId'],
           properties: {
-            doctorId: { type: 'string', minLength: 20, maxLength: 30, pattern: '^c[a-z0-9]+$' // CUID format },
+            doctorId: { type: 'string', minLength: 20, maxLength: 30, pattern: '^c[a-z0-9]+$' }, // CUID format
           },
         },
         body: {
@@ -212,8 +212,8 @@ export async function availabilityRoutes(
               data: {
                 type: 'object',
                 properties: {
-                  id: { type: 'string', minLength: 20, maxLength: 30, pattern: '^c[a-z0-9]+$' // CUID format },
-                  doctorId: { type: 'string', minLength: 20, maxLength: 30, pattern: '^c[a-z0-9]+$' // CUID format },
+                  id: { type: 'string', minLength: 20, maxLength: 30, pattern: '^c[a-z0-9]+$' }, // CUID format
+                  doctorId: { type: 'string', minLength: 20, maxLength: 30, pattern: '^c[a-z0-9]+$' }, // CUID format
                   dayOfWeek: { type: 'number' },
                   startTime: { type: 'string' },
                   endTime: { type: 'string' },
@@ -257,7 +257,7 @@ export async function availabilityRoutes(
           type: 'object',
           required: ['doctorId'],
           properties: {
-            doctorId: { type: 'string', minLength: 20, maxLength: 30, pattern: '^c[a-z0-9]+$' // CUID format },
+            doctorId: { type: 'string', minLength: 20, maxLength: 30, pattern: '^c[a-z0-9]+$' }, // CUID format
           },
         },
         response: {
@@ -270,7 +270,7 @@ export async function availabilityRoutes(
                 items: {
                   type: 'object',
                   properties: {
-                    id: { type: 'string', minLength: 20, maxLength: 30, pattern: '^c[a-z0-9]+$' // CUID format },
+                    id: { type: 'string', minLength: 20, maxLength: 30, pattern: '^c[a-z0-9]+$' }, // CUID format
                     dayOfWeek: { type: 'number' },
                     startTime: { type: 'string' },
                     endTime: { type: 'string' },
@@ -314,7 +314,7 @@ export async function availabilityRoutes(
           type: 'object',
           required: ['id'],
           properties: {
-            id: { type: 'string', minLength: 20, maxLength: 30, pattern: '^c[a-z0-9]+$' // CUID format },
+            id: { type: 'string', minLength: 20, maxLength: 30, pattern: '^c[a-z0-9]+$' }, // CUID format
           },
         },
         body: {
@@ -342,8 +342,8 @@ export async function availabilityRoutes(
               data: {
                 type: 'object',
                 properties: {
-                  id: { type: 'string', minLength: 20, maxLength: 30, pattern: '^c[a-z0-9]+$' // CUID format },
-                  doctorId: { type: 'string', minLength: 20, maxLength: 30, pattern: '^c[a-z0-9]+$' // CUID format },
+                  id: { type: 'string', minLength: 20, maxLength: 30, pattern: '^c[a-z0-9]+$' }, // CUID format
+                  doctorId: { type: 'string', minLength: 20, maxLength: 30, pattern: '^c[a-z0-9]+$' }, // CUID format
                   dayOfWeek: { type: 'number' },
                   startTime: { type: 'string' },
                   endTime: { type: 'string' },
@@ -386,7 +386,7 @@ export async function availabilityRoutes(
           type: 'object',
           required: ['id'],
           properties: {
-            id: { type: 'string', minLength: 20, maxLength: 30, pattern: '^c[a-z0-9]+$' // CUID format },
+            id: { type: 'string', minLength: 20, maxLength: 30, pattern: '^c[a-z0-9]+$' }, // CUID format
           },
         },
       },

@@ -61,7 +61,8 @@ cp .env.example .env
 
 ### 💰 **Módulo Financeiro Enterprise**
 - ✅ **Dashboard Financeiro** - KPIs e métricas de receita
-- ✅ **Faturamento Automático** - Cobrança de consultas
+- ✅ **Sistema de Preços Flexível** - Configuração por médico ou especialidade
+- ✅ **Faturamento Automático** - Cobrança de consultas com cálculo inteligente
 - ✅ **Contas a Pagar/Receber** - Gestão financeira completa
 - ✅ **Relatórios Fiscais** - Compliance fiscal brasileira
 
