@@ -1,10 +1,16 @@
 name: 🚀 CI/CD - EO Clínica
 
 on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main, develop ]
+  # Desabilitado automático para economizar GitHub Actions minutes
+  # Só executa manualmente quando necessário
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Motivo para executar CI/CD'
+        required: true
+        default: 'Validação manual antes de deploy'
+  # pull_request:
+  #   branches: [ main, develop ]
 
 jobs:
   test:

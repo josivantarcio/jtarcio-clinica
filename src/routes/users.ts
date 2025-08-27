@@ -126,7 +126,7 @@ export async function userRoutes(fastify: FastifyInstance): Promise<void> {
           type: 'object',
           required: ['id'],
           properties: {
-            id: { type: 'string', format: 'uuid' },
+            id: { type: 'string', minLength: 20, maxLength: 30 }, // CUID format, not UUID
           },
         },
         response: {
@@ -199,7 +199,7 @@ export async function userRoutes(fastify: FastifyInstance): Promise<void> {
           type: 'object',
           required: ['id'],
           properties: {
-            id: { type: 'string', format: 'uuid' },
+            id: { type: 'string', minLength: 20, maxLength: 30, pattern: '^c[a-z0-9]+$' }, // CUID format
           },
         },
         body: {
@@ -310,7 +310,7 @@ export async function userRoutes(fastify: FastifyInstance): Promise<void> {
           type: 'object',
           required: ['id'],
           properties: {
-            id: { type: 'string', format: 'uuid' },
+            id: { type: 'string', minLength: 20, maxLength: 30, pattern: '^c[a-z0-9]+$' }, // CUID format
           },
         },
       },
@@ -358,7 +358,7 @@ export async function userRoutes(fastify: FastifyInstance): Promise<void> {
           type: 'object',
           required: ['id'],
           properties: {
-            id: { type: 'string', format: 'uuid' },
+            id: { type: 'string', minLength: 20, maxLength: 30, pattern: '^c[a-z0-9]+$' }, // CUID format
           },
         },
         querystring: {
@@ -427,7 +427,7 @@ export async function userRoutes(fastify: FastifyInstance): Promise<void> {
           type: 'object',
           required: ['id'],
           properties: {
-            id: { type: 'string', format: 'uuid' },
+            id: { type: 'string', minLength: 20, maxLength: 30, pattern: '^c[a-z0-9]+$' }, // CUID format
           },
         },
         body: {
