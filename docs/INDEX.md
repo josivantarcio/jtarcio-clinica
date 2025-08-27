@@ -128,6 +128,14 @@
 └── 🔧 BREAKING_CHANGES.md      # Mudanças quebradoras
 ```
 
+### **11 - Implementação de IA**
+```
+📂 11-ai-implementation/
+├── 🤖 AI_IMPLEMENTATION_PREP.md    # Preparação para implementação IA
+├── 💬 WHATSAPP_AI_INTEGRATION_PROMPT.md  # Prompt para integração WhatsApp + IA
+└── 📋 AI_DEVELOPMENT_ROADMAP.md    # Roadmap de desenvolvimento IA
+```
+
 ---
 
 ## 🔍 **Como Navegar Esta Documentação**
