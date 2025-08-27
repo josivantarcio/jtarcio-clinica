@@ -348,7 +348,7 @@ export class UserService {
             email: doctorData.user.email,
             password: hashedPassword,
             phone: doctorData.phone,
-            cpf: doctorData.cpf,
+            cpf: doctorData.cpf && doctorData.cpf.trim() !== '' ? doctorData.cpf : null,
             role: 'DOCTOR',
             status: 'ACTIVE', // Set as active by default
           },

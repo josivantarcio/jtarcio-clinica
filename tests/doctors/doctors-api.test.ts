@@ -232,6 +232,223 @@ describe('🏥 API de Médicos - /api/v1/doctors', () => {
       expect(data.success).toBe(false)
     })
   })
+
+  describe('🆔 Validação de CPF - Fix para Issue #CPF-400-Error', () => {
+    // Helper para gerar CPF válido
+    function generateValidCPF(): string {
+      const firstNineDigits = Math.floor(Math.random() * 999999999).toString().padStart(9, '0')
+      
+      let sum = 0
+      for (let i = 0; i < 9; i++) {
+        sum += parseInt(firstNineDigits[i]) * (10 - i)
+      }
+      let firstDigit = (sum * 10) % 11
+      if (firstDigit >= 10) firstDigit = 0
+      
+      sum = 0
+      const withFirstDigit = firstNineDigits + firstDigit
+      for (let i = 0; i < 10; i++) {
+        sum += parseInt(withFirstDigit[i]) * (11 - i)
+      }
+      let secondDigit = (sum * 10) % 11
+      if (secondDigit >= 10) secondDigit = 0
+      
+      return firstNineDigits + firstDigit + secondDigit
+    }
+
+    test('✅ Deve aceitar CPF válido', async () => {
+      const doctorWithValidCPF = {
+        ...testDoctor,
+        cpf: generateValidCPF(),
+        crm: `${Math.floor(Math.random() * 90000) + 10000}-RJ`,
+        user: {
+          ...testDoctor.user,
+          email: `cpf.valid.${Date.now()}@example.com`
+        }
+      }
+
+      const { response, data } = await apiRequest('/api/v1/doctors', {
+        method: 'POST',
+        body: JSON.stringify(doctorWithValidCPF),
+      })
+
+      expect(response.status).toBe(201)
+      expect(data.success).toBe(true)
+      expect(data.data.cpf).toBe(doctorWithValidCPF.cpf)
+    })
+
+    test('✅ Deve aceitar CPF como string vazia (opcional)', async () => {
+      const doctorWithEmptyCPF = {
+        ...testDoctor,
+        cpf: '', // CPF vazio deve ser aceito
+        crm: `${Math.floor(Math.random() * 90000) + 10000}-MG`,
+        user: {
+          ...testDoctor.user,
+          email: `cpf.empty.${Date.now()}@example.com`
+        }
+      }
+
+      const { response, data } = await apiRequest('/api/v1/doctors', {
+        method: 'POST',
+        body: JSON.stringify(doctorWithEmptyCPF),
+      })
+
+      expect(response.status).toBe(201)
+      expect(data.success).toBe(true)
+      // CPF vazio deve ser convertido para null no banco
+      expect(data.data.cpf).toBeNull()
+    })
+
+    test('✅ Deve aceitar médico sem campo CPF (undefined)', async () => {
+      const doctorWithoutCPF = {
+        ...testDoctor,
+        // CPF não enviado (undefined)
+        crm: `${Math.floor(Math.random() * 90000) + 10000}-RS`,
+        user: {
+          ...testDoctor.user,
+          email: `cpf.undefined.${Date.now()}@example.com`
+        }
+      }
+      delete (doctorWithoutCPF as any).cpf // Remover campo completamente
+
+      const { response, data } = await apiRequest('/api/v1/doctors', {
+        method: 'POST',
+        body: JSON.stringify(doctorWithoutCPF),
+      })
+
+      expect(response.status).toBe(201)
+      expect(data.success).toBe(true)
+      expect(data.data.cpf).toBeNull()
+    })
+
+    test('✅ Deve aceitar CPF como null', async () => {
+      const doctorWithNullCPF = {
+        ...testDoctor,
+        cpf: null, // CPF null deve ser aceito
+        crm: `${Math.floor(Math.random() * 90000) + 10000}-PR`,
+        user: {
+          ...testDoctor.user,
+          email: `cpf.null.${Date.now()}@example.com`
+        }
+      }
+
+      const { response, data } = await apiRequest('/api/v1/doctors', {
+        method: 'POST',
+        body: JSON.stringify(doctorWithNullCPF),
+      })
+
+      expect(response.status).toBe(201)
+      expect(data.success).toBe(true)
+      expect(data.data.cpf).toBeNull()
+    })
+
+    test('✅ Deve permitir múltiplos médicos com CPF vazio/null (sem violação de constraint)', async () => {
+      // Primeiro médico com CPF vazio
+      const doctor1 = {
+        ...testDoctor,
+        cpf: '',
+        crm: `${Math.floor(Math.random() * 90000) + 10000}-SC`,
+        user: {
+          ...testDoctor.user,
+          email: `cpf.multi1.${Date.now()}@example.com`
+        }
+      }
+
+      const { response: response1, data: data1 } = await apiRequest('/api/v1/doctors', {
+        method: 'POST',
+        body: JSON.stringify(doctor1),
+      })
+
+      expect(response1.status).toBe(201)
+      expect(data1.success).toBe(true)
+
+      // Segundo médico com CPF null
+      const doctor2 = {
+        ...testDoctor,
+        cpf: null,
+        crm: `${Math.floor(Math.random() * 90000) + 10000}-BA`,
+        user: {
+          ...testDoctor.user,
+          email: `cpf.multi2.${Date.now()}@example.com`
+        }
+      }
+
+      const { response: response2, data: data2 } = await apiRequest('/api/v1/doctors', {
+        method: 'POST',
+        body: JSON.stringify(doctor2),
+      })
+
+      expect(response2.status).toBe(201)
+      expect(data2.success).toBe(true)
+
+      // Ambos devem ter CPF null no banco
+      expect(data1.data.cpf).toBeNull()
+      expect(data2.data.cpf).toBeNull()
+    })
+
+    test('❌ Deve rejeitar CPF duplicado (constraint única para CPFs válidos)', async () => {
+      const validCPF = generateValidCPF()
+
+      // Primeiro médico com CPF válido
+      const doctor1 = {
+        ...testDoctor,
+        cpf: validCPF,
+        crm: `${Math.floor(Math.random() * 90000) + 10000}-CE`,
+        user: {
+          ...testDoctor.user,
+          email: `cpf.dup1.${Date.now()}@example.com`
+        }
+      }
+
+      const { response: response1, data: data1 } = await apiRequest('/api/v1/doctors', {
+        method: 'POST',
+        body: JSON.stringify(doctor1),
+      })
+
+      expect(response1.status).toBe(201)
+      expect(data1.success).toBe(true)
+
+      // Segundo médico com mesmo CPF deve falhar
+      const doctor2 = {
+        ...testDoctor,
+        cpf: validCPF, // Mesmo CPF
+        crm: `${Math.floor(Math.random() * 90000) + 10000}-PE`,
+        user: {
+          ...testDoctor.user,
+          email: `cpf.dup2.${Date.now()}@example.com`
+        }
+      }
+
+      const { response: response2, data: data2 } = await apiRequest('/api/v1/doctors', {
+        method: 'POST',
+        body: JSON.stringify(doctor2),
+      })
+
+      expect(response2.status).toBe(400)
+      expect(data2.success).toBe(false)
+      expect(data2.error?.message).toContain('CPF')
+    })
+
+    test('❌ Deve rejeitar CPF com formato inválido', async () => {
+      const doctorWithInvalidCPF = {
+        ...testDoctor,
+        cpf: '123', // CPF muito curto
+        crm: `${Math.floor(Math.random() * 90000) + 10000}-GO`,
+        user: {
+          ...testDoctor.user,
+          email: `cpf.invalid.${Date.now()}@example.com`
+        }
+      }
+
+      const { response, data } = await apiRequest('/api/v1/doctors', {
+        method: 'POST',
+        body: JSON.stringify(doctorWithInvalidCPF),
+      })
+
+      expect(response.status).toBe(400)
+      expect(data.success).toBe(false)
+    })
+  })
 })
 
 // Cleanup após os testes

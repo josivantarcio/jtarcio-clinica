@@ -304,7 +304,7 @@ export default function NewDoctorPage() {
         },
         crm: data.crm,
         phone: data.phone,
-        cpf: data.cpf,
+        cpf: data.cpf || '', // Garantir que CPF seja sempre string
         specialtyId: data.specialtyId,
         subSpecialties: selectedSubSpecialties,
         graduationDate: data.graduationDate,
