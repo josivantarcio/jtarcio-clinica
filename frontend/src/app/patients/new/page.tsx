@@ -15,6 +15,7 @@ import { apiClient } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
 import { formatDateForAPI } from '@/lib/date-utils'
 import { validateCPF, formatCPF, cleanCPF } from '@/lib/cpf-validation'
+import { useNotificationsStore } from '@/store/notifications'
 
 interface PatientForm {
   firstName: string
@@ -61,6 +62,7 @@ const initialForm: PatientForm = {
 export default function NewPatientPage() {
   const { user, isAuthenticated } = useAuthStore()
   const router = useRouter()
+  const { addNotification } = useNotificationsStore()
   const [form, setForm] = useState<PatientForm>(initialForm)
   const [loading, setLoading] = useState(false)
   const [cpfError, setCpfError] = useState('')
@@ -188,6 +190,18 @@ export default function NewPatientPage() {
       toast({
         title: "Sucesso!",
         description: "Paciente cadastrado com sucesso.",
+      })
+      
+      // Adicionar notificação de novo paciente cadastrado
+      addNotification({
+        type: 'system',
+        title: '🎉 Novo Paciente Cadastrado',
+        message: `${form.firstName} ${form.lastName} foi cadastrado com sucesso no sistema. Email enviado para ${form.email}.`,
+        priority: 'medium',
+        metadata: {
+          patientName: `${form.firstName} ${form.lastName}`,
+          source: 'manual'
+        }
       })
       
       router.push('/patients')

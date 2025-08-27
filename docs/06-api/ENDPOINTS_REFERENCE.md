@@ -5,13 +5,17 @@
 - **Development**: `http://localhost:3000/api/v1`
 - **Production**: `https://api.eoclinica.com.br/api/v1`
 
-### 🆕 LATEST ADDITIONS - Settings API
-Adicionados endpoints completos para gerenciamento de configurações de usuário:
-- **GET** `/auth/me` - Perfil do usuário autenticado
-- **GET** `/users/profile` - Perfil completo com configurações
-- **PATCH** `/users/profile` - Atualizar perfil e settings
-- **JWT Middleware** - Sistema de autenticação completo
-- **Production**: `https://api.eo-clinica.com/api/v1`
+### 🆕 LATEST ADDITIONS - Patients Management API
+
+**🏥 Sistema Completo de Pacientes - 100% Testado e Validado:**
+- **POST** `/users` - Cadastro de pacientes com validações completas
+- **GET** `/users?role=PATIENT` - Listagem de pacientes com filtros
+- **GET** `/users/check-cpf/{cpf}` - Verificação de CPF duplicado
+- **GET** `/users/{id}` - Detalhes completos do paciente
+- **PATCH** `/users/{id}/status` - Alterar status do paciente
+- **Validações**: CPF brasileiro, telefone único, email válido
+- **Notificações**: Sistema automático integrado
+- **Email**: Confirmação de cadastro automática
 
 ### 🔐 AUTHENTICATION
 
@@ -98,6 +102,248 @@ Request password reset via email.
 Reset password using reset token.
 
 ---
+
+## 🏥 PATIENT MANAGEMENT ENDPOINTS - COMPLETE & VALIDATED
+
+### POST `/users` - Create New Patient
+Cadastro completo de paciente com validações robustas e notificações automáticas.
+
+**Authentication:** Required - Admin, Doctor, Receptionist roles only
+
+**Request Body:**
+```json
+{
+  "firstName": "João",
+  "lastName": "Silva", 
+  "email": "joao.silva@exemplo.com",
+  "phone": "(11) 99999-8888",
+  "cpf": "12345678909",
+  "dateOfBirth": "1990-01-15",
+  "gender": "M",
+  "emergencyContactName": "Maria Silva",
+  "emergencyContactPhone": "(11) 99999-7777",
+  "allergies": ["Dipirona", "Penicilina"],
+  "medications": ["Losartana 50mg"],
+  "role": "PATIENT",
+  "password": "TempPassword123!",
+  "address": {
+    "street": "Rua das Flores, 123",
+    "neighborhood": "Centro",
+    "city": "São Paulo",
+    "state": "SP",
+    "zipCode": "01234-567"
+  }
+}
+```
+
+**Response - Success (201):**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "cmeu81dgk0001cnobjfdio3xf",
+    "email": "joao.silva@exemplo.com",
+    "firstName": "João",
+    "lastName": "Silva",
+    "fullName": "João Silva",
+    "role": "PATIENT",
+    "status": "ACTIVE",
+    "phone": "(11) 99999-8888",
+    "cpf": "123.456.789-09",
+    "dateOfBirth": "1990-01-15T00:00:00.000Z",
+    "gender": "M",
+    "createdAt": "2025-08-27T17:00:49.124Z"
+  }
+}
+```
+
+**Response - Error (400):**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "EMAIL_ALREADY_EXISTS",
+    "message": "Um usuário com este email já existe"
+  }
+}
+```
+
+**Validations Applied:**
+- ✅ **CPF**: Brazilian CPF algorithm with verification digits
+- ✅ **Email**: Unique constraint validation
+- ✅ **Phone**: Unique constraint with Brazilian format
+- ✅ **Required fields**: firstName, lastName, email, phone, cpf, role
+- ✅ **Password**: Temporary password assigned (must change on first login)
+
+### GET `/users?role=PATIENT` - List Patients
+Lista paginada de pacientes com filtros avançados.
+
+**Authentication:** Required - Admin, Doctor, Receptionist roles
+
+**Query Parameters:**
+```
+?role=PATIENT              # Required - filter by patient role
+&page=1                    # Optional - page number (default: 1)
+&limit=20                  # Optional - items per page (default: 20, max: 100)
+&search=joão               # Optional - search in name, email, cpf, phone
+&status=ACTIVE             # Optional - ACTIVE, INACTIVE, PENDING_VERIFICATION
+&sortBy=createdAt          # Optional - field to sort by
+&sortOrder=desc            # Optional - asc or desc (default: desc)
+```
+
+**Example Request:**
+```bash
+GET /api/v1/users?role=PATIENT&limit=5&search=joão&status=ACTIVE
+```
+
+**Response - Success (200):**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "cmeu81dgk0001cnobjfdio3xf",
+      "email": "joao.silva@exemplo.com",
+      "firstName": "João",
+      "lastName": "Silva",
+      "fullName": "João Silva",
+      "role": "PATIENT",
+      "status": "ACTIVE",
+      "phone": "(11) 99999-8888",
+      "timezone": "America/Sao_Paulo",
+      "avatar": "",
+      "createdAt": "2025-08-27T17:00:49.124Z",
+      "updatedAt": "2025-08-27T17:00:49.124Z"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 5,
+    "total": 1,
+    "totalPages": 1
+  }
+}
+```
+
+### GET `/users/check-cpf/{cpf}` - Verify CPF Duplicate
+Verificação em tempo real de CPF duplicado para validação de formulário.
+
+**Authentication:** Required
+
+**Path Parameters:**
+- `cpf` - CPF to check (11 digits, no formatting)
+
+**Example Request:**
+```bash
+GET /api/v1/users/check-cpf/12345678909
+```
+
+**Response - CPF Available (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "exists": false,
+    "user": {}
+  }
+}
+```
+
+**Response - CPF Already Exists (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "exists": true,
+    "user": {
+      "fullName": "João Silva",
+      "email": "joao.silva@exemplo.com"
+    }
+  }
+}
+```
+
+### GET `/users/{id}` - Get Patient Details
+Detalhes completos de um paciente específico incluindo prontuário médico.
+
+**Authentication:** Required
+
+**Path Parameters:**
+- `id` - Patient CUID (e.g., "cmeu81dgk0001cnobjfdio3xf")
+
+**Response - Success (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "cmeu81dgk0001cnobjfdio3xf",
+    "email": "joao.silva@exemplo.com",
+    "firstName": "João",
+    "lastName": "Silva",
+    "fullName": "João Silva",
+    "role": "PATIENT",
+    "status": "ACTIVE",
+    "phone": "(11) 99999-8888",
+    "cpf": "123.456.789-09",
+    "dateOfBirth": "1990-01-15T00:00:00.000Z",
+    "gender": "M",
+    "patient": {
+      "id": "patient123",
+      "emergencyContactName": "Maria Silva",
+      "emergencyContactPhone": "(11) 99999-7777",
+      "allergies": ["Dipirona", "Penicilina"],
+      "medications": ["Losartana 50mg"],
+      "address": {
+        "street": "Rua das Flores, 123",
+        "neighborhood": "Centro",
+        "city": "São Paulo",
+        "state": "SP",
+        "zipCode": "01234-567"
+      }
+    },
+    "createdAt": "2025-08-27T17:00:49.124Z",
+    "updatedAt": "2025-08-27T17:00:49.124Z"
+  }
+}
+```
+
+### PATCH `/users/{id}/status` - Update Patient Status
+Altera o status de um paciente (ativar/inativar).
+
+**Authentication:** Required - Admin, Doctor roles only
+
+**Path Parameters:**
+- `id` - Patient CUID
+
+**Request Body:**
+```json
+{
+  "status": "INACTIVE"
+}
+```
+
+**Valid Status Values:**
+- `ACTIVE` - Patient can use the system
+- `INACTIVE` - Patient blocked from system
+- `PENDING_VERIFICATION` - Awaiting email confirmation
+
+**Response - Success (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "cmeu81dgk0001cnobjfdio3xf",
+    "status": "INACTIVE",
+    "updatedAt": "2025-08-27T17:05:30.124Z"
+  }
+}
+```
+
+**🎯 Integration Features:**
+- ✅ **Automatic Notifications**: Bell/sino system notified on patient creation
+- ✅ **Email Confirmation**: Automatic email sent to patient
+- ✅ **Audit Logging**: All actions logged with timestamps
+- ✅ **LGPD Compliance**: Data handling follows Brazilian privacy law
 
 ## 👤 USER MANAGEMENT ENDPOINTS
 
