@@ -1,20 +1,20 @@
 name: 🚀 CI/CD - EO Clínica
 
 on:
-  # Desabilitado automático para economizar GitHub Actions minutes
-  # Só executa manualmente quando necessário
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
   workflow_dispatch:
     inputs:
       reason:
         description: 'Motivo para executar CI/CD'
         required: true
         default: 'Validação manual antes de deploy'
-  # pull_request:
-  #   branches: [ main, develop ]
 
 jobs:
   test:
-    name: 🧪 Tests - Segurança, Acessibilidade e Mobile
+    name: 🧪 Tests - Segurança, Acessibilidade, Mobile e WhatsApp AI
     runs-on: ubuntu-latest
 
     services:
@@ -121,6 +121,19 @@ jobs:
         export DATABASE_URL="postgresql://clinic_user:clinic_password@localhost:5433/eo_clinica_db"
         export DATABASE_URL_TEST="postgresql://clinic_user:clinic_password@localhost:5433/eo_clinica_db"
         npm test -- tests/mobile/basic-mobile.test.ts --testTimeout=30000 --maxWorkers=1
+
+    - name: 🤖 Run WhatsApp AI Integration Tests
+      run: |
+        export NODE_ENV=test
+        export DATABASE_URL="postgresql://clinic_user:clinic_password@localhost:5433/eo_clinica_db"
+        export DATABASE_URL_TEST="postgresql://clinic_user:clinic_password@localhost:5433/eo_clinica_db"
+        echo "🚀 Running WhatsApp AI Integration Test Suite..."
+        echo "📋 Testing all 4 phases: Infrastructure, IA Core, Automations, Testing & Refinement"
+        
+        # Run Master Integration Test (validates all 130 test scenarios)
+        npm test -- tests/whatsapp-ai-integration/master-integration.test.ts --testTimeout=60000 --maxWorkers=1
+        
+        echo "✅ WhatsApp AI Integration: Master test completed successfully!"
         
     - name: 📊 Upload Coverage Reports
       uses: codecov/codecov-action@v3
