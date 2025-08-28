@@ -1,5 +1,8 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import { WAHAService, WhatsAppMessage } from '../../services/whatsapp/waha.service';
+import {
+  WAHAService,
+  WhatsAppMessage,
+} from '../../services/whatsapp/waha.service';
 import { WhatsAppAIService } from '../../services/ai/whatsapp-ai.service';
 import { logger } from '../../services/logger.service';
 import crypto from 'crypto';
@@ -23,7 +26,10 @@ export default async function whatsappWebhookRoutes(fastify: FastifyInstance) {
   /**
    * Verify webhook signature for security (HMAC)
    */
-  function verifyWebhookSignature(payload: string, signature?: string): boolean {
+  function verifyWebhookSignature(
+    payload: string,
+    signature?: string,
+  ): boolean {
     if (!signature || !process.env.WAHA_WEBHOOK_HMAC_KEY) {
       return true; // Skip verification if not configured
     }
@@ -37,7 +43,7 @@ export default async function whatsappWebhookRoutes(fastify: FastifyInstance) {
       const receivedSignature = signature.replace('sha256=', '');
       return crypto.timingSafeEqual(
         Buffer.from(expectedSignature, 'hex'),
-        Buffer.from(receivedSignature, 'hex')
+        Buffer.from(receivedSignature, 'hex'),
       );
     } catch (error) {
       logger.error('Failed to verify webhook signature:', error);
@@ -48,64 +54,66 @@ export default async function whatsappWebhookRoutes(fastify: FastifyInstance) {
   /**
    * Main WhatsApp webhook endpoint
    */
-  fastify.post('/whatsapp', async (request: FastifyRequest, reply: FastifyReply) => {
-    const startTime = Date.now();
-    
-    try {
-      const rawPayload = JSON.stringify(request.body);
-      const signature = request.headers['x-webhook-signature'] as string;
-      
-      // Verify webhook signature
-      if (!verifyWebhookSignature(rawPayload, signature)) {
-        logger.warn('Invalid webhook signature received', {
-          userAgent: request.headers['user-agent'],
-          ip: request.ip,
+  fastify.post(
+    '/whatsapp',
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const startTime = Date.now();
+
+      try {
+        const rawPayload = JSON.stringify(request.body);
+        const signature = request.headers['x-webhook-signature'] as string;
+
+        // Verify webhook signature
+        if (!verifyWebhookSignature(rawPayload, signature)) {
+          logger.warn('Invalid webhook signature received', {
+            userAgent: request.headers['user-agent'],
+            ip: request.ip,
+          });
+          return reply.code(401).send({ error: 'Invalid signature' });
+        }
+
+        const webhookData = request.body as any;
+        const { event, session, payload } = webhookData;
+
+        logger.info('WhatsApp webhook received', {
+          event,
+          session,
+          hasPayload: !!payload,
+          processingTime: Date.now() - startTime,
         });
-        return reply.code(401).send({ error: 'Invalid signature' });
+
+        // Handle different webhook events
+        switch (event) {
+          case 'message':
+            await handleIncomingMessage(payload);
+            break;
+
+          case 'session.status':
+            await handleSessionStatus(payload);
+            break;
+
+          case 'call':
+            await handleIncomingCall(payload);
+            break;
+
+          default:
+            logger.info('Unhandled webhook event', { event, payload });
+        }
+
+        return reply.send({
+          success: true,
+          processed: true,
+          processingTime: Date.now() - startTime,
+        });
+      } catch (error) {
+        logger.error('WhatsApp webhook processing error:', error);
+        return reply.code(500).send({
+          error: 'Webhook processing failed',
+          message: error.message,
+        });
       }
-
-      const webhookData = request.body as any;
-      const { event, session, payload } = webhookData;
-
-      logger.info('WhatsApp webhook received', {
-        event,
-        session,
-        hasPayload: !!payload,
-        processingTime: Date.now() - startTime,
-      });
-
-      // Handle different webhook events
-      switch (event) {
-        case 'message':
-          await handleIncomingMessage(payload);
-          break;
-          
-        case 'session.status':
-          await handleSessionStatus(payload);
-          break;
-          
-        case 'call':
-          await handleIncomingCall(payload);
-          break;
-          
-        default:
-          logger.info('Unhandled webhook event', { event, payload });
-      }
-
-      return reply.send({ 
-        success: true, 
-        processed: true,
-        processingTime: Date.now() - startTime,
-      });
-
-    } catch (error) {
-      logger.error('WhatsApp webhook processing error:', error);
-      return reply.code(500).send({ 
-        error: 'Webhook processing failed',
-        message: error.message,
-      });
-    }
-  });
+    },
+  );
 
   /**
    * Handle incoming WhatsApp messages
@@ -144,35 +152,34 @@ export default async function whatsappWebhookRoutes(fastify: FastifyInstance) {
         case 'text':
           await handleTextMessage(message);
           break;
-          
+
         case 'voice':
           await handleVoiceMessage(message);
           break;
-          
+
         case 'image':
           await handleImageMessage(message);
           break;
-          
+
         case 'document':
           await handleDocumentMessage(message);
           break;
-          
+
         default:
           await handleUnsupportedMessage(message);
       }
 
       // Remove typing indicator
       await wahaService.sendTyping(message.from, false);
-
     } catch (error) {
       logger.error('Failed to handle incoming message:', error);
-      
+
       // Send error message to user
       if (payload?.from) {
         try {
           await wahaService.sendTextMessage(
             payload.from,
-            '❌ Desculpe, ocorreu um erro ao processar sua mensagem. Tente novamente em alguns instantes ou entre em contato diretamente com a clínica.'
+            '❌ Desculpe, ocorreu um erro ao processar sua mensagem. Tente novamente em alguns instantes ou entre em contato diretamente com a clínica.',
           );
         } catch (sendError) {
           logger.error('Failed to send error message:', sendError);
@@ -186,11 +193,11 @@ export default async function whatsappWebhookRoutes(fastify: FastifyInstance) {
    */
   async function handleTextMessage(message: WhatsAppMessage): Promise<void> {
     const text = message.body?.text || '';
-    
+
     if (!text.trim()) {
       await wahaService.sendTextMessage(
         message.from,
-        'Olá! Não consegui entender sua mensagem. Pode escrever novamente o que precisa?'
+        'Olá! Não consegui entender sua mensagem. Pode escrever novamente o que precisa?',
       );
       return;
     }
@@ -219,10 +226,13 @@ export default async function whatsappWebhookRoutes(fastify: FastifyInstance) {
   async function handleVoiceMessage(message: WhatsAppMessage): Promise<void> {
     try {
       // Check if voice transcription is enabled
-      if (!process.env.WAHA_VOICE_TRANSCRIPTION || process.env.WAHA_VOICE_TRANSCRIPTION !== 'true') {
+      if (
+        !process.env.WAHA_VOICE_TRANSCRIPTION ||
+        process.env.WAHA_VOICE_TRANSCRIPTION !== 'true'
+      ) {
         await wahaService.sendTextMessage(
           message.from,
-          '🎤 Recebi seu áudio, mas no momento só posso responder mensagens de texto. Pode escrever sua mensagem?'
+          '🎤 Recebi seu áudio, mas no momento só posso responder mensagens de texto. Pode escrever sua mensagem?',
         );
         return;
       }
@@ -231,18 +241,21 @@ export default async function whatsappWebhookRoutes(fastify: FastifyInstance) {
       if (!audioUrl) {
         await wahaService.sendTextMessage(
           message.from,
-          '❌ Não consegui processar seu áudio. Tente enviar novamente ou escreva sua mensagem.'
+          '❌ Não consegui processar seu áudio. Tente enviar novamente ou escreva sua mensagem.',
         );
         return;
       }
 
       // Transcribe voice to text
-      const transcription = await wahaService.transcribeVoice(audioUrl, 'pt-BR');
-      
+      const transcription = await wahaService.transcribeVoice(
+        audioUrl,
+        'pt-BR',
+      );
+
       if (!transcription.text || transcription.confidence < 0.5) {
         await wahaService.sendTextMessage(
           message.from,
-          '🎤 Não consegui entender bem o áudio. Pode falar mais devagar ou escrever sua mensagem?'
+          '🎤 Não consegui entender bem o áudio. Pode falar mais devagar ou escrever sua mensagem?',
         );
         return;
       }
@@ -270,12 +283,11 @@ export default async function whatsappWebhookRoutes(fastify: FastifyInstance) {
       if (response.actions) {
         await handleAIActions(message.from, response.actions);
       }
-
     } catch (error) {
       logger.error('Failed to handle voice message:', error);
       await wahaService.sendTextMessage(
         message.from,
-        '❌ Erro ao processar áudio. Tente enviar uma mensagem de texto.'
+        '❌ Erro ao processar áudio. Tente enviar uma mensagem de texto.',
       );
     }
   }
@@ -286,51 +298,61 @@ export default async function whatsappWebhookRoutes(fastify: FastifyInstance) {
   async function handleImageMessage(message: WhatsAppMessage): Promise<void> {
     await wahaService.sendTextMessage(
       message.from,
-      '📷 Recebi sua imagem! No momento não consigo analisar imagens, mas posso ajudar com informações sobre consultas e agendamentos. Como posso ajudar?'
+      '📷 Recebi sua imagem! No momento não consigo analisar imagens, mas posso ajudar com informações sobre consultas e agendamentos. Como posso ajudar?',
     );
   }
 
   /**
    * Handle document messages
    */
-  async function handleDocumentMessage(message: WhatsAppMessage): Promise<void> {
+  async function handleDocumentMessage(
+    message: WhatsAppMessage,
+  ): Promise<void> {
     await wahaService.sendTextMessage(
       message.from,
-      '📄 Recebi seu documento! No momento não consigo analisar documentos pelo WhatsApp. Para envio de exames ou documentos, recomendo usar nosso portal online ou trazê-los na consulta. Posso ajudar com agendamentos?'
+      '📄 Recebi seu documento! No momento não consigo analisar documentos pelo WhatsApp. Para envio de exames ou documentos, recomendo usar nosso portal online ou trazê-los na consulta. Posso ajudar com agendamentos?',
     );
   }
 
   /**
    * Handle unsupported message types
    */
-  async function handleUnsupportedMessage(message: WhatsAppMessage): Promise<void> {
+  async function handleUnsupportedMessage(
+    message: WhatsAppMessage,
+  ): Promise<void> {
     await wahaService.sendTextMessage(
       message.from,
-      `📱 Recebi sua mensagem do tipo "${message.type}", mas no momento só posso processar mensagens de texto e áudio. Como posso ajudar?`
+      `📱 Recebi sua mensagem do tipo "${message.type}", mas no momento só posso processar mensagens de texto e áudio. Como posso ajudar?`,
     );
   }
 
   /**
    * Handle AI actions (appointment booking, escalation, etc.)
    */
-  async function handleAIActions(phoneNumber: string, actions: any[]): Promise<void> {
+  async function handleAIActions(
+    phoneNumber: string,
+    actions: any[],
+  ): Promise<void> {
     for (const action of actions) {
       try {
         switch (action.type) {
           case 'book_appointment':
             await handleAppointmentBooking(phoneNumber, action.data);
             break;
-            
+
           case 'escalate_to_human':
             await handleEscalation(phoneNumber, action.data);
             break;
-            
+
           case 'send_reminder':
             await handleReminder(phoneNumber, action.data);
             break;
-            
+
           default:
-            logger.warn('Unknown AI action type', { type: action.type, data: action.data });
+            logger.warn('Unknown AI action type', {
+              type: action.type,
+              data: action.data,
+            });
         }
       } catch (error) {
         logger.error(`Failed to handle AI action ${action.type}:`, error);
@@ -341,7 +363,10 @@ export default async function whatsappWebhookRoutes(fastify: FastifyInstance) {
   /**
    * Handle appointment booking
    */
-  async function handleAppointmentBooking(phoneNumber: string, data: any): Promise<void> {
+  async function handleAppointmentBooking(
+    phoneNumber: string,
+    data: any,
+  ): Promise<void> {
     // Implementation will be added in Phase 3
     logger.info('Appointment booking requested', {
       phoneNumber: sanitizePhoneNumber(phoneNumber),
@@ -352,7 +377,10 @@ export default async function whatsappWebhookRoutes(fastify: FastifyInstance) {
   /**
    * Handle escalation to human agent
    */
-  async function handleEscalation(phoneNumber: string, data: any): Promise<void> {
+  async function handleEscalation(
+    phoneNumber: string,
+    data: any,
+  ): Promise<void> {
     logger.info('Escalation to human requested', {
       phoneNumber: sanitizePhoneNumber(phoneNumber),
       reason: data.reason,
@@ -360,7 +388,7 @@ export default async function whatsappWebhookRoutes(fastify: FastifyInstance) {
 
     await wahaService.sendTextMessage(
       phoneNumber,
-      '👥 Vou conectar você com um de nossos atendentes. Aguarde um momento...\n\n📞 Ou ligue diretamente: (11) 1234-5678\n📍 Endereço: Rua das Clínicas, 123'
+      '👥 Vou conectar você com um de nossos atendentes. Aguarde um momento...\n\n📞 Ou ligue diretamente: (11) 1234-5678\n📍 Endereço: Rua das Clínicas, 123',
     );
 
     // TODO: Integrate with CRM or ticketing system
@@ -390,16 +418,16 @@ export default async function whatsappWebhookRoutes(fastify: FastifyInstance) {
       case 'WORKING':
         logger.info('WhatsApp session is now active and ready');
         break;
-        
+
       case 'SCAN_QR_CODE':
         logger.info('WhatsApp session requires QR code scan');
         break;
-        
+
       case 'FAILED':
         logger.error('WhatsApp session failed', payload);
         // TODO: Send alert to administrators
         break;
-        
+
       case 'STOPPED':
         logger.warn('WhatsApp session stopped');
         break;
@@ -419,7 +447,7 @@ export default async function whatsappWebhookRoutes(fastify: FastifyInstance) {
     try {
       await wahaService.sendTextMessage(
         payload.from,
-        '📞 Recebemos sua ligação! No momento atendemos apenas por mensagens de texto. Como posso ajudar?\n\n📱 Para emergências, ligue: (11) 1234-5678'
+        '📞 Recebemos sua ligação! No momento atendemos apenas por mensagens de texto. Como posso ajudar?\n\n📱 Para emergências, ligue: (11) 1234-5678',
       );
     } catch (error) {
       logger.error('Failed to send call response message:', error);
@@ -429,41 +457,50 @@ export default async function whatsappWebhookRoutes(fastify: FastifyInstance) {
   /**
    * Health check endpoint for WhatsApp webhook
    */
-  fastify.get('/whatsapp/health', async (request: FastifyRequest, reply: FastifyReply) => {
-    try {
-      const health = await wahaService.getHealth();
-      return reply.send({
-        service: 'whatsapp-webhook',
-        status: health.status,
-        waha: health,
-        timestamp: new Date().toISOString(),
-      });
-    } catch (error) {
-      logger.error('WhatsApp health check failed:', error);
-      return reply.code(503).send({
-        service: 'whatsapp-webhook',
-        status: 'unhealthy',
-        error: error.message,
-        timestamp: new Date().toISOString(),
-      });
-    }
-  });
+  fastify.get(
+    '/whatsapp/health',
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      try {
+        const health = await wahaService.getHealth();
+        return reply.send({
+          service: 'whatsapp-webhook',
+          status: health.status,
+          waha: health,
+          timestamp: new Date().toISOString(),
+        });
+      } catch (error) {
+        logger.error('WhatsApp health check failed:', error);
+        return reply.code(503).send({
+          service: 'whatsapp-webhook',
+          status: 'unhealthy',
+          error: error.message,
+          timestamp: new Date().toISOString(),
+        });
+      }
+    },
+  );
 
   /**
    * Test endpoint for sending messages (development only)
    */
   if (process.env.NODE_ENV === 'development') {
-    fastify.post('/whatsapp/test-send', async (request: FastifyRequest, reply: FastifyReply) => {
-      const { phoneNumber, message } = request.body as any;
-      
-      try {
-        const result = await wahaService.sendTextMessage(phoneNumber, message);
-        return reply.send({ success: true, result });
-      } catch (error) {
-        logger.error('Test message send failed:', error);
-        return reply.code(500).send({ error: error.message });
-      }
-    });
+    fastify.post(
+      '/whatsapp/test-send',
+      async (request: FastifyRequest, reply: FastifyReply) => {
+        const { phoneNumber, message } = request.body as any;
+
+        try {
+          const result = await wahaService.sendTextMessage(
+            phoneNumber,
+            message,
+          );
+          return reply.send({ success: true, result });
+        } catch (error) {
+          logger.error('Test message send failed:', error);
+          return reply.code(500).send({ error: error.message });
+        }
+      },
+    );
   }
 
   /**
@@ -471,12 +508,12 @@ export default async function whatsappWebhookRoutes(fastify: FastifyInstance) {
    */
   function sanitizePhoneNumber(phoneNumber: string): string {
     if (!phoneNumber) return 'unknown';
-    
+
     const cleaned = phoneNumber.replace(/\D/g, '');
     if (cleaned.length > 4) {
       return `${cleaned.slice(0, 2)}****${cleaned.slice(-2)}`;
     }
-    
+
     return '****';
   }
 }

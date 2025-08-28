@@ -52,7 +52,7 @@ export class WAHAService {
       baseURL: this.baseURL,
       timeout: 30000,
       headers: {
-        'Authorization': `Bearer ${this.apiKey}`,
+        Authorization: `Bearer ${this.apiKey}`,
         'Content-Type': 'application/json',
       },
     });
@@ -63,7 +63,7 @@ export class WAHAService {
   private setupInterceptors() {
     // Request interceptor for logging
     this.client.interceptors.request.use(
-      (config) => {
+      config => {
         logger.info('WAHA API Request', {
           method: config.method?.toUpperCase(),
           url: config.url,
@@ -71,15 +71,15 @@ export class WAHAService {
         });
         return config;
       },
-      (error) => {
+      error => {
         logger.error('WAHA API Request Error:', error);
         return Promise.reject(error);
-      }
+      },
     );
 
     // Response interceptor for logging and error handling
     this.client.interceptors.response.use(
-      (response) => {
+      response => {
         logger.info('WAHA API Response', {
           status: response.status,
           url: response.config.url,
@@ -87,14 +87,14 @@ export class WAHAService {
         });
         return response;
       },
-      (error) => {
+      error => {
         logger.error('WAHA API Response Error', {
           status: error.response?.status,
           message: error.response?.data?.message || error.message,
           url: error.config?.url,
         });
         return Promise.reject(this.handleError(error));
-      }
+      },
     );
   }
 
@@ -102,7 +102,7 @@ export class WAHAService {
     if (error.response) {
       const status = error.response.status;
       const message = error.response.data?.message || error.message;
-      
+
       switch (status) {
         case 401:
           return new Error('WAHA: API key inválida ou expirada');
@@ -118,11 +118,13 @@ export class WAHAService {
           return new Error(`WAHA: ${message}`);
       }
     }
-    
+
     if (error.code === 'ECONNREFUSED') {
-      return new Error('WAHA: Serviço indisponível - verifique se WAHA está rodando');
+      return new Error(
+        'WAHA: Serviço indisponível - verifique se WAHA está rodando',
+      );
     }
-    
+
     return new Error(`WAHA: ${error.message}`);
   }
 
@@ -144,7 +146,9 @@ export class WAHAService {
    */
   async getSessionStatus(): Promise<WhatsAppSession> {
     try {
-      const response = await this.client.get(`/api/sessions/${this.sessionName}`);
+      const response = await this.client.get(
+        `/api/sessions/${this.sessionName}`,
+      );
       return response.data;
     } catch (error) {
       logger.error('Failed to get session status:', error);
@@ -157,22 +161,27 @@ export class WAHAService {
    */
   async startSession(): Promise<WhatsAppSession> {
     try {
-      const response = await this.client.post(`/api/sessions/${this.sessionName}/start`, {
-        name: this.sessionName,
-        config: {
-          debug: process.env.NODE_ENV === 'development',
-          printQR: true,
-          webhooks: [
-            {
-              url: process.env.WAHA_WEBHOOK_URL || 'http://localhost:3000/api/v1/webhooks/whatsapp',
-              events: ['message', 'session.status', 'call'],
-              hmac: {
-                key: process.env.WAHA_WEBHOOK_HMAC_KEY,
+      const response = await this.client.post(
+        `/api/sessions/${this.sessionName}/start`,
+        {
+          name: this.sessionName,
+          config: {
+            debug: process.env.NODE_ENV === 'development',
+            printQR: true,
+            webhooks: [
+              {
+                url:
+                  process.env.WAHA_WEBHOOK_URL ||
+                  'http://localhost:3000/api/v1/webhooks/whatsapp',
+                events: ['message', 'session.status', 'call'],
+                hmac: {
+                  key: process.env.WAHA_WEBHOOK_HMAC_KEY,
+                },
               },
-            },
-          ],
+            ],
+          },
         },
-      });
+      );
 
       logger.info('WhatsApp session started successfully', {
         session: this.sessionName,
@@ -255,7 +264,11 @@ export class WAHAService {
   /**
    * Send voice message (audio file)
    */
-  async sendVoiceMessage(chatId: string, audioUrl: string, caption?: string): Promise<any> {
+  async sendVoiceMessage(
+    chatId: string,
+    audioUrl: string,
+    caption?: string,
+  ): Promise<any> {
     try {
       const response = await this.client.post(`/api/sendVoice`, {
         session: this.sessionName,
@@ -279,7 +292,11 @@ export class WAHAService {
   /**
    * Send image with caption
    */
-  async sendImage(chatId: string, imageUrl: string, caption?: string): Promise<any> {
+  async sendImage(
+    chatId: string,
+    imageUrl: string,
+    caption?: string,
+  ): Promise<any> {
     try {
       const response = await this.client.post(`/api/sendImage`, {
         session: this.sessionName,
@@ -303,7 +320,12 @@ export class WAHAService {
   /**
    * Send document/file
    */
-  async sendDocument(chatId: string, documentUrl: string, filename?: string, caption?: string): Promise<any> {
+  async sendDocument(
+    chatId: string,
+    documentUrl: string,
+    filename?: string,
+    caption?: string,
+  ): Promise<any> {
     try {
       const response = await this.client.post(`/api/sendFile`, {
         session: this.sessionName,
@@ -329,7 +351,10 @@ export class WAHAService {
   /**
    * Transcribe voice message to text (Portuguese)
    */
-  async transcribeVoice(audioUrl: string, language = 'pt-BR'): Promise<VoiceTranscription> {
+  async transcribeVoice(
+    audioUrl: string,
+    language = 'pt-BR',
+  ): Promise<VoiceTranscription> {
     try {
       const response = await this.client.post('/api/transcribe', {
         url: audioUrl,
@@ -352,7 +377,7 @@ export class WAHAService {
       return transcription;
     } catch (error) {
       logger.error('Failed to transcribe voice:', error);
-      
+
       // Return empty transcription on error
       return {
         text: '',
@@ -443,7 +468,7 @@ export class WAHAService {
     try {
       const response = await this.client.get('/api/health');
       const sessionStatus = await this.getSessionStatus();
-      
+
       return {
         status: 'healthy',
         session: sessionStatus.status === 'WORKING',
@@ -467,12 +492,12 @@ export class WAHAService {
   private formatPhoneNumber(phoneNumber: string): string {
     // Remove all non-numeric characters
     const cleaned = phoneNumber.replace(/\D/g, '');
-    
+
     // Add Brazil country code if not present
     if (cleaned.length === 10 || cleaned.length === 11) {
       return `55${cleaned}`;
     }
-    
+
     return cleaned;
   }
 
@@ -481,12 +506,12 @@ export class WAHAService {
    */
   private sanitizePhoneNumber(phoneNumber: string): string {
     if (!phoneNumber) return 'unknown';
-    
+
     const cleaned = phoneNumber.replace(/\D/g, '');
     if (cleaned.length > 4) {
       return `${cleaned.slice(0, 2)}****${cleaned.slice(-2)}`;
     }
-    
+
     return '****';
   }
 
@@ -496,7 +521,7 @@ export class WAHAService {
   static parseWebhookMessage(webhookData: any): WhatsAppMessage | null {
     try {
       const { body, from, to, type, timestamp, id } = webhookData;
-      
+
       return {
         from,
         to,

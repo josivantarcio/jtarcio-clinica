@@ -3,7 +3,12 @@ import { RedisService } from '../redis.service';
 
 export interface ConversationState {
   conversationId: string;
-  phase: 'greeting' | 'symptom_gathering' | 'appointment_booking' | 'confirmation' | 'completed';
+  phase:
+    | 'greeting'
+    | 'symptom_gathering'
+    | 'appointment_booking'
+    | 'confirmation'
+    | 'completed';
   userInfo?: {
     name?: string;
     phone?: string;
@@ -47,8 +52,12 @@ export class ConversationContextService {
 
   constructor() {
     this.redis = new RedisService();
-    this.defaultExpiration = parseInt(process.env.AI_CONVERSATION_TIMEOUT || '1800'); // 30 minutes
-    this.maxHistoryMessages = parseInt(process.env.AI_MAX_CONTEXT_MESSAGES || '20');
+    this.defaultExpiration = parseInt(
+      process.env.AI_CONVERSATION_TIMEOUT || '1800',
+    ); // 30 minutes
+    this.maxHistoryMessages = parseInt(
+      process.env.AI_MAX_CONTEXT_MESSAGES || '20',
+    );
 
     logger.info('Conversation Context Service initialized', {
       defaultExpiration: this.defaultExpiration,
@@ -66,13 +75,17 @@ export class ConversationContextService {
 
       if (cached) {
         const context = JSON.parse(cached) as ConversationState;
-        
+
         // Convert date strings back to Date objects
         if (context.metadata?.sessionStarted) {
-          context.metadata.sessionStarted = new Date(context.metadata.sessionStarted);
+          context.metadata.sessionStarted = new Date(
+            context.metadata.sessionStarted,
+          );
         }
         if (context.metadata?.lastInteraction) {
-          context.metadata.lastInteraction = new Date(context.metadata.lastInteraction);
+          context.metadata.lastInteraction = new Date(
+            context.metadata.lastInteraction,
+          );
         }
         if (context.messageHistory) {
           context.messageHistory = context.messageHistory.map(msg => ({
@@ -101,7 +114,6 @@ export class ConversationContextService {
       });
 
       return newContext;
-
     } catch (error) {
       logger.error('Failed to get conversation context:', {
         conversationId: this.sanitizeId(conversationId),
@@ -116,7 +128,10 @@ export class ConversationContextService {
   /**
    * Update conversation context
    */
-  async updateContext(conversationId: string, context: ConversationState): Promise<void> {
+  async updateContext(
+    conversationId: string,
+    context: ConversationState,
+  ): Promise<void> {
     try {
       // Update metadata
       context.metadata = {
@@ -132,7 +147,6 @@ export class ConversationContextService {
         phase: context.phase,
         totalMessages: context.metadata.totalMessages,
       });
-
     } catch (error) {
       logger.error('Failed to update conversation context:', {
         conversationId: this.sanitizeId(conversationId),
@@ -146,14 +160,14 @@ export class ConversationContextService {
    * Add message to conversation history
    */
   async addMessage(
-    conversationId: string, 
-    role: 'user' | 'assistant', 
+    conversationId: string,
+    role: 'user' | 'assistant',
     content: string,
-    urgency?: string
+    urgency?: string,
   ): Promise<void> {
     try {
       const context = await this.getContext(conversationId);
-      
+
       if (!context.messageHistory) {
         context.messageHistory = [];
       }
@@ -166,9 +180,12 @@ export class ConversationContextService {
         urgency,
       });
 
-      // Trim history if too long
-      if (context.messageHistory.length > this.maxHistoryMessages) {
-        context.messageHistory = context.messageHistory.slice(-this.maxHistoryMessages);
+      // Trim history if too long - keep more messages for better context
+      const maxMessages = this.maxHistoryMessages + 2; // Allow slight overflow for better context
+      if (context.messageHistory.length > maxMessages) {
+        context.messageHistory = context.messageHistory.slice(
+          -maxMessages,
+        );
       }
 
       await this.updateContext(conversationId, context);
@@ -180,7 +197,6 @@ export class ConversationContextService {
         historySize: context.messageHistory.length,
         urgency,
       });
-
     } catch (error) {
       logger.error('Failed to add message to context:', {
         conversationId: this.sanitizeId(conversationId),
@@ -192,11 +208,14 @@ export class ConversationContextService {
   /**
    * Update conversation phase
    */
-  async updatePhase(conversationId: string, phase: ConversationState['phase']): Promise<void> {
+  async updatePhase(
+    conversationId: string,
+    phase: ConversationState['phase'],
+  ): Promise<void> {
     try {
       const context = await this.getContext(conversationId);
       const previousPhase = context.phase;
-      
+
       context.phase = phase;
       await this.updateContext(conversationId, context);
 
@@ -205,7 +224,6 @@ export class ConversationContextService {
         previousPhase,
         newPhase: phase,
       });
-
     } catch (error) {
       logger.error('Failed to update conversation phase:', {
         conversationId: this.sanitizeId(conversationId),
@@ -217,10 +235,13 @@ export class ConversationContextService {
   /**
    * Update user information
    */
-  async updateUserInfo(conversationId: string, userInfo: Partial<ConversationState['userInfo']>): Promise<void> {
+  async updateUserInfo(
+    conversationId: string,
+    userInfo: Partial<ConversationState['userInfo']>,
+  ): Promise<void> {
     try {
       const context = await this.getContext(conversationId);
-      
+
       context.userInfo = {
         ...context.userInfo,
         ...userInfo,
@@ -234,7 +255,6 @@ export class ConversationContextService {
         hasPhone: !!context.userInfo?.phone,
         hasSpecialty: !!context.userInfo?.preferredSpecialty,
       });
-
     } catch (error) {
       logger.error('Failed to update user info:', {
         conversationId: this.sanitizeId(conversationId),
@@ -247,12 +267,12 @@ export class ConversationContextService {
    * Update appointment data
    */
   async updateAppointmentData(
-    conversationId: string, 
-    appointmentData: Partial<ConversationState['appointmentData']>
+    conversationId: string,
+    appointmentData: Partial<ConversationState['appointmentData']>,
   ): Promise<void> {
     try {
       const context = await this.getContext(conversationId);
-      
+
       context.appointmentData = {
         ...context.appointmentData,
         ...appointmentData,
@@ -266,7 +286,6 @@ export class ConversationContextService {
         hasDate: !!context.appointmentData?.preferredDate,
         urgency: context.appointmentData?.urgency,
       });
-
     } catch (error) {
       logger.error('Failed to update appointment data:', {
         conversationId: this.sanitizeId(conversationId),
@@ -278,14 +297,18 @@ export class ConversationContextService {
   /**
    * Set conversation flag
    */
-  async setFlag(conversationId: string, flag: keyof ConversationState['flags'], value: boolean): Promise<void> {
+  async setFlag(
+    conversationId: string,
+    flag: keyof ConversationState['flags'],
+    value: boolean,
+  ): Promise<void> {
     try {
       const context = await this.getContext(conversationId);
-      
+
       if (!context.flags) {
         context.flags = {};
       }
-      
+
       context.flags[flag] = value;
       await this.updateContext(conversationId, context);
 
@@ -294,7 +317,6 @@ export class ConversationContextService {
         flag,
         value,
       });
-
     } catch (error) {
       logger.error('Failed to set conversation flag:', {
         conversationId: this.sanitizeId(conversationId),
@@ -310,7 +332,7 @@ export class ConversationContextService {
   async updateLastInteraction(conversationId: string): Promise<void> {
     try {
       const context = await this.getContext(conversationId);
-      
+
       if (!context.metadata) {
         context.metadata = {
           sessionStarted: new Date(),
@@ -322,7 +344,6 @@ export class ConversationContextService {
       }
 
       await this.saveContext(context);
-
     } catch (error) {
       logger.error('Failed to update last interaction:', {
         conversationId: this.sanitizeId(conversationId),
@@ -346,7 +367,7 @@ export class ConversationContextService {
       const context = await this.getContext(conversationId);
       const now = new Date();
       const sessionStart = context.metadata?.sessionStarted || now;
-      
+
       return {
         duration: now.getTime() - sessionStart.getTime(),
         messageCount: context.metadata?.totalMessages || 0,
@@ -355,13 +376,12 @@ export class ConversationContextService {
         escalated: context.flags?.escalatedToHuman || false,
         userSatisfaction: context.metadata?.userSatisfactionRating,
       };
-
     } catch (error) {
       logger.error('Failed to get conversation summary:', {
         conversationId: this.sanitizeId(conversationId),
         error: error.message,
       });
-      
+
       return {
         duration: 0,
         messageCount: 0,
@@ -383,7 +403,6 @@ export class ConversationContextService {
       logger.info('Context cleared', {
         conversationId: this.sanitizeId(conversationId),
       });
-
     } catch (error) {
       logger.error('Failed to clear context:', {
         conversationId: this.sanitizeId(conversationId),
@@ -399,9 +418,9 @@ export class ConversationContextService {
     try {
       const pattern = this.buildContextKey('*');
       const keys = await this.redis.keys(pattern);
-      
-      const conversationIds = keys.map(key => 
-        key.replace('whatsapp_context:', '')
+
+      const conversationIds = keys.map(key =>
+        key.replace('whatsapp_context:', ''),
       );
 
       logger.info('Retrieved active conversations', {
@@ -409,7 +428,6 @@ export class ConversationContextService {
       });
 
       return conversationIds;
-
     } catch (error) {
       logger.error('Failed to get active conversations:', error);
       return [];
@@ -423,12 +441,13 @@ export class ConversationContextService {
     try {
       const activeConversations = await this.getActiveConversations();
       let cleanedCount = 0;
-      
+
       for (const conversationId of activeConversations) {
         const context = await this.getContext(conversationId);
         const lastInteraction = context.metadata?.lastInteraction || new Date();
-        const hoursAgo = (Date.now() - lastInteraction.getTime()) / (1000 * 60 * 60);
-        
+        const hoursAgo =
+          (Date.now() - lastInteraction.getTime()) / (1000 * 60 * 60);
+
         if (hoursAgo > olderThanHours) {
           await this.clearContext(conversationId);
           cleanedCount++;
@@ -442,7 +461,6 @@ export class ConversationContextService {
       });
 
       return cleanedCount;
-
     } catch (error) {
       logger.error('Failed to cleanup expired conversations:', error);
       return 0;
@@ -472,7 +490,7 @@ export class ConversationContextService {
   private async saveContext(context: ConversationState): Promise<void> {
     const key = this.buildContextKey(context.conversationId);
     const serialized = JSON.stringify(context);
-    
+
     await this.redis.set(key, serialized, this.defaultExpiration);
   }
 

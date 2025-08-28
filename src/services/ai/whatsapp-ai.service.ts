@@ -24,7 +24,12 @@ export interface ProcessMessageResponse {
 }
 
 export interface ConversationState {
-  phase: 'greeting' | 'symptom_gathering' | 'appointment_booking' | 'confirmation' | 'completed';
+  phase:
+    | 'greeting'
+    | 'symptom_gathering'
+    | 'appointment_booking'
+    | 'confirmation'
+    | 'completed';
   userInfo?: {
     name?: string;
     phone?: string;
@@ -56,17 +61,19 @@ export class WhatsAppAIService {
   /**
    * Main method to process incoming WhatsApp messages
    */
-  async processTextMessage(request: ProcessMessageRequest): Promise<ProcessMessageResponse> {
+  async processTextMessage(
+    request: ProcessMessageRequest,
+  ): Promise<ProcessMessageResponse> {
     const startTime = Date.now();
-    
+
     try {
       // Get or create conversation context
       const conversationId = this.generateConversationId(request.phoneNumber);
       const context = await this.contextService.getContext(conversationId);
-      
+
       // Detect message urgency
       const urgency = this.detectUrgency(request.message);
-      
+
       // Log message processing start
       logger.info('Processing WhatsApp AI message', {
         phoneNumber: this.sanitizePhoneNumber(request.phoneNumber),
@@ -86,19 +93,19 @@ export class WhatsAppAIService {
         case 'greeting':
           response = await this.handleGreetingPhase(request, context);
           break;
-          
+
         case 'symptom_gathering':
           response = await this.handleSymptomGatheringPhase(request, context);
           break;
-          
+
         case 'appointment_booking':
           response = await this.handleAppointmentBookingPhase(request, context);
           break;
-          
+
         case 'confirmation':
           response = await this.handleConfirmationPhase(request, context);
           break;
-          
+
         default:
           response = await this.handleGeneralInquiry(request, context);
       }
@@ -109,7 +116,7 @@ export class WhatsAppAIService {
         response.actions = response.actions || [];
         response.actions.push({
           type: 'escalate_to_human',
-          data: { reason: 'high_urgency', message: request.message }
+          data: { reason: 'high_urgency', message: request.message },
         });
       }
 
@@ -128,19 +135,20 @@ export class WhatsAppAIService {
 
       response.processingTime = processingTime;
       return response;
-
     } catch (error) {
       logger.error('Failed to process WhatsApp AI message:', error);
-      
+
       return {
         text: 'Desculpe, ocorreu um erro ao processar sua mensagem. Nosso atendimento humano já foi notificado. Tente novamente ou ligue diretamente para (11) 1234-5678.',
         urgency: 'medium',
         confidence: 0,
         processingTime: Date.now() - startTime,
-        actions: [{
-          type: 'escalate_to_human',
-          data: { reason: 'processing_error', error: error.message }
-        }]
+        actions: [
+          {
+            type: 'escalate_to_human',
+            data: { reason: 'processing_error', error: error.message },
+          },
+        ],
       };
     }
   }
@@ -149,10 +157,9 @@ export class WhatsAppAIService {
    * Handle greeting phase - user first interaction
    */
   private async handleGreetingPhase(
-    request: ProcessMessageRequest, 
-    context: ConversationState
+    request: ProcessMessageRequest,
+    context: ConversationState,
   ): Promise<ProcessMessageResponse> {
-    
     const greetingPrompt = `
     Você é a assistente virtual da EO Clínica. O usuário está iniciando uma conversa.
     
@@ -167,14 +174,19 @@ export class WhatsAppAIService {
     IMPORTANTE: Seja natural e empática, mas concisa.
     `;
 
-    const geminiResponse = await this.geminiService.generateResponse(greetingPrompt, {
-      conversation_phase: 'greeting',
-      user_message: request.message
-    });
+    const geminiResponse = await this.geminiService.generateResponse(
+      greetingPrompt,
+      {
+        conversation_phase: 'greeting',
+        user_message: request.message,
+      },
+    );
 
     // Check if user mentioned symptoms or appointment in first message
     const mentionsSymptoms = this.containsSymptomKeywords(request.message);
-    const mentionsAppointment = this.containsAppointmentKeywords(request.message);
+    const mentionsAppointment = this.containsAppointmentKeywords(
+      request.message,
+    );
 
     let nextPhase: ConversationState['phase'] = 'greeting';
     if (mentionsSymptoms) {
@@ -195,13 +207,14 @@ export class WhatsAppAIService {
    * Handle symptom gathering phase
    */
   private async handleSymptomGatheringPhase(
-    request: ProcessMessageRequest, 
-    context: ConversationState
+    request: ProcessMessageRequest,
+    context: ConversationState,
   ): Promise<ProcessMessageResponse> {
-    
     // Analyze symptoms with specialized AI
-    const symptomAnalysis = await this.appointmentService.analyzeSymptoms(request.message);
-    
+    const symptomAnalysis = await this.appointmentService.analyzeSymptoms(
+      request.message,
+    );
+
     const symptomPrompt = `
     O usuário está relatando sintomas. Analise e responda profissionalmente:
     
@@ -217,12 +230,15 @@ export class WhatsAppAIService {
     - Máximo 3 frases
     `;
 
-    const geminiResponse = await this.geminiService.generateResponse(symptomPrompt, {
-      conversation_phase: 'symptom_gathering',
-      symptoms: symptomAnalysis.symptoms,
-      recommended_specialty: symptomAnalysis.recommendedSpecialty,
-      urgency: symptomAnalysis.urgencyLevel
-    });
+    const geminiResponse = await this.geminiService.generateResponse(
+      symptomPrompt,
+      {
+        conversation_phase: 'symptom_gathering',
+        symptoms: symptomAnalysis.symptoms,
+        recommended_specialty: symptomAnalysis.recommendedSpecialty,
+        urgency: symptomAnalysis.urgencyLevel,
+      },
+    );
 
     const actions = [];
     if (symptomAnalysis.confidence > 0.7) {
@@ -231,8 +247,8 @@ export class WhatsAppAIService {
         data: {
           symptoms: symptomAnalysis.symptoms,
           recommendedSpecialty: symptomAnalysis.recommendedSpecialty,
-          urgency: symptomAnalysis.urgencyLevel
-        }
+          urgency: symptomAnalysis.urgencyLevel,
+        },
       });
     }
 
@@ -241,7 +257,7 @@ export class WhatsAppAIService {
       urgency: symptomAnalysis.urgencyLevel as 'low' | 'medium' | 'high',
       confidence: symptomAnalysis.confidence,
       processingTime: geminiResponse.responseTimeMs,
-      actions: actions.length > 0 ? actions : undefined
+      actions: actions.length > 0 ? actions : undefined,
     };
   }
 
@@ -249,10 +265,9 @@ export class WhatsAppAIService {
    * Handle appointment booking phase
    */
   private async handleAppointmentBookingPhase(
-    request: ProcessMessageRequest, 
-    context: ConversationState
+    request: ProcessMessageRequest,
+    context: ConversationState,
   ): Promise<ProcessMessageResponse> {
-    
     const bookingPrompt = `
     O usuário quer agendar uma consulta. Colete informações necessárias:
     
@@ -269,22 +284,29 @@ export class WhatsAppAIService {
     Máximo 3 frases.
     `;
 
-    const geminiResponse = await this.geminiService.generateResponse(bookingPrompt, {
-      conversation_phase: 'appointment_booking',
-      current_appointment_data: context.appointmentData,
-      user_message: request.message
-    });
+    const geminiResponse = await this.geminiService.generateResponse(
+      bookingPrompt,
+      {
+        conversation_phase: 'appointment_booking',
+        current_appointment_data: context.appointmentData,
+        user_message: request.message,
+      },
+    );
 
     // Check if we have enough information to proceed
-    const hasSpecialty = context.appointmentData?.specialty || this.extractSpecialty(request.message);
-    const hasDatePreference = context.appointmentData?.preferredDate || this.extractDatePreference(request.message);
+    const hasSpecialty =
+      context.appointmentData?.specialty ||
+      this.extractSpecialty(request.message);
+    const hasDatePreference =
+      context.appointmentData?.preferredDate ||
+      this.extractDatePreference(request.message);
 
     const actions = [];
     if (hasSpecialty && hasDatePreference) {
       // Try to find available appointments
       const availableSlots = await this.appointmentService.findAvailableSlots(
-        hasSpecialty, 
-        context.appointmentData?.urgency || 'medium'
+        hasSpecialty,
+        context.appointmentData?.urgency || 'medium',
       );
 
       if (availableSlots.availableSlots.length > 0) {
@@ -293,8 +315,8 @@ export class WhatsAppAIService {
           data: {
             specialty: hasSpecialty,
             preferredDate: hasDatePreference,
-            availableSlots: availableSlots.availableSlots
-          }
+            availableSlots: availableSlots.availableSlots,
+          },
         });
       }
     }
@@ -304,7 +326,7 @@ export class WhatsAppAIService {
       urgency: this.detectUrgency(request.message),
       confidence: 0.8,
       processingTime: geminiResponse.responseTimeMs,
-      actions: actions.length > 0 ? actions : undefined
+      actions: actions.length > 0 ? actions : undefined,
     };
   }
 
@@ -312,12 +334,11 @@ export class WhatsAppAIService {
    * Handle confirmation phase
    */
   private async handleConfirmationPhase(
-    request: ProcessMessageRequest, 
-    context: ConversationState
+    request: ProcessMessageRequest,
+    context: ConversationState,
   ): Promise<ProcessMessageResponse> {
-    
     const isConfirmation = this.isConfirmationMessage(request.message);
-    
+
     const confirmationPrompt = `
     O usuário está confirmando ou negando um agendamento:
     
@@ -337,11 +358,14 @@ export class WhatsAppAIService {
     Máximo 3 frases, seja clara e prestativa.
     `;
 
-    const geminiResponse = await this.geminiService.generateResponse(confirmationPrompt, {
-      conversation_phase: 'confirmation',
-      is_confirmation: isConfirmation,
-      appointment_data: context.appointmentData
-    });
+    const geminiResponse = await this.geminiService.generateResponse(
+      confirmationPrompt,
+      {
+        conversation_phase: 'confirmation',
+        is_confirmation: isConfirmation,
+        appointment_data: context.appointmentData,
+      },
+    );
 
     return {
       text: geminiResponse.response,
@@ -355,10 +379,9 @@ export class WhatsAppAIService {
    * Handle general inquiries
    */
   private async handleGeneralInquiry(
-    request: ProcessMessageRequest, 
-    context: ConversationState
+    request: ProcessMessageRequest,
+    context: ConversationState,
   ): Promise<ProcessMessageResponse> {
-    
     const generalPrompt = `
     Responda como assistente virtual da EO Clínica:
     
@@ -375,10 +398,13 @@ export class WhatsAppAIService {
     Máximo 3 frases.
     `;
 
-    const geminiResponse = await this.geminiService.generateResponse(generalPrompt, {
-      conversation_phase: 'general_inquiry',
-      user_question: request.message
-    });
+    const geminiResponse = await this.geminiService.generateResponse(
+      generalPrompt,
+      {
+        conversation_phase: 'general_inquiry',
+        user_question: request.message,
+      },
+    );
 
     return {
       text: geminiResponse.response,
@@ -393,26 +419,44 @@ export class WhatsAppAIService {
    */
   private detectUrgency(message: string): 'low' | 'medium' | 'high' {
     const urgentKeywords = [
-      'urgente', 'emergência', 'emergency', 'dor forte', 'sangramento',
-      'febre alta', 'não consigo', 'muito mal', 'socorro', 'ajuda',
-      'grave', 'sério', 'crítico', 'imediato'
+      'urgente',
+      'emergência',
+      'emergency',
+      'dor forte',
+      'sangramento',
+      'febre alta',
+      'não consigo',
+      'muito mal',
+      'socorro',
+      'ajuda',
+      'grave',
+      'sério',
+      'crítico',
+      'imediato',
     ];
 
     const mediumKeywords = [
-      'dor', 'mal estar', 'preocupado', 'ansioso', 'desconforto',
-      'hoje', 'agora', 'rápido', 'logo'
+      'dor',
+      'mal estar',
+      'preocupado',
+      'ansioso',
+      'desconforto',
+      'hoje',
+      'agora',
+      'rápido',
+      'logo',
     ];
 
     const lowerMessage = message.toLowerCase();
-    
+
     if (urgentKeywords.some(keyword => lowerMessage.includes(keyword))) {
       return 'high';
     }
-    
+
     if (mediumKeywords.some(keyword => lowerMessage.includes(keyword))) {
       return 'medium';
     }
-    
+
     return 'low';
   }
 
@@ -421,15 +465,35 @@ export class WhatsAppAIService {
    */
   private containsSymptomKeywords(message: string): boolean {
     const symptomKeywords = [
-      'dor', 'febre', 'tosse', 'dor de cabeça', 'mal estar', 'náusea',
-      'vômito', 'diarreia', 'constipação', 'cansaço', 'fraqueza',
-      'tontura', 'falta de ar', 'palpitação', 'insônia', 'ansiedade',
-      'sangramento', 'machucado', 'ferida', 'sintoma', 'doendo',
-      'está doendo', 'sentindo', 'dói', 'incomoda'
+      'dor',
+      'febre',
+      'tosse',
+      'dor de cabeça',
+      'mal estar',
+      'náusea',
+      'vômito',
+      'diarreia',
+      'constipação',
+      'cansaço',
+      'fraqueza',
+      'tontura',
+      'falta de ar',
+      'palpitação',
+      'insônia',
+      'ansiedade',
+      'sangramento',
+      'machucado',
+      'ferida',
+      'sintoma',
+      'doendo',
+      'está doendo',
+      'sentindo',
+      'dói',
+      'incomoda',
     ];
 
-    return symptomKeywords.some(keyword => 
-      message.toLowerCase().includes(keyword)
+    return symptomKeywords.some(keyword =>
+      message.toLowerCase().includes(keyword),
     );
   }
 
@@ -438,13 +502,24 @@ export class WhatsAppAIService {
    */
   private containsAppointmentKeywords(message: string): boolean {
     const appointmentKeywords = [
-      'agendar', 'marcar', 'consulta', 'appointment', 'horário',
-      'disponibilidade', 'agenda', 'atendimento', 'médico',
-      'doutor', 'doutora', 'especialista', 'quando', 'data'
+      'agendar',
+      'marcar',
+      'consulta',
+      'appointment',
+      'horário',
+      'disponibilidade',
+      'agenda',
+      'atendimento',
+      'médico',
+      'doutor',
+      'doutora',
+      'especialista',
+      'quando',
+      'data',
     ];
 
-    return appointmentKeywords.some(keyword => 
-      message.toLowerCase().includes(keyword)
+    return appointmentKeywords.some(keyword =>
+      message.toLowerCase().includes(keyword),
     );
   }
 
@@ -452,13 +527,23 @@ export class WhatsAppAIService {
    * Check if message is a confirmation (yes/no)
    */
   private isConfirmationMessage(message: string): boolean {
-    const positiveKeywords = ['sim', 'yes', 'confirmo', 'ok', 'tá bom', 'aceito', 'quero'];
+    const positiveKeywords = [
+      'sim',
+      'yes',
+      'confirmo',
+      'ok',
+      'tá bom',
+      'aceito',
+      'quero',
+    ];
     const negativeKeywords = ['não', 'no', 'não quero', 'cancelar', 'não pode'];
-    
+
     const lowerMessage = message.toLowerCase();
-    
-    return positiveKeywords.some(keyword => lowerMessage.includes(keyword)) ||
-           negativeKeywords.some(keyword => lowerMessage.includes(keyword));
+
+    return (
+      positiveKeywords.some(keyword => lowerMessage.includes(keyword)) ||
+      negativeKeywords.some(keyword => lowerMessage.includes(keyword))
+    );
   }
 
   /**
@@ -466,20 +551,20 @@ export class WhatsAppAIService {
    */
   private extractSpecialty(message: string): string | null {
     const specialties = {
-      'cardiologista': ['coração', 'cardio', 'cardiologista', 'pressão'],
-      'dermatologista': ['pele', 'dermat', 'dermatologista', 'alergia'],
-      'neurologista': ['cabeça', 'neuro', 'neurologista', 'enxaqueca'],
-      'clínico geral': ['clínico', 'geral', 'clínica geral']
+      cardiologista: ['coração', 'cardio', 'cardiologista', 'pressão'],
+      dermatologista: ['pele', 'dermat', 'dermatologista', 'alergia'],
+      neurologista: ['cabeça', 'neuro', 'neurologista', 'enxaqueca'],
+      'clínico geral': ['clínico', 'geral', 'clínica geral'],
     };
 
     const lowerMessage = message.toLowerCase();
-    
+
     for (const [specialty, keywords] of Object.entries(specialties)) {
       if (keywords.some(keyword => lowerMessage.includes(keyword))) {
         return specialty;
       }
     }
-    
+
     return null;
   }
 
@@ -488,23 +573,25 @@ export class WhatsAppAIService {
    */
   private extractDatePreference(message: string): string | null {
     const dateKeywords = {
-      'hoje': new Date().toISOString().split('T')[0],
-      'amanhã': new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      'segunda': 'next-monday',
-      'terça': 'next-tuesday',
-      'quarta': 'next-wednesday',
-      'quinta': 'next-thursday',
-      'sexta': 'next-friday'
+      hoje: new Date().toISOString().split('T')[0],
+      amanhã: new Date(Date.now() + 24 * 60 * 60 * 1000)
+        .toISOString()
+        .split('T')[0],
+      segunda: 'next-monday',
+      terça: 'next-tuesday',
+      quarta: 'next-wednesday',
+      quinta: 'next-thursday',
+      sexta: 'next-friday',
     };
 
     const lowerMessage = message.toLowerCase();
-    
+
     for (const [keyword, date] of Object.entries(dateKeywords)) {
       if (lowerMessage.includes(keyword)) {
         return date;
       }
     }
-    
+
     return null;
   }
 
@@ -512,22 +599,23 @@ export class WhatsAppAIService {
    * Update conversation context based on interaction
    */
   private async updateConversationContext(
-    conversationId: string, 
-    request: ProcessMessageRequest, 
-    response: ProcessMessageResponse
+    conversationId: string,
+    request: ProcessMessageRequest,
+    response: ProcessMessageResponse,
   ): Promise<void> {
-    
     try {
       const context = await this.contextService.getContext(conversationId);
-      
+
       // Update phase based on response content
       let newPhase = context.phase;
-      
+
       if (this.containsSymptomKeywords(request.message)) {
         newPhase = 'symptom_gathering';
       } else if (this.containsAppointmentKeywords(request.message)) {
         newPhase = 'appointment_booking';
-      } else if (response.actions?.some(action => action.type === 'book_appointment')) {
+      } else if (
+        response.actions?.some(action => action.type === 'book_appointment')
+      ) {
         newPhase = 'confirmation';
       }
 
@@ -540,8 +628,12 @@ export class WhatsAppAIService {
       // Extract appointment data
       const appointmentData = {
         ...context.appointmentData,
-        specialty: this.extractSpecialty(request.message) || context.appointmentData?.specialty,
-        preferredDate: this.extractDatePreference(request.message) || context.appointmentData?.preferredDate,
+        specialty:
+          this.extractSpecialty(request.message) ||
+          context.appointmentData?.specialty,
+        preferredDate:
+          this.extractDatePreference(request.message) ||
+          context.appointmentData?.preferredDate,
         urgency: response.urgency,
       };
 
@@ -552,7 +644,6 @@ export class WhatsAppAIService {
         appointmentData,
         lastInteraction: new Date(),
       });
-
     } catch (error) {
       logger.error('Failed to update conversation context:', error);
     }
@@ -571,12 +662,12 @@ export class WhatsAppAIService {
    */
   private sanitizePhoneNumber(phoneNumber: string): string {
     if (!phoneNumber) return 'unknown';
-    
+
     const cleaned = phoneNumber.replace(/\D/g, '');
     if (cleaned.length > 4) {
       return `${cleaned.slice(0, 2)}****${cleaned.slice(-2)}`;
     }
-    
+
     return '****';
   }
 }

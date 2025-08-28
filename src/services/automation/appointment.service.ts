@@ -115,12 +115,13 @@ export class AppointmentAutomationService {
       Responda APENAS com o JSON, sem explicações adicionais:
       `;
 
-      const geminiResponse = await this.geminiService.generateResponse(analysisPrompt);
-      
+      const geminiResponse =
+        await this.geminiService.generateResponse(analysisPrompt);
+
       try {
         // Parse AI response as JSON
         const analysis = JSON.parse(geminiResponse.response);
-        
+
         // Validate and sanitize response
         const validatedAnalysis = this.validateSymptomAnalysis(analysis);
         validatedAnalysis.processingTime = Date.now() - startTime;
@@ -134,17 +135,21 @@ export class AppointmentAutomationService {
         });
 
         return validatedAnalysis;
-
       } catch (parseError) {
-        logger.warn('Failed to parse AI JSON response, using fallback analysis', {
-          originalResponse: geminiResponse.response.substring(0, 200),
-          parseError: parseError.message,
-        });
+        logger.warn(
+          'Failed to parse AI JSON response, using fallback analysis',
+          {
+            originalResponse: geminiResponse.response.substring(0, 200),
+            parseError: parseError.message,
+          },
+        );
 
         // Fallback to pattern-based analysis
-        return this.fallbackSymptomAnalysis(symptomsText, Date.now() - startTime);
+        return this.fallbackSymptomAnalysis(
+          symptomsText,
+          Date.now() - startTime,
+        );
       }
-
     } catch (error) {
       logger.error('Symptom analysis failed:', {
         error: error.message,
@@ -167,8 +172,8 @@ export class AppointmentAutomationService {
    * Find available appointment slots based on criteria
    */
   async findAvailableSlots(
-    specialty: string, 
-    urgency: 'low' | 'medium' | 'high' = 'medium'
+    specialty: string,
+    urgency: 'low' | 'medium' | 'high' = 'medium',
   ): Promise<AvailabilityResult> {
     try {
       logger.info('Searching for available slots', {
@@ -179,14 +184,15 @@ export class AppointmentAutomationService {
       // In production, this would query the actual database
       // For now, generate mock available slots based on specialty and urgency
       const mockSlots = this.generateMockAvailableSlots(specialty, urgency);
-      
+
       // Sort slots by date/time and urgency priority
       const sortedSlots = this.sortSlotsByPriority(mockSlots, urgency);
-      
+
       // Determine next available slot
-      const nextAvailable = sortedSlots.length > 0 ? 
-        `${sortedSlots[0].date} às ${sortedSlots[0].time}` : 
-        'Não há horários disponíveis no momento';
+      const nextAvailable =
+        sortedSlots.length > 0
+          ? `${sortedSlots[0].date} às ${sortedSlots[0].time}`
+          : 'Não há horários disponíveis no momento';
 
       logger.info('Available slots found', {
         specialty,
@@ -205,7 +211,6 @@ export class AppointmentAutomationService {
           dateRange: '7 days',
         },
       };
-
     } catch (error) {
       logger.error('Failed to find available slots:', {
         specialty,
@@ -240,8 +245,8 @@ export class AppointmentAutomationService {
 
       // Find available slots
       const availability = await this.findAvailableSlots(
-        request.preferredSpecialty, 
-        request.urgency
+        request.preferredSpecialty,
+        request.urgency,
       );
 
       if (availability.availableSlots.length === 0) {
@@ -254,9 +259,9 @@ export class AppointmentAutomationService {
 
       // Select best slot based on preferences
       const selectedSlot = this.selectBestSlot(
-        availability.availableSlots, 
-        request.preferredDate, 
-        request.preferredTime
+        availability.availableSlots,
+        request.preferredDate,
+        request.preferredTime,
       );
 
       // In production, this would integrate with the actual booking system
@@ -264,7 +269,7 @@ export class AppointmentAutomationService {
 
       if (mockBookingSuccess) {
         const appointmentId = `APP_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        
+
         logger.info('Appointment booked successfully', {
           appointmentId,
           phoneNumber: this.sanitizePhoneNumber(request.phoneNumber),
@@ -289,7 +294,6 @@ export class AppointmentAutomationService {
             ],
           },
         };
-
       } else {
         logger.warn('Appointment booking failed', {
           phoneNumber: this.sanitizePhoneNumber(request.phoneNumber),
@@ -298,11 +302,11 @@ export class AppointmentAutomationService {
 
         return {
           success: false,
-          error: 'Erro temporário no sistema de agendamento. Tente novamente em alguns instantes.',
+          error:
+            'Erro temporário no sistema de agendamento. Tente novamente em alguns instantes.',
           alternativeSlots: availability.availableSlots.slice(1, 4), // Offer alternatives
         };
       }
-
     } catch (error) {
       logger.error('Appointment booking failed:', {
         phoneNumber: this.sanitizePhoneNumber(request.phoneNumber),
@@ -311,7 +315,8 @@ export class AppointmentAutomationService {
 
       return {
         success: false,
-        error: 'Erro interno no sistema de agendamento. Nossa equipe foi notificada.',
+        error:
+          'Erro interno no sistema de agendamento. Nossa equipe foi notificada.',
       };
     }
   }
@@ -320,8 +325,8 @@ export class AppointmentAutomationService {
    * Send appointment reminders
    */
   async sendReminder(
-    appointmentId: string, 
-    reminderType: 'confirmation' | '24h' | '2h' | 'followup'
+    appointmentId: string,
+    reminderType: 'confirmation' | '24h' | '2h' | 'followup',
   ): Promise<boolean> {
     try {
       logger.info('Sending appointment reminder', {
@@ -346,7 +351,6 @@ export class AppointmentAutomationService {
       }
 
       return reminderSuccess;
-
     } catch (error) {
       logger.error('Reminder sending failed:', {
         appointmentId,
@@ -362,35 +366,95 @@ export class AppointmentAutomationService {
    */
   private initializeSpecialtyMappings(): void {
     this.specialtyMappings = new Map([
-      ['Cardiologia', [
-        'dor no peito', 'palpitação', 'pressão alta', 'coração acelerado',
-        'falta de ar', 'cansaço extremo', 'inchaço nas pernas', 'tontura',
-        'desmaio', 'batimento irregular'
-      ]],
-      ['Dermatologia', [
-        'coceira', 'manchas na pele', 'alergia', 'vermelhidão',
-        'descamação', 'ferida que não cicatriza', 'acne', 'eczema',
-        'psoríase', 'verruga', 'mancha escura'
-      ]],
-      ['Neurologia', [
-        'dor de cabeça', 'enxaqueca', 'tontura persistente', 'formigamento',
-        'dormência', 'tremor', 'convulsão', 'perda de memória',
-        'confusão mental', 'visão turva', 'dificuldade para falar'
-      ]],
-      ['Ginecologia', [
-        'menstruação irregular', 'cólica forte', 'corrimento', 'coceira íntima',
-        'dor durante relação', 'gravidez', 'menopausa', 'contraceptivos',
-        'exame preventivo'
-      ]],
-      ['Pediatria', [
-        'criança', 'bebê', 'adolescente', 'vacinação', 'desenvolvimento infantil',
-        'febre em criança', 'diarreia infantil', 'crescimento'
-      ]],
-      ['Ortopedia', [
-        'dor nas costas', 'dor no joelho', 'fratura', 'entorse',
-        'dor muscular', 'artrite', 'bursite', 'tendinite',
-        'dor na coluna', 'lesão esportiva'
-      ]],
+      [
+        'Cardiologia',
+        [
+          'dor no peito',
+          'palpitação',
+          'pressão alta',
+          'coração acelerado',
+          'falta de ar',
+          'cansaço extremo',
+          'inchaço nas pernas',
+          'tontura',
+          'desmaio',
+          'batimento irregular',
+        ],
+      ],
+      [
+        'Dermatologia',
+        [
+          'coceira',
+          'manchas na pele',
+          'alergia',
+          'vermelhidão',
+          'descamação',
+          'ferida que não cicatriza',
+          'acne',
+          'eczema',
+          'psoríase',
+          'verruga',
+          'mancha escura',
+        ],
+      ],
+      [
+        'Neurologia',
+        [
+          'dor de cabeça',
+          'enxaqueca',
+          'tontura persistente',
+          'formigamento',
+          'dormência',
+          'tremor',
+          'convulsão',
+          'perda de memória',
+          'confusão mental',
+          'visão turva',
+          'dificuldade para falar',
+        ],
+      ],
+      [
+        'Ginecologia',
+        [
+          'menstruação irregular',
+          'cólica forte',
+          'corrimento',
+          'coceira íntima',
+          'dor durante relação',
+          'gravidez',
+          'menopausa',
+          'contraceptivos',
+          'exame preventivo',
+        ],
+      ],
+      [
+        'Pediatria',
+        [
+          'criança',
+          'bebê',
+          'adolescente',
+          'vacinação',
+          'desenvolvimento infantil',
+          'febre em criança',
+          'diarreia infantil',
+          'crescimento',
+        ],
+      ],
+      [
+        'Ortopedia',
+        [
+          'dor nas costas',
+          'dor no joelho',
+          'fratura',
+          'entorse',
+          'dor muscular',
+          'artrite',
+          'bursite',
+          'tendinite',
+          'dor na coluna',
+          'lesão esportiva',
+        ],
+      ],
     ]);
   }
 
@@ -410,20 +474,36 @@ export class AppointmentAutomationService {
    */
   private validateSymptomAnalysis(analysis: any): SymptomAnalysis {
     return {
-      symptoms: Array.isArray(analysis.symptoms) ? analysis.symptoms : ['sintomas relatados'],
-      urgencyLevel: ['low', 'medium', 'high'].includes(analysis.urgencyLevel) ? analysis.urgencyLevel : 'medium',
-      recommendedSpecialty: typeof analysis.recommendedSpecialty === 'string' ? analysis.recommendedSpecialty : 'Clínica Geral',
-      confidence: typeof analysis.confidence === 'number' && analysis.confidence >= 0 && analysis.confidence <= 1 ? 
-        analysis.confidence : 0.5,
+      symptoms: Array.isArray(analysis.symptoms)
+        ? analysis.symptoms
+        : ['sintomas relatados'],
+      urgencyLevel: ['low', 'medium', 'high'].includes(analysis.urgencyLevel)
+        ? analysis.urgencyLevel
+        : 'medium',
+      recommendedSpecialty:
+        typeof analysis.recommendedSpecialty === 'string'
+          ? analysis.recommendedSpecialty
+          : 'Clínica Geral',
+      confidence:
+        typeof analysis.confidence === 'number' &&
+        analysis.confidence >= 0 &&
+        analysis.confidence <= 1
+          ? analysis.confidence
+          : 0.5,
       processingTime: 0, // Will be set by caller
-      recommendations: Array.isArray(analysis.recommendations) ? analysis.recommendations : undefined,
+      recommendations: Array.isArray(analysis.recommendations)
+        ? analysis.recommendations
+        : undefined,
     };
   }
 
   /**
    * Fallback symptom analysis using pattern matching
    */
-  private fallbackSymptomAnalysis(symptomsText: string, processingTime: number): SymptomAnalysis {
+  private fallbackSymptomAnalysis(
+    symptomsText: string,
+    processingTime: number,
+  ): SymptomAnalysis {
     const lowerText = symptomsText.toLowerCase();
     let recommendedSpecialty = 'Clínica Geral';
     let urgencyLevel: 'low' | 'medium' | 'high' = 'medium';
@@ -431,16 +511,24 @@ export class AppointmentAutomationService {
 
     // Check for specialty-specific keywords
     for (const [specialty, keywords] of this.specialtyMappings.entries()) {
-      const matchCount = keywords.filter(keyword => lowerText.includes(keyword)).length;
+      const matchCount = keywords.filter(keyword =>
+        lowerText.includes(keyword),
+      ).length;
       if (matchCount > 0) {
         recommendedSpecialty = specialty;
-        confidence = Math.min(0.9, 0.5 + (matchCount * 0.1));
+        confidence = Math.min(0.9, 0.5 + matchCount * 0.1);
         break;
       }
     }
 
     // Detect urgency
-    const urgentKeywords = ['dor forte', 'sangramento', 'febre alta', 'não consigo', 'muito mal'];
+    const urgentKeywords = [
+      'dor forte',
+      'sangramento',
+      'febre alta',
+      'não consigo',
+      'muito mal',
+    ];
     const mediumKeywords = ['dor', 'preocupado', 'desconforto'];
 
     if (urgentKeywords.some(keyword => lowerText.includes(keyword))) {
@@ -469,8 +557,17 @@ export class AppointmentAutomationService {
    */
   private extractSymptomsFromText(text: string): string[] {
     const commonSymptoms = [
-      'dor', 'febre', 'tosse', 'dor de cabeça', 'náusea', 'vômito',
-      'diarreia', 'cansaço', 'tontura', 'falta de ar', 'coceira'
+      'dor',
+      'febre',
+      'tosse',
+      'dor de cabeça',
+      'náusea',
+      'vômito',
+      'diarreia',
+      'cansaço',
+      'tontura',
+      'falta de ar',
+      'coceira',
     ];
 
     const lowerText = text.toLowerCase();
@@ -480,27 +577,35 @@ export class AppointmentAutomationService {
   /**
    * Generate mock available slots for testing
    */
-  private generateMockAvailableSlots(specialty: string, urgency: string): AvailableSlot[] {
+  private generateMockAvailableSlots(
+    specialty: string,
+    urgency: string,
+  ): AvailableSlot[] {
     const slots: AvailableSlot[] = [];
     const baseDate = new Date();
-    
+
     // Generate slots for the next 7 days
-    for (let dayOffset = urgency === 'high' ? 0 : 1; dayOffset < 7; dayOffset++) {
+    for (
+      let dayOffset = urgency === 'high' ? 0 : 1;
+      dayOffset < 7;
+      dayOffset++
+    ) {
       const date = new Date(baseDate);
       date.setDate(date.getDate() + dayOffset);
-      
+
       const dateStr = date.toISOString().split('T')[0];
       const dayName = date.toLocaleDateString('pt-BR', { weekday: 'long' });
-      
+
       // Skip weekends for some specialties
       if (date.getDay() === 0 || date.getDay() === 6) {
         continue;
       }
 
       // Generate time slots
-      const timeSlots = urgency === 'high' ? 
-        ['08:00', '08:30', '14:00', '14:30'] :
-        ['09:00', '10:00', '14:00', '15:00', '16:00'];
+      const timeSlots =
+        urgency === 'high'
+          ? ['08:00', '08:30', '14:00', '14:30']
+          : ['09:00', '10:00', '14:00', '15:00', '16:00'];
 
       for (const time of timeSlots) {
         slots.push({
@@ -523,17 +628,19 @@ export class AppointmentAutomationService {
    */
   private getMockDoctorName(specialty: string): string {
     const doctors = {
-      'Cardiologia': ['Dr. Silva Cardio', 'Dra. Santos Coração'],
-      'Dermatologia': ['Dr. Pele Santos', 'Dra. Silva Derma'],
-      'Neurologia': ['Dr. Cérebro Lima', 'Dra. Neuro Silva'],
-      'Ginecologia': ['Dra. Mulher Santos', 'Dra. Gine Lima'],
-      'Pediatria': ['Dr. Criança Silva', 'Dra. Pediatra Santos'],
-      'Ortopedia': ['Dr. Osso Lima', 'Dra. Orto Silva'],
+      Cardiologia: ['Dr. Silva Cardio', 'Dra. Santos Coração'],
+      Dermatologia: ['Dr. Pele Santos', 'Dra. Silva Derma'],
+      Neurologia: ['Dr. Cérebro Lima', 'Dra. Neuro Silva'],
+      Ginecologia: ['Dra. Mulher Santos', 'Dra. Gine Lima'],
+      Pediatria: ['Dr. Criança Silva', 'Dra. Pediatra Santos'],
+      Ortopedia: ['Dr. Osso Lima', 'Dra. Orto Silva'],
       'Clínica Geral': ['Dr. Geral Santos', 'Dra. Clínica Lima'],
     };
 
     const specialtyDoctors = doctors[specialty] || doctors['Clínica Geral'];
-    return specialtyDoctors[Math.floor(Math.random() * specialtyDoctors.length)];
+    return specialtyDoctors[
+      Math.floor(Math.random() * specialtyDoctors.length)
+    ];
   }
 
   /**
@@ -541,12 +648,12 @@ export class AppointmentAutomationService {
    */
   private getEstimatedCost(specialty: string): number {
     const costs = {
-      'Cardiologia': 250,
-      'Dermatologia': 200,
-      'Neurologia': 280,
-      'Ginecologia': 220,
-      'Pediatria': 180,
-      'Ortopedia': 240,
+      Cardiologia: 250,
+      Dermatologia: 200,
+      Neurologia: 280,
+      Ginecologia: 220,
+      Pediatria: 180,
+      Ortopedia: 240,
       'Clínica Geral': 150,
     };
 
@@ -556,11 +663,14 @@ export class AppointmentAutomationService {
   /**
    * Sort slots by priority based on urgency
    */
-  private sortSlotsByPriority(slots: AvailableSlot[], urgency: string): AvailableSlot[] {
+  private sortSlotsByPriority(
+    slots: AvailableSlot[],
+    urgency: string,
+  ): AvailableSlot[] {
     return slots.sort((a, b) => {
       const dateA = new Date(`${a.date} ${a.time}`);
       const dateB = new Date(`${b.date} ${b.time}`);
-      
+
       if (urgency === 'high') {
         // For high urgency, prioritize earliest slots
         return dateA.getTime() - dateB.getTime();
@@ -575,9 +685,9 @@ export class AppointmentAutomationService {
    * Select best slot based on patient preferences
    */
   private selectBestSlot(
-    slots: AvailableSlot[], 
-    preferredDate?: string, 
-    preferredTime?: string
+    slots: AvailableSlot[],
+    preferredDate?: string,
+    preferredTime?: string,
   ): AvailableSlot {
     if (slots.length === 0) {
       throw new Error('No available slots');
@@ -594,11 +704,11 @@ export class AppointmentAutomationService {
 
     for (const slot of slots) {
       let score = 0;
-      
+
       if (preferredDate && slot.date === preferredDate) {
         score += 10;
       }
-      
+
       if (preferredTime && slot.time === preferredTime) {
         score += 10;
       }
@@ -617,12 +727,12 @@ export class AppointmentAutomationService {
    */
   private sanitizePhoneNumber(phoneNumber: string): string {
     if (!phoneNumber) return 'unknown';
-    
+
     const cleaned = phoneNumber.replace(/\D/g, '');
     if (cleaned.length > 4) {
       return `${cleaned.slice(0, 2)}****${cleaned.slice(-2)}`;
     }
-    
+
     return '****';
   }
 }

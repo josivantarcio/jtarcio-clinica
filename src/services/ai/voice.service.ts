@@ -22,16 +22,39 @@ export class VoiceRecognitionService {
   constructor() {
     this.defaultLanguage = process.env.AI_RESPONSE_LANGUAGE || 'pt-BR';
     this.confidenceThreshold = 0.6;
-    
+
     // Portuguese urgency detection keywords
     this.urgencyKeywords = [
-      'urgente', 'emergência', 'emergency', 'socorro', 'ajuda',
-      'dor forte', 'dor intensa', 'sangramento', 'sangrando',
-      'febre alta', 'febre muito alta', 'não consigo', 'muito mal',
-      'grave', 'sério', 'crítico', 'imediato', 'agora',
-      'desmaiei', 'desmaiando', 'tonteira forte', 'vomitando muito',
-      'peito apertado', 'falta de ar', 'respirar', 'coração acelerado',
-      'dormência', 'formigamento', 'visão turva', 'confuso'
+      'urgente',
+      'emergência',
+      'emergency',
+      'socorro',
+      'ajuda',
+      'dor forte',
+      'dor intensa',
+      'sangramento',
+      'sangrando',
+      'febre alta',
+      'febre muito alta',
+      'não consigo',
+      'muito mal',
+      'grave',
+      'sério',
+      'crítico',
+      'imediato',
+      'agora',
+      'desmaiei',
+      'desmaiando',
+      'tonteira forte',
+      'vomitando muito',
+      'peito apertado',
+      'falta de ar',
+      'respirar',
+      'coração acelerado',
+      'dormência',
+      'formigamento',
+      'visão turva',
+      'confuso',
     ];
 
     logger.info('Voice Recognition Service initialized', {
@@ -45,12 +68,12 @@ export class VoiceRecognitionService {
    * Transcribe audio buffer to text with Portuguese optimization
    */
   async transcribeAudio(
-    audioBuffer: Buffer, 
-    options: VoiceProcessingOptions = {}
+    audioBuffer: Buffer,
+    options: VoiceProcessingOptions = {},
   ): Promise<VoiceTranscription> {
     const startTime = Date.now();
     const language = options.language || this.defaultLanguage;
-    
+
     try {
       logger.info('Starting voice transcription', {
         audioSize: audioBuffer.length,
@@ -60,17 +83,24 @@ export class VoiceRecognitionService {
 
       // In production, this would integrate with WAHA's voice transcription
       // or Google Speech-to-Text API. For now, we'll simulate the transcription
-      const transcriptionResult = await this.performTranscription(audioBuffer, language);
-      
+      const transcriptionResult = await this.performTranscription(
+        audioBuffer,
+        language,
+      );
+
       // Detect urgency in transcribed text
-      const urgencyDetected = options.urgencyDetection !== false ? 
-        this.detectUrgencyInText(transcriptionResult.text) : false;
-      
+      const urgencyDetected =
+        options.urgencyDetection !== false
+          ? this.detectUrgencyInText(transcriptionResult.text)
+          : false;
+
       // Validate confidence threshold
-      const meetsThreshold = transcriptionResult.confidence >= (options.confidenceThreshold || this.confidenceThreshold);
-      
+      const meetsThreshold =
+        transcriptionResult.confidence >=
+        (options.confidenceThreshold || this.confidenceThreshold);
+
       const processingTime = Date.now() - startTime;
-      
+
       logger.info('Voice transcription completed', {
         textLength: transcriptionResult.text.length,
         confidence: transcriptionResult.confidence,
@@ -87,10 +117,9 @@ export class VoiceRecognitionService {
         urgencyDetected,
         processingTime,
       };
-
     } catch (error) {
       const processingTime = Date.now() - startTime;
-      
+
       logger.error('Voice transcription failed:', {
         error: error.message,
         audioSize: audioBuffer.length,
@@ -113,11 +142,11 @@ export class VoiceRecognitionService {
    * Transcribe audio from URL (WAHA integration)
    */
   async transcribeFromUrl(
-    audioUrl: string, 
-    options: VoiceProcessingOptions = {}
+    audioUrl: string,
+    options: VoiceProcessingOptions = {},
   ): Promise<VoiceTranscription> {
     const startTime = Date.now();
-    
+
     try {
       logger.info('Transcribing audio from URL', {
         audioUrl: this.sanitizeUrl(audioUrl),
@@ -126,13 +155,12 @@ export class VoiceRecognitionService {
 
       // Download audio buffer from URL
       const audioBuffer = await this.downloadAudioFromUrl(audioUrl);
-      
+
       // Transcribe the downloaded audio
       return await this.transcribeAudio(audioBuffer, options);
-
     } catch (error) {
       const processingTime = Date.now() - startTime;
-      
+
       logger.error('URL transcription failed:', {
         error: error.message,
         audioUrl: this.sanitizeUrl(audioUrl),
@@ -152,7 +180,10 @@ export class VoiceRecognitionService {
   /**
    * Perform actual transcription (placeholder for real implementation)
    */
-  private async performTranscription(audioBuffer: Buffer, language: string): Promise<{
+  private async performTranscription(
+    audioBuffer: Buffer,
+    language: string,
+  ): Promise<{
     text: string;
     confidence: number;
   }> {
@@ -164,20 +195,26 @@ export class VoiceRecognitionService {
 
     // Mock implementation for testing and development
     const mockTranscriptions = [
-      { text: "Olá, preciso marcar uma consulta com cardiologista", confidence: 0.95 },
-      { text: "Estou sentindo dor no peito e falta de ar", confidence: 0.89 },
-      { text: "Gostaria de agendar um check-up", confidence: 0.92 },
-      { text: "Tenho uma dor de cabeça muito forte", confidence: 0.87 },
-      { text: "Preciso de uma consulta urgente", confidence: 0.94 },
-      { text: "Minha filha está com febre alta", confidence: 0.91 },
+      {
+        text: 'Olá, preciso marcar uma consulta com cardiologista',
+        confidence: 0.95,
+      },
+      { text: 'Estou sentindo dor no peito e falta de ar', confidence: 0.89 },
+      { text: 'Gostaria de agendar um check-up', confidence: 0.92 },
+      { text: 'Tenho uma dor de cabeça muito forte', confidence: 0.87 },
+      { text: 'Preciso de uma consulta urgente', confidence: 0.94 },
+      { text: 'Minha filha está com febre alta', confidence: 0.91 },
     ];
 
     // Simulate processing delay
-    await new Promise(resolve => setTimeout(resolve, 1500 + Math.random() * 1000));
+    await new Promise(resolve =>
+      setTimeout(resolve, 1500 + Math.random() * 1000),
+    );
 
     // Return random mock transcription for development
-    const mockResult = mockTranscriptions[Math.floor(Math.random() * mockTranscriptions.length)];
-    
+    const mockResult =
+      mockTranscriptions[Math.floor(Math.random() * mockTranscriptions.length)];
+
     return {
       text: mockResult.text,
       confidence: mockResult.confidence + (Math.random() * 0.1 - 0.05), // Add slight variation
@@ -192,7 +229,6 @@ export class VoiceRecognitionService {
       // In production, implement actual HTTP download
       // For now, return a mock buffer
       return Buffer.alloc(1024); // Mock audio buffer
-      
     } catch (error) {
       logger.error('Failed to download audio from URL:', {
         url: this.sanitizeUrl(url),
@@ -211,15 +247,15 @@ export class VoiceRecognitionService {
     }
 
     const lowerText = text.toLowerCase();
-    const urgencyDetected = this.urgencyKeywords.some(keyword => 
-      lowerText.includes(keyword.toLowerCase())
+    const urgencyDetected = this.urgencyKeywords.some(keyword =>
+      lowerText.includes(keyword.toLowerCase()),
     );
 
     if (urgencyDetected) {
       logger.info('Urgency detected in transcribed text', {
         textSample: text.substring(0, 50) + (text.length > 50 ? '...' : ''),
-        matchedKeywords: this.urgencyKeywords.filter(keyword => 
-          lowerText.includes(keyword.toLowerCase())
+        matchedKeywords: this.urgencyKeywords.filter(keyword =>
+          lowerText.includes(keyword.toLowerCase()),
         ),
       });
     }
@@ -269,12 +305,12 @@ export class VoiceRecognitionService {
       return {
         quality,
         confidence,
-        recommendations: recommendations.length > 0 ? recommendations : undefined,
+        recommendations:
+          recommendations.length > 0 ? recommendations : undefined,
       };
-
     } catch (error) {
       logger.error('Audio quality analysis failed:', error);
-      
+
       return {
         quality: 'poor',
         confidence: 0,
@@ -303,7 +339,7 @@ export class VoiceRecognitionService {
         code: 'pt-PT',
         name: 'Portuguese (Portugal)',
         nativeName: 'Português (Portugal)',
-        confidence: 0.90,
+        confidence: 0.9,
       },
       {
         code: 'en-US',
@@ -315,7 +351,7 @@ export class VoiceRecognitionService {
         code: 'es-ES',
         name: 'Spanish',
         nativeName: 'Español',
-        confidence: 0.80,
+        confidence: 0.8,
       },
     ];
   }
@@ -332,17 +368,18 @@ export class VoiceRecognitionService {
     try {
       // Test with a small mock buffer
       const testBuffer = Buffer.from('test audio data');
-      const testResult = await this.transcribeAudio(testBuffer, { language: 'pt-BR' });
-      
+      const testResult = await this.transcribeAudio(testBuffer, {
+        language: 'pt-BR',
+      });
+
       return {
         status: 'healthy',
         supportedLanguages: this.getSupportedLanguages().length,
         urgencyKeywords: this.urgencyKeywords.length,
       };
-
     } catch (error) {
       logger.error('Voice service health check failed:', error);
-      
+
       return {
         status: 'unhealthy',
         supportedLanguages: 0,
@@ -357,14 +394,14 @@ export class VoiceRecognitionService {
    */
   updateUrgencyKeywords(newKeywords: string[]): void {
     const currentCount = this.urgencyKeywords.length;
-    
+
     // Add new keywords that aren't already present
-    const uniqueKeywords = newKeywords.filter(keyword => 
-      !this.urgencyKeywords.includes(keyword.toLowerCase())
+    const uniqueKeywords = newKeywords.filter(
+      keyword => !this.urgencyKeywords.includes(keyword.toLowerCase()),
     );
-    
+
     this.urgencyKeywords.push(...uniqueKeywords.map(k => k.toLowerCase()));
-    
+
     logger.info('Urgency keywords updated', {
       previousCount: currentCount,
       newKeywords: uniqueKeywords.length,

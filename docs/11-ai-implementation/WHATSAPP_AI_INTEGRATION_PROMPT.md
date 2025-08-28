@@ -16,11 +16,21 @@ O EO Clínica é um sistema SaaS de gestão médica completo (versão 1.4.0) com
 Criar um assistente de IA educado e inteligente que:
 
 ### Funcionalidades Core
+
+#### 📅 **Gestão Inteligente de Agenda**
+1. **Acesso à Agenda**: Integração direta com sistema para consulta em tempo real
+2. **Verificação de Disponibilidade**: Análise automática de horários disponíveis
+3. **Agendamento Automático**: Criação de consultas diretamente no sistema
+4. **Lembretes Inteligentes**: Notificações automáticas com confirmação de status
+5. **Informações Completas**: Profissionais disponíveis, valores, horários, especialidades
+
+#### 🤖 **Capacidades da IA**
 1. **Atendimento WhatsApp**: Integração N8N + WAHA + Gemini Pro
-2. **Agendamentos Automáticos**: Análise de sintomas → especialidade → disponibilidade
-3. **Reconhecimento de Voz**: Transcrição e processamento de áudios
-4. **Lembretes Inteligentes**: Notificações automáticas de consultas
+2. **Agendamentos Automáticos**: Análise de sintomas → especialidade → disponibilidade → agendamento
+3. **Reconhecimento de Voz**: Transcrição e processamento de áudios em português
+4. **Lembretes Inteligentes**: Sistema de confirmação e mudança de status
 5. **Continuidade Conversacional**: Compreensão de mensagens fragmentadas
+6. **Gestão de Cancelamentos**: Política restrita apenas para atendentes humanos
 
 ### Características da IA
 
@@ -90,6 +100,42 @@ Consulte a pasta `/docs` para documentação específica:
 2. **Integration Tests**: Fluxos end-to-end
 3. **User Acceptance**: Testes com cenários reais
 4. **Performance Optimization**: Latência e throughput
+
+---
+
+## 📋 Funcionalidades Críticas de Agendamento
+
+### 🔍 **Capacidades de Consulta**
+- **Agenda em Tempo Real**: Acesso direto ao banco de dados para verificar disponibilidade
+- **Profissionais Disponíveis**: Lista com especialidades, horários e disponibilidade
+- **Valores e Preços**: Consulta automática de valores de consultas e exames
+- **Especialidades**: Mapeamento inteligente de sintomas para especialidades médicas
+
+### ⚙️ **Funcionalidades de Agendamento**
+- **Criação Automática**: Inserção direta de agendamentos no sistema
+- **Validação Inteligente**: Verificação de conflitos de horário e disponibilidade
+- **Confirmação Imediata**: Feedback instantâneo ao paciente com dados da consulta
+- **Integração Completa**: Sincronização com agenda dos profissionais
+
+### 📬 **Sistema de Lembretes**
+- **Lembretes Automáticos**: 24h, 2h e 30min antes da consulta
+- **Confirmação de Status**: Mudança automática para "confirmado" após resposta do paciente
+- **Personalizados**: Mensagens adaptadas ao perfil do paciente (idade, preferências)
+- **Reagendamento**: Facilidade para reagendar através do próprio WhatsApp
+
+### 🚫 **Políticas de Segurança**
+- **Cancelamentos**: APENAS atendentes humanos podem cancelar consultas
+- **Dados Sensíveis**: IA não divulga informações de outros pacientes
+- **Privacidade**: Proteção rigorosa de dados pessoais e financeiros
+- **Escalação**: Transferência automática para humano em situações complexas
+
+### 📊 **Informações Disponíveis**
+- **Horários**: Consulta de agenda em tempo real
+- **Profissionais**: Lista com especialidades e disponibilidade
+- **Valores**: Preços de consultas e exames atualizados
+- **Histórico**: Consultas anteriores do paciente (apenas próprias)
+
+---
 
 ## Diretrizes de Implementação
 

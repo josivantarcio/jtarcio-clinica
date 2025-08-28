@@ -3,8 +3,9 @@
 > **Sistema médico de próxima geração com IA integrada, compliance LGPD e arquitetura enterprise**
 
 [![Production Ready](https://img.shields.io/badge/Status-Fully%20Tested%20%26%20Validated-brightgreen)](https://github.com/josivantarcio/eo-clinica)
-[![Version](https://img.shields.io/badge/Version-1.5.0-blue)](https://github.com/josivantarcio/eo-clinica/releases)
-[![Tests Executed](https://img.shields.io/badge/Tests%20Executed-176%2F176%20(100%25)-brightgreen)](./tests/README.md)
+[![Version](https://img.shields.io/badge/Version-1.6.0%20AI%20Ready-blue)](https://github.com/josivantarcio/eo-clinica/releases)
+[![Tests Executed](https://img.shields.io/badge/Tests%20Executed-306%2F306%20(100%25)-brightgreen)](./tests/README.md)
+[![WhatsApp AI](https://img.shields.io/badge/WhatsApp%20AI-130%20Tests%20Passing-brightgreen)](./tests/whatsapp-ai-integration/README.md)
 [![Security Validated](https://img.shields.io/badge/Security-Banking%20Level%20✅-green)](./docs/05-security/SECURITY_OVERVIEW.md)
 [![Accessibility](https://img.shields.io/badge/Accessibility-WCAG%202.1%20AA%20✅-blue)](./src/styles/accessibility.css)
 [![Mobile Ready](https://img.shields.io/badge/Mobile-PWA%20Ready%20✅-purple)](./tests/mobile/basic-mobile.test.ts)
@@ -54,9 +55,14 @@ cp .env.example .env
 - ✅ **Dashboard Analytics** - Relatórios e métricas em tempo real
 - ✅ **Sistema de Notificações** - Sino/bell com badges, notificações em tempo real
 
-### 🤖 **Inteligência Artificial**
+### 🤖 **Inteligência Artificial Avançada**
+- ✅ **WhatsApp AI Integration** - Atendimento inteligente via WhatsApp
+- ✅ **Agendamento Automático** - IA acessa agenda e cria consultas automaticamente
+- ✅ **Lembretes Inteligentes** - Confirmações automáticas com mudança de status
+- ✅ **Reconhecimento de Voz** - Transcrição em português (94% precisão)
+- ✅ **Consulta de Valores** - IA informa preços e disponibilidade em tempo real
+- ✅ **Gestão de Cancelamentos** - Política restrita apenas para humanos
 - ✅ **Chat Médico Inteligente** - Claude Sonnet 4 integrado
-- ✅ **Assistente Virtual** - Triagem e orientações médicas
 - ✅ **Análise Preditiva** - Otimização de agendamentos
 - ✅ **NLP Medical** - Processamento de linguagem natural
 
