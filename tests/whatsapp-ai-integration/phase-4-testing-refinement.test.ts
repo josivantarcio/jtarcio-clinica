@@ -128,7 +128,7 @@ describe('🧪 Fase 4: Testing & Refinement - WhatsApp AI Integration', () => {
       expect(testResults.overall.passed).toBe(9)
       expect(testResults.overall.success_rate).toBe('100.0%')
       
-      Object.values(testResults.by_component).forEach(component => {
+      Object.values(testResults.by_component).forEach((component: any) => {
         expect(component.success_rate).toBe('100.0%')
       })
 
@@ -798,9 +798,9 @@ describe('🧪 Fase 4: Testing & Refinement - WhatsApp AI Integration', () => {
           
           // Identifica pontos fortes e áreas para melhoria
           Object.entries(analysis.avg_ratings).forEach(([question, avg]) => {
-            if (parseFloat(avg) >= 4.5) {
+            if (parseFloat(avg as string) >= 4.5) {
               analysis.strengths.push(question)
-            } else if (parseFloat(avg) < 4.0) {
+            } else if (parseFloat(avg as string) < 4.0) {
               analysis.areas_for_improvement.push(question)
             }
           })
@@ -818,7 +818,7 @@ describe('🧪 Fase 4: Testing & Refinement - WhatsApp AI Integration', () => {
       
       // Verifica se educação/polidez é um ponto forte
       expect(satisfactionAnalysis.strengths).toContain('politeness')
-      expect(parseFloat(satisfactionAnalysis.avg_ratings.politeness)).toBe(5.0)
+      expect(parseFloat((satisfactionAnalysis.avg_ratings as any).politeness)).toBe(5.0)
       
       // Verifica se há pelo menos 2 pontos fortes
       expect(satisfactionAnalysis.strengths.length).toBeGreaterThan(1)
@@ -857,7 +857,7 @@ describe('🧪 Fase 4: Testing & Refinement - WhatsApp AI Integration', () => {
             p50_ms: totalTimes.sort((a, b) => a - b)[Math.floor(totalTimes.length * 0.5)],
             p90_ms: totalTimes.sort((a, b) => a - b)[Math.floor(totalTimes.length * 0.9)],
             p99_ms: totalTimes.sort((a, b) => a - b)[Math.floor(totalTimes.length * 0.99)],
-            bottlenecks: this.identifyBottlenecks(measurements)
+            bottlenecks: this.identifyBottlenecks ? this.identifyBottlenecks(measurements) : []
           }
         },
         
