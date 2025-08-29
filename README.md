@@ -405,13 +405,36 @@ npm run start &
 cd frontend && PORT=3001 npm run dev &
 ```
 
-### Opção 3: Com Docker
+### Opção 3: Com Docker (Recomendado para Produção)
+
+#### **🐳 Deploy Completo com WhatsApp AI:**
 ```bash
-npm run docker:up
+# Produção completa (inclui WAHA, N8N, ChromaDB, ClickHouse)
+./scripts/start-production.sh
+
+# Ou alternativa com docker-compose
+docker-compose up --build -d
+```
+
+#### **🛠️ Desenvolvimento:**
+```bash
+# Ambiente de desenvolvimento
+docker-compose -f docker-compose.dev.yml up -d
+
+# Database setup
 npm run db:generate
 npm run db:migrate
 npm run db:seed
 ```
+
+#### **📊 Status das Imagens Docker:**
+- ✅ **9 imagens sincronizadas** (~8.6GB total)
+- ✅ **WAHA WhatsApp API** (3.04GB) - Integração WhatsApp
+- ✅ **N8N Workflows** (1.14GB) - Automação
+- ✅ **ChromaDB + ClickHouse** (2.43GB) - IA Vectorial
+- ✅ **PostgreSQL, Redis, Nginx** - Infraestrutura
+
+📋 **[Ver Status Completo das Imagens →](./DOCKER_IMAGES_STATUS.md)**
 
 ## Documentação
 

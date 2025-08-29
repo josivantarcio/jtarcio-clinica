@@ -420,9 +420,9 @@ start_docker_services() {
     while [ $retry -le $max_retries ]; do
         log_step "Tentativa $retry/$max_retries de inicialização dos containers..."
         
-        # Start only infrastructure services (postgres, redis, chromadb, n8n, pgadmin)
-        if COMPOSE_HTTP_TIMEOUT=120 docker-compose --env-file .env.production up -d postgres redis chromadb n8n pgadmin; then
-            log_success "Containers de infraestrutura iniciados"
+        # Start all infrastructure services including WhatsApp AI Integration
+        if COMPOSE_HTTP_TIMEOUT=120 docker-compose --env-file .env.production up -d postgres redis chromadb clickhouse n8n waha nginx pgadmin; then
+            log_success "Containers de infraestrutura iniciados (incluindo WhatsApp AI - WAHA)"
             return 0
         else
             log_warning "Falha na tentativa $retry/$max_retries"
