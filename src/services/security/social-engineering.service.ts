@@ -27,7 +27,8 @@ export class SocialEngineeringDetectionService {
         description: 'Impersonation attempt',
       },
       {
-        pattern: /(dados|informação).*(outros?|demais)\s+(pacientes?|clientes?)/i,
+        pattern:
+          /(dados|informação).*(outros?|demais)\s+(pacientes?|clientes?)/i,
         threat_level: 'CRITICAL',
         description: 'Patient data request',
       },
@@ -65,21 +66,30 @@ export class SocialEngineeringDetectionService {
     for (const pattern of this.suspiciousPatterns) {
       if (pattern.pattern.test(message)) {
         detectedPatterns.push(pattern.description);
-        
+
         // Update threat level if higher
-        if (this.getThreatLevelScore(pattern.threat_level) > this.getThreatLevelScore(maxThreatLevel)) {
+        if (
+          this.getThreatLevelScore(pattern.threat_level) >
+          this.getThreatLevelScore(maxThreatLevel)
+        ) {
           maxThreatLevel = pattern.threat_level;
         }
-        
+
         confidence += 0.3;
       }
     }
 
     // Additional heuristics
     const words = message.toLowerCase().split(/\s+/);
-    const urgentWords = ['urgente', 'emergência', 'rápido', 'agora', 'imediato'];
+    const urgentWords = [
+      'urgente',
+      'emergência',
+      'rápido',
+      'agora',
+      'imediato',
+    ];
     const urgentCount = words.filter(word => urgentWords.includes(word)).length;
-    
+
     if (urgentCount >= 2) {
       confidence += 0.2;
       if (maxThreatLevel === 'LOW') maxThreatLevel = 'MEDIUM';
@@ -109,11 +119,16 @@ export class SocialEngineeringDetectionService {
 
   private getThreatLevelScore(level: string): number {
     switch (level) {
-      case 'LOW': return 1;
-      case 'MEDIUM': return 2;
-      case 'HIGH': return 3;
-      case 'CRITICAL': return 4;
-      default: return 0;
+      case 'LOW':
+        return 1;
+      case 'MEDIUM':
+        return 2;
+      case 'HIGH':
+        return 3;
+      case 'CRITICAL':
+        return 4;
+      default:
+        return 0;
     }
   }
 
@@ -134,7 +149,10 @@ export class SocialEngineeringDetectionService {
   /**
    * Health check for the service
    */
-  async healthCheck(): Promise<{ status: 'healthy' | 'unhealthy'; patterns: number }> {
+  async healthCheck(): Promise<{
+    status: 'healthy' | 'unhealthy';
+    patterns: number;
+  }> {
     return {
       status: 'healthy',
       patterns: this.suspiciousPatterns.length,

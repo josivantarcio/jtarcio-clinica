@@ -348,19 +348,24 @@ Services Architecture:
              └───────────┘
 ```
 
-### **📊 Network Configuration**
+### **📊 Network Configuration (Updated)**
 
 - **External Access Ports:**
-  - `8080` → Nginx (AI Services Proxy)
+  - `80/443` → Nginx (Main Reverse Proxy)
+  - `3000` → Backend API (EO Clínica)
+  - `3001` → Frontend (Next.js)
+  - `3002` → WAHA (WhatsApp API)
   - `5678` → N8N (Workflow Management)
-  - `3001` → WAHA (WhatsApp API)
+  - `5433` → PostgreSQL (Database)
+  - `6380` → Redis (Cache)
   - `8000` → ChromaDB (Vector Database)
+  - `8123` → ClickHouse (ChromaDB Backend)
 
 - **Internal Network:**
-  - Docker network: `eo-clinica-ai-network`
-  - Subnet: `172.20.0.0/16`
+  - Docker network: `clinic-network` (consolidated)
+  - Subnet: `172.18.0.0/16`
   - Service discovery: Container names
-  - Health checks: Built-in for all services
+  - Health checks: All services monitored
 
 ### **💾 Data Persistence**
 

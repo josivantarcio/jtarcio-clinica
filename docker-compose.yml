@@ -1,61 +1,190 @@
 version: '3.8'
 
 services:
+  # =================================
+  # CORE APPLICATION SERVICES
+  # =================================
+  
+  # Backend API (Node.js + Fastify)
+  app:
+    build: .
+    image: eo-clinica/backend:latest
+    container_name: eo-clinica-app
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://clinic_user:clinic_password@postgres:5432/eo_clinica_db
+      - REDIS_URL=redis://redis:6379
+      - CLAUDE_API_KEY=${CLAUDE_API_KEY:-}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - JWT_SECRET=${JWT_SECRET:-eo-clinica-jwt-secret-2024}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-eo-clinica-refresh-secret-2024}
+      - BCRYPT_SALT_ROUNDS=${BCRYPT_SALT_ROUNDS:-12}
+      - MASTER_ENCRYPTION_KEY=${MASTER_ENCRYPTION_KEY:-eo-clinica-encryption-key}
+      - WHATSAPP_PHONE_NUMBER_ID=${WHATSAPP_PHONE_NUMBER_ID:-}
+      - WHATSAPP_ACCESS_TOKEN=${WHATSAPP_ACCESS_TOKEN:-}
+      - WAHA_API_KEY=${WAHA_API_KEY:-your-waha-api-key}
+      - N8N_WEBHOOK_URL=http://n8n:5678/webhook
+    ports:
+      - "3000:3000"
+    volumes:
+      - app_data:/app/data
+      - app_logs:/app/logs
+    networks:
+      - clinic-network
+    depends_on:
+      - postgres
+      - redis
+      - chromadb
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
+  # Frontend (Next.js)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: eo-clinica/frontend:latest
+    container_name: eo-clinica-frontend
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://localhost:3000/api/v1
+      - PORT=3000
+    ports:
+      - "3001:3000"
+    networks:
+      - clinic-network
+    depends_on:
+      - app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # =================================
+  # DATABASE SERVICES
+  # =================================
+  
   # PostgreSQL Database
   postgres:
     image: postgres:15-alpine
+    container_name: eo-clinica-postgres
+    restart: unless-stopped
     environment:
       POSTGRES_DB: eo_clinica_db
       POSTGRES_USER: clinic_user
       POSTGRES_PASSWORD: clinic_password
+      PGDATA: /var/lib/postgresql/data/pgdata
     ports:
-      - "5433:5432"
+      - "5433:5432"  # Manter porta 5433 conforme produção
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./docker/postgres/init-prod.sql:/docker-entrypoint-initdb.d/01-init-main.sql
     networks:
       - clinic-network
-    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U clinic_user -d eo_clinica_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  # Redis for caching and sessions
+  # Redis Cache & Sessions
   redis:
     image: redis:7-alpine
+    container_name: eo-clinica-redis
+    restart: unless-stopped
+    command: >
+      redis-server 
+      --appendonly yes
+      --maxmemory 1gb
+      --maxmemory-policy allkeys-lru
+      --save 900 1
+      --save 300 10
+      --save 60 10000
     ports:
-      - "6380:6379"
+      - "6380:6379"  # Manter porta 6380 conforme produção
     volumes:
       - redis_data:/data
     networks:
       - clinic-network
-    restart: unless-stopped
-    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
 
-  # ChromaDB for vector embeddings
+  # =================================
+  # AI & VECTOR DATABASE SERVICES
+  # =================================
+  
+  # ChromaDB Vector Database
   chromadb:
-    image: chromadb/chroma:latest
+    image: chromadb/chroma:0.4.18
+    container_name: eo-clinica-chromadb
+    restart: unless-stopped
     ports:
       - "8000:8000"
     environment:
       - CHROMA_SERVER_HOST=0.0.0.0
       - CHROMA_SERVER_HTTP_PORT=8000
+      - CHROMA_DB_IMPL=clickhouse
+      - CLICKHOUSE_HOST=clickhouse
+      - CLICKHOUSE_PORT=8123
+      - ANONYMIZED_TELEMETRY=false
     volumes:
-      - chroma_data:/chroma/chroma
+      - chromadb_data:/chroma/chroma
     networks:
       - clinic-network
-    restart: unless-stopped
+    depends_on:
+      - clickhouse
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
-  # N8N for workflow automation
-  n8n:
-    image: n8nio/n8n:latest
+  # ClickHouse (ChromaDB Backend)
+  clickhouse:
+    image: clickhouse/clickhouse-server:23.11
+    container_name: eo-clinica-clickhouse
+    restart: unless-stopped
     ports:
-      - "5678:5678"
+      - "8123:8123"
+      - "9000:9000"
+    environment:
+      - CLICKHOUSE_DB=chroma
+      - CLICKHOUSE_USER=chroma
+      - CLICKHOUSE_PASSWORD=chroma_password
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
     networks:
       - clinic-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8123/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # =================================
+  # AUTOMATION & INTEGRATION SERVICES
+  # =================================
+  
+  # N8N Workflow Automation
+  n8n:
+    image: n8nio/n8n:1.24.1
+    container_name: eo-clinica-n8n
+    restart: unless-stopped
     environment:
-      # Basic Configuration
+      # Basic Authentication
       - N8N_BASIC_AUTH_ACTIVE=true
-      - N8N_BASIC_AUTH_USER=admin
-      - N8N_BASIC_AUTH_PASSWORD=admin123
+      - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER:-admin}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD:-admin123}
       - N8N_HOST=0.0.0.0
       - N8N_PORT=5678
       - N8N_PROTOCOL=http
@@ -63,13 +192,14 @@ services:
       # Webhook Configuration
       - WEBHOOK_URL=http://localhost:5678/
       
-      # Database Configuration  
+      # Database Configuration (using main PostgreSQL with separate schema)
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=postgres
       - DB_POSTGRESDB_PORT=5432
       - DB_POSTGRESDB_DATABASE=eo_clinica_db
       - DB_POSTGRESDB_USER=clinic_user
       - DB_POSTGRESDB_PASSWORD=clinic_password
+      - DB_POSTGRESDB_SCHEMA=n8n_schema
       
       # Security
       - N8N_ENCRYPTION_KEY=eo-clinica-n8n-encryption-key-2024
@@ -83,7 +213,7 @@ services:
       - EXECUTIONS_DATA_PRUNE=true
       - EXECUTIONS_DATA_MAX_AGE=90
       
-      # Queue Configuration
+      # Queue Configuration (using main Redis)
       - QUEUE_BULL_REDIS_HOST=redis
       - QUEUE_BULL_REDIS_PORT=6379
       - QUEUE_HEALTH_CHECK_ACTIVE=true
@@ -92,21 +222,16 @@ services:
       - GENERIC_TIMEZONE=America/Sao_Paulo
       - TZ=America/Sao_Paulo
       
-      # Custom Nodes
-      - N8N_CUSTOM_EXTENSIONS=/home/node/.n8n/custom
-      
       # Logging
       - N8N_LOG_LEVEL=info
       - N8N_LOG_OUTPUT=console
-      
-      # Metrics
       - N8N_METRICS=true
       
-      # Clinic-specific configuration
-      - CLINIC_API_BASE_URL=http://localhost:3000
-      - CLINIC_FRONTEND_URL=http://localhost:3001
+      # Integration URLs
+      - CLINIC_API_BASE_URL=http://app:3000
+      - CLINIC_FRONTEND_URL=http://frontend:3000
       
-      # External API Keys (set these in production)
+      # External API Keys (passed from environment)
       - WHATSAPP_PHONE_NUMBER_ID=${WHATSAPP_PHONE_NUMBER_ID:-}
       - WHATSAPP_ACCESS_TOKEN=${WHATSAPP_ACCESS_TOKEN:-}
       - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID:-}
@@ -118,21 +243,104 @@ services:
       - SMTP_PORT=${SMTP_PORT:-587}
       - SMTP_USER=${SMTP_USER:-}
       - SMTP_PASSWORD=${SMTP_PASSWORD:-}
-      - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@eo-clinica.com}
-      - ADMIN_PHONE=${ADMIN_PHONE:-}
-      - CLINIC_PHONE=${CLINIC_PHONE:-}
-      - EMERGENCY_PHONE=${EMERGENCY_PHONE:-}
+      
+    ports:
+      - "5678:5678"
     volumes:
       - n8n_data:/home/node/.n8n
-      - ./src/integrations/n8n/custom-nodes:/home/node/.n8n/custom:ro
-    restart: unless-stopped
+      - ./n8n-workflows:/data/workflows:ro
+      - ./n8n/custom-nodes:/data/custom-nodes:ro
+    networks:
+      - clinic-network
     depends_on:
       - postgres
       - redis
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5678/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
-  # Database administration (optional)
+  # WAHA WhatsApp Business API
+  waha:
+    image: devlikeapro/waha:latest
+    container_name: eo-clinica-waha
+    restart: unless-stopped
+    ports:
+      - "3002:3000"  # Alterar porta para evitar conflito com frontend
+    environment:
+      # API Configuration
+      - WAHA_API_KEY=${WAHA_API_KEY:-your-waha-api-key}
+      - WAHA_API_TOKEN=${WAHA_API_KEY:-your-waha-api-key}
+      
+      # WhatsApp Session Configuration
+      - WAHA_SESSION_DEFAULT=${WAHA_SESSION_NAME:-eo-clinica-session}
+      - WAHA_AUTO_START_SESSIONS=true
+      - WAHA_PRINT_QR=true
+      
+      # Webhook Configuration
+      - WEBHOOK_URL=http://app:3000/api/v1/webhooks/whatsapp
+      - WEBHOOK_EVENTS=message,session.status,call
+      
+      # Voice & Media Configuration
+      - WAHA_VOICE_TRANSCRIPTION=true
+      - WAHA_VOICE_LANGUAGE=pt-BR
+      - WAHA_MEDIA_DOWNLOAD=true
+      
+      # Storage Configuration
+      - WAHA_SESSION_STORE_TYPE=memory
+      - WAHA_FILES_FOLDER=/app/files
+      - WAHA_LOG_LEVEL=info
+      
+    volumes:
+      - waha_sessions:/app/sessions
+      - waha_files:/app/files
+    networks:
+      - clinic-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # =================================
+  # INFRASTRUCTURE SERVICES
+  # =================================
+  
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: eo-clinica-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./nginx/logs:/var/log/nginx
+    networks:
+      - clinic-network
+    depends_on:
+      - app
+      - frontend
+      - n8n
+      - waha
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # =================================
+  # DEVELOPMENT & ADMIN TOOLS
+  # =================================
+  
+  # PgAdmin (Development only)
   pgadmin:
     image: dpage/pgadmin4:latest
+    container_name: eo-clinica-pgadmin
+    restart: unless-stopped
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@clinic.com
       PGADMIN_DEFAULT_PASSWORD: admin123
@@ -142,17 +350,63 @@ services:
       - pgadmin_data:/var/lib/pgadmin
     networks:
       - clinic-network
-    restart: unless-stopped
     depends_on:
       - postgres
+    profiles: ["development"]  # Só ativo em desenvolvimento
 
+# =================================
+# VOLUMES FOR DATA PERSISTENCE
+# =================================
+volumes:
+  # Application Data
+  app_data:
+    driver: local
+    name: eo-clinica-app-data
+  app_logs:
+    driver: local
+    name: eo-clinica-app-logs
+  
+  # Database Data
+  postgres_data:
+    driver: local
+    name: eo-clinica-postgres-data
+  redis_data:
+    driver: local
+    name: eo-clinica-redis-data
+  
+  # AI & Vector Data
+  chromadb_data:
+    driver: local
+    name: eo-clinica-chromadb-data
+  clickhouse_data:
+    driver: local
+    name: eo-clinica-clickhouse-data
+  
+  # Integration Data
+  n8n_data:
+    driver: local
+    name: eo-clinica-n8n-data
+  waha_sessions:
+    driver: local
+    name: eo-clinica-waha-sessions
+  waha_files:
+    driver: local
+    name: eo-clinica-waha-files
+  
+  # Development Data
+  pgadmin_data:
+    driver: local
+    name: eo-clinica-pgadmin-data
+
+# =================================
+# NETWORK CONFIGURATION
+# =================================
 networks:
   clinic-network:
     driver: bridge
-
-volumes:
-  postgres_data:
-  redis_data:
-  chroma_data:
-  n8n_data:
-  pgadmin_data:
+    name: eo-clinica-network
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.18.0.0/16
+          gateway: 172.18.0.1

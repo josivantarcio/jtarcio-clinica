@@ -1,0 +1,416 @@
+version: '3.8'
+
+# =================================
+# PRODUCTION ENVIRONMENT
+# Optimized for performance, security, and reliability
+# =================================
+
+services:
+  # =================================
+  # CORE APPLICATION SERVICES
+  # =================================
+  
+  # Backend API (Production Optimized)
+  app:
+    build:
+      context: .
+      target: production
+    image: eo-clinica/backend:latest
+    container_name: eo-clinica-app-prod
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://clinic_user:${DB_PASSWORD}@postgres:5432/eo_clinica_db
+      - REDIS_URL=redis://redis:6379
+      - CLAUDE_API_KEY=${CLAUDE_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+      - BCRYPT_SALT_ROUNDS=${BCRYPT_SALT_ROUNDS:-12}
+      - MASTER_ENCRYPTION_KEY=${MASTER_ENCRYPTION_KEY}
+      - WHATSAPP_PHONE_NUMBER_ID=${WHATSAPP_PHONE_NUMBER_ID}
+      - WHATSAPP_ACCESS_TOKEN=${WHATSAPP_ACCESS_TOKEN}
+      - WAHA_API_KEY=${WAHA_API_KEY}
+      - N8N_WEBHOOK_URL=http://n8n:5678/webhook
+    ports:
+      - "3000:3000"
+    volumes:
+      - app_data_prod:/app/data
+      - app_logs_prod:/app/logs
+    networks:
+      - clinic-network-prod
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      chromadb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+
+  # Frontend (Production Optimized)
+  frontend:
+    build:
+      context: ./frontend
+      target: production
+    image: eo-clinica/frontend:latest
+    container_name: eo-clinica-frontend-prod
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=https://${DOMAIN}/api/v1
+      - PORT=3000
+    ports:
+      - "3001:3000"
+    networks:
+      - clinic-network-prod
+    depends_on:
+      app:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  # =================================
+  # DATABASE SERVICES
+  # =================================
+  
+  # PostgreSQL (Production Tuned)
+  postgres:
+    image: postgres:15-alpine
+    container_name: eo-clinica-postgres-prod
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: eo_clinica_db
+      POSTGRES_USER: clinic_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data_prod:/var/lib/postgresql/data
+      - ./docker/postgres/init-prod.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./docker/postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+    networks:
+      - clinic-network-prod
+    command: >
+      postgres 
+      -c max_connections=100
+      -c shared_buffers=256MB
+      -c effective_cache_size=1GB
+      -c maintenance_work_mem=64MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c work_mem=4MB
+      -c min_wal_size=1GB
+      -c max_wal_size=4GB
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U clinic_user -d eo_clinica_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
+
+  # Redis (Production Tuned)
+  redis:
+    image: redis:7-alpine
+    container_name: eo-clinica-redis-prod
+    restart: unless-stopped
+    command: >
+      redis-server 
+      --requirepass ${REDIS_PASSWORD}
+      --appendonly yes
+      --maxmemory 2gb
+      --maxmemory-policy allkeys-lru
+      --save 900 1
+      --save 300 10
+      --save 60 10000
+      --tcp-keepalive 300
+      --timeout 0
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data_prod:/data
+      - ./docker/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    networks:
+      - clinic-network-prod
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
+
+  # =================================
+  # AI & VECTOR DATABASE SERVICES
+  # =================================
+  
+  # ChromaDB (Production Scale)
+  chromadb:
+    image: chromadb/chroma:0.4.18
+    container_name: eo-clinica-chromadb-prod
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - CHROMA_SERVER_HOST=0.0.0.0
+      - CHROMA_SERVER_HTTP_PORT=8000
+      - CHROMA_DB_IMPL=clickhouse
+      - CLICKHOUSE_HOST=clickhouse
+      - CLICKHOUSE_PORT=8123
+      - ANONYMIZED_TELEMETRY=false
+    volumes:
+      - chromadb_data_prod:/chroma/chroma
+    networks:
+      - clinic-network-prod
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+        reservations:
+          memory: 2G
+
+  # ClickHouse (Production Backend)
+  clickhouse:
+    image: clickhouse/clickhouse-server:23.11
+    container_name: eo-clinica-clickhouse-prod
+    restart: unless-stopped
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    environment:
+      - CLICKHOUSE_DB=chroma
+      - CLICKHOUSE_USER=chroma
+      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD}
+    volumes:
+      - clickhouse_data_prod:/var/lib/clickhouse
+      - ./docker/clickhouse/config.xml:/etc/clickhouse-server/config.xml:ro
+    networks:
+      - clinic-network-prod
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8123/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+        reservations:
+          memory: 2G
+
+  # =================================
+  # AUTOMATION & INTEGRATION SERVICES
+  # =================================
+  
+  # N8N (Production Configuration)
+  n8n:
+    image: n8nio/n8n:1.24.1
+    container_name: eo-clinica-n8n-prod
+    restart: unless-stopped
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=${N8N_USER}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_PASSWORD}
+      - N8N_HOST=0.0.0.0
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=https://${DOMAIN}/webhook
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=eo_clinica_db
+      - DB_POSTGRESDB_USER=clinic_user
+      - DB_POSTGRESDB_PASSWORD=${DB_PASSWORD}
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+      - N8N_USER_MANAGEMENT_JWT_SECRET=${JWT_SECRET}
+      - EXECUTIONS_MODE=queue
+      - EXECUTIONS_DATA_PRUNE=true
+      - EXECUTIONS_DATA_MAX_AGE=168  # 1 week
+      - QUEUE_BULL_REDIS_HOST=redis
+      - QUEUE_BULL_REDIS_PORT=6379
+      - QUEUE_HEALTH_CHECK_ACTIVE=true
+      - N8N_LOG_LEVEL=warn
+      - N8N_METRICS=true
+      - GENERIC_TIMEZONE=America/Sao_Paulo
+    ports:
+      - "5678:5678"
+    volumes:
+      - n8n_data_prod:/home/node/.n8n
+      - ./n8n-workflows:/data/workflows:ro
+    networks:
+      - clinic-network-prod
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5678/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
+
+  # WAHA (Production WhatsApp API)
+  waha:
+    image: devlikeapro/waha:latest
+    container_name: eo-clinica-waha-prod
+    restart: unless-stopped
+    ports:
+      - "3002:3000"
+    environment:
+      - WAHA_API_KEY=${WAHA_API_KEY}
+      - WAHA_API_TOKEN=${WAHA_API_KEY}
+      - WAHA_SESSION_DEFAULT=eo-clinica-prod
+      - WAHA_AUTO_START_SESSIONS=true
+      - WEBHOOK_URL=https://${DOMAIN}/api/v1/webhooks/whatsapp
+      - WEBHOOK_EVENTS=message,session.status,call
+      - WAHA_VOICE_TRANSCRIPTION=true
+      - WAHA_VOICE_LANGUAGE=pt-BR
+      - WAHA_MEDIA_DOWNLOAD=true
+      - WAHA_SESSION_STORE_TYPE=memory
+      - WAHA_FILES_FOLDER=/app/files
+      - WAHA_LOG_LEVEL=warn
+    volumes:
+      - waha_sessions_prod:/app/sessions
+      - waha_files_prod:/app/files
+    networks:
+      - clinic-network-prod
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+
+  # =================================
+  # INFRASTRUCTURE SERVICES
+  # =================================
+  
+  # Nginx (Production Load Balancer)
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: eo-clinica-nginx-prod
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx-prod.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./nginx/logs:/var/log/nginx
+    networks:
+      - clinic-network-prod
+    depends_on:
+      app:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+# =================================
+# PRODUCTION VOLUMES
+# =================================
+volumes:
+  # Application Data
+  app_data_prod:
+    driver: local
+    name: eo-clinica-app-data-prod
+  app_logs_prod:
+    driver: local
+    name: eo-clinica-app-logs-prod
+  
+  # Database Data
+  postgres_data_prod:
+    driver: local
+    name: eo-clinica-postgres-data-prod
+  redis_data_prod:
+    driver: local
+    name: eo-clinica-redis-data-prod
+  
+  # AI & Vector Data
+  chromadb_data_prod:
+    driver: local
+    name: eo-clinica-chromadb-data-prod
+  clickhouse_data_prod:
+    driver: local
+    name: eo-clinica-clickhouse-data-prod
+  
+  # Integration Data
+  n8n_data_prod:
+    driver: local
+    name: eo-clinica-n8n-data-prod
+  waha_sessions_prod:
+    driver: local
+    name: eo-clinica-waha-sessions-prod
+  waha_files_prod:
+    driver: local
+    name: eo-clinica-waha-files-prod
+
+# =================================
+# PRODUCTION NETWORK
+# =================================
+networks:
+  clinic-network-prod:
+    driver: bridge
+    name: eo-clinica-network-prod
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.19.0.0/16
+          gateway: 172.19.0.1

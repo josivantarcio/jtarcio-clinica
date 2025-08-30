@@ -48,9 +48,30 @@ Cache/Redis Server:
 
 ## 🐳 DOCKER DEPLOYMENT
 
-### Production Docker Compose
+### 📋 Available Docker Configurations
 
-Create `/opt/eo-clinica/docker-compose.prod.yml`:
+EO Clínica now provides **3 optimized Docker configurations** for different environments:
+
+1. **`docker-compose.yml`** - **Unified production-ready configuration** (recommended)
+2. **`docker-compose.dev.yml`** - Development environment with hot reload
+3. **`docker-compose.prod.yml`** - Enterprise production with advanced security
+
+### ⚡ Quick Start (Recommended)
+
+```bash
+# Production deployment (unified configuration)
+docker-compose up -d
+
+# Development with hot reload  
+docker-compose -f docker-compose.dev.yml up -d
+
+# Enterprise production (advanced features)
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+### 🏗️ Unified Docker Compose (Main Configuration)
+
+The main `docker-compose.yml` consolidates all services with production-ready settings:
 
 ```yaml
 version: '3.8'

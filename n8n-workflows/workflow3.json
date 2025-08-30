@@ -1,0 +1,226 @@
+{
+  "name": "WhatsApp AI - Emergency Escalation",
+  "active": true,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "emergency-detected",
+        "responseMode": "onReceived"
+      },
+      "name": "Webhook Emergency",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "urgency_level",
+              "value": "={{ $json.urgency_level || 'HIGH' }}"
+            },
+            {
+              "name": "detected_keywords",
+              "value": "={{ $json.keywords ? $json.keywords.join(', ') : 'emergency detected' }}"
+            },
+            {
+              "name": "escalation_time",
+              "value": "={{ new Date().toISOString() }}"
+            }
+          ]
+        }
+      },
+      "name": "Process Emergency Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO emergency_logs (phone_number, message_text, urgency_level, detected_keywords, escalated_at, status) VALUES ('{{ $json.phone_number }}', '{{ $json.message }}', '{{ $json.urgency_level }}', '{{ $json.detected_keywords }}', NOW(), 'ESCALATED') RETURNING id;"
+      },
+      "name": "Log Emergency",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [
+        680,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "eo_clinica_postgres",
+          "name": "EO Clínica PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT u.name, u.phone, u.email FROM users u JOIN doctors d ON u.id = d.user_id WHERE u.active = true AND u.role = 'DOCTOR' AND d.on_call = true ORDER BY d.priority DESC LIMIT 3;"
+      },
+      "name": "Find On-Call Doctors",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [
+        900,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "eo_clinica_postgres",
+          "name": "EO Clínica PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "http://host.docker.internal:3000/api/v1/notifications/emergency",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $node['Get Auth Token'].json['token'] }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "emergency_type",
+              "value": "whatsapp_escalation"
+            },
+            {
+              "name": "patient_phone",
+              "value": "{{ $json.phone_number }}"
+            },
+            {
+              "name": "urgency_level",
+              "value": "{{ $json.urgency_level }}"
+            },
+            {
+              "name": "message",
+              "value": "🚨 EMERGÊNCIA VIA WHATSAPP\\n\\nPaciente: {{ $json.phone_number }}\\nNível: {{ $json.urgency_level }}\\nPalavras-chave: {{ $json.detected_keywords }}\\n\\nMensagem original: {{ $json.message }}"
+            },
+            {
+              "name": "doctors",
+              "value": "={{ $json }}"
+            }
+          ]
+        }
+      },
+      "name": "Notify Medical Team",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://host.docker.internal:3000/api/v1/webhooks/whatsapp",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "to",
+              "value": "{{ $json.phone_number }}"
+            },
+            {
+              "name": "message",
+              "value": "🚨 EMERGÊNCIA DETECTADA 🚨\\n\\nSua mensagem foi identificada como urgente e nossa equipe médica foi notificada imediatamente.\\n\\n🏥 Um profissional entrará em contato em poucos minutos.\\n\\n📞 Para emergências graves, ligue também para 192 (SAMU).\\n\\nEO Clínica - Cuidamos de você! ❤️"
+            }
+          ]
+        }
+      },
+      "name": "Send Emergency Response",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        1340,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Emergency": {
+      "main": [
+        [
+          {
+            "node": "Process Emergency Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Emergency Data": {
+      "main": [
+        [
+          {
+            "node": "Log Emergency",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Emergency": {
+      "main": [
+        [
+          {
+            "node": "Find On-Call Doctors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find On-Call Doctors": {
+      "main": [
+        [
+          {
+            "node": "Notify Medical Team",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Medical Team": {
+      "main": [
+        [
+          {
+            "node": "Send Emergency Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

@@ -1,0 +1,184 @@
+{
+  "name": "WhatsApp AI - Message Processor",
+  "active": true,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp-incoming",
+        "responseMode": "onReceived",
+        "responseCode": 200,
+        "responseData": "allEntries"
+      },
+      "name": "Webhook WhatsApp",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "phone_number",
+              "value": "={{ $json.entry && $json.entry[0] && $json.entry[0].changes && $json.entry[0].changes[0] && $json.entry[0].changes[0].value && $json.entry[0].changes[0].value.contacts && $json.entry[0].changes[0].value.contacts[0] ? $json.entry[0].changes[0].value.contacts[0].wa_id : 'unknown' }}"
+            },
+            {
+              "name": "message_text",
+              "value": "={{ $json.entry && $json.entry[0] && $json.entry[0].changes && $json.entry[0].changes[0] && $json.entry[0].changes[0].value && $json.entry[0].changes[0].value.messages && $json.entry[0].changes[0].value.messages[0] && $json.entry[0].changes[0].value.messages[0].text ? $json.entry[0].changes[0].value.messages[0].text.body : '' }}"
+            },
+            {
+              "name": "message_type",
+              "value": "={{ $json.entry && $json.entry[0] && $json.entry[0].changes && $json.entry[0].changes[0] && $json.entry[0].changes[0].value && $json.entry[0].changes[0].value.messages && $json.entry[0].changes[0].value.messages[0] ? $json.entry[0].changes[0].value.messages[0].type : 'unknown' }}"
+            },
+            {
+              "name": "timestamp",
+              "value": "={{ new Date().toISOString() }}"
+            }
+          ]
+        }
+      },
+      "name": "Extract Message Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.message_text }}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        }
+      },
+      "name": "Check Valid Message",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://host.docker.internal:3000/api/v1/ai/process-message",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $node['Get Auth Token'].json['token'] }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "phone_number",
+              "value": "={{ $json.phone_number }}"
+            },
+            {
+              "name": "message",
+              "value": "={{ $json.message_text }}"
+            },
+            {
+              "name": "message_type",
+              "value": "={{ $json.message_type }}"
+            },
+            {
+              "name": "source",
+              "value": "whatsapp_n8n"
+            }
+          ]
+        }
+      },
+      "name": "Process with EO Clínica AI",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        900,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO whatsapp_messages (phone_number, message_text, message_type, direction, processed_at, ai_response) VALUES ('{{ $json.phone_number }}', '{{ $json.message_text }}', '{{ $json.message_type }}', 'incoming', NOW(), '{{ $node['Process with EO Clínica AI'].json['response'] }}') RETURNING id;"
+      },
+      "name": "Log Message to DB",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "eo_clinica_postgres",
+          "name": "EO Clínica PostgreSQL"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "Extract Message Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Message Data": {
+      "main": [
+        [
+          {
+            "node": "Check Valid Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Valid Message": {
+      "main": [
+        [
+          {
+            "node": "Process with EO Clínica AI",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Process with EO Clínica AI": {
+      "main": [
+        [
+          {
+            "node": "Log Message to DB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

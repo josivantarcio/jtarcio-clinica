@@ -1,0 +1,187 @@
+{
+  "name": "WhatsApp AI - Appointment Scheduler",
+  "active": true,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "schedule-appointment",
+        "responseMode": "onReceived"
+      },
+      "name": "Webhook Schedule Request",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT d.id, u.name, s.name as specialty, s.price, s.duration FROM doctors d JOIN users u ON d.user_id = u.id JOIN specialties s ON d.specialty_id = s.id WHERE u.active = true AND s.name ILIKE '%{{ $json.specialty }}%' ORDER BY u.name LIMIT 5;"
+      },
+      "name": "Find Available Doctors",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [
+        460,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "eo_clinica_postgres",
+          "name": "EO Clínica PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT appointment_date FROM appointments WHERE doctor_id = {{ $json.doctor_id }} AND appointment_date::date = '{{ $json.requested_date }}'::date AND status IN ('SCHEDULED', 'CONFIRMED') ORDER BY appointment_date;"
+      },
+      "name": "Check Doctor Schedule",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [
+        680,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "eo_clinica_postgres",
+          "name": "EO Clínica PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO users (name, phone, email, role, created_at) VALUES ('{{ $json.patient_name }}', '{{ $json.phone_number }}', '{{ $json.email || $json.phone_number + '@whatsapp.temp' }}', 'PATIENT', NOW()) ON CONFLICT (phone) DO UPDATE SET name = EXCLUDED.name, email = EXCLUDED.email RETURNING id;"
+      },
+      "name": "Find or Create Patient",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [
+        900,
+        200
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "eo_clinica_postgres",
+          "name": "EO Clínica PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO appointments (patient_id, doctor_id, appointment_date, status, notes, created_at) VALUES ({{ $json.patient_id }}, {{ $json.doctor_id }}, '{{ $json.appointment_datetime }}', 'SCHEDULED', 'Agendado via WhatsApp AI - N8N', NOW()) RETURNING id, appointment_date;"
+      },
+      "name": "Create Appointment",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "eo_clinica_postgres",
+          "name": "EO Clínica PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "http://host.docker.internal:3000/api/v1/webhooks/whatsapp",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "to",
+              "value": "{{ $json.phone_number }}"
+            },
+            {
+              "name": "message",
+              "value": "✅ Consulta agendada com sucesso!\\n\\n📅 Data: {{ $json.appointment_date }}\\n👨‍⚕️ Médico: {{ $json.doctor_name }}\\n🏥 Especialidade: {{ $json.specialty }}\\n\\n📋 Detalhes enviados por SMS/email.\\n\\nObrigado por escolher a EO Clínica! 🏥"
+            }
+          ]
+        }
+      },
+      "name": "Send Confirmation WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        1340,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Schedule Request": {
+      "main": [
+        [
+          {
+            "node": "Find Available Doctors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Available Doctors": {
+      "main": [
+        [
+          {
+            "node": "Check Doctor Schedule",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Doctor Schedule": {
+      "main": [
+        [
+          {
+            "node": "Find or Create Patient",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find or Create Patient": {
+      "main": [
+        [
+          {
+            "node": "Create Appointment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Appointment": {
+      "main": [
+        [
+          {
+            "node": "Send Confirmation WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

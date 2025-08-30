@@ -1,0 +1,160 @@
+<?xml version="1.0"?>
+<yandex>
+    <!-- Configuration for ChromaDB backend -->
+    
+    <!-- Logging -->
+    <logger>
+        <level>information</level>
+        <log>/var/log/clickhouse-server/clickhouse-server.log</log>
+        <errorlog>/var/log/clickhouse-server/clickhouse-server.err.log</errorlog>
+        <size>1000M</size>
+        <count>10</count>
+    </logger>
+
+    <!-- Network -->
+    <http_port>8123</http_port>
+    <tcp_port>9000</tcp_port>
+    <listen_host>0.0.0.0</listen_host>
+
+    <!-- Storage -->
+    <path>/var/lib/clickhouse/</path>
+    <tmp_path>/var/lib/clickhouse/tmp/</tmp_path>
+    <user_files_path>/var/lib/clickhouse/user_files/</user_files_path>
+    <format_schema_path>/var/lib/clickhouse/format_schemas/</format_schema_path>
+
+    <!-- Users and Security -->
+    <users_config>users.xml</users_config>
+
+    <!-- Default Profile -->
+    <default_profile>default</default_profile>
+    <default_database>default</default_database>
+
+    <!-- Performance Settings -->
+    <max_server_memory_usage_to_ram_ratio>0.8</max_server_memory_usage_to_ram_ratio>
+    <max_concurrent_queries>100</max_concurrent_queries>
+    <max_connections>4096</max_connections>
+    <keep_alive_timeout>3</keep_alive_timeout>
+
+    <!-- Query Processing -->
+    <max_query_size>268435456</max_query_size>
+    <max_ask_size>134217728</max_ask_size>
+    
+    <!-- Background Processing -->
+    <background_pool_size>16</background_pool_size>
+    <background_schedule_pool_size>16</background_schedule_pool_size>
+    <background_message_broker_schedule_pool_size>16</background_message_broker_schedule_pool_size>
+
+    <!-- Merge Tree Settings -->
+    <merge_tree>
+        <max_suspicious_broken_parts>10</max_suspicious_broken_parts>
+    </merge_tree>
+
+    <!-- Timezone -->
+    <timezone>America/Sao_Paulo</timezone>
+
+    <!-- Dictionaries -->
+    <dictionaries_config>*_dictionary.xml</dictionaries_config>
+
+    <!-- Query Log -->
+    <query_log>
+        <database>system</database>
+        <table>query_log</table>
+        <partition_by>toYYYYMM(event_date)</partition_by>
+        <flush_interval_milliseconds>7500</flush_interval_milliseconds>
+    </query_log>
+
+    <!-- Query Thread Log -->
+    <query_thread_log>
+        <database>system</database>
+        <table>query_thread_log</table>
+        <partition_by>toYYYYMM(event_date)</partition_by>
+        <flush_interval_milliseconds>7500</flush_interval_milliseconds>
+    </query_thread_log>
+
+    <!-- Part Log -->
+    <part_log>
+        <database>system</database>
+        <table>part_log</table>
+        <flush_interval_milliseconds>7500</flush_interval_milliseconds>
+    </part_log>
+
+    <!-- Crash Log -->
+    <crash_log>
+        <database>system</database>
+        <table>crash_log</table>
+        <partition_by></partition_by>
+        <flush_interval_milliseconds>1000</flush_interval_milliseconds>
+    </crash_log>
+
+    <!-- Builtin Configurations -->
+    <builtin_dictionaries_reload_interval>3600</builtin_dictionaries_reload_interval>
+    <max_table_size_to_drop>0</max_table_size_to_drop>
+    <max_partition_size_to_drop>0</max_partition_size_to_drop>
+
+    <!-- Compression -->
+    <compression incl="clickhouse_compression">
+        <case>
+            <min_part_size>10000000000</min_part_size>
+            <min_part_size_ratio>0.01</min_part_size_ratio>
+            <method>lz4</method>
+        </case>
+    </compression>
+
+    <!-- Remote Servers (for replication if needed) -->
+    <remote_servers incl="clickhouse_remote_servers">
+        <test_shard_localhost>
+            <shard>
+                <replica>
+                    <host>localhost</host>
+                    <port>9000</port>
+                </replica>
+            </shard>
+        </test_shard_localhost>
+    </remote_servers>
+
+    <!-- Macros (for replication) -->
+    <macros incl="macros" optional="true" />
+
+    <!-- Settings for ChromaDB optimization -->
+    <profiles>
+        <default>
+            <max_memory_usage>10000000000</max_memory_usage>
+            <use_uncompressed_cache>0</use_uncompressed_cache>
+            <load_balancing>random</load_balancing>
+        </default>
+        <chroma_profile>
+            <max_memory_usage>20000000000</max_memory_usage>
+            <max_bytes_before_external_group_by>2000000000</max_bytes_before_external_group_by>
+            <max_bytes_before_external_sort>2000000000</max_bytes_before_external_sort>
+        </chroma_profile>
+    </profiles>
+
+    <!-- Users -->
+    <users>
+        <chroma>
+            <password_sha256_hex>5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8</password_sha256_hex>
+            <networks incl="networks" replace="replace">
+                <ip>::/0</ip>
+            </networks>
+            <profile>chroma_profile</profile>
+            <quota>default</quota>
+            <databases>
+                <database>chroma</database>
+            </databases>
+        </chroma>
+    </users>
+
+    <!-- Quotas -->
+    <quotas>
+        <default>
+            <interval>
+                <duration>3600</duration>
+                <queries>0</queries>
+                <errors>0</errors>
+                <result_rows>0</result_rows>
+                <read_rows>0</read_rows>
+                <execution_time>0</execution_time>
+            </interval>
+        </default>
+    </quotas>
+</yandex>

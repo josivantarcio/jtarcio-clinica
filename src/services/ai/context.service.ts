@@ -183,9 +183,7 @@ export class ConversationContextService {
       // Trim history if too long - keep more messages for better context
       const maxMessages = this.maxHistoryMessages + 2; // Allow slight overflow for better context
       if (context.messageHistory.length > maxMessages) {
-        context.messageHistory = context.messageHistory.slice(
-          -maxMessages,
-        );
+        context.messageHistory = context.messageHistory.slice(-maxMessages);
       }
 
       await this.updateContext(conversationId, context);

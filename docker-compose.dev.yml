@@ -1,0 +1,175 @@
+version: '3.8'
+
+# =================================
+# DEVELOPMENT ENVIRONMENT
+# Fast startup, hot reloading, development tools
+# =================================
+
+services:
+  # Development Backend (Hot Reload)
+  app:
+    build: .
+    image: eo-clinica/backend:dev
+    container_name: eo-clinica-app-dev
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://clinic_user:clinic_password@postgres:5432/eo_clinica_db
+      - REDIS_URL=redis://redis:6379
+      - CLAUDE_API_KEY=${CLAUDE_API_KEY:-}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - JWT_SECRET=dev-jwt-secret-123
+      - JWT_REFRESH_SECRET=dev-refresh-secret-123
+      - BCRYPT_SALT_ROUNDS=6  # Faster for development
+      - DEBUG=*
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./src:/app/src:ro
+      - ./package.json:/app/package.json:ro
+      - ./tsconfig.json:/app/tsconfig.json:ro
+      - app_logs_dev:/app/logs
+    networks:
+      - clinic-network
+    depends_on:
+      - postgres
+      - redis
+    command: ["npm", "run", "dev"]
+
+  # Development Frontend (Hot Reload)
+  frontend:
+    build:
+      context: ./frontend
+      target: builder  # Use builder stage for development
+    image: eo-clinica/frontend:dev
+    container_name: eo-clinica-frontend-dev
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:3000/api/v1
+      - PORT=3000
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./frontend/src:/app/src:ro
+      - ./frontend/components:/app/components:ro
+      - ./frontend/package.json:/app/package.json:ro
+    networks:
+      - clinic-network
+    depends_on:
+      - app
+    command: ["npm", "run", "dev"]
+
+  # Lightweight PostgreSQL for Development
+  postgres:
+    image: postgres:15-alpine
+    container_name: eo-clinica-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: eo_clinica_db
+      POSTGRES_USER: clinic_user
+      POSTGRES_PASSWORD: clinic_password
+    ports:
+      - "5433:5432"  # Match production port mapping
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - clinic-network
+
+  # Lightweight Redis for Development
+  redis:
+    image: redis:7-alpine
+    container_name: eo-clinica-redis-dev
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb
+    ports:
+      - "6380:6379"  # Match production port mapping
+    volumes:
+      - redis_data_dev:/data
+    networks:
+      - clinic-network
+
+  # Essential Services for AI Development
+  chromadb:
+    image: chromadb/chroma:0.4.18
+    container_name: eo-clinica-chromadb-dev
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - CHROMA_SERVER_HOST=0.0.0.0
+      - CHROMA_SERVER_HTTP_PORT=8000
+      - ANONYMIZED_TELEMETRY=false
+    volumes:
+      - chromadb_data_dev:/chroma/chroma
+    networks:
+      - clinic-network
+
+  # N8N for Workflow Development
+  n8n:
+    image: n8nio/n8n:1.24.1
+    container_name: eo-clinica-n8n-dev
+    restart: unless-stopped
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=dev123
+      - N8N_HOST=0.0.0.0
+      - N8N_PORT=5678
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=eo_clinica_db
+      - DB_POSTGRESDB_USER=clinic_user
+      - DB_POSTGRESDB_PASSWORD=clinic_password
+      - QUEUE_BULL_REDIS_HOST=redis
+      - QUEUE_BULL_REDIS_PORT=6379
+      - N8N_LOG_LEVEL=debug
+      - GENERIC_TIMEZONE=America/Sao_Paulo
+    ports:
+      - "5678:5678"
+    volumes:
+      - n8n_data_dev:/home/node/.n8n
+      - ./n8n-workflows:/data/workflows
+    networks:
+      - clinic-network
+    depends_on:
+      - postgres
+      - redis
+
+  # PgAdmin for Database Management
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: eo-clinica-pgadmin-dev
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@clinic.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data_dev:/var/lib/pgadmin
+    networks:
+      - clinic-network
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data_dev:
+    name: eo-clinica-postgres-data-dev
+  redis_data_dev:
+    name: eo-clinica-redis-data-dev
+  chromadb_data_dev:
+    name: eo-clinica-chromadb-data-dev
+  n8n_data_dev:
+    name: eo-clinica-n8n-data-dev
+  app_logs_dev:
+    name: eo-clinica-app-logs-dev
+  pgadmin_data_dev:
+    name: eo-clinica-pgadmin-data-dev
+
+networks:
+  clinic-network:
+    driver: bridge
+    name: eo-clinica-network-dev
