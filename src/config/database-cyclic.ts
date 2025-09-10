@@ -75,7 +75,7 @@ const mockDatabase = {
       updatedAt: new Date(),
     },
   ] as User[],
-  
+
   appointments: [
     {
       id: 'cyclic-apt-1',
@@ -96,27 +96,30 @@ export const cyclicPrisma = {
   user: {
     findUnique: async ({ where }: { where: any }) => {
       if (where.email) {
-        return mockDatabase.users.find(u => u.email === where.email.toLowerCase()) || null;
+        return (
+          mockDatabase.users.find(u => u.email === where.email.toLowerCase()) ||
+          null
+        );
       }
       if (where.id) {
         return mockDatabase.users.find(u => u.id === where.id) || null;
       }
       return null;
     },
-    
+
     findMany: async ({ where }: { where?: any } = {}) => {
       let users = [...mockDatabase.users];
-      
+
       if (where?.role) {
         users = users.filter(u => u.role === where.role);
       }
       if (where?.status) {
         users = users.filter(u => u.status === where.status);
       }
-      
+
       return users;
     },
-    
+
     create: async ({ data }: { data: any }) => {
       const newUser: User = {
         id: `cyclic-user-${Date.now()}`,
@@ -125,42 +128,45 @@ export const cyclicPrisma = {
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-      
+
       mockDatabase.users.push(newUser);
       return newUser;
     },
-    
+
     update: async ({ where, data }: { where: any; data: any }) => {
-      const userIndex = mockDatabase.users.findIndex(u => 
-        (where.id && u.id === where.id) || 
-        (where.email && u.email === where.email)
+      const userIndex = mockDatabase.users.findIndex(
+        u =>
+          (where.id && u.id === where.id) ||
+          (where.email && u.email === where.email),
       );
-      
+
       if (userIndex === -1) {
         throw new Error('User not found');
       }
-      
+
       const updatedUser = {
         ...mockDatabase.users[userIndex],
         ...data,
         updatedAt: new Date(),
       };
-      
+
       mockDatabase.users[userIndex] = updatedUser;
       return updatedUser;
     },
-    
+
     count: async () => {
       return mockDatabase.users.length;
     },
   },
-  
+
   appointment: {
     findMany: async ({ where }: { where?: any } = {}) => {
       let appointments = [...mockDatabase.appointments];
-      
+
       if (where?.patientId) {
-        appointments = appointments.filter(a => a.patientId === where.patientId);
+        appointments = appointments.filter(
+          a => a.patientId === where.patientId,
+        );
       }
       if (where?.doctorId) {
         appointments = appointments.filter(a => a.doctorId === where.doctorId);
@@ -168,10 +174,10 @@ export const cyclicPrisma = {
       if (where?.status) {
         appointments = appointments.filter(a => a.status === where.status);
       }
-      
+
       return appointments;
     },
-    
+
     create: async ({ data }: { data: any }) => {
       const newAppointment: Appointment = {
         id: `cyclic-apt-${Date.now()}`,
@@ -179,21 +185,21 @@ export const cyclicPrisma = {
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-      
+
       mockDatabase.appointments.push(newAppointment);
       return newAppointment;
     },
-    
+
     count: async () => {
       return mockDatabase.appointments.length;
     },
   },
-  
+
   // Health check para connection
   $queryRaw: async () => {
     return [{ result: 1 }];
   },
-  
+
   // Mock disconnect
   $disconnect: async () => {
     console.log('Mock database disconnected');

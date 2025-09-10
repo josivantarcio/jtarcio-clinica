@@ -4,14 +4,18 @@ import fs from 'fs';
 import { cyclicPrisma } from './config/database-cyclic';
 import bcrypt from 'bcryptjs';
 
-// Criar instância do Fastify específica para Cyclic
+// Criar instância do Fastify específica para Hostinger VPS
 const fastify = Fastify({
-  logger: true,
+  logger: {
+    level: 'info',
+    prettyPrint: process.env.NODE_ENV === 'development'
+  }
 });
 
-// Configuração específica para Cyclic
+// Configuração específica para Hostinger VPS
 const isDevelopment = process.env.NODE_ENV === 'development';
 const PORT = process.env.PORT || 3000;
+const HOST = process.env.HOST || '0.0.0.0';
 
 // Função para registrar rotas da API
 async function registerApiRoutes() {
@@ -68,8 +72,8 @@ async function registerApiRoutes() {
             role: user.role,
             status: user.status,
           },
-          accessToken: 'cyclic-demo-token',
-          refreshToken: 'cyclic-demo-refresh',
+          accessToken: 'hostinger-demo-token',
+          refreshToken: 'hostinger-demo-refresh',
         },
       });
     } catch (error) {
@@ -88,7 +92,7 @@ async function registerApiRoutes() {
   fastify.get('/api/auth/me', async (request, reply) => {
     // Mock auth check
     const authHeader = request.headers.authorization;
-    if (!authHeader || !authHeader.includes('cyclic-demo-token')) {
+    if (!authHeader || !authHeader.includes('hostinger-demo-token')) {
       return reply.status(401).send({
         success: false,
         error: {
@@ -145,7 +149,7 @@ async function registerApiRoutes() {
             sessionTimeout: 60,
           },
         },
-        bio: 'Usuário demo do Cyclic',
+        bio: 'Usuário demo do Hostinger VPS',
         createdAt: user!.createdAt,
         updatedAt: user!.updatedAt,
       },
@@ -197,7 +201,7 @@ async function registerApiRoutes() {
   });
 }
 
-async function startCyclicServer() {
+async function startHostingerServer() {
   try {
     // Registrar plugins essenciais
     await fastify.register(import('@fastify/cors'), {
@@ -257,30 +261,51 @@ async function startCyclicServer() {
       console.log('⚠️ Frontend build not found. Serving API only.');
     }
 
-    // Health check específico para Cyclic
+    // Health check específico para Hostinger VPS
     fastify.get('/health', async (request, reply) => {
       return {
         status: 'ok',
         timestamp: new Date().toISOString(),
-        service: 'EO Clínica - Cyclic',
+        service: 'EO Clínica - Hostinger VPS',
         version: '2.1.1',
         environment: process.env.NODE_ENV || 'production',
+        host: HOST,
         port: PORT,
+        memory: process.memoryUsage(),
+        uptime: process.uptime(),
+      };
+    });
+
+    // Endpoint para informações do servidor
+    fastify.get('/server-info', async (request, reply) => {
+      return {
+        platform: process.platform,
+        arch: process.arch,
+        nodeVersion: process.version,
+        pid: process.pid,
+        cwd: process.cwd(),
+        env: process.env.NODE_ENV || 'production',
+        memory: process.memoryUsage(),
+        uptime: process.uptime(),
       };
     });
 
     // Iniciar servidor
     await fastify.listen({
       port: Number(PORT),
-      host: '0.0.0.0',
+      host: HOST,
     });
 
-    console.log(`🚀 EO Clínica server running on Cyclic!`);
+    console.log(`🚀 EO Clínica server running on Hostinger VPS!`);
     console.log(`🌍 Environment: ${process.env.NODE_ENV || 'production'}`);
-    console.log(`🔗 Health check: /health`);
-    console.log(`🏥 API endpoints: /api/*`);
+    console.log(`🖥️  Host: ${HOST}:${PORT}`);
+    console.log(`🔗 Health check: http://${HOST}:${PORT}/health`);
+    console.log(`📊 Server info: http://${HOST}:${PORT}/server-info`);
+    console.log(`🏥 API endpoints: http://${HOST}:${PORT}/api/*`);
+    console.log(`💻 Platform: ${process.platform} ${process.arch}`);
+    console.log(`🟢 Node.js: ${process.version}`);
   } catch (error) {
-    console.error('❌ Failed to start Cyclic server:', error);
+    console.error('❌ Failed to start Hostinger server:', error);
     process.exit(1);
   }
 }
@@ -298,9 +323,20 @@ process.on('SIGTERM', async () => {
   process.exit(0);
 });
 
+// Handle uncaught exceptions
+process.on('uncaughtException', (error) => {
+  console.error('💥 Uncaught Exception:', error);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('💥 Unhandled Rejection at:', promise, 'reason:', reason);
+  process.exit(1);
+});
+
 // Iniciar servidor
-startCyclicServer();
+startHostingerServer();
 
 // Export para compatibilidade com diferentes ambientes
-export default startCyclicServer;
+export default startHostingerServer;
 export { fastify };
