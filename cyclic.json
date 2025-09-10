@@ -1,0 +1,35 @@
+{
+  "name": "eo-clinica-system",
+  "description": "Medical clinic scheduling system with AI integration",
+  "version": "2.1.1",
+  "build": {
+    "commands": [
+      "npm ci",
+      "npm run db:generate",
+      "cd frontend && npm ci && npm run build"
+    ],
+    "environment": {
+      "NODE_ENV": "production",
+      "NPM_CONFIG_PRODUCTION": "false"
+    }
+  },
+  "deploy": {
+    "environment": {
+      "NODE_ENV": "production"
+    }
+  },
+  "healthCheck": {
+    "path": "/health",
+    "timeout": 30
+  },
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/src/index.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/frontend/out/$1"
+    }
+  ]
+}

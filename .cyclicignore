@@ -1,0 +1,42 @@
+# Cyclic deployment ignore file
+# Similar to .gitignore but for Cyclic builds
+
+# Development
+node_modules/
+.env.local
+.env.development
+*.log
+
+# Database
+postgres_data/
+redis_data/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Tests
+coverage/
+.nyc_output/
+
+# Build artifacts (keep frontend/out for serving)
+dist/
+.next/
+!frontend/out/
+
+# Docker
+.docker/
+docker-compose.override.yml
+
+# Git
+.git/
+.gitignore
+
+# Documentation (keep deploy guides)
+docs/
+README.md
+!CYCLIC_DEPLOY.md
