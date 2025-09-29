@@ -274,17 +274,20 @@ perform_health_checks() {
     
     # Check backend health
     local attempts=0
-    while [ $attempts -lt 30 ]; do
-        if curl -s -f http://localhost:3000/health >/dev/null 2>&1; then
+    local max_attempts=45
+    local sleep_seconds=3
+    while [ $attempts -lt $max_attempts ]; do
+        # Use explicit IPv4 to avoid IPv6 resolution (::1) issues
+        if curl -s -f http://127.0.0.1:3000/health >/dev/null 2>&1; then
             log_success "Backend está saudável!"
             break
         fi
         echo -n "."
-        sleep 2
+        sleep $sleep_seconds
         attempts=$((attempts + 1))
     done
-    
-    if [ $attempts -eq 30 ]; then
+
+    if [ $attempts -eq $max_attempts ]; then
         log_error "Backend não passou no health check"
         return 1
     fi
