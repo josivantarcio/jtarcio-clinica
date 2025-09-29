@@ -8,8 +8,8 @@ import bcrypt from 'bcryptjs';
 const fastify = Fastify({
   logger: {
     level: 'info',
-    prettyPrint: process.env.NODE_ENV === 'development'
-  }
+    prettyPrint: process.env.NODE_ENV === 'development',
+  },
 });
 
 // Configuração específica para Hostinger VPS
@@ -324,7 +324,7 @@ process.on('SIGTERM', async () => {
 });
 
 // Handle uncaught exceptions
-process.on('uncaughtException', (error) => {
+process.on('uncaughtException', error => {
   console.error('💥 Uncaught Exception:', error);
   process.exit(1);
 });
