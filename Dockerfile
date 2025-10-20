@@ -1,53 +1,50 @@
 # Build stage
 FROM node:20-alpine AS builder
-
-# Install required dependencies for Prisma
-RUN apk add --no-cache openssl libc6-compat
-
 WORKDIR /app
 
-# Copy package files
+# Copiar package files
 COPY package*.json ./
-COPY tsconfig.json ./
+COPY prisma ./prisma/
 
-# Install dependencies (skip prepare script for Docker)
-RUN npm install --ignore-scripts && npm cache clean --force
+# Instalar dependências
+RUN npm ci
 
-# Copy source code
-COPY src ./src
+# Copiar código fonte
+COPY . .
 
-# Generate Prisma client
+# Gerar Prisma Client
 RUN npx prisma generate
 
-# Build TypeScript
-RUN echo "Using tsx for production"
+# Build da aplicação
+RUN npm run build
 
 # Production stage
 FROM node:20-alpine AS production
-
-# Install required dependencies for Prisma and dumb-init
-RUN apk add --no-cache dumb-init openssl libc6-compat
-
-# Create app user
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nextjs -u 1001
-
 WORKDIR /app
 
-# Copy application source
-COPY --from=builder --chown=nextjs:nodejs /app/src ./src
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
-COPY --from=builder --chown=nextjs:nodejs /app/src/database ./src/database
+# Instalar apenas dependências de produção
+COPY package*.json ./
+RUN npm ci --only=production
 
-USER nextjs
+# Copiar arquivos do build
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
+# Criar usuário não-root para segurança
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S nodejs -u 1001
+USER nodejs
+
+# Expor porta
 EXPOSE 3000
 
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
+
+# Variável de ambiente para produção
 ENV NODE_ENV=production
-ENV PORT=3000
 
-# Use dumb-init to handle signals properly
-ENTRYPOINT ["dumb-init", "--"]
-
-CMD ["npm", "start"]
+# Start command
+CMD ["npm", "run", "start:prod"]
