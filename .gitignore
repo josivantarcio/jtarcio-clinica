@@ -34,6 +34,14 @@ build/
 .env.test.local
 .env.production.local
 
+# 🔐 CRITICAL: Production secrets (keep template, exclude actual secrets)
+.env.production.local
+.env.production.secrets
+.env.production.backup
+*.production.env
+*-secrets-*.env
+/tmp/eo-clinica-production-secrets-*
+
 # Logs
 logs
 *.log
@@ -112,11 +120,38 @@ playwright-report/
 # Backup files
 *.bak
 *.backup
+backups/
+.last_backup_path
 
 # Generated files
 generated/
 *.generated.*
-# Backup files
-backups/
-.last_backup_path
-.env.production
+
+# Security and secrets
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+ssl/
+certificates/
+
+# Production deployment artifacts
+docker-compose.override.yml
+docker-compose.production.override.yml
+.deployment/
+.terraform/
+*.tfstate
+*.tfstate.backup
+
+# Monitoring and analytics
+.monitoring/
+*.metrics
+*.analytics
+
+# LGPD and audit data (keep structure, exclude sensitive data)
+audit-logs/
+privacy-data/
+gdpr-exports/
+*.audit
+*.privacy
